@@ -1,0 +1,221 @@
+/* Custom styles for Personal Finance App */
+
+/* Smooth scrolling */
+html {
+    scroll-behavior: smooth;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--fallback-b2, oklch(var(--b2)));
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--fallback-bc, oklch(var(--bc)));
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--fallback-p, oklch(var(--p)));
+}
+
+/* Toast notifications */
+.toast {
+    animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+/* Drag and drop zone */
+#dropZone {
+    transition: all 0.3s ease;
+}
+
+#dropZone.dragover {
+    background-color: var(--fallback-b3, oklch(var(--b3)));
+    border-color: var(--fallback-p, oklch(var(--p)));
+}
+
+/* Card hover effects */
+.card.hover\:shadow-2xl:hover {
+    transform: translateY(-2px);
+}
+
+/* Progress bar animations */
+progress {
+    transition: value 0.5s ease;
+}
+
+/* Table row hover */
+.table tbody tr.hover {
+    transition: background-color 0.2s ease;
+}
+
+/* Modal backdrop */
+.modal::backdrop {
+    background: rgba(0, 0, 0, 0.5);
+}
+
+/* Form input focus states */
+.input:focus,
+.select:focus,
+.textarea:focus {
+    box-shadow: 0 0 0 2px var(--fallback-p, oklch(var(--p) / 0.2));
+}
+
+/* Stats cards */
+.stat {
+    transition: transform 0.2s ease;
+}
+
+.stat:hover {
+    transform: translateY(-2px);
+}
+
+/* Category color indicators */
+.category-color {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 8px;
+}
+
+/* Loading states */
+.loading-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(255, 255, 255, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 50;
+}
+
+/* Chart containers */
+canvas {
+    max-height: 100% !important;
+}
+
+/* Mobile optimizations */
+@media (max-width: 768px) {
+    .drawer-content {
+        padding-top: 0;
+    }
+    
+    .card-body {
+        padding: 1rem;
+    }
+    
+    .steps {
+        font-size: 0.75rem;
+    }
+}
+
+/* Print styles */
+@media print {
+    .drawer-side,
+    .navbar,
+    .btn {
+        display: none !important;
+    }
+    
+    .drawer-content {
+        margin: 0;
+        padding: 0;
+    }
+}
+
+/* Dark mode adjustments */
+[data-theme="dark"] {
+    /* Any dark mode specific overrides */
+}
+
+/* Budget progress indicators */
+.budget-progress {
+    position: relative;
+    height: 8px;
+    background: var(--fallback-b3, oklch(var(--b3)));
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.budget-progress-bar {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.5s ease;
+}
+
+/* Transaction amount colors */
+.amount-income {
+    color: var(--fallback-su, oklch(var(--su)));
+}
+
+.amount-expense {
+    color: var(--fallback-er, oklch(var(--er)));
+}
+
+/* Wizard step transitions */
+.wizard-step {
+    animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Alert small variant */
+.alert-sm {
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+}
+
+/* Badge colors based on category */
+.badge-category {
+    background-color: var(--category-color, var(--fallback-b2, oklch(var(--b2))));
+    color: var(--category-text, inherit);
+}
+
+/* Table compact view */
+.table-compact td,
+.table-compact th {
+    padding: 0.5rem;
+    font-size: 0.875rem;
+}
+
+/* Dropdown menu animation */
+.dropdown-content {
+    animation: dropdownIn 0.2s ease-out;
+}
+
+@keyframes dropdownIn {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}

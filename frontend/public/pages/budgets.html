@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light-fin">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Budgets - Personal Finance</title>
+    <link rel="stylesheet" href="../assets/css/app.css">
+    <link rel="stylesheet" href="../assets/css/custom.css">
+</head>
+<body class="bg-base-200 min-h-screen">
+    <div id="app"></div>
+    
+    <!-- Add Budget Modal -->
+    <dialog id="budgetModal" class="modal">
+        <div class="modal-box w-11/12 max-w-2xl">
+            <h3 class="font-bold text-lg mb-4">Create Budget</h3>
+            <form id="budgetForm" class="space-y-4">
+                <div class="form-control">
+                    <label class="label"><span class="label-text">Budget Name</span></label>
+                    <input type="text" id="budgetName" name="name" class="input input-bordered" required>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="form-control">
+                        <label class="label"><span class="label-text">Amount</span></label>
+                        <input type="number" id="budgetAmount" name="amount" step="0.01" class="input input-bordered" required>
+                    </div>
+                    <div class="form-control">
+                        <label class="label"><span class="label-text">Period</span></label>
+                        <select id="budgetPeriod" name="period" class="select select-bordered w-full">
+                            <option value="monthly">Monthly</option>
+                            <option value="yearly">Yearly</option>
+                            <option value="custom">Custom</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-4" id="dateRangeFields">
+                    <div class="form-control">
+                        <label class="label"><span class="label-text">Start Date</span></label>
+                        <input type="date" id="startDate" name="startDate" class="input input-bordered">
+                    </div>
+                    <div class="form-control">
+                        <label class="label"><span class="label-text">End Date</span></label>
+                        <input type="date" id="endDate" name="endDate" class="input input-bordered">
+                    </div>
+                </div>
+                <div class="form-control">
+                    <label class="label"><span class="label-text">Categories</span></label>
+                    <div id="categorySelection" class="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto p-2 border rounded-lg">
+                        <!-- Categories will be loaded here -->
+                    </div>
+                </div>
+                <div class="modal-action">
+                    <button type="button" class="btn" onclick="budgetModal.close()">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Create Budget</button>
+                </div>
+            </form>
+        </div>
+    </dialog>
+    
+    <!-- Budget Details Modal -->
+    <dialog id="budgetDetailsModal" class="modal">
+        <div class="modal-box w-11/12 max-w-4xl">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="font-bold text-lg" id="budgetDetailsTitle">Budget Details</h3>
+                <button onclick="budgetDetailsModal.close()" class="btn btn-sm btn-circle btn-ghost">✕</button>
+            </div>
+            
+            <!-- Budget Info -->
+            <div id="budgetDetailsInfo" class="mb-4"></div>
+            
+            <!-- Transactions Table -->
+            <div id="budgetTransactionsTable"></div>
+            
+            <div class="modal-action">
+                <button type="button" class="btn" onclick="budgetDetailsModal.close()">Close</button>
+            </div>
+        </div>
+    </dialog>
+    
+    <script src="../js/utils.js"></script>
+    <script src="../js/api.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/components/layout.js"></script>
+    <script src="../js/pages/budgets.js"></script>
+</body>
+</html>
