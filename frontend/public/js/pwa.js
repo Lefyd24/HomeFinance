@@ -1,9 +1,18 @@
 // Register service worker and handle install prompt
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js')
-      .then(reg => console.log('Service Worker registered.', reg))
-      .catch(err => console.warn('Service Worker registration failed:', err));
+    // Unregister any existing service workers first (to clear old caches)
+    navigator.serviceWorker.getRegistrations().then(registrations => {
+      registrations.forEach(registration => {
+        registration.unregister();
+        console.log('Service Worker unregistered:', registration);
+      });
+      
+      // Register fresh service worker with no caching
+      navigator.serviceWorker.register('/sw.js')
+        .then(reg => console.log('Service Worker registered (no-cache mode).', reg))
+        .catch(err => console.warn('Service Worker registration failed:', err));
+    });
   });
 }
 

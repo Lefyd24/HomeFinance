@@ -2,6 +2,15 @@
  * Dashboard page controller
  */
 
+// Global date range state - accessible from layout.js
+window.dashboardDateRange = {
+    startDate: Utils.getFirstDayOfMonth(),
+    endDate: Utils.getLastDayOfMonth()
+};
+
+// Aliases for convenience
+const dashboardDateRange = window.dashboardDateRange;
+
 document.addEventListener('DOMContentLoaded', async () => {
     if (!Auth.requireAuth()) return;
     
@@ -82,11 +91,11 @@ async function loadDashboardData() {
         const accounts = await API.accounts.list();
         const totalBalance = accounts.reduce((sum, acc) => sum + parseFloat(acc.balance || 0), 0);
         
-        // Get current month's date range
-        const startDate = Utils.getFirstDayOfMonth();
-        const endDate = Utils.getLastDayOfMonth();
+        // Use selected date range
+        const startDate = dashboardDateRange.startDate;
+        const endDate = dashboardDateRange.endDate;
         
-        // Load transactions for current month to calculate income/expenses
+        // Load transactions for selected date range to calculate income/expenses
         const txResponse = await API.transactions.list({
             start_date: startDate,
             end_date: endDate,
@@ -109,22 +118,25 @@ async function loadDashboardData() {
         
         const netSavings = totalIncome - totalExpenses;
         
+        // Format date range for display
+        const dateRangeText = formatDateRangeForDisplay(startDate, endDate);
+        
         // Update summary cards
         const summaryContainer = document.getElementById('summary-cards');
         summaryContainer.innerHTML = `
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-                <!-- Total Balance Card -->
-                <div class="card bg-base-100 shadow-sm">
+                <!-- Today's Balance Card -->
+                <div class="card bg-base-100 shadow-sm border border-primary">
                     <div class="card-body">
                         <div class="flex items-center gap-3">
-                            <div class="p-3 bg-primary/10 rounded-lg">
+                            <div class="p-3 rounded-lg">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                 </svg>
                             </div>
                             <div>
-                                <p class="text-sm text-base-content/60">Total Balance</p>
-                                <p class="text-2xl font-bold">${Utils.formatCurrency(totalBalance)}</p>
+                                <p class="text-sm font-medium text-base-content/60">Today's Balance</p>
+                                <p class="text-2xl font-bold text-primary">${Utils.formatCurrency(totalBalance)}</p>
                             </div>
                         </div>
                     </div>
@@ -139,7 +151,7 @@ async function loadDashboardData() {
                                 </svg>
                             </div>
                             <div>
-                                <p class="text-sm text-base-content/60">Income (Month)</p>
+                                <p class="text-sm text-base-content/60">Income ${dateRangeText}</p>
                                 <p class="text-2xl font-bold text-success">${Utils.formatCurrency(totalIncome)}</p>
                             </div>
                         </div>
@@ -155,7 +167,7 @@ async function loadDashboardData() {
                                 </svg>
                             </div>
                             <div>
-                                <p class="text-sm text-base-content/60">Expenses (Month)</p>
+                                <p class="text-sm text-base-content/60">Expenses ${dateRangeText}</p>
                                 <p class="text-2xl font-bold text-error">${Utils.formatCurrency(totalExpenses)}</p>
                             </div>
                         </div>
@@ -222,17 +234,25 @@ async function loadDashboardData() {
     }
 }
 
+// Store chart instance globally
+let spendingChartInstance = null;
+
 async function loadSpendingChart() {
     const ctx = document.getElementById('spendingChart');
     if (!ctx) return;
     
     try {
         const data = await API.reports.spending({
-            start_date: Utils.getFirstDayOfMonth(),
-            end_date: Utils.getLastDayOfMonth()
+            start_date: dashboardDateRange.startDate,
+            end_date: dashboardDateRange.endDate
         });
         
-        new Chart(ctx, {
+        // Destroy existing chart if it exists
+        if (spendingChartInstance) {
+            spendingChartInstance.destroy();
+        }
+        
+        spendingChartInstance = new Chart(ctx, {
             type: 'bar',
             data: {
                 labels: data.labels || [],
@@ -290,12 +310,43 @@ async function loadBudgetOverview() {
             return;
         }
         
+        // Get transactions for the selected date range to calculate budget spending
+        const txResponse = await API.transactions.list({
+            start_date: dashboardDateRange.startDate,
+            end_date: dashboardDateRange.endDate,
+            type: 'expense',
+            limit: 1000
+        });
+        
+        const transactions = txResponse.items || [];
+        
+        // Calculate spending for each budget based on the date range
+        const budgetsWithSpending = budgets.slice(0, 3).map(budget => {
+            // Get category IDs for this budget
+            const categoryIds = budget.category_ids || [];
+            
+            // Calculate spent amount from transactions in the selected date range
+            const spent = transactions
+                .filter(tx => categoryIds.includes(tx.category_id))
+                .reduce((sum, tx) => sum + parseFloat(tx.amount || 0), 0);
+            
+            const remaining = budget.amount - spent;
+            const percentage = budget.amount > 0 ? (spent / budget.amount * 100) : 0;
+            
+            return {
+                ...budget,
+                spent,
+                remaining,
+                percentage
+            };
+        });
+        
         container.innerHTML = `
             <div class="card bg-base-100 shadow-xl">
                 <div class="card-body">
                     <h2 class="card-title mb-4">Budget Overview</h2>
                     <div class="space-y-4">
-                        ${budgets.slice(0, 3).map(budget => `
+                        ${budgetsWithSpending.map(budget => `
                             <div>
                                 <div class="flex justify-between mb-1">
                                     <span class="font-medium">${budget.name}</span>
@@ -323,7 +374,11 @@ async function loadBudgetOverview() {
 
 async function loadRecentTransactions() {
     try {
-        const response = await API.transactions.list({ limit: 5 });
+        const response = await API.transactions.list({ 
+            limit: 5,
+            start_date: dashboardDateRange.startDate,
+            end_date: dashboardDateRange.endDate
+        });
         const container = document.getElementById('recent-transactions');
         
         if (!response.items || response.items.length === 0) {
@@ -491,6 +546,119 @@ window.showTransactionDetailModal = async (transactionId) => {
         modal.showModal();
     } catch (error) {
         console.error('Error loading transaction details:', error);
-        Utils.showToast('Error loading transaction details', 'error');
+        Utils.showToast('Error loading transaction details:', 'error');
     }
+};
+
+// Helper function to format date range for display
+function formatDateRangeForDisplay(startDate, endDate) {
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    const today = new Date();
+    
+    // Check if it's today
+    if (startDate === endDate && startDate === today.toISOString().split('T')[0]) {
+        return '(Today)';
+    }
+    
+    // Check if it's current month
+    const currentMonthStart = Utils.getFirstDayOfMonth();
+    const currentMonthEnd = Utils.getLastDayOfMonth();
+    if (startDate === currentMonthStart && endDate === currentMonthEnd) {
+        return '(This Month)';
+    }
+    
+    // Check if it's current week
+    const currentWeekStart = new Date(today);
+    currentWeekStart.setDate(today.getDate() - today.getDay());
+    const currentWeekEnd = new Date(currentWeekStart);
+    currentWeekEnd.setDate(currentWeekStart.getDate() + 6);
+    if (startDate === currentWeekStart.toISOString().split('T')[0] && 
+        endDate === currentWeekEnd.toISOString().split('T')[0]) {
+        return '(This Week)';
+    }
+    
+    // Check if it's current year
+    const currentYearStart = `${today.getFullYear()}-01-01`;
+    const currentYearEnd = `${today.getFullYear()}-12-31`;
+    if (startDate === currentYearStart && endDate === currentYearEnd) {
+        return '(This Year)';
+    }
+    
+    // Default: show date range
+    const formatDate = (date) => {
+        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    };
+    
+    return `(${formatDate(start)} - ${formatDate(end)})`;
+}
+
+// Apply date range from picker (deprecated, use navbar instead)
+window.applyDashboardDateRange = function() {
+    // This function is kept for compatibility, but date picker is now in navbar
+    // Use setDashboardDateRange or navbar apply button instead
+    console.log('applyDashboardDateRange is deprecated, use navbar date picker');
+};
+
+// Set date range from navbar or preset buttons
+window.setDashboardDateRange = function(startDate, endDate) {
+    if (!startDate || !endDate) return;
+    
+    if (new Date(startDate) > new Date(endDate)) {
+        Utils.showToast('Start date cannot be after end date', 'error');
+        return;
+    }
+    
+    dashboardDateRange.startDate = startDate;
+    dashboardDateRange.endDate = endDate;
+    
+    // Update navbar inputs
+    if (Layout.updateNavbarDateInputs) {
+        Layout.updateNavbarDateInputs(startDate, endDate);
+    }
+    
+    Utils.showToast('Date range updated', 'success');
+    loadDashboardData();
+};
+
+// Set date range preset
+window.setDashboardDatePreset = function(preset) {
+    const today = new Date();
+    let startDate, endDate;
+    
+    switch (preset) {
+        case 'today':
+            startDate = today.toISOString().split('T')[0];
+            endDate = startDate;
+            break;
+        case 'week':
+            const weekStart = new Date(today);
+            weekStart.setDate(today.getDate() - today.getDay());
+            startDate = weekStart.toISOString().split('T')[0];
+            const weekEnd = new Date(weekStart);
+            weekEnd.setDate(weekStart.getDate() + 6);
+            endDate = weekEnd.toISOString().split('T')[0];
+            break;
+        case 'month':
+            startDate = Utils.getFirstDayOfMonth();
+            endDate = Utils.getLastDayOfMonth();
+            break;
+        case 'year':
+            startDate = `${today.getFullYear()}-01-01`;
+            endDate = `${today.getFullYear()}-12-31`;
+            break;
+        default:
+            return;
+    }
+    
+    // Update navbar inputs
+    if (Layout.updateNavbarDateInputs) {
+        Layout.updateNavbarDateInputs(startDate, endDate);
+    }
+    
+    dashboardDateRange.startDate = startDate;
+    dashboardDateRange.endDate = endDate;
+    
+    Utils.showToast(`Date range set to ${preset}`, 'success');
+    loadDashboardData();
 };

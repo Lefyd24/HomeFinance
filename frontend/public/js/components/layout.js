@@ -38,6 +38,33 @@ const Layout = {
                             </h1>
                         </div>
                         
+                        <!-- Date Range Picker (Dashboard only) -->
+                        ${activePage === 'dashboard' ? `
+                        <div class="hidden md:flex items-center gap-2 px-4">
+                            <input type="date" id="navStartDate" class="input input-bordered input-sm" value="${this.getDashboardDateRange ? this.getDashboardDateRange().startDate : ''}">
+                            <span class="text-base-content/50 text-sm">-</span>
+                            <input type="date" id="navEndDate" class="input input-bordered input-sm" value="${this.getDashboardDateRange ? this.getDashboardDateRange().endDate : ''}">
+                            <button onclick="applyNavDateRange()" class="btn btn-primary btn-sm">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                </svg>
+                            </button>
+                            <div class="dropdown dropdown-end">
+                                <button class="btn btn-ghost btn-sm">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                    </svg>
+                                </button>
+                                <ul tabindex="0" class="dropdown-content menu menu-sm bg-base-100 rounded-box z-50 mt-3 w-40 p-2 shadow-xl border border-base-300">
+                                    <li><a onclick="setNavDatePreset('today')">Today</a></li>
+                                    <li><a onclick="setNavDatePreset('week')">This Week</a></li>
+                                    <li><a onclick="setNavDatePreset('month')">This Month</a></li>
+                                    <li><a onclick="setNavDatePreset('year')">This Year</a></li>
+                                </ul>
+                            </div>
+                        </div>
+                        ` : ''}
+                        
                         <!-- Right side actions -->
                         <div class="flex-none gap-1 lg:gap-2">
                             <!-- Theme toggle -->
@@ -360,6 +387,90 @@ const Layout = {
     saveSettings() {
         Utils.showToast('Settings saved successfully', 'success');
         document.getElementById('settingsModal').close();
+    },
+
+    /**
+     * Get dashboard date range (for navbar date picker)
+     * This is populated by dashboard.js
+     */
+    getDashboardDateRange() {
+        if (window.dashboardDateRange) {
+            return window.dashboardDateRange;
+        }
+        // Default to current month
+        const today = new Date();
+        return {
+            startDate: today.toISOString().split('T')[0].substring(0, 8) + '01',
+            endDate: today.toISOString().split('T')[0]
+        };
+    },
+
+    /**
+     * Update navbar date inputs
+     */
+    updateNavbarDateInputs(startDate, endDate) {
+        const startInput = document.getElementById('navStartDate');
+        const endInput = document.getElementById('navEndDate');
+        if (startInput && endInput) {
+            startInput.value = startDate;
+            endInput.value = endDate;
+        }
+    }
+};
+
+// Global functions for navbar date picker
+window.applyNavDateRange = function() {
+    const startDate = document.getElementById('navStartDate')?.value;
+    const endDate = document.getElementById('navEndDate')?.value;
+    
+    if (!startDate || !endDate) {
+        Utils.showToast('Please select both start and end dates', 'error');
+        return;
+    }
+    
+    if (new Date(startDate) > new Date(endDate)) {
+        Utils.showToast('Start date cannot be after end date', 'error');
+        return;
+    }
+    
+    if (window.setDashboardDateRange) {
+        window.setDashboardDateRange(startDate, endDate);
+    }
+};
+
+window.setNavDatePreset = function(preset) {
+    const today = new Date();
+    let startDate, endDate;
+    
+    switch (preset) {
+        case 'today':
+            startDate = today.toISOString().split('T')[0];
+            endDate = startDate;
+            break;
+        case 'week':
+            const weekStart = new Date(today);
+            weekStart.setDate(today.getDate() - today.getDay());
+            startDate = weekStart.toISOString().split('T')[0];
+            const weekEnd = new Date(weekStart);
+            weekEnd.setDate(weekStart.getDate() + 6);
+            endDate = weekEnd.toISOString().split('T')[0];
+            break;
+        case 'month':
+            startDate = Utils.getFirstDayOfMonth();
+            endDate = Utils.getLastDayOfMonth();
+            break;
+        case 'year':
+            startDate = `${today.getFullYear()}-01-01`;
+            endDate = `${today.getFullYear()}-12-31`;
+            break;
+        default:
+            return;
+    }
+    
+    Layout.updateNavbarDateInputs(startDate, endDate);
+    
+    if (window.setDashboardDateRange) {
+        window.setDashboardDateRange(startDate, endDate);
     }
 };
 
