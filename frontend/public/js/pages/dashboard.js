@@ -24,68 +24,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Get main content container
     const mainContent = document.getElementById('main-content');
     
-    // Render dashboard content
-    mainContent.innerHTML = `
-        <div class="space-y-6">
-            <!-- Summary Cards -->
-            <div id="summary-cards"></div>
-            
-            <!-- Main Grid -->
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6">
-                <!-- Spending Chart -->
-                <div class="lg:col-span-2">
-                    <div class="card bg-base-100 shadow-lg lg:shadow-xl">
-                        <div class="card-body p-4 lg:p-6">
-                            <h2 class="card-title text-lg lg:text-xl">Spending Overview</h2>
-                            <div class="h-64 lg:h-80">
-                                <canvas id="spendingChart"></canvas>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Budget Overview -->
-                <div>
-                    <div id="budget-overview"></div>
-                </div>
-            </div>
-            
-            <!-- Recent Transactions -->
-            <div class="card bg-base-100 shadow-xl">
-                <div class="card-body">
-                    <div class="flex justify-between items-center mb-4">
-                        <h2 class="card-title">Recent Transactions</h2>
-                        <a href="transactions.html" class="btn btn-sm btn-ghost">View All</a>
-                    </div>
-                    <div id="recent-transactions"></div>
-                </div>
-            </div>
-            
-            <!-- Quick Actions -->
-            <div class="flex flex-wrap gap-4">
-                <button onclick="window.location.href='transactions.html'" class="btn btn-primary">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                    </svg>
-                    Add Transaction
-                </button>
-                <button onclick="window.location.href='import.html'" class="btn btn-secondary">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                    </svg>
-                    Import Bank File
-                </button>
-                <button onclick="window.location.href='budgets.html'" class="btn btn-accent">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                    </svg>
-                    Manage Budgets
-                </button>
-            </div>
-        </div>
-    `;
+    // Show skeleton loading screen initially
+    const skeletonTemplate = document.getElementById('dashboard-skeleton');
+    if (skeletonTemplate) {
+        mainContent.innerHTML = skeletonTemplate.innerHTML;
+    }
     
-    // Load dashboard data
+    // Load dashboard data (this will replace the skeleton)
     await loadDashboardData();
 });
 
@@ -301,6 +246,68 @@ window.handleDashboardTransactionSubmit = async function(e) {
 
 async function loadDashboardData() {
     try {
+        // First, render the main content structure
+        const mainContent = document.getElementById('main-content');
+        mainContent.innerHTML = `
+            <div class="space-y-6">
+                <!-- Summary Cards -->
+                <div id="summary-cards"></div>
+                 
+                <!-- Main Grid -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6">
+                    <!-- Spending Chart -->
+                    <div class="lg:col-span-2">
+                        <div class="card bg-base-100 shadow-lg lg:shadow-xl">
+                            <div class="card-body p-4 lg:p-6">
+                                <h2 class="card-title text-lg lg:text-xl">Spending Overview</h2>
+                                <div class="h-64 lg:h-80">
+                                    <canvas id="spendingChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Budget Overview -->
+                    <div>
+                        <div id="budget-overview"></div>
+                    </div>
+                </div>
+                
+                <!-- Recent Transactions -->
+                <div class="card bg-base-100 shadow-xl">
+                    <div class="card-body">
+                        <div class="flex justify-between items-center mb-4">
+                            <h2 class="card-title">Recent Transactions</h2>
+                            <a href="transactions.html" class="btn btn-sm btn-ghost">View All</a>
+                        </div>
+                        <div id="recent-transactions"></div>
+                    </div>
+                </div>
+                
+                <!-- Quick Actions -->
+                <div class="flex flex-wrap gap-4">
+                    <button onclick="window.location.href='transactions.html'" class="btn btn-primary">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                        </svg>
+                        Add Transaction
+                    </button>
+                    <button onclick="window.location.href='import.html'" class="btn btn-secondary">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                        </svg>
+                        Import Bank File
+                    </button>
+                    <button onclick="window.location.href='budgets.html'" class="btn btn-accent">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                        </svg>
+                        Manage Budgets
+                    </button>
+                </div>
+            </div>
+        `;
+        
         // Load accounts and calculate total balance
         const accounts = await API.accounts.list();
         const totalBalance = accounts.reduce((sum, acc) => sum + parseFloat(acc.balance || 0), 0);
@@ -326,12 +333,12 @@ async function loadDashboardData() {
                 totalExpenses += amount;
             }
         });
-        
+         
         const netSavings = totalIncome - totalExpenses;
-        
+         
         // Format date range for display
         const dateRangeText = formatDateRangeForDisplay(startDate, endDate);
-        
+         
         // Update summary cards
         const summaryContainer = document.getElementById('summary-cards');
         summaryContainer.innerHTML = `

@@ -64,101 +64,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Get main content container
     const mainContent = document.getElementById('main-content');
     
-    // Render page content
-    mainContent.innerHTML = `
-        <div class="space-y-4 md:space-y-6">
-            <!-- Header -->
-            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 md:gap-4">
-                <div>
-                    <h2 class="text-xl md:text-2xl font-bold">Transactions</h2>
-                    <p class="text-sm text-base-content/60">Manage your income and expenses</p>
-                </div>
-                <button onclick="openTransactionModal()" class="btn btn-primary btn-sm md:btn-md w-full sm:w-auto">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 md:h-5 md:w-5 mr-1 md:mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                    </svg>
-                    <span class="hidden sm:inline">Add Transaction</span>
-                    <span class="sm:hidden">Add</span>
-                </button>
-            </div>
-            
-            <!-- Search Bar -->
-            <div class="card bg-base-100 shadow-sm">
-                <div class="card-body p-3 md:p-4">
-                    <div class="relative">
-                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-base-content/40" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                            </svg>
-                        </div>
-                        <input type="text" id="searchDescription" class="input input-bordered w-full pl-10 input-sm md:input-md" placeholder="Search by description..." onkeyup="handleSearch(event)">
-                        <button id="clearSearch" class="absolute inset-y-0 right-0 pr-3 flex items-center hidden" onclick="clearSearch()">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-base-content/40 hover:text-base-content" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                            </svg>
-                        </button>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Filters -->
-            <div class="card bg-base-100 shadow-sm">
-                <div class="card-body p-3 md:p-4">
-                    <div class="flex flex-wrap gap-2 md:gap-4">
-                        <div class="form-control w-full sm:w-auto flex-1 sm:flex-none min-w-[140px]">
-                            <label class="label py-1"><span class="label-text text-xs md:text-sm">From Date</span></label>
-                            <input type="date" id="filterFromDate" class="input input-bordered input-sm w-full">
-                        </div>
-                        <div class="form-control w-full sm:w-auto flex-1 sm:flex-none min-w-[140px]">
-                            <label class="label py-1"><span class="label-text text-xs md:text-sm">To Date</span></label>
-                            <input type="date" id="filterToDate" class="input input-bordered input-sm w-full">
-                        </div>
-                        <div class="form-control w-full sm:w-auto flex-1 sm:flex-none min-w-[140px]">
-                            <label class="label py-1"><span class="label-text text-xs md:text-sm">Account</span></label>
-                            <select id="filterAccount" class="select select-bordered select-sm w-full">
-                                <option value="">All Accounts</option>
-                            </select>
-                        </div>
-                        <div class="form-control w-full sm:w-auto flex-1 sm:flex-none min-w-[140px]">
-                            <label class="label py-1"><span class="label-text text-xs md:text-sm">Category</span></label>
-                            <select id="filterCategory" class="select select-bordered select-sm w-full">
-                                <option value="">All Categories</option>
-                            </select>
-                        </div>
-                        <div class="form-control w-full sm:w-auto flex-1 sm:flex-none min-w-[120px]">
-                            <label class="label py-1"><span class="label-text text-xs md:text-sm">Type</span></label>
-                            <select id="filterType" class="select select-bordered select-sm w-full">
-                                <option value="">All Types</option>
-                                <option value="income">Income</option>
-                                <option value="expense">Expense</option>
-                                <option value="transfer">Transfer</option>
-                            </select>
-                        </div>
-                        <div class="form-control flex items-end w-full sm:w-auto">
-                            <button onclick="applyFilters()" class="btn btn-sm btn-primary w-full sm:w-auto">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 sm:mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
-                                </svg>
-                                <span class="hidden sm:inline">Apply</span>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Transactions Table -->
-            <div class="card bg-base-100 shadow-xl">
-                <div class="card-body p-3 md:p-6">
-                    <div id="transactionsTable"></div>
-                    
-                    <!-- Pagination -->
-                    <div id="pagination" class="flex justify-center mt-4"></div>
-                </div>
-            </div>
-        </div>
-    `;
+    // Show skeleton loading screen initially
+    const skeletonTemplate = document.getElementById('transactions-skeleton');
+    if (skeletonTemplate) {
+        mainContent.innerHTML = skeletonTemplate.innerHTML;
+    }
     
-    // Initialize
+    // Initialize (this will replace the skeleton with actual content)
     await initialize();
     
     // Setup form submission (modal is in HTML, not dynamically rendered)
@@ -178,6 +90,101 @@ document.addEventListener('DOMContentLoaded', async () => {
             // Load accounts and categories
             accounts = await API.accounts.list();
             categories = await API.categories.list();
+            
+            // Render the actual content structure (replacing skeleton)
+            const mainContent = document.getElementById('main-content');
+            mainContent.innerHTML = `
+                <div class="space-y-4 md:space-y-6">
+                    <!-- Header -->
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 md:gap-4">
+                        <div>
+                            <h2 class="text-xl md:text-2xl font-bold">Transactions</h2>
+                            <p class="text-sm text-base-content/60">Manage your income and expenses</p>
+                        </div>
+                        <button onclick="openTransactionModal()" class="btn btn-primary btn-sm md:btn-md w-full sm:w-auto">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 md:h-5 md:w-5 mr-1 md:mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                            </svg>
+                            <span class="hidden sm:inline">Add Transaction</span>
+                            <span class="sm:hidden">Add</span>
+                        </button>
+                    </div>
+                    
+                    <!-- Search Bar -->
+                    <div class="card bg-base-100 shadow-sm">
+                        <div class="card-body p-3 md:p-4">
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-base-content/40" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                    </svg>
+                                </div>
+                                <input type="text" id="searchDescription" class="input input-bordered w-full pl-10 input-sm md:input-md" placeholder="Search by description..." onkeyup="handleSearch(event)">
+                                <button id="clearSearch" class="absolute inset-y-0 right-0 pr-3 flex items-center hidden" onclick="clearSearch()">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-base-content/40 hover:text-base-content" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Filters -->
+                    <div class="card bg-base-100 shadow-sm">
+                        <div class="card-body p-3 md:p-4">
+                            <div class="flex flex-wrap gap-2 md:gap-4">
+                                <div class="form-control w-full sm:w-auto flex-1 sm:flex-none min-w-[140px]">
+                                    <label class="label py-1"><span class="label-text text-xs md:text-sm">From Date</span></label>
+                                    <input type="date" id="filterFromDate" class="input input-bordered input-sm w-full">
+                                </div>
+                                <div class="form-control w-full sm:w-auto flex-1 sm:flex-none min-w-[140px]">
+                                    <label class="label py-1"><span class="label-text text-xs md:text-sm">To Date</span></label>
+                                    <input type="date" id="filterToDate" class="input input-bordered input-sm w-full">
+                                </div>
+                                <div class="form-control w-full sm:w-auto flex-1 sm:flex-none min-w-[140px]">
+                                    <label class="label py-1"><span class="label-text text-xs md:text-sm">Account</span></label>
+                                    <select id="filterAccount" class="select select-bordered select-sm w-full">
+                                        <option value="">All Accounts</option>
+                                    </select>
+                                </div>
+                                <div class="form-control w-full sm:w-auto flex-1 sm:flex-none min-w-[140px]">
+                                    <label class="label py-1"><span class="label-text text-xs md:text-sm">Category</span></label>
+                                    <select id="filterCategory" class="select select-bordered select-sm w-full">
+                                        <option value="">All Categories</option>
+                                    </select>
+                                </div>
+                                <div class="form-control w-full sm:w-auto flex-1 sm:flex-none min-w-[120px]">
+                                    <label class="label py-1"><span class="label-text text-xs md:text-sm">Type</span></label>
+                                    <select id="filterType" class="select select-bordered select-sm w-full">
+                                        <option value="">All Types</option>
+                                        <option value="income">Income</option>
+                                        <option value="expense">Expense</option>
+                                        <option value="transfer">Transfer</option>
+                                    </select>
+                                </div>
+                                <div class="form-control flex items-end w-full sm:w-auto">
+                                    <button onclick="applyFilters()" class="btn btn-sm btn-primary w-full sm:w-auto">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 sm:mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                                        </svg>
+                                        <span class="hidden sm:inline">Apply</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Transactions Table -->
+                    <div class="card bg-base-100 shadow-xl">
+                        <div class="card-body p-3 md:p-6">
+                            <div id="transactionsTable"></div>
+                            
+                            <!-- Pagination -->
+                            <div id="pagination" class="flex justify-center mt-4"></div>
+                        </div>
+                    </div>
+                </div>
+            `;
             
             // Populate filters
             populateFilterSelects();

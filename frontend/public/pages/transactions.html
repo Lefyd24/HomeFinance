@@ -16,6 +16,190 @@
 <body class="bg-base-200 min-h-screen">
     <div id="app"></div>
     
+    <!-- Skeleton Loading Template -->
+    <template id="transactions-skeleton">
+        <div class="space-y-4 md:space-y-6">
+            <!-- Skeleton Header -->
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 md:gap-4">
+                <div>
+                    <div class="skeleton h-8 w-40 mb-2"></div>
+                    <div class="skeleton h-4 w-56"></div>
+                </div>
+                <div class="skeleton h-10 w-36"></div>
+            </div>
+            
+            <!-- Skeleton Search Bar -->
+            <div class="card bg-base-100 shadow-sm">
+                <div class="card-body p-3 md:p-4">
+                    <div class="skeleton h-10 w-full rounded-lg"></div>
+                </div>
+            </div>
+            
+            <!-- Skeleton Filters -->
+            <div class="card bg-base-100 shadow-sm">
+                <div class="card-body p-3 md:p-4">
+                    <div class="flex flex-wrap gap-2 md:gap-4">
+                        <div class="flex-1 min-w-[140px]">
+                            <div class="skeleton h-3 w-16 mb-1"></div>
+                            <div class="skeleton h-10 w-full rounded-lg"></div>
+                        </div>
+                        <div class="flex-1 min-w-[140px]">
+                            <div class="skeleton h-3 w-16 mb-1"></div>
+                            <div class="skeleton h-10 w-full rounded-lg"></div>
+                        </div>
+                        <div class="flex-1 min-w-[140px]">
+                            <div class="skeleton h-3 w-16 mb-1"></div>
+                            <div class="skeleton h-10 w-full rounded-lg"></div>
+                        </div>
+                        <div class="flex-1 min-w-[140px]">
+                            <div class="skeleton h-3 w-16 mb-1"></div>
+                            <div class="skeleton h-10 w-full rounded-lg"></div>
+                        </div>
+                        <div class="flex-1 min-w-[120px]">
+                            <div class="skeleton h-3 w-12 mb-1"></div>
+                            <div class="skeleton h-10 w-full rounded-lg"></div>
+                        </div>
+                        <div class="flex items-end">
+                            <div class="skeleton h-10 w-24 rounded-lg"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Skeleton Transactions Table -->
+            <div class="card bg-base-100 shadow-xl">
+                <div class="card-body p-3 md:p-6">
+                    <div class="overflow-x-auto -mx-3 md:mx-0">
+                        <table class="table w-full">
+                            <thead>
+                                <tr class="border-b border-base-300">
+                                    <th class="py-2 md:py-3 pl-3 md:pl-4"><div class="skeleton h-4 w-12"></div></th>
+                                    <th class="py-2 md:py-3"><div class="skeleton h-4 w-24"></div></th>
+                                    <th class="hidden md:table-cell py-2 md:py-3"><div class="skeleton h-4 w-16"></div></th>
+                                    <th class="hidden md:table-cell py-2 md:py-3"><div class="skeleton h-4 w-16"></div></th>
+                                    <th class="text-right py-2 md:py-3 pr-3 md:pr-4"><div class="skeleton h-4 w-16 ml-auto"></div></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr class="border-b border-base-200/50">
+                                    <td class="py-3 md:py-4 pl-3 md:pl-4"><div class="skeleton h-4 w-20"></div></td>
+                                    <td class="py-3 md:py-4">
+                                        <div class="skeleton h-4 w-32 mb-1"></div>
+                                        <div class="skeleton h-3 w-20 md:hidden"></div>
+                                    </td>
+                                    <td class="hidden md:table-cell py-3 md:py-4"><div class="skeleton h-6 w-20 rounded-full"></div></td>
+                                    <td class="hidden md:table-cell py-3 md:py-4"><div class="skeleton h-4 w-24"></div></td>
+                                    <td class="text-right py-3 md:py-4 pr-3 md:pr-4"><div class="skeleton h-4 w-20 ml-auto"></div></td>
+                                </tr>
+                                <tr class="border-b border-base-200/50">
+                                    <td class="py-3 md:py-4 pl-3 md:pl-4"><div class="skeleton h-4 w-20"></div></td>
+                                    <td class="py-3 md:py-4">
+                                        <div class="skeleton h-4 w-32 mb-1"></div>
+                                        <div class="skeleton h-3 w-20 md:hidden"></div>
+                                    </td>
+                                    <td class="hidden md:table-cell py-3 md:py-4"><div class="skeleton h-6 w-20 rounded-full"></div></td>
+                                    <td class="hidden md:table-cell py-3 md:py-4"><div class="skeleton h-4 w-24"></div></td>
+                                    <td class="text-right py-3 md:py-4 pr-3 md:pr-4"><div class="skeleton h-4 w-20 ml-auto"></div></td>
+                                </tr>
+                                <tr class="border-b border-base-200/50">
+                                    <td class="py-3 md:py-4 pl-3 md:pl-4"><div class="skeleton h-4 w-20"></div></td>
+                                    <td class="py-3 md:py-4">
+                                        <div class="skeleton h-4 w-32 mb-1"></div>
+                                        <div class="skeleton h-3 w-20 md:hidden"></div>
+                                    </td>
+                                    <td class="hidden md:table-cell py-3 md:py-4"><div class="skeleton h-6 w-20 rounded-full"></div></td>
+                                    <td class="hidden md:table-cell py-3 md:py-4"><div class="skeleton h-4 w-24"></div></td>
+                                    <td class="text-right py-3 md:py-4 pr-3 md:pr-4"><div class="skeleton h-4 w-20 ml-auto"></div></td>
+                                </tr>
+                                <tr class="border-b border-base-200/50">
+                                    <td class="py-3 md:py-4 pl-3 md:pl-4"><div class="skeleton h-4 w-20"></div></td>
+                                    <td class="py-3 md:py-4">
+                                        <div class="skeleton h-4 w-32 mb-1"></div>
+                                        <div class="skeleton h-3 w-20 md:hidden"></div>
+                                    </td>
+                                    <td class="hidden md:table-cell py-3 md:py-4"><div class="skeleton h-6 w-20 rounded-full"></div></td>
+                                    <td class="hidden md:table-cell py-3 md:py-4"><div class="skeleton h-4 w-24"></div></td>
+                                    <td class="text-right py-3 md:py-4 pr-3 md:pr-4"><div class="skeleton h-4 w-20 ml-auto"></div></td>
+                                </tr>
+                                <tr class="border-b border-base-200/50">
+                                    <td class="py-3 md:py-4 pl-3 md:pl-4"><div class="skeleton h-4 w-20"></div></td>
+                                    <td class="py-3 md:py-4">
+                                        <div class="skeleton h-4 w-32 mb-1"></div>
+                                        <div class="skeleton h-3 w-20 md:hidden"></div>
+                                    </td>
+                                    <td class="hidden md:table-cell py-3 md:py-4"><div class="skeleton h-6 w-20 rounded-full"></div></td>
+                                    <td class="hidden md:table-cell py-3 md:py-4"><div class="skeleton h-4 w-24"></div></td>
+                                    <td class="text-right py-3 md:py-4 pr-3 md:pr-4"><div class="skeleton h-4 w-20 ml-auto"></div></td>
+                                </tr>
+                                <tr class="border-b border-base-200/50">
+                                    <td class="py-3 md:py-4 pl-3 md:pl-4"><div class="skeleton h-4 w-20"></div></td>
+                                    <td class="py-3 md:py-4">
+                                        <div class="skeleton h-4 w-32 mb-1"></div>
+                                        <div class="skeleton h-3 w-20 md:hidden"></div>
+                                    </td>
+                                    <td class="hidden md:table-cell py-3 md:py-4"><div class="skeleton h-6 w-20 rounded-full"></div></td>
+                                    <td class="hidden md:table-cell py-3 md:py-4"><div class="skeleton h-4 w-24"></div></td>
+                                    <td class="text-right py-3 md:py-4 pr-3 md:pr-4"><div class="skeleton h-4 w-20 ml-auto"></div></td>
+                                </tr>
+                                <tr class="border-b border-base-200/50">
+                                    <td class="py-3 md:py-4 pl-3 md:pl-4"><div class="skeleton h-4 w-20"></div></td>
+                                    <td class="py-3 md:py-4">
+                                        <div class="skeleton h-4 w-32 mb-1"></div>
+                                        <div class="skeleton h-3 w-20 md:hidden"></div>
+                                    </td>
+                                    <td class="hidden md:table-cell py-3 md:py-4"><div class="skeleton h-6 w-20 rounded-full"></div></td>
+                                    <td class="hidden md:table-cell py-3 md:py-4"><div class="skeleton h-4 w-24"></div></td>
+                                    <td class="text-right py-3 md:py-4 pr-3 md:pr-4"><div class="skeleton h-4 w-20 ml-auto"></div></td>
+                                </tr>
+                                <tr class="border-b border-base-200/50">
+                                    <td class="py-3 md:py-4 pl-3 md:pl-4"><div class="skeleton h-4 w-20"></div></td>
+                                    <td class="py-3 md:py-4">
+                                        <div class="skeleton h-4 w-32 mb-1"></div>
+                                        <div class="skeleton h-3 w-20 md:hidden"></div>
+                                    </td>
+                                    <td class="hidden md:table-cell py-3 md:py-4"><div class="skeleton h-6 w-20 rounded-full"></div></td>
+                                    <td class="hidden md:table-cell py-3 md:py-4"><div class="skeleton h-4 w-24"></div></td>
+                                    <td class="text-right py-3 md:py-4 pr-3 md:pr-4"><div class="skeleton h-4 w-20 ml-auto"></div></td>
+                                </tr>
+                                <tr class="border-b border-base-200/50">
+                                    <td class="py-3 md:py-4 pl-3 md:pl-4"><div class="skeleton h-4 w-20"></div></td>
+                                    <td class="py-3 md:py-4">
+                                        <div class="skeleton h-4 w-32 mb-1"></div>
+                                        <div class="skeleton h-3 w-20 md:hidden"></div>
+                                    </td>
+                                    <td class="hidden md:table-cell py-3 md:py-4"><div class="skeleton h-6 w-20 rounded-full"></div></td>
+                                    <td class="hidden md:table-cell py-3 md:py-4"><div class="skeleton h-4 w-24"></div></td>
+                                    <td class="text-right py-3 md:py-4 pr-3 md:pr-4"><div class="skeleton h-4 w-20 ml-auto"></div></td>
+                                </tr>
+                                <tr class="border-b border-base-200/50">
+                                    <td class="py-3 md:py-4 pl-3 md:pl-4"><div class="skeleton h-4 w-20"></div></td>
+                                    <td class="py-3 md:py-4">
+                                        <div class="skeleton h-4 w-32 mb-1"></div>
+                                        <div class="skeleton h-3 w-20 md:hidden"></div>
+                                    </td>
+                                    <td class="hidden md:table-cell py-3 md:py-4"><div class="skeleton h-6 w-20 rounded-full"></div></td>
+                                    <td class="hidden md:table-cell py-3 md:py-4"><div class="skeleton h-4 w-24"></div></td>
+                                    <td class="text-right py-3 md:py-4 pr-3 md:pr-4"><div class="skeleton h-4 w-20 ml-auto"></div></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- Skeleton Pagination -->
+                    <div class="flex justify-center mt-4">
+                        <div class="flex gap-1">
+                            <div class="skeleton h-8 w-8 rounded-lg"></div>
+                            <div class="skeleton h-8 w-8 rounded-lg"></div>
+                            <div class="skeleton h-8 w-8 rounded-lg"></div>
+                            <div class="skeleton h-8 w-8 rounded-lg"></div>
+                            <div class="skeleton h-8 w-8 rounded-lg"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </template>
+    
     <!-- Add/Edit Transaction Modal -->
     <dialog id="transactionModal" class="modal modal-middle sm:modal-middle">
         <div class="modal-box">

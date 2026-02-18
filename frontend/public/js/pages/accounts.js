@@ -18,11 +18,27 @@ window.editAccount = async (id) => {
     editingAccountId = id;
     
     // Populate form with account data
-    document.getElementById('accountName').value = account.name;
-    document.getElementById('accountType').value = account.type;
-    document.getElementById('currency').value = account.currency;
-    document.getElementById('balance').value = parseFloat(account.balance || 0);
-    document.getElementById('accountDescription').value = account.description || '';
+    const accountNameEl = document.getElementById('accountName');
+    const accountTypeEl = document.getElementById('accountType');
+    const currencyEl = document.getElementById('currency');
+    const balanceEl = document.getElementById('balance');
+    const descriptionEl = document.getElementById('accountDescription');
+    const modalTitleEl = document.getElementById('modalTitle');
+    const submitButtonTextEl = document.getElementById('submitButtonText');
+    
+    // Check if modal elements exist
+    if (!accountNameEl || !modalTitleEl) {
+        console.error('Modal elements not found. Retrying...');
+        // Retry after a short delay to allow DOM to be ready
+        setTimeout(() => window.editAccount(id), 100);
+        return;
+    }
+    
+    accountNameEl.value = account.name;
+    if (accountTypeEl) accountTypeEl.value = account.type;
+    if (currencyEl) currencyEl.value = account.currency;
+    if (balanceEl) balanceEl.value = parseFloat(account.balance || 0);
+    if (descriptionEl) descriptionEl.value = account.description || '';
     
     // Set icon selection
     const iconRadios = document.querySelectorAll('input[name="accountIcon"]');
@@ -31,8 +47,8 @@ window.editAccount = async (id) => {
     });
     
     // Update modal UI
-    document.getElementById('modalTitle').textContent = 'Edit Account';
-    document.getElementById('submitButtonText').textContent = 'Update Account';
+    modalTitleEl.textContent = 'Edit Account';
+    if (submitButtonTextEl) submitButtonTextEl.textContent = 'Update Account';
     
     // Update preview
     updateAccountPreview();
@@ -68,7 +84,10 @@ window.deleteAccount = async (id) => {
 // Reset modal to add mode
 window.resetAccountModal = () => {
     editingAccountId = null;
-    document.getElementById('accountForm').reset();
+    
+    // Reset form if it exists
+    const form = document.getElementById('accountForm');
+    if (form) form.reset();
     
     // Reset icon selection to default
     const defaultIconRadio = document.querySelector('input[name="accountIcon"][value=""]');
@@ -76,29 +95,43 @@ window.resetAccountModal = () => {
         defaultIconRadio.checked = true;
     }
     
-    // Reset modal UI
-    document.getElementById('modalTitle').textContent = 'Add Account';
-    document.getElementById('submitButtonText').textContent = 'Save Account';
+    // Reset modal UI with null checks
+    const modalTitleEl = document.getElementById('modalTitle');
+    const submitButtonTextEl = document.getElementById('submitButtonText');
+    
+    if (modalTitleEl) modalTitleEl.textContent = 'Add Account';
+    if (submitButtonTextEl) submitButtonTextEl.textContent = 'Save Account';
     
     // Reset preview
     updateAccountPreview();
-    document.querySelector('#accountModal h3').textContent = 'Add Account';
-    document.querySelector('#accountForm button[type="submit"]').textContent = 'Save Account';
 };
 
 // Update account preview in modal
 function updateAccountPreview() {
-    const name = document.getElementById('accountName')?.value || 'New Account';
-    const type = document.getElementById('accountType')?.value || 'checking';
-    const currency = document.getElementById('currency')?.value || 'EUR';
-    const balance = parseFloat(document.getElementById('balance')?.value || 0);
+    const nameEl = document.getElementById('accountName');
+    const typeEl = document.getElementById('accountType');
+    const currencyEl = document.getElementById('currency');
+    const balanceEl = document.getElementById('balance');
+    const previewNameEl = document.getElementById('previewName');
+    const previewTypeEl = document.getElementById('previewType');
+    const previewCurrencyEl = document.getElementById('previewCurrency');
+    const previewBalanceEl = document.getElementById('previewBalance');
+    const previewIconEl = document.getElementById('previewIcon');
+    
+    // Exit if preview elements don't exist (modal not open)
+    if (!previewNameEl || !previewIconEl) return;
+    
+    const name = nameEl?.value || 'New Account';
+    const type = typeEl?.value || 'checking';
+    const currency = currencyEl?.value || 'EUR';
+    const balance = parseFloat(balanceEl?.value || 0);
     const selectedIcon = document.querySelector('input[name="accountIcon"]:checked');
     const iconValue = selectedIcon?.value || '';
     
     // Update preview text
-    document.getElementById('previewName').textContent = name || 'New Account';
-    document.getElementById('previewType').textContent = type;
-    document.getElementById('previewCurrency').textContent = currency;
+    previewNameEl.textContent = name || 'New Account';
+    if (previewTypeEl) previewTypeEl.textContent = type;
+    if (previewCurrencyEl) previewCurrencyEl.textContent = currency;
     
     // Format balance
     const currencySymbols = { EUR: '€', USD: '$', GBP: '£' };
@@ -106,12 +139,11 @@ function updateAccountPreview() {
     const formattedBalance = balance < 0 
         ? `-${symbol}${Math.abs(balance).toFixed(2)}`
         : `${symbol}${balance.toFixed(2)}`;
-    document.getElementById('previewBalance').textContent = formattedBalance;
+    if (previewBalanceEl) previewBalanceEl.textContent = formattedBalance;
     
     // Update preview icon
-    const previewIconContainer = document.getElementById('previewIcon');
     if (iconValue) {
-        previewIconContainer.innerHTML = `<img src="../assets/icons/banks/${iconValue}" alt="${name}" class="w-full h-full object-contain">`;
+        previewIconEl.innerHTML = `<img src="../assets/icons/banks/${iconValue}" alt="${name}" class="w-full h-full object-contain">`;
     } else {
         const typeIcons = {
             checking: '<svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" /></svg>',
@@ -120,7 +152,7 @@ function updateAccountPreview() {
             cash: '<svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" /></svg>',
             investment: '<svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>'
         };
-        previewIconContainer.innerHTML = typeIcons[type] || typeIcons.checking;
+        previewIconEl.innerHTML = typeIcons[type] || typeIcons.checking;
     }
 }
 
@@ -316,9 +348,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             e.target.reset();
             editingAccountId = null;
             
-            // Reset modal title
-            document.querySelector('#accountModal h3').textContent = 'Add Account';
-            document.querySelector('#accountForm button[type="submit"]').textContent = 'Save Account';
+            // Reset modal UI
+            const modalTitleEl = document.getElementById('modalTitle');
+            const submitButtonTextEl = document.getElementById('submitButtonText');
+            if (modalTitleEl) modalTitleEl.textContent = 'Add Account';
+            if (submitButtonTextEl) submitButtonTextEl.textContent = 'Save Account';
             
             // Reload accounts
             accounts = await API.accounts.list();

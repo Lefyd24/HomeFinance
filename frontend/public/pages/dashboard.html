@@ -19,6 +19,230 @@
         <!-- Sidebar and main content will be injected here -->
     </div>
     
+    <!-- Skeleton Loading Template -->
+    <template id="dashboard-skeleton">
+        <div class="space-y-6">
+            <!-- Skeleton Summary Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                <div class="card bg-base-100 shadow-sm border border-primary">
+                    <div class="card-body">
+                        <div class="flex items-center gap-3">
+                            <div class="skeleton w-12 h-12 rounded-lg shrink-0"></div>
+                            <div class="flex-1">
+                                <div class="skeleton h-3 w-24 mb-2"></div>
+                                <div class="skeleton h-8 w-28"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card bg-base-100 shadow-sm">
+                    <div class="card-body">
+                        <div class="flex items-center gap-3">
+                            <div class="skeleton w-12 h-12 rounded-lg shrink-0"></div>
+                            <div class="flex-1">
+                                <div class="skeleton h-3 w-24 mb-2"></div>
+                                <div class="skeleton h-8 w-28"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card bg-base-100 shadow-sm">
+                    <div class="card-body">
+                        <div class="flex items-center gap-3">
+                            <div class="skeleton w-12 h-12 rounded-lg shrink-0"></div>
+                            <div class="flex-1">
+                                <div class="skeleton h-3 w-24 mb-2"></div>
+                                <div class="skeleton h-8 w-28"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card bg-base-100 shadow-sm">
+                    <div class="card-body">
+                        <div class="flex items-center gap-3">
+                            <div class="skeleton w-12 h-12 rounded-lg shrink-0"></div>
+                            <div class="flex-1">
+                                <div class="skeleton h-3 w-24 mb-2"></div>
+                                <div class="skeleton h-8 w-28"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Skeleton Account Balances -->
+            <div class="card bg-base-100 shadow-sm mb-6">
+                <div class="card-body">
+                    <div class="flex justify-between items-center mb-4">
+                        <div class="skeleton h-6 w-40"></div>
+                        <div class="skeleton h-8 w-20"></div>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+                        <div class="bg-base-200 rounded-lg p-3">
+                            <div class="flex items-center gap-3">
+                                <div class="skeleton w-10 h-10 rounded-lg shrink-0"></div>
+                                <div class="flex-1">
+                                    <div class="skeleton h-4 w-24 mb-1"></div>
+                                    <div class="skeleton h-3 w-16 mb-1"></div>
+                                    <div class="skeleton h-4 w-20"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-base-200 rounded-lg p-3">
+                            <div class="flex items-center gap-3">
+                                <div class="skeleton w-10 h-10 rounded-lg shrink-0"></div>
+                                <div class="flex-1">
+                                    <div class="skeleton h-4 w-24 mb-1"></div>
+                                    <div class="skeleton h-3 w-16 mb-1"></div>
+                                    <div class="skeleton h-4 w-20"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-base-200 rounded-lg p-3">
+                            <div class="flex items-center gap-3">
+                                <div class="skeleton w-10 h-10 rounded-lg shrink-0"></div>
+                                <div class="flex-1">
+                                    <div class="skeleton h-4 w-24 mb-1"></div>
+                                    <div class="skeleton h-3 w-16 mb-1"></div>
+                                    <div class="skeleton h-4 w-20"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Skeleton Main Grid -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6">
+                <!-- Skeleton Spending Chart -->
+                <div class="lg:col-span-2">
+                    <div class="card bg-base-100 shadow-lg lg:shadow-xl">
+                        <div class="card-body p-4 lg:p-6">
+                            <div class="skeleton h-6 w-40 mb-4"></div>
+                            <div class="h-64 lg:h-80">
+                                <div class="skeleton w-full h-full rounded-lg"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Skeleton Budget Overview -->
+                <div>
+                    <div class="card bg-base-100 shadow-xl">
+                        <div class="card-body">
+                            <div class="skeleton h-6 w-32 mb-4"></div>
+                            <div class="space-y-4">
+                                <div>
+                                    <div class="flex justify-between mb-1">
+                                        <div class="skeleton h-4 w-24"></div>
+                                        <div class="skeleton h-4 w-28"></div>
+                                    </div>
+                                    <div class="skeleton h-3 w-full rounded-full"></div>
+                                    <div class="flex justify-between mt-1">
+                                        <div class="skeleton h-3 w-16"></div>
+                                        <div class="skeleton h-3 w-16"></div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="flex justify-between mb-1">
+                                        <div class="skeleton h-4 w-24"></div>
+                                        <div class="skeleton h-4 w-28"></div>
+                                    </div>
+                                    <div class="skeleton h-3 w-full rounded-full"></div>
+                                    <div class="flex justify-between mt-1">
+                                        <div class="skeleton h-3 w-16"></div>
+                                        <div class="skeleton h-3 w-16"></div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="flex justify-between mb-1">
+                                        <div class="skeleton h-4 w-24"></div>
+                                        <div class="skeleton h-4 w-28"></div>
+                                    </div>
+                                    <div class="skeleton h-3 w-full rounded-full"></div>
+                                    <div class="flex justify-between mt-1">
+                                        <div class="skeleton h-3 w-16"></div>
+                                        <div class="skeleton h-3 w-16"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mt-4 flex justify-end">
+                                <div class="skeleton h-8 w-32"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Skeleton Recent Transactions -->
+            <div class="card bg-base-100 shadow-xl">
+                <div class="card-body">
+                    <div class="flex justify-between items-center mb-4">
+                        <div class="skeleton h-6 w-40"></div>
+                        <div class="skeleton h-8 w-20"></div>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="table w-full">
+                            <thead>
+                                <tr>
+                                    <th><div class="skeleton h-4 w-12"></div></th>
+                                    <th><div class="skeleton h-4 w-20"></div></th>
+                                    <th class="hidden md:table-cell"><div class="skeleton h-4 w-16"></div></th>
+                                    <th class="hidden md:table-cell"><div class="skeleton h-4 w-16"></div></th>
+                                    <th class="text-right"><div class="skeleton h-4 w-16 ml-auto"></div></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><div class="skeleton h-4 w-20"></div></td>
+                                    <td><div class="skeleton h-4 w-32"></div></td>
+                                    <td class="hidden md:table-cell"><div class="skeleton h-6 w-20"></div></td>
+                                    <td class="hidden md:table-cell"><div class="skeleton h-4 w-24"></div></td>
+                                    <td class="text-right"><div class="skeleton h-4 w-20 ml-auto"></div></td>
+                                </tr>
+                                <tr>
+                                    <td><div class="skeleton h-4 w-20"></div></td>
+                                    <td><div class="skeleton h-4 w-32"></div></td>
+                                    <td class="hidden md:table-cell"><div class="skeleton h-6 w-20"></div></td>
+                                    <td class="hidden md:table-cell"><div class="skeleton h-4 w-24"></div></td>
+                                    <td class="text-right"><div class="skeleton h-4 w-20 ml-auto"></div></td>
+                                </tr>
+                                <tr>
+                                    <td><div class="skeleton h-4 w-20"></div></td>
+                                    <td><div class="skeleton h-4 w-32"></div></td>
+                                    <td class="hidden md:table-cell"><div class="skeleton h-6 w-20"></div></td>
+                                    <td class="hidden md:table-cell"><div class="skeleton h-4 w-24"></div></td>
+                                    <td class="text-right"><div class="skeleton h-4 w-20 ml-auto"></div></td>
+                                </tr>
+                                <tr>
+                                    <td><div class="skeleton h-4 w-20"></div></td>
+                                    <td><div class="skeleton h-4 w-32"></div></td>
+                                    <td class="hidden md:table-cell"><div class="skeleton h-6 w-20"></div></td>
+                                    <td class="hidden md:table-cell"><div class="skeleton h-4 w-24"></div></td>
+                                    <td class="text-right"><div class="skeleton h-4 w-20 ml-auto"></div></td>
+                                </tr>
+                                <tr>
+                                    <td><div class="skeleton h-4 w-20"></div></td>
+                                    <td><div class="skeleton h-4 w-32"></div></td>
+                                    <td class="hidden md:table-cell"><div class="skeleton h-6 w-20"></div></td>
+                                    <td class="hidden md:table-cell"><div class="skeleton h-4 w-24"></div></td>
+                                    <td class="text-right"><div class="skeleton h-4 w-20 ml-auto"></div></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Skeleton Quick Actions -->
+            <div class="flex flex-wrap gap-4">
+                <div class="skeleton h-10 w-40"></div>
+                <div class="skeleton h-10 w-40"></div>
+                <div class="skeleton h-10 w-40"></div>
+            </div>
+        </div>
+    </template>
+    
     <!-- Transaction Edit Modal -->
     <dialog id="transactionModal" class="modal modal-middle sm:modal-middle">
         <div class="modal-box">
