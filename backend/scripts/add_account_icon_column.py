@@ -19,18 +19,18 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 from app.config import settings
 
 
-def migrate_add_icon_column():
+def migrate_add_icon_column(db_path=None):
     """Add icon column to accounts table."""
-    
-    # Extract database path from DATABASE_URL
-    db_url = settings.DATABASE_URL
-    if db_url.startswith('sqlite:///./'):
-        db_path = db_url.replace('sqlite:///./', '')
-    elif db_url.startswith('sqlite:///'):
-        db_path = db_url.replace('sqlite:///', '')
-    else:
-        print(f"Unsupported database type: {db_url}")
-        return False
+    if not db_path:
+        # Extract database path from DATABASE_URL
+        db_url = settings.DATABASE_URL
+        if db_url.startswith('sqlite:///./'):
+            db_path = db_url.replace('sqlite:///./', '')
+        elif db_url.startswith('sqlite:///'):
+            db_path = db_url.replace('sqlite:///', '')
+        else:
+            print(f"Unsupported database type: {db_url}")
+            return False
     
     if not os.path.exists(db_path):
         print(f"Database not found at: {db_path}")
@@ -74,11 +74,11 @@ if __name__ == "__main__":
     print("Database Migration: Add icon column to accounts")
     print("=" * 50)
     print()
-    
+
     success = migrate_add_icon_column()
-    
+
     if not success:
         sys.exit(1)
-    
+
     print()
     print("Migration completed. You can now use custom account icons!")
