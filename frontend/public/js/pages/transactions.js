@@ -372,22 +372,28 @@ document.addEventListener('DOMContentLoaded', async () => {
                     </thead>
                     <tbody>
                         ${transactions.map(tx => `
-                            <tr class="hover cursor-pointer transition-colors border-b border-base-200/50" onclick="showTransactionDetailModal(${tx.id})">
-                                <td class="py-2 md:py-3 pl-3 md:pl-4">
+                            <tr class="hover transition-colors border-b border-base-200/50">
+                                <td class="py-2 md:py-3 pl-3 md:pl-4 cursor-pointer" onclick="showTransactionDetailModal(${tx.id})">
                                     <span class="text-xs md:text-sm whitespace-nowrap text-base-content/80">${Utils.formatDate(tx.date)}</span>
                                 </td>
-                                <td class="py-2 md:py-3 max-w-[120px] md:max-w-xs">
+                                <td class="py-2 md:py-3 max-w-[120px] md:max-w-xs cursor-pointer" onclick="showTransactionDetailModal(${tx.id})">
                                     <div class="flex flex-col">
                                         <span class="text-xs md:text-sm font-medium truncate" title="${tx.description}">${tx.description}</span>
-                                        <span class="md:hidden text-[10px] text-base-content/50 mt-0.5">
-                                            ${tx.type === 'transfer' ? 'Transfer' : tx.category_name || 'Uncategorized'}
-                                        </span>
+                                        ${tx.type === 'transfer' 
+                                            ? '<span class="md:hidden text-[10px] text-base-content/50 mt-0.5">Transfer</span>'
+                                            : `<span class="md:hidden text-[10px] text-base-content/50 mt-0.5 cursor-pointer hover:text-primary" 
+                                                   onclick="event.stopPropagation(); enableInlineCategoryEditMobile(${tx.id}, this)">
+                                                ${tx.category_name || 'Uncategorized'}
+                                            </span>`
+                                        }
                                     </div>
                                 </td>
                                 <td class="hidden md:table-cell py-2 md:py-3">
                                     ${tx.type === 'transfer' 
                                         ? '<span class="badge badge-sm badge-info">Transfer</span>' 
-                                        : `<span class="badge badge-sm" style="background-color: ${tx.category_color || 'var(--fallback-bc, oklch(var(--bc)))'}20; color: ${tx.category_color || 'inherit'};">${tx.category_name || 'Uncategorized'}</span>`
+                                        : `<span class="badge badge-sm cursor-pointer hover:opacity-80 transition-opacity" 
+                                               style="background-color: ${tx.category_color || 'var(--fallback-bc, oklch(var(--bc)))'}20; color: ${tx.category_color || 'inherit'};"
+                                               onclick="event.stopPropagation(); enableInlineCategoryEdit(${tx.id}, this)">${tx.category_name || 'Uncategorized'}</span>`
                                     }
                                 </td>
                                 <td class="hidden md:table-cell py-2 md:py-3 text-xs md:text-sm text-base-content/70">
@@ -397,7 +403,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                                     }
                                 </td>
                                 <td class="py-2 md:py-3 pr-3 md:pr-4 text-right">
-                                    <span class="text-xs md:text-sm font-semibold whitespace-nowrap ${tx.type === 'income' ? 'text-success' : tx.type === 'transfer' ? 'text-info' : 'text-error'}">
+                                    <span class="text-xs md:text-sm font-semibold whitespace-nowrap cursor-pointer hover:opacity-80 transition-opacity inline-block px-2 py-1 rounded ${tx.type === 'income' ? 'text-success hover:bg-success/10' : tx.type === 'transfer' ? 'text-info hover:bg-info/10' : 'text-error hover:bg-error/10'}"
+                                          onclick="event.stopPropagation(); enableInlineAmountEdit(${tx.id}, this, '${tx.type}')">
                                         ${tx.type === 'income' ? '+' : tx.type === 'transfer' ? '⇄' : '-'}${Utils.formatCurrency(tx.amount)}
                                     </span>
                                 </td>
@@ -408,6 +415,254 @@ document.addEventListener('DOMContentLoaded', async () => {
             </div>
         `;
     }
+    
+    // Inline editing for category
+    window.enableInlineCategoryEdit = function(transactionId, element) {
+        const tx = transactions.find(t => t.id === transactionId);
+        if (!tx || tx.type === 'transfer') return;
+        
+        // Create select dropdown
+        const select = document.createElement('select');
+        select.className = 'select select-bordered select-xs w-full max-w-[150px]';
+        select.style.cssText = 'font-size: 0.75rem; padding: 0.25rem; min-height: 1.5rem; height: auto;';
+        
+        // Build options grouped by type
+        const incomeCats = categories.filter(c => c.type === 'income').sort((a, b) => a.name.localeCompare(b.name));
+        const expenseCats = categories.filter(c => c.type === 'expense').sort((a, b) => a.name.localeCompare(b.name));
+        
+        let optionsHtml = '';
+        if (incomeCats.length > 0) {
+            optionsHtml += '<optgroup label="Income">';
+            incomeCats.forEach(cat => {
+                optionsHtml += `<option value="${cat.id}" ${cat.id === tx.category_id ? 'selected' : ''}>${cat.name}</option>`;
+            });
+            optionsHtml += '</optgroup>';
+        }
+        if (expenseCats.length > 0) {
+            optionsHtml += '<optgroup label="Expense">';
+            expenseCats.forEach(cat => {
+                optionsHtml += `<option value="${cat.id}" ${cat.id === tx.category_id ? 'selected' : ''}>${cat.name}</option>`;
+            });
+            optionsHtml += '</optgroup>';
+        }
+        select.innerHTML = optionsHtml;
+        
+        // Replace element with select
+        element.replaceWith(select);
+        
+        // Use setTimeout to allow the click event that triggered this to finish
+        // before we start listening for outside clicks
+        setTimeout(() => {
+            select.focus();
+        }, 0);
+        
+        let isChanging = false;
+        let clickListener = null;
+        
+        // Handle change - save when user selects something
+        const saveCategory = async () => {
+            if (isChanging) return;
+            isChanging = true;
+            
+            // Remove click listener
+            if (clickListener) {
+                document.removeEventListener('click', clickListener);
+            }
+            
+            const newCategoryId = parseInt(select.value);
+            if (newCategoryId !== tx.category_id) {
+                try {
+                    await API.transactions.update(transactionId, {
+                        ...tx,
+                        category_id: newCategoryId
+                    });
+                    Utils.showToast('Category updated', 'success');
+                    loadTransactions();
+                } catch (error) {
+                    console.error('Error updating category:', error);
+                    Utils.showToast('Error updating category', 'error');
+                    renderTransactionsTable();
+                }
+            } else {
+                renderTransactionsTable();
+            }
+        };
+        
+        // Handle clicks outside to cancel
+        clickListener = (e) => {
+            if (!select.contains(e.target)) {
+                document.removeEventListener('click', clickListener);
+                if (!isChanging) {
+                    renderTransactionsTable();
+                }
+            }
+        };
+        
+        // Add click listener after a short delay to avoid the current click
+        setTimeout(() => {
+            document.addEventListener('click', clickListener);
+        }, 100);
+        
+        select.addEventListener('change', saveCategory);
+        select.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                isChanging = true;
+                document.removeEventListener('click', clickListener);
+                renderTransactionsTable();
+            }
+        });
+    };
+    
+    // Inline editing for amount
+    window.enableInlineAmountEdit = function(transactionId, element, txType) {
+        const tx = transactions.find(t => t.id === transactionId);
+        if (!tx) return;
+        
+        // Create input field
+        const input = document.createElement('input');
+        input.type = 'number';
+        input.step = '0.01';
+        input.value = tx.amount;
+        input.className = 'input input-bordered input-xs w-24 text-right';
+        input.style.cssText = 'font-size: 0.75rem; padding: 0.25rem 0.5rem; height: auto; min-height: 1.5rem;';
+        
+        // Replace element with input
+        element.replaceWith(input);
+        input.focus();
+        input.select();
+        
+        // Handle save
+        const saveAmount = async () => {
+            const newAmount = parseFloat(input.value);
+            if (isNaN(newAmount) || newAmount <= 0) {
+                Utils.showToast('Please enter a valid amount', 'error');
+                renderTransactionsTable();
+                return;
+            }
+            if (newAmount !== tx.amount) {
+                try {
+                    await API.transactions.update(transactionId, {
+                        ...tx,
+                        amount: newAmount
+                    });
+                    Utils.showToast('Amount updated', 'success');
+                    loadTransactions();
+                } catch (error) {
+                    console.error('Error updating amount:', error);
+                    Utils.showToast('Error updating amount', 'error');
+                    renderTransactionsTable();
+                }
+            } else {
+                renderTransactionsTable();
+            }
+        };
+        
+        input.addEventListener('blur', saveAmount);
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                input.blur();
+            } else if (e.key === 'Escape') {
+                renderTransactionsTable();
+            }
+        });
+    };
+    
+    // Inline editing for category on mobile
+    window.enableInlineCategoryEditMobile = function(transactionId, element) {
+        const tx = transactions.find(t => t.id === transactionId);
+        if (!tx || tx.type === 'transfer') return;
+        
+        // Create select dropdown
+        const select = document.createElement('select');
+        select.className = 'select select-bordered select-xs';
+        select.style.cssText = 'font-size: 0.65rem; padding: 0.125rem; min-height: 1.25rem; height: auto; width: auto; max-width: 120px;';
+        
+        // Build options grouped by type
+        const incomeCats = categories.filter(c => c.type === 'income').sort((a, b) => a.name.localeCompare(b.name));
+        const expenseCats = categories.filter(c => c.type === 'expense').sort((a, b) => a.name.localeCompare(b.name));
+        
+        let optionsHtml = '';
+        if (incomeCats.length > 0) {
+            optionsHtml += '<optgroup label="Income">';
+            incomeCats.forEach(cat => {
+                optionsHtml += `<option value="${cat.id}" ${cat.id === tx.category_id ? 'selected' : ''}>${cat.name}</option>`;
+            });
+            optionsHtml += '</optgroup>';
+        }
+        if (expenseCats.length > 0) {
+            optionsHtml += '<optgroup label="Expense">';
+            expenseCats.forEach(cat => {
+                optionsHtml += `<option value="${cat.id}" ${cat.id === tx.category_id ? 'selected' : ''}>${cat.name}</option>`;
+            });
+            optionsHtml += '</optgroup>';
+        }
+        select.innerHTML = optionsHtml;
+        
+        // Replace element with select
+        element.replaceWith(select);
+        
+        // Use setTimeout to allow the click event that triggered this to finish
+        // before we start listening for outside clicks
+        setTimeout(() => {
+            select.focus();
+        }, 0);
+        
+        let isChanging = false;
+        let clickListener = null;
+        
+        // Handle change - save when user selects something
+        const saveCategory = async () => {
+            if (isChanging) return;
+            isChanging = true;
+            
+            // Remove click listener
+            if (clickListener) {
+                document.removeEventListener('click', clickListener);
+            }
+            
+            const newCategoryId = parseInt(select.value);
+            if (newCategoryId !== tx.category_id) {
+                try {
+                    await API.transactions.update(transactionId, {
+                        ...tx,
+                        category_id: newCategoryId
+                    });
+                    Utils.showToast('Category updated', 'success');
+                    loadTransactions();
+                } catch (error) {
+                    console.error('Error updating category:', error);
+                    Utils.showToast('Error updating category', 'error');
+                    renderTransactionsTable();
+                }
+            } else {
+                renderTransactionsTable();
+            }
+        };
+        
+        // Handle clicks outside to cancel
+        clickListener = (e) => {
+            if (!select.contains(e.target)) {
+                document.removeEventListener('click', clickListener);
+                if (!isChanging) {
+                    renderTransactionsTable();
+                }
+            }
+        };
+        
+        // Add click listener after a short delay to avoid the current click
+        setTimeout(() => {
+            document.addEventListener('click', clickListener);
+        }, 100);
+        
+        select.addEventListener('change', saveCategory);
+        select.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                isChanging = true;
+                document.removeEventListener('click', clickListener);
+                renderTransactionsTable();
+            }
+        });
+    };
     
     function renderPagination() {
         const container = document.getElementById('pagination');
