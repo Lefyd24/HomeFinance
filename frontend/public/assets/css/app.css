@@ -1958,9 +1958,6 @@
   .relative {
     position: relative;
   }
-  .static {
-    position: static;
-  }
   .sticky {
     position: sticky;
   }
@@ -2372,9 +2369,6 @@
   .-mx-3 {
     margin-inline: calc(var(--spacing) * -3);
   }
-  .mx-0 {
-    margin-inline: calc(var(--spacing) * 0);
-  }
   .mx-auto {
     margin-inline: auto;
   }
@@ -2407,9 +2401,6 @@
   }
   .my-5 {
     margin-block: calc(var(--spacing) * 5);
-  }
-  .my-6 {
-    margin-block: calc(var(--spacing) * 6);
   }
   .label {
     @layer daisyui.l1.l2.l3 {
@@ -2909,9 +2900,6 @@
   .max-h-64 {
     max-height: calc(var(--spacing) * 64);
   }
-  .max-h-\[60vh\] {
-    max-height: 60vh;
-  }
   .min-h-\[2\.75rem\] {
     min-height: 2.75rem;
   }
@@ -2955,6 +2943,9 @@
   }
   .w-12 {
     width: calc(var(--spacing) * 12);
+  }
+  .w-12\/12 {
+    width: calc(12/12 * 100%);
   }
   .w-16 {
     width: calc(var(--spacing) * 16);
@@ -3215,10 +3206,6 @@
   .rounded-xl {
     border-radius: var(--radius-xl);
   }
-  .rounded-t-2xl {
-    border-top-left-radius: var(--radius-2xl);
-    border-top-right-radius: var(--radius-2xl);
-  }
   .border {
     border-style: var(--tw-border-style);
     border-width: 1px;
@@ -3269,26 +3256,8 @@
       border-color: color-mix(in oklab, var(--color-base-300) 50%, transparent);
     }
   }
-  .border-indigo-200 {
-    border-color: var(--color-indigo-200);
-  }
   .border-primary {
     border-color: var(--color-primary);
-  }
-  .border-primary-content {
-    border-color: var(--color-primary-content);
-  }
-  .border-primary-content\/20 {
-    border-color: var(--color-primary-content);
-    @supports (color: color-mix(in lab, red, red)) {
-      border-color: color-mix(in oklab, var(--color-primary-content) 20%, transparent);
-    }
-  }
-  .border-primary\/20 {
-    border-color: var(--color-primary);
-    @supports (color: color-mix(in lab, red, red)) {
-      border-color: color-mix(in oklab, var(--color-primary) 20%, transparent);
-    }
   }
   .border-transparent {
     border-color: transparent;
@@ -3321,18 +3290,6 @@
     background-color: var(--color-error);
     @supports (color: color-mix(in lab, red, red)) {
       background-color: color-mix(in oklab, var(--color-error) 10%, transparent);
-    }
-  }
-  .bg-indigo-50 {
-    background-color: var(--color-indigo-50);
-  }
-  .bg-indigo-500 {
-    background-color: var(--color-indigo-500);
-  }
-  .bg-indigo-500\/20 {
-    background-color: color-mix(in srgb, oklch(58.5% 0.233 277.117) 20%, transparent);
-    @supports (color: color-mix(in lab, red, red)) {
-      background-color: color-mix(in oklab, var(--color-indigo-500) 20%, transparent);
     }
   }
   .bg-info {
@@ -3762,15 +3719,6 @@
   .text-error {
     color: var(--color-error);
   }
-  .text-indigo-600 {
-    color: var(--color-indigo-600);
-  }
-  .text-indigo-700 {
-    color: var(--color-indigo-700);
-  }
-  .text-indigo-800 {
-    color: var(--color-indigo-800);
-  }
   .text-info {
     color: var(--color-info);
   }
@@ -3779,9 +3727,6 @@
   }
   .text-primary-content {
     color: var(--color-primary-content);
-  }
-  .text-secondary {
-    color: var(--color-secondary);
   }
   .text-success {
     color: var(--color-success);
@@ -4137,11 +4082,6 @@
       }
     }
   }
-  .sm\:mx-auto {
-    @media (width >= 40rem) {
-      margin-inline: auto;
-    }
-  }
   .sm\:input-md {
     @media (width >= 40rem) {
       @layer daisyui.l1.l2 {
@@ -4190,24 +4130,9 @@
       }
     }
   }
-  .sm\:max-h-none {
-    @media (width >= 40rem) {
-      max-height: none;
-    }
-  }
   .sm\:w-auto {
     @media (width >= 40rem) {
       width: auto;
-    }
-  }
-  .sm\:max-w-2xl {
-    @media (width >= 40rem) {
-      max-width: var(--container-2xl);
-    }
-  }
-  .sm\:max-w-md {
-    @media (width >= 40rem) {
-      max-width: var(--container-md);
     }
   }
   .sm\:flex-none {
@@ -4228,32 +4153,6 @@
   .sm\:items-center {
     @media (width >= 40rem) {
       align-items: center;
-    }
-  }
-  .sm\:rounded-box {
-    @media (width >= 40rem) {
-      border-radius: var(--radius-box);
-    }
-  }
-  .sm\:rounded-box {
-    @media (width >= 40rem) {
-      border-radius: var(--radius-box);
-    }
-  }
-  .sm\:border-0 {
-    @media (width >= 40rem) {
-      border-style: var(--tw-border-style);
-      border-width: 0px;
-    }
-  }
-  .sm\:p-0 {
-    @media (width >= 40rem) {
-      padding: calc(var(--spacing) * 0);
-    }
-  }
-  .sm\:p-6 {
-    @media (width >= 40rem) {
-      padding: calc(var(--spacing) * 6);
     }
   }
   .sm\:select-md {
@@ -4429,12 +4328,6 @@
       line-height: var(--tw-leading, var(--text-sm--line-height));
     }
   }
-  .md\:text-xl {
-    @media (width >= 48rem) {
-      font-size: var(--text-xl);
-      line-height: var(--tw-leading, var(--text-xl--line-height));
-    }
-  }
   .md\:btn-md {
     @media (width >= 48rem) {
       @layer daisyui.l1.l2 {
@@ -4582,42 +4475,6 @@
   .xl\:grid-cols-4 {
     @media (width >= 80rem) {
       grid-template-columns: repeat(4, minmax(0, 1fr));
-    }
-  }
-  .dark\:border-indigo-800 {
-    @media (prefers-color-scheme: dark) {
-      border-color: var(--color-indigo-800);
-    }
-  }
-  .dark\:border-primary-content\/40 {
-    @media (prefers-color-scheme: dark) {
-      border-color: var(--color-primary-content);
-      @supports (color: color-mix(in lab, red, red)) {
-        border-color: color-mix(in oklab, var(--color-primary-content) 40%, transparent);
-      }
-    }
-  }
-  .dark\:bg-indigo-900\/20 {
-    @media (prefers-color-scheme: dark) {
-      background-color: color-mix(in srgb, oklch(35.9% 0.144 278.697) 20%, transparent);
-      @supports (color: color-mix(in lab, red, red)) {
-        background-color: color-mix(in oklab, var(--color-indigo-900) 20%, transparent);
-      }
-    }
-  }
-  .dark\:text-indigo-200 {
-    @media (prefers-color-scheme: dark) {
-      color: var(--color-indigo-200);
-    }
-  }
-  .dark\:text-indigo-300 {
-    @media (prefers-color-scheme: dark) {
-      color: var(--color-indigo-300);
-    }
-  }
-  .dark\:text-indigo-400 {
-    @media (prefers-color-scheme: dark) {
-      color: var(--color-indigo-400);
     }
   }
 }
