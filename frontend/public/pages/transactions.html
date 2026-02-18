@@ -17,67 +17,73 @@
     <div id="app"></div>
     
     <!-- Add/Edit Transaction Modal -->
-    <dialog id="transactionModal" class="modal">
-        <div class="modal-box w-11/12 max-w-2xl">
+    <dialog id="transactionModal" class="modal modal-middle sm:modal-middle">
+        <div class="modal-box">
             <h3 class="font-bold text-lg mb-4" id="modalTitle">Add Transaction</h3>
             <input type="hidden" id="transactionId" value="">
             <form id="transactionForm" class="space-y-4">
-                <div class="grid grid-cols-2 gap-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div class="form-control">
-                        <label class="label"><span class="label-text">Type</span></label>
-                        <select id="transactionType" name="type" class="select select-bordered w-full">
+                        <label class="label py-1"><span class="label-text font-medium text-sm">Type</span></label>
+                        <select id="transactionType" name="type" class="select select-bordered w-full select-sm sm:select-md">
                             <option value="expense">Expense</option>
                             <option value="income">Income</option>
                             <option value="transfer">Transfer</option>
                         </select>
                     </div>
                     <div class="form-control">
-                        <label class="label"><span class="label-text">Amount</span></label>
-                        <input type="number" id="amount" name="amount" step="0.01" class="input input-bordered" required>
+                        <label class="label py-1"><span class="label-text font-medium text-sm">Amount</span></label>
+                        <input type="number" id="amount" name="amount" step="0.01" class="input input-bordered input-sm sm:input-md" required>
                     </div>
                 </div>
-                <div class="grid grid-cols-2 gap-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div class="form-control">
-                        <label class="label"><span class="label-text" id="sourceAccountLabel">Account</span></label>
-                        <select id="accountId" name="accountId" class="select select-bordered w-full" required>
+                        <label class="label py-1"><span class="label-text font-medium text-sm" id="sourceAccountLabel">Account</span></label>
+                        <select id="accountId" name="accountId" class="select select-bordered w-full select-sm sm:select-md" required>
                             <option value="">Select Account</option>
                         </select>
                     </div>
-                    <div class="form-control" id="destinationAccountContainer" style="display: none;">
-                        <label class="label"><span class="label-text">To Account</span></label>
-                        <select id="destinationAccountId" name="destinationAccountId" class="select select-bordered w-full">
+                    <div class="form-control hidden" id="destinationAccountContainer">
+                        <label class="label py-1"><span class="label-text font-medium text-sm">To Account</span></label>
+                        <select id="destinationAccountId" name="destinationAccountId" class="select select-bordered w-full select-sm sm:select-md">
                             <option value="">Select Destination Account</option>
                         </select>
                     </div>
                     <div class="form-control" id="categoryContainer">
-                        <label class="label"><span class="label-text">Category</span></label>
-                        <select id="categoryId" name="categoryId" class="select select-bordered w-full" required>
+                        <label class="label py-1"><span class="label-text font-medium text-sm">Category</span></label>
+                        <select id="categoryId" name="categoryId" class="select select-bordered w-full select-sm sm:select-md" required>
                             <option value="">Select Category</option>
                             <!-- Categories will be populated here -->
                         </select>
                     </div>
                 </div>
                 <div class="form-control">
-                    <label class="label"><span class="label-text">Description</span></label>
-                    <input type="text" id="description" name="description" class="input input-bordered" required>
+                    <label class="label py-1"><span class="label-text font-medium text-sm">Description</span></label>
+                    <input type="text" id="description" name="description" class="input input-bordered input-sm sm:input-md" required placeholder="e.g., Grocery shopping">
                 </div>
-                <div class="grid grid-cols-2 gap-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div class="form-control">
-                        <label class="label"><span class="label-text">Date</span></label>
-                        <input type="date" id="transactionDate" name="date" class="input input-bordered" required>
+                        <label class="label py-1"><span class="label-text font-medium text-sm">Date</span></label>
+                        <input type="date" id="transactionDate" name="date" class="input input-bordered input-sm sm:input-md" required>
                     </div>
                     <div class="form-control">
-                        <label class="label"><span class="label-text">Notes</span></label>
-                        <input type="text" id="notes" name="notes" class="input input-bordered">
+                        <label class="label py-1"><span class="label-text font-medium text-sm">Notes</span></label>
+                        <input type="text" id="notes" name="notes" class="input input-bordered input-sm sm:input-md" placeholder="Optional notes">
                     </div>
                 </div>
-                <div class="modal-action">
-                    <button type="button" class="btn" onclick="transactionModal.close()">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Save Transaction</button>
+                <div class="modal-action pt-2">
+                    <button type="button" class="btn btn-sm sm:btn-md btn-ghost" onclick="transactionModal.close()">Cancel</button>
+                    <button type="submit" class="btn btn-sm sm:btn-md btn-primary">Save Transaction</button>
                 </div>
             </form>
         </div>
+        <form method="dialog" class="modal-backdrop">
+            <button>close</button>
+        </form>
     </dialog>
+    
+    <!-- Transaction Detail Modal -->
+    <dialog id="transactionDetailModal" class="modal modal-middle sm:modal-middle"></dialog>
     
     <script src="../js/utils.js"></script>
     <script src="../js/api.js"></script>

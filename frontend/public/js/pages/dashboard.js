@@ -338,29 +338,29 @@ async function loadRecentTransactions() {
         
         container.innerHTML = `
             <div class="overflow-x-auto">
-                <table class="table">
+                <table class="table w-full">
                     <thead>
                         <tr>
-                            <th>Date</th>
-                            <th>Description</th>
-                            <th>Category</th>
-                            <th>Account</th>
-                            <th class="text-right">Amount</th>
+                            <th class="text-xs md:text-sm">Date</th>
+                            <th class="text-xs md:text-sm">Description</th>
+                            <th class="hidden md:table-cell text-xs md:text-sm">Category</th>
+                            <th class="hidden md:table-cell text-xs md:text-sm">Account</th>
+                            <th class="text-right text-xs md:text-sm">Amount</th>
                         </tr>
                     </thead>
                     <tbody>
                         ${response.items.map(tx => `
-                            <tr class="hover">
-                                <td>${Utils.formatDate(tx.date)}</td>
-                                <td>${tx.description}</td>
-                                <td>
+                            <tr class="hover cursor-pointer transition-colors" onclick="showTransactionDetailModal(${tx.id})">
+                                <td class="text-xs md:text-sm whitespace-nowrap">${Utils.formatDate(tx.date)}</td>
+                                <td class="text-xs md:text-sm max-w-[120px] md:max-w-none truncate" title="${tx.description}">${tx.description}</td>
+                                <td class="hidden md:table-cell">
                                     <span class="badge badge-sm" style="background-color: ${tx.category_color || 'var(--fallback-bc, oklch(var(--bc)))'}20; color: ${tx.category_color || 'inherit'};">
                                         ${tx.category_name || 'Uncategorized'}
                                     </span>
                                 </td>
-                                <td>${tx.account_name || 'Unknown'}</td>
-                                <td class="text-right ${tx.type === 'income' ? 'text-success' : 'text-error'}">
-                                    ${tx.type === 'income' ? '+' : '-'}${Utils.formatCurrency(tx.amount)}
+                                <td class="hidden md:table-cell text-xs md:text-sm">${tx.account_name || 'Unknown'}</td>
+                                <td class="text-right text-xs md:text-sm font-semibold ${tx.type === 'income' ? 'text-success' : tx.type === 'transfer' ? 'text-info' : 'text-error'}">
+                                    ${tx.type === 'income' ? '+' : tx.type === 'transfer' ? '⇄' : '-'}${Utils.formatCurrency(tx.amount)}
                                 </td>
                             </tr>
                         `).join('')}
@@ -377,3 +377,120 @@ async function loadRecentTransactions() {
         `;
     }
 }
+
+// Show transaction detail modal
+window.showTransactionDetailModal = async (transactionId) => {
+    try {
+        const tx = await API.transactions.get(transactionId);
+        
+        // Create modal if it doesn't exist
+        let modal = document.getElementById('transactionDetailModal');
+        if (!modal) {
+            modal = document.createElement('dialog');
+            modal.id = 'transactionDetailModal';
+            modal.className = 'modal modal-middle sm:modal-middle';
+            document.body.appendChild(modal);
+        }
+        
+        const isTransfer = tx.type === 'transfer';
+        const amountColor = tx.type === 'income' ? 'text-success' : isTransfer ? 'text-info' : 'text-error';
+        const amountPrefix = tx.type === 'income' ? '+' : isTransfer ? '⇄' : '-';
+        
+        modal.innerHTML = `
+            <div class="modal-box p-0">
+                <div class="bg-primary/5 p-4 border-b border-base-300">
+                    <div class="flex justify-between items-start">
+                        <div class="flex-1 pr-2">
+                            <p class="text-xs uppercase tracking-wide text-base-content/60 mb-1">${tx.type}</p>
+                            <h3 class="text-lg font-bold line-clamp-2">${tx.description}</h3>
+                        </div>
+                        <button onclick="transactionDetailModal.close()" class="btn btn-ghost btn-circle btn-sm shrink-0">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
+                    <p class="text-2xl font-bold ${amountColor} mt-3">
+                        ${amountPrefix}${Utils.formatCurrency(tx.amount)}
+                    </p>
+                </div>
+                
+                <div class="p-4 space-y-3">
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="bg-base-200 rounded-lg p-3">
+                            <p class="text-xs text-base-content/60 mb-1">Date</p>
+                            <p class="font-medium text-sm flex items-center gap-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-primary shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                </svg>
+                                ${Utils.formatDate(tx.date)}
+                            </p>
+                        </div>
+                        <div class="bg-base-200 rounded-lg p-3">
+                            <p class="text-xs text-base-content/60 mb-1">Category</p>
+                            <p class="font-medium text-sm">
+                                ${isTransfer 
+                                    ? '<span class="badge badge-info badge-sm">Transfer</span>'
+                                    : `<span class="badge badge-sm" style="background-color: ${tx.category_color || 'var(--fallback-bc, oklch(var(--bc)))'}20; color: ${tx.category_color || 'inherit'};">${tx.category_name || 'Uncategorized'}</span>`
+                                }
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-base-200 rounded-lg p-3">
+                        <p class="text-xs text-base-content/60 mb-1">${isTransfer ? 'From Account' : 'Account'}</p>
+                        <p class="font-medium text-sm flex items-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-primary shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                            </svg>
+                            <span class="truncate">${tx.account_name || 'Unknown'}</span>
+                        </p>
+                    </div>
+                    
+                    ${isTransfer && tx.destination_account_name ? `
+                        <div class="bg-base-200 rounded-lg p-3">
+                            <p class="text-xs text-base-content/60 mb-1">To Account</p>
+                            <p class="font-medium text-sm flex items-center gap-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-success shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V5a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2V9" />
+                                </svg>
+                                <span class="truncate">${tx.destination_account_name}</span>
+                            </p>
+                        </div>
+                    ` : ''}
+                    
+                    ${tx.notes ? `
+                        <div class="bg-base-200 rounded-lg p-3">
+                            <p class="text-xs text-base-content/60 mb-1">Notes</p>
+                            <p class="text-sm">${tx.notes}</p>
+                        </div>
+                    ` : ''}
+                    
+                    <!-- Action Buttons - Always visible in modal -->
+                    <div class="flex gap-2 pt-3 border-t border-base-300 mt-3">
+                        <button onclick="window.location.href='transactions.html?edit=${tx.id}'" class="btn btn-sm btn-ghost flex-1">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                            </svg>
+                            Edit
+                        </button>
+                        <button onclick="if(confirm('Delete this transaction?')) { /* delete logic */ transactionDetailModal.close(); Utils.showToast('Go to Transactions page to delete', 'info'); }" class="btn btn-sm btn-ghost text-error flex-1">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                            Delete
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <form method="dialog" class="modal-backdrop">
+                <button>close</button>
+            </form>
+        `;
+        
+        modal.showModal();
+    } catch (error) {
+        console.error('Error loading transaction details:', error);
+        Utils.showToast('Error loading transaction details', 'error');
+    }
+};

@@ -3,66 +3,113 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="manifest" href="/manifest.json">
-    <meta name="theme-color" content="#0ea5a4">
-    <meta name="mobile-web-app-capable" content="yes">
-    <link rel="apple-touch-icon" href="assets/icons/icon-192.svg">
     <title>Login - Personal Finance</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="assets/css/app.css">
     <link rel="stylesheet" href="assets/css/custom.css">
-<link rel="icon" type="image/svg+xml" href="assets/icons/favicon.svg">
+    <link rel="icon" type="image/svg+xml" href="assets/icons/favicon.svg">
     <link rel="alternate icon" href="assets/icons/favicon.ico">
     <link rel="shortcut icon" href="assets/icons/favicon.ico">
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#0ea5a4">
+    <meta name="mobile-web-app-capable" content="yes">
+    <link rel="apple-touch-icon" href="assets/icons/icon-192.svg">
 </head>
-<body class="bg-base-200 min-h-screen flex items-center justify-center">
-    <div class="card w-full max-w-md bg-base-100 shadow-xl">
-        <div class="card-body">
-            <h1 class="card-title text-3xl font-bold text-center mb-6">Personal Finance</h1>
-            <p class="text-center text-base-content/60 mb-6">Sign in to manage your finances</p>
+<body class="bg-gradient-to-br from-base-200 via-base-100 to-base-200 min-h-screen flex items-center justify-center p-4">
+    <div class="card w-full max-w-sm md:max-w-md bg-base-100 shadow-2xl rounded-2xl border border-base-300/50">
+        <div class="card-body p-6 md:p-8">
+            <!-- Logo / Icon -->
+            <div class="flex justify-center mb-4">
+                <div class="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                </div>
+            </div>
             
-            <form id="loginForm" class="space-y-4">
+            <h1 class="text-2xl md:text-3xl font-bold text-center text-base-content mb-2">Welcome Back</h1>
+            <p class="text-center text-base-content/60 text-sm md:text-base mb-6">Sign in to manage your finances</p>
+            
+            <form id="loginForm" class="space-y-5">
+                <!-- Email Field -->
                 <div class="form-control">
-                    <label class="label">
-                        <span class="label-text">Email</span>
+                    <label class="label py-1 px-0" for="email">
+                        <span class="label-text font-medium text-sm">Email Address</span>
                     </label>
-                    <input type="email" id="email" name="email" placeholder="your@email.com" 
-                           class="input input-bordered" required>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-base-content/40" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207"/>
+                            </svg>
+                        </div>
+                        <input type="email" id="email" name="email" placeholder="name@example.com" 
+                               class="input input-bordered w-full pl-10 h-12 focus:input-primary transition-all duration-200" required>
+                    </div>
                 </div>
                 
+                <!-- Password Field -->
                 <div class="form-control">
-                    <label class="label">
-                        <span class="label-text">Password</span>
-                        <a href="#" class="label-text-alt link link-primary">Forgot password?</a>
-                    </label>
-                    <input type="password" id="password" name="password" placeholder="••••••••" 
-                           class="input input-bordered" required>
+                    <div class="flex justify-between items-center py-1">
+                        <label class="label py-0 px-0" for="password">
+                            <span class="label-text font-medium text-sm">Password</span>
+                        </label>
+                        <a href="#" class="text-xs text-primary hover:text-primary-focus font-medium transition-colors">Forgot password?</a>
+                    </div>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-base-content/40" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                            </svg>
+                        </div>
+                        <input type="password" id="password" name="password" placeholder="Enter your password" 
+                               class="input input-bordered w-full pl-10 h-12 focus:input-primary transition-all duration-200" required>
+                        <button type="button" class="absolute inset-y-0 right-0 pr-3 flex items-center" onclick="togglePassword()">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-base-content/40 hover:text-base-content/60 cursor-pointer" fill="none" viewBox="0 0 24 24" stroke="currentColor" id="eyeIcon">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                            </svg>
+                        </button>
+                    </div>
                 </div>
                 
-                <div id="errorMessage" class="alert alert-error hidden">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+                <!-- Error Message -->
+                <div id="errorMessage" class="alert alert-error alert-sm hidden rounded-lg">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-5 w-5" fill="none" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                     </svg>
-                    <span id="errorText"></span>
+                    <span id="errorText" class="text-sm"></span>
                 </div>
                 
-                <button type="submit" id="submitBtn" class="btn btn-primary w-full">
-                    Sign In
+                <!-- Submit Button -->
+                <button type="submit" id="submitBtn" class="btn btn-primary w-full h-12 text-base font-semibold shadow-lg hover:shadow-xl transition-all duration-200">
+                    <span id="btnText">Sign In</span>
                     <span id="loadingSpinner" class="loading loading-spinner loading-sm hidden"></span>
                 </button>
             </form>
             
-            <div class="divider">OR</div>
-            
-            <p class="text-center">
+            <!-- Sign Up Link -->
+            <p class="text-center text-sm text-base-content/70">
                 Don't have an account? 
-                <a href="pages/register.html" class="link link-primary">Sign up</a>
+                <a href="pages/register.html" class="link link-primary font-semibold hover:link-primary-focus transition-colors">Create an account</a>
             </p>
         </div>
     </div>
     
+    <script>
+        function togglePassword() {
+            const passwordInput = document.getElementById('password');
+            const eyeIcon = document.getElementById('eyeIcon');
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                eyeIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7a10.05 10.05 0 011.574-2.912m2.197-2.197A10.05 10.05 0 0112 5c4.478 0 8.268 2.943 9.542 7a10.05 10.05 0 01-2.033 3.533M9 9l3 3m-3 3l6-6"/>';
+            } else {
+                passwordInput.type = 'password';
+                eyeIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>';
+            }
+        }
+    </script>
     <script src="js/utils.js"></script>
     <script src="js/api.js"></script>
     <script src="js/auth.js"></script>

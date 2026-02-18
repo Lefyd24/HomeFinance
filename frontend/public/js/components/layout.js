@@ -223,7 +223,7 @@ const Layout = {
             </dialog>
             
             <!-- Settings Modal -->
-            <dialog id="settingsModal" class="modal modal-bottom sm:modal-middle">
+            <dialog id="settingsModal" class="modal modal-middle sm:modal-middle">
                 <div class="modal-box">
                     <h3 class="font-bold text-lg mb-1">Settings</h3>
                     <p class="text-sm opacity-60 mb-4">Customize your experience</p>
