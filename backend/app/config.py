@@ -20,8 +20,10 @@ class Settings(BaseSettings):
     REFRESH_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 7  # 7 days
     
     # CORS
-    CORS_ORIGINS: list = ["http://localhost:8080", "http://127.0.0.1:8080", "http://localhost:3100", 
-                          "http://127.0.0.1:3100", 'http://100.101.185.10:3100']
+    CORS_ORIGINS: list = ["http://localhost:8080", "http://127.0.0.1:8080", 
+                        "http://localhost:3100", "http://127.0.0.1:3100", 
+                        "http://100.101.185.10:3100", "http://100.101.185.10:8223",
+                        "http://homeserver.burbot-karat.ts.net:3100", "http://100.101.125.41:3100"]
     
     # File Upload
     MAX_UPLOAD_SIZE: int = 10 * 1024 * 1024  # 10MB

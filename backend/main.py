@@ -41,12 +41,7 @@ app = FastAPI(
 # Add CORS middleware - allow frontend on port 3100
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3100",
-        "http://127.0.0.1:3100",
-        "http://frontend:3100",
-        "*",  # Allow all for development
-    ],
+    allow_origins=settings.CORS_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
