@@ -85,6 +85,34 @@ document.addEventListener('DOMContentLoaded', async () => {
     await loadDashboardData();
 });
 
+// Helper function to fetch all transactions across all pages
+async function fetchAllTransactions(params) {
+    const allTransactions = [];
+    let page = 1;
+    let hasMore = true;
+    
+    while (hasMore) {
+        const response = await API.transactions.list({
+            ...params,
+            page: page,
+            per_page: 100
+        });
+        
+        if (response.items && response.items.length > 0) {
+            allTransactions.push(...response.items);
+            
+            // Check if there are more pages
+            const totalPages = Math.ceil(response.total / response.per_page);
+            hasMore = page < totalPages;
+            page++;
+        } else {
+            hasMore = false;
+        }
+    }
+    
+    return allTransactions;
+}
+
 async function loadDashboardData() {
     try {
         // Load accounts and calculate total balance
@@ -95,26 +123,23 @@ async function loadDashboardData() {
         const startDate = dashboardDateRange.startDate;
         const endDate = dashboardDateRange.endDate;
         
-        // Load transactions for selected date range to calculate income/expenses
-        const txResponse = await API.transactions.list({
+        // Load ALL transactions for selected date range (across all pages)
+        const allTransactions = await fetchAllTransactions({
             start_date: startDate,
-            end_date: endDate,
-            limit: 100
+            end_date: endDate
         });
         
         let totalIncome = 0;
         let totalExpenses = 0;
         
-        if (txResponse.items) {
-            txResponse.items.forEach(tx => {
-                const amount = parseFloat(tx.amount || 0);
-                if (tx.type === 'income') {
-                    totalIncome += amount;
-                } else if (tx.type === 'expense') {
-                    totalExpenses += amount;
-                }
-            });
-        }
+        allTransactions.forEach(tx => {
+            const amount = parseFloat(tx.amount || 0);
+            if (tx.type === 'income') {
+                totalIncome += amount;
+            } else if (tx.type === 'expense') {
+                totalExpenses += amount;
+            }
+        });
         
         const netSavings = totalIncome - totalExpenses;
         
@@ -310,15 +335,12 @@ async function loadBudgetOverview() {
             return;
         }
         
-        // Get transactions for the selected date range to calculate budget spending
-        const txResponse = await API.transactions.list({
+        // Get ALL transactions for the selected date range to calculate budget spending
+        const transactions = await fetchAllTransactions({
             start_date: dashboardDateRange.startDate,
             end_date: dashboardDateRange.endDate,
-            type: 'expense',
-            limit: 1000
+            type: 'expense'
         });
-        
-        const transactions = txResponse.items || [];
         
         // Calculate spending for each budget based on the date range
         const budgetsWithSpending = budgets.slice(0, 3).map(budget => {
