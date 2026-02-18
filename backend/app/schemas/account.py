@@ -9,6 +9,7 @@ class AccountBase(BaseModel):
     currency: str = Field(default="EUR", pattern="^[A-Z]{3}$")
     balance: float = Field(default=0)
     description: Optional[str] = None
+    icon: Optional[str] = None
 
 
 class AccountCreate(AccountBase):
@@ -20,6 +21,7 @@ class AccountUpdate(BaseModel):
     type: Optional[str] = Field(None, pattern="^(checking|savings|credit|cash|investment)$")
     currency: Optional[str] = Field(None, pattern="^[A-Z]{3}$")
     description: Optional[str] = None
+    icon: Optional[str] = None
     is_active: Optional[bool] = None
 
 

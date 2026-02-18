@@ -16,49 +16,259 @@
 <body class="bg-base-200 min-h-screen">
     <div id="app"></div>
     
-    <!-- Add Account Modal -->
-    <dialog id="accountModal" class="modal">
-        <div class="modal-box w-11/12 max-w-lg">
-            <h3 class="font-bold text-lg mb-4">Add Account</h3>
-            <form id="accountForm" class="space-y-4">
-                <div class="form-control">
-                    <label class="label"><span class="label-text">Account Name</span></label>
-                    <input type="text" id="accountName" name="name" placeholder="e.g., Eurobank, Wallet" 
-                           class="input input-bordered" required>
+    <!-- Add/Edit Account Modal -->
+    <dialog id="accountModal" class="modal modal-middle sm:modal-middle">
+        <div class="modal-box w-11/12 max-w-xl p-0 overflow-hidden">
+            <!-- Modal Header with Preview -->
+            <div class="bg-gradient-to-r from-primary to-primary/80 p-6 text-primary-content">
+                <div class="flex items-center justify-between">
+                    <h3 class="font-bold text-xl flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                        </svg>
+                        <span id="modalTitle">Add Account</span>
+                    </h3>
+                    <button type="button" onclick="accountModal.close()" class="btn btn-ghost btn-circle btn-sm">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
                 </div>
-                <div class="grid grid-cols-2 gap-4">
+                <!-- Account Preview Card -->
+                <div class="mt-4 bg-white/10 backdrop-blur rounded-xl p-4 flex items-center gap-4">
+                    <div id="previewIcon" class="w-16 h-16 rounded-xl bg-white/20 flex items-center justify-center text-3xl overflow-hidden">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                        </svg>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <h4 id="previewName" class="font-semibold text-lg truncate">New Account</h4>
+                        <div class="flex items-center gap-2 mt-1">
+                            <span id="previewType" class="badge badge-sm badge-ghost">checking</span>
+                            <span id="previewCurrency" class="text-sm opacity-70">EUR</span>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <p id="previewBalance" class="text-2xl font-bold">€0.00</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Form Content -->
+            <form id="accountForm" class="p-6 space-y-5">
+                <!-- Account Name -->
+                <div class="form-control">
+                    <label class="label">
+                        <span class="label-text font-medium">Account Name</span>
+                        <span class="label-text-alt text-error">*</span>
+                    </label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-base-content/40" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                            </svg>
+                        </div>
+                        <input type="text" id="accountName" name="name" placeholder="e.g., Eurobank Checking, My Wallet" 
+                               class="input input-bordered w-full pl-10" required>
+                    </div>
+                </div>
+
+                <!-- Account Type & Currency -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div class="form-control">
-                        <label class="label"><span class="label-text">Type</span></label>
-                        <select id="accountType" name="type" class="select select-bordered w-full">
-                            <option value="checking">Checking</option>
-                            <option value="savings">Savings</option>
-                            <option value="credit">Credit Card</option>
-                            <option value="cash">Cash</option>
-                            <option value="investment">Investment</option>
-                        </select>
+                        <label class="label">
+                            <span class="label-text font-medium">Account Type</span>
+                        </label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-base-content/40" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                                </svg>
+                            </div>
+                            <select id="accountType" name="type" class="select select-bordered w-full pl-10">
+                                <option value="checking">🏦 Checking</option>
+                                <option value="savings">💰 Savings</option>
+                                <option value="credit">💳 Credit Card</option>
+                                <option value="cash">💵 Cash</option>
+                                <option value="investment">📈 Investment</option>
+                            </select>
+                        </div>
                     </div>
                     <div class="form-control">
-                        <label class="label"><span class="label-text">Currency</span></label>
-                        <select id="currency" name="currency" class="select select-bordered w-full">
-                            <option value="EUR">EUR</option>
-                            <option value="USD">USD</option>
-                            <option value="GBP">GBP</option>
-                        </select>
+                        <label class="label">
+                            <span class="label-text font-medium">Currency</span>
+                        </label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-base-content/40" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                            </div>
+                            <select id="currency" name="currency" class="select select-bordered w-full pl-10">
+                                <option value="EUR">🇪🇺 EUR - Euro</option>
+                                <option value="USD">🇺🇸 USD - US Dollar</option>
+                                <option value="GBP">🇬🇧 GBP - British Pound</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
+
+                <!-- Current Balance -->
                 <div class="form-control">
-                    <label class="label"><span class="label-text">Current Balance</span></label>
-                    <input type="number" id="balance" name="balance" step="0.01" value="0" 
-                           class="input input-bordered">
+                    <label class="label">
+                        <span class="label-text font-medium">Current Balance</span>
+                    </label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-base-content/40" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                        </div>
+                        <input type="number" id="balance" name="balance" step="0.01" value="0" 
+                               class="input input-bordered w-full pl-10" placeholder="0.00">
+                    </div>
+                    <label class="label">
+                        <span class="label-text-alt text-base-content/50">Use negative values for credit cards with outstanding balance</span>
+                    </label>
                 </div>
+
+                <!-- Icon Selection -->
                 <div class="form-control">
-                    <label class="label"><span class="label-text">Description</span></label>
-                    <textarea id="accountDescription" name="description" class="textarea textarea-bordered" 
-                              rows="2"></textarea>
+                    <label class="label">
+                        <span class="label-text font-medium">Account Icon</span>
+                        <span class="label-text-alt">Optional</span>
+                    </label>
+                    <div class="bg-base-200/50 rounded-xl p-4">
+                        <div id="iconSelection" class="flex flex-wrap gap-3 justify-center">
+                            <!-- Default Icon -->
+                            <label class="cursor-pointer group">
+                                <input type="radio" name="accountIcon" value="" checked class="hidden peer">
+                                <div class="flex flex-col items-center gap-2 p-3 rounded-xl border-2 border-transparent 
+                                            peer-checked:border-primary peer-checked:bg-primary/10 
+                                            hover:bg-base-300 transition-all duration-200">
+                                    <div class="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                                        </svg>
+                                    </div>
+                                    <span class="text-xs font-medium">Default</span>
+                                </div>
+                            </label>
+                            
+                            <!-- Alpha Bank -->
+                            <label class="cursor-pointer group">
+                                <input type="radio" name="accountIcon" value="alphabank.png" class="hidden peer">
+                                <div class="flex flex-col items-center gap-2 p-3 rounded-xl border-2 border-transparent 
+                                            peer-checked:border-primary peer-checked:bg-primary/10 
+                                            hover:bg-base-300 transition-all duration-200">
+                                    <div class="w-12 h-12 rounded-lg bg-white flex items-center justify-center overflow-hidden">
+                                        <img src="../assets/icons/banks/alphabank.png" alt="Alpha Bank" class="h-10 w-10 object-contain">
+                                    </div>
+                                    <span class="text-xs font-medium">Alpha</span>
+                                </div>
+                            </label>
+                            
+                            <!-- Eurobank -->
+                            <label class="cursor-pointer group">
+                                <input type="radio" name="accountIcon" value="eurobank.jpg" class="hidden peer">
+                                <div class="flex flex-col items-center gap-2 p-3 rounded-xl border-2 border-transparent 
+                                            peer-checked:border-primary peer-checked:bg-primary/10 
+                                            hover:bg-base-300 transition-all duration-200">
+                                    <div class="w-12 h-12 rounded-lg bg-white flex items-center justify-center overflow-hidden">
+                                        <img src="../assets/icons/banks/eurobank.jpg" alt="Eurobank" class="h-10 w-10 object-contain">
+                                    </div>
+                                    <span class="text-xs font-medium">Eurobank</span>
+                                </div>
+                            </label>
+
+                            <!-- Piraeus Bank -->
+                            <label class="cursor-pointer group">
+                                <input type="radio" name="accountIcon" value="piraeus.png" class="hidden peer">
+                                <div class="flex flex-col items-center gap-2 p-3 rounded-xl border-2 border-transparent 
+                                            peer-checked:border-primary peer-checked:bg-primary/10 
+                                            hover:bg-base-300 transition-all duration-200">
+                                    <div class="w-12 h-12 rounded-lg bg-white flex items-center justify-center overflow-hidden">
+                                        <img src="../assets/icons/banks/piraeus.png" alt="Piraeus Bank" class="h-10 w-10 object-contain">
+                                    </div>
+                                    <span class="text-xs font-medium">Piraeus</span>
+                                </div>
+                            </label>
+
+                            <!-- National Bank -->
+                            <label class="cursor-pointer group">
+                                <input type="radio" name="accountIcon" value="nationalbank.png" class="hidden peer">
+                                <div class="flex flex-col items-center gap-2 p-3 rounded-xl border-2 border-transparent 
+                                            peer-checked:border-primary peer-checked:bg-primary/10 
+                                            hover:bg-base-300 transition-all duration-200">
+                                    <div class="w-12 h-12 rounded-lg bg-white flex items-center justify-center overflow-hidden">
+                                        <img src="../assets/icons/banks/nationalbank.png" alt="National Bank" class="h-10 w-10 object-contain">
+                                    </div>
+                                    <span class="text-xs font-medium">National</span>
+                                </div>
+                            </label>
+
+                            <!-- Optima Bank -->
+                            <label class="cursor-pointer group">
+                                <input type="radio" name="accountIcon" value="optima.png" class="hidden peer">
+                                <div class="flex flex-col items-center gap-2 p-3 rounded-xl border-2 border-transparent 
+                                            peer-checked:border-primary peer-checked:bg-primary/10 
+                                            hover:bg-base-300 transition-all duration-200">
+                                    <div class="w-12 h-12 rounded-lg bg-white flex items-center justify-center overflow-hidden">
+                                        <img src="../assets/icons/banks/optimabank.jpg" alt="Optima Bank" class="h-10 w-10 object-contain">
+                                    </div>
+                                    <span class="text-xs font-medium">Optima</span>
+                                </div>
+                            </label>
+
+                            <!-- Revolut -->
+                            <label class="cursor-pointer group">
+                                <input type="radio" name="accountIcon" value="revolut.png" class="hidden peer">
+                                <div class="flex flex-col items-center gap-2 p-3 rounded-xl border-2 border-transparent 
+                                            peer-checked:border-primary peer-checked:bg-primary/10 
+                                            hover:bg-base-300 transition-all duration-200">
+                                    <div class="w-12 h-12 rounded-lg bg-white flex items-center justify-center overflow-hidden">
+                                        <img src="../assets/icons/banks/revolut.png" alt="Revolut" class="h-10 w-10 object-contain">
+                                    </div>
+                                    <span class="text-xs font-medium">Revolut</span>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
                 </div>
-                <div class="modal-action">
-                    <button type="button" class="btn" onclick="accountModal.close()">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Save Account</button>
+
+                <!-- Description -->
+                <div class="form-control">
+                    <label class="label">
+                        <span class="label-text font-medium">Description</span>
+                        <span class="label-text-alt">Optional</span>
+                    </label>
+                    <div class="relative">
+                        <div class="absolute top-3 left-3 pointer-events-none">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-base-content/40" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7" />
+                            </svg>
+                        </div>
+                        <textarea id="accountDescription" name="description" 
+                                  class="textarea textarea-bordered w-full pl-10 min-h-[80px]" 
+                                  placeholder="Add a note about this account (optional)"
+                                  rows="2"></textarea>
+                    </div>
+                </div>
+
+                <!-- Actions -->
+                <div class="modal-action pt-2 border-t border-base-200 mt-6">
+                    <button type="button" class="btn btn-ghost" onclick="accountModal.close()">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                        Cancel
+                    </button>
+                    <button type="submit" class="btn btn-primary px-6">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                        </svg>
+                        <span id="submitButtonText">Save Account</span>
+                    </button>
                 </div>
             </form>
         </div>

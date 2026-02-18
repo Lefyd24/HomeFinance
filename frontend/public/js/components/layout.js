@@ -399,9 +399,12 @@ const Layout = {
         }
         // Default to current month
         const today = new Date();
+        const year = today.getFullYear();
+        const month = String(today.getMonth() + 1).padStart(2, '0');
+        const day = String(today.getDate()).padStart(2, '0');
         return {
-            startDate: today.toISOString().split('T')[0].substring(0, 8) + '01',
-            endDate: today.toISOString().split('T')[0]
+            startDate: `${year}-${month}-01`,
+            endDate: `${year}-${month}-${day}`
         };
     },
 
@@ -444,16 +447,17 @@ window.setNavDatePreset = function(preset) {
     
     switch (preset) {
         case 'today':
-            startDate = today.toISOString().split('T')[0];
-            endDate = startDate;
+            const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+            startDate = todayStr;
+            endDate = todayStr;
             break;
         case 'week':
             const weekStart = new Date(today);
             weekStart.setDate(today.getDate() - today.getDay());
-            startDate = weekStart.toISOString().split('T')[0];
+            startDate = `${weekStart.getFullYear()}-${String(weekStart.getMonth() + 1).padStart(2, '0')}-${String(weekStart.getDate()).padStart(2, '0')}`;
             const weekEnd = new Date(weekStart);
             weekEnd.setDate(weekStart.getDate() + 6);
-            endDate = weekEnd.toISOString().split('T')[0];
+            endDate = `${weekEnd.getFullYear()}-${String(weekEnd.getMonth() + 1).padStart(2, '0')}-${String(weekEnd.getDate()).padStart(2, '0')}`;
             break;
         case 'month':
             startDate = Utils.getFirstDayOfMonth();

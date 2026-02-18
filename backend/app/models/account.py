@@ -16,6 +16,7 @@ class Account(Base):
     currency = Column(String(3), default="EUR")
     balance = Column(Float, default=0)
     description = Column(Text)
+    icon = Column(String(100))  # Custom icon filename from banks/ folder
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

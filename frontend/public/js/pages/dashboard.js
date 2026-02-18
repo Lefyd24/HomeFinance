@@ -11,6 +11,10 @@ window.dashboardDateRange = {
 // Aliases for convenience
 const dashboardDateRange = window.dashboardDateRange;
 
+// State for edit modal
+let dashboardAccounts = [];
+let dashboardCategories = [];
+
 document.addEventListener('DOMContentLoaded', async () => {
     if (!Auth.requireAuth()) return;
     
@@ -112,6 +116,188 @@ async function fetchAllTransactions(params) {
     
     return allTransactions;
 }
+
+// Helper function to calculate months between two dates (accepts Date objects or strings)
+function calculateMonthsInRange(startDate, endDate) {
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    const months = (end.getFullYear() - start.getFullYear()) * 12 + 
+                   (end.getMonth() - start.getMonth()) + 1;
+    return Math.max(1, months);
+}
+
+// Populate transaction modal selects
+function populateDashboardModalSelects() {
+    const accountSelect = document.getElementById('accountId');
+    const destinationSelect = document.getElementById('destinationAccountId');
+    const categorySelect = document.getElementById('categoryId');
+    
+    if (!accountSelect || !destinationSelect || !categorySelect) return;
+
+    // Clear existing options except the first one
+    accountSelect.innerHTML = '<option value="">Select Account</option>';
+    destinationSelect.innerHTML = '<option value="">Select Destination Account</option>';
+
+    dashboardAccounts.forEach(acc => {
+        accountSelect.innerHTML += `<option value="${acc.id}">${acc.name}</option>`;
+        destinationSelect.innerHTML += `<option value="${acc.id}">${acc.name}</option>`;
+    });
+
+    // Build category select with optgroups
+    let categoryHtml = '<option value="">Select Category</option>';
+    
+    // Group categories by type
+    const incomeCats = dashboardCategories.filter(c => c.type === 'income').sort((a, b) => a.name.localeCompare(b.name));
+    const expenseCats = dashboardCategories.filter(c => c.type === 'expense').sort((a, b) => a.name.localeCompare(b.name));
+    const transferCats = dashboardCategories.filter(c => c.type === 'transfer').sort((a, b) => a.name.localeCompare(b.name));
+    
+    if (incomeCats.length > 0) {
+        categoryHtml += '<optgroup label="📥 Income">';
+        incomeCats.forEach(cat => {
+            categoryHtml += `<option value="${cat.id}">${cat.name}</option>`;
+        });
+        categoryHtml += '</optgroup>';
+    }
+    
+    if (expenseCats.length > 0) {
+        categoryHtml += '<optgroup label="📤 Expense">';
+        expenseCats.forEach(cat => {
+            categoryHtml += `<option value="${cat.id}">${cat.name}</option>`;
+        });
+        categoryHtml += '</optgroup>';
+    }
+    
+    if (transferCats.length > 0) {
+        categoryHtml += '<optgroup label="🔄 Transfer">';
+        transferCats.forEach(cat => {
+            categoryHtml += `<option value="${cat.id}">${cat.name}</option>`;
+        });
+        categoryHtml += '</optgroup>';
+    }
+
+    categorySelect.innerHTML = categoryHtml;
+}
+
+// Update form visibility based on transaction type
+window.updateDashboardFormForTransactionType = function() {
+    const type = document.getElementById('transactionType').value;
+    const destContainer = document.getElementById('destinationAccountContainer');
+    const categoryContainer = document.getElementById('categoryContainer');
+    const sourceLabel = document.getElementById('sourceAccountLabel');
+    const destSelect = document.getElementById('destinationAccountId');
+    const categorySelect = document.getElementById('categoryId');
+    
+    if (type === 'transfer') {
+        destContainer.classList.remove('hidden');
+        categoryContainer.classList.add('hidden');
+        sourceLabel.textContent = 'From Account';
+        destSelect.required = true;
+        categorySelect.required = false;
+        categorySelect.value = '';
+    } else {
+        destContainer.classList.add('hidden');
+        categoryContainer.classList.remove('hidden');
+        sourceLabel.textContent = 'Account';
+        destSelect.required = false;
+        destSelect.value = '';
+        categorySelect.required = true;
+    }
+};
+
+// Open edit transaction modal
+window.openEditTransactionModal = async function(tx) {
+    try {
+        // Load accounts and categories if not already loaded
+        if (dashboardAccounts.length === 0) {
+            dashboardAccounts = await API.accounts.list();
+        }
+        if (dashboardCategories.length === 0) {
+            dashboardCategories = await API.categories.list();
+        }
+        
+        populateDashboardModalSelects();
+        
+        // Format date for input
+        let formattedDate = tx.date;
+        if (tx.date && typeof tx.date === 'string') {
+            formattedDate = tx.date.split('T')[0];
+        }
+        
+        // Populate form
+        document.getElementById('transactionId').value = tx.id;
+        document.getElementById('transactionType').value = tx.type;
+        document.getElementById('amount').value = tx.amount;
+        document.getElementById('accountId').value = tx.account_id;
+        document.getElementById('description').value = tx.description;
+        document.getElementById('transactionDate').value = formattedDate;
+        document.getElementById('notes').value = tx.notes || '';
+        
+        // Handle transfer-specific fields
+        if (tx.type === 'transfer') {
+            document.getElementById('destinationAccountId').value = tx.destination_account_id || '';
+            document.getElementById('categoryId').value = '';
+        } else {
+            document.getElementById('categoryId').value = tx.category_id || '';
+        }
+        
+        // Update modal title and visibility
+        document.getElementById('modalTitle').textContent = 'Edit Transaction';
+        window.updateDashboardFormForTransactionType();
+        
+        transactionModal.showModal();
+    } catch (error) {
+        console.error('Error opening edit modal:', error);
+        Utils.showToast('Error opening edit modal', 'error');
+    }
+};
+
+// Handle transaction form submission
+window.handleDashboardTransactionSubmit = async function(e) {
+    e.preventDefault();
+    
+    const transactionId = document.getElementById('transactionId').value;
+    const type = document.getElementById('transactionType').value;
+    const data = {
+        type: type,
+        amount: parseFloat(document.getElementById('amount').value),
+        account_id: parseInt(document.getElementById('accountId').value),
+        description: document.getElementById('description').value,
+        date: document.getElementById('transactionDate').value,
+        notes: document.getElementById('notes').value || null
+    };
+    
+    // Add category for income/expense, destination_account_id for transfers
+    if (type === 'transfer') {
+        const destId = document.getElementById('destinationAccountId').value;
+        if (!destId) {
+            Utils.showToast('Please select a destination account', 'error');
+            return;
+        }
+        data.destination_account_id = parseInt(destId);
+        data.category_id = null;
+    } else {
+        const catId = document.getElementById('categoryId').value;
+        if (!catId) {
+            Utils.showToast('Please select a category', 'error');
+            return;
+        }
+        data.category_id = parseInt(catId);
+        data.destination_account_id = null;
+    }
+    
+    try {
+        await API.transactions.update(parseInt(transactionId), data);
+        Utils.showToast('Transaction updated successfully', 'success');
+        transactionModal.close();
+        e.target.reset();
+        
+        // Reload dashboard data
+        await loadDashboardData();
+    } catch (error) {
+        console.error('Error saving transaction:', error);
+        Utils.showToast(error.message || 'Error saving transaction', 'error');
+    }
+};
 
 async function loadDashboardData() {
     try {
@@ -231,10 +417,20 @@ async function loadDashboardData() {
                     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
                         ${accounts.map(acc => `
                             <div class="bg-base-200 rounded-lg p-3">
-                                <div class="flex flex-col">
-                                    <p class="font-medium text-sm truncate" title="${acc.name}">${acc.name}</p>
-                                    <p class="text-xs text-base-content/60 capitalize">${acc.type}</p>
-                                    <p class="font-bold text-sm mt-1 ${parseFloat(acc.balance) >= 0 ? 'text-success' : 'text-error'}">${Utils.formatCurrency(acc.balance)}</p>
+                                <div class="flex items-center gap-3">
+                                    ${acc.icon 
+                                        ? `<img src="../assets/icons/banks/${acc.icon}" alt="${acc.name}" class="h-10 w-10 object-contain rounded shrink-0">`
+                                        : `<div class="p-2 rounded-lg bg-primary/10 text-primary shrink-0">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                                            </svg>
+                                           </div>`
+                                    }
+                                    <div class="flex flex-col min-w-0">
+                                        <p class="font-medium text-sm truncate" title="${acc.name}">${acc.name}</p>
+                                        <p class="text-xs text-base-content/60 capitalize">${acc.type}</p>
+                                        <p class="font-bold text-sm ${parseFloat(acc.balance) >= 0 ? 'text-success' : 'text-error'}">${Utils.formatCurrency(acc.balance)}</p>
+                                    </div>
                                 </div>
                             </div>
                         `).join('')}
@@ -335,6 +531,43 @@ async function loadBudgetOverview() {
             return;
         }
         
+        // Filter budgets that are relevant to the selected date range
+        const rangeStart = new Date(dashboardDateRange.startDate);
+        const rangeEnd = new Date(dashboardDateRange.endDate);
+        
+        const relevantBudgets = budgets.filter(budget => {
+            const budgetStart = budget.start_date ? new Date(budget.start_date) : null;
+            const budgetEnd = budget.end_date ? new Date(budget.end_date) : null;
+            
+            // Budget is relevant if it overlaps with the selected date range
+            // No dates set = always relevant
+            if (!budgetStart && !budgetEnd) return true;
+            
+            // Only start date set: relevant if start is before or within range
+            if (budgetStart && !budgetEnd) return budgetStart <= rangeEnd;
+            
+            // Only end date set: relevant if end is after or within range
+            if (!budgetStart && budgetEnd) return budgetEnd >= rangeStart;
+            
+            // Both dates set: relevant if there's any overlap
+            return budgetStart <= rangeEnd && budgetEnd >= rangeStart;
+        });
+        
+        if (relevantBudgets.length === 0) {
+            container.innerHTML = `
+                <div class="card bg-base-100 shadow-xl">
+                    <div class="card-body">
+                        <h2 class="card-title mb-4">Budget Overview</h2>
+                        <p class="text-base-content/60">No budgets for the selected date range.</p>
+                        <div class="card-actions justify-end mt-4">
+                            <a href="budgets.html" class="btn btn-sm btn-primary">Manage Budgets</a>
+                        </div>
+                    </div>
+                </div>
+            `;
+            return;
+        }
+        
         // Get ALL transactions for the selected date range to calculate budget spending
         const transactions = await fetchAllTransactions({
             start_date: dashboardDateRange.startDate,
@@ -343,23 +576,65 @@ async function loadBudgetOverview() {
         });
         
         // Calculate spending for each budget based on the date range
-        const budgetsWithSpending = budgets.slice(0, 3).map(budget => {
+        const budgetsWithSpending = relevantBudgets.slice(0, 3).map(budget => {
             // Get category IDs for this budget
             const categoryIds = budget.category_ids || [];
             
-            // Calculate spent amount from transactions in the selected date range
-            const spent = transactions
-                .filter(tx => categoryIds.includes(tx.category_id))
-                .reduce((sum, tx) => sum + parseFloat(tx.amount || 0), 0);
+            // Calculate effective date range (intersection of dashboard range and budget dates)
+            // Use date-only strings for consistent comparison (avoid timezone issues)
+            const budgetStartStr = budget.start_date ? budget.start_date.split('T')[0] : null;
+            const budgetEndStr = budget.end_date ? budget.end_date.split('T')[0] : null;
+            const rangeStartStr = dashboardDateRange.startDate;
+            const rangeEndStr = dashboardDateRange.endDate;
             
-            const remaining = budget.amount - spent;
-            const percentage = budget.amount > 0 ? (spent / budget.amount * 100) : 0;
+            // Determine effective date range
+            let effectiveStartStr = rangeStartStr;
+            let effectiveEndStr = rangeEndStr;
+            
+            if (budgetStartStr && budgetStartStr > rangeStartStr) {
+                effectiveStartStr = budgetStartStr;
+            }
+            if (budgetEndStr && budgetEndStr < rangeEndStr) {
+                effectiveEndStr = budgetEndStr;
+            }
+            
+            // Calculate spent amount from transactions within the effective date range
+            const matchingTransactions = transactions.filter(tx => {
+                const txDateStr = tx.date ? tx.date.split('T')[0] : null;
+                const categoryMatch = categoryIds.includes(tx.category_id);
+                const dateMatch = txDateStr >= effectiveStartStr && txDateStr <= effectiveEndStr;
+                return categoryMatch && dateMatch;
+            });
+            
+            const spent = matchingTransactions.reduce((sum, tx) => sum + parseFloat(tx.amount || 0), 0);
+            
+            // Calculate months in effective range for budget amount adjustment
+            const monthsInRange = calculateMonthsInRange(effectiveStartStr, effectiveEndStr);
+            
+            // Adjust budget amount based on frequency
+            let adjustedBudgetAmount = budget.amount;
+            let periodLabel = '';
+            
+            if (budget.period === 'monthly') {
+                adjustedBudgetAmount = budget.amount * monthsInRange;
+                periodLabel = monthsInRange === 1 ? '/month' : `/${monthsInRange} months`;
+            } else if (budget.period === 'yearly') {
+                const yearsInRange = monthsInRange / 12;
+                adjustedBudgetAmount = budget.amount * yearsInRange;
+                periodLabel = yearsInRange === 1 ? '/year' : `/${yearsInRange.toFixed(1)} years`;
+            }
+            
+            const remaining = adjustedBudgetAmount - spent;
+            const percentage = adjustedBudgetAmount > 0 ? (spent / adjustedBudgetAmount * 100) : 0;
             
             return {
                 ...budget,
                 spent,
                 remaining,
-                percentage
+                percentage,
+                adjustedAmount: adjustedBudgetAmount,
+                periodLabel,
+                monthsInRange
             };
         });
         
@@ -372,13 +647,13 @@ async function loadBudgetOverview() {
                             <div>
                                 <div class="flex justify-between mb-1">
                                     <span class="font-medium">${budget.name}</span>
-                                    <span class="text-sm">${Utils.formatCurrency(budget.spent || 0)} / ${Utils.formatCurrency(budget.amount)}</span>
+                                    <span class="text-sm">${Utils.formatCurrency(budget.spent || 0)} / ${Utils.formatCurrency(budget.adjustedAmount)}</span>
                                 </div>
                                 <progress class="progress ${(budget.percentage || 0) > 90 ? 'progress-error' : (budget.percentage || 0) > 75 ? 'progress-warning' : 'progress-primary'} w-full" 
                                           value="${budget.percentage || 0}" max="100"></progress>
                                 <div class="flex justify-between mt-1 text-xs text-base-content/60">
-                                    <span>${Math.round(budget.percentage || 0)}% used</span>
-                                    <span>${Utils.formatCurrency(budget.remaining || 0)} left</span>
+                                    <span>${Math.round(budget.percentage || 0)}% used ${budget.periodLabel}</span>
+                                    <span class="${budget.remaining < 0 ? 'text-error' : ''}">${Utils.formatCurrency(Math.abs(budget.remaining || 0))} ${budget.remaining < 0 ? 'over' : 'left'}</span>
                                 </div>
                             </div>
                         `).join('')}
@@ -545,7 +820,7 @@ window.showTransactionDetailModal = async (transactionId) => {
                     
                     <!-- Action Buttons - Always visible in modal -->
                     <div class="flex gap-2 pt-3 border-t border-base-300 mt-3">
-                        <button onclick="window.location.href='transactions.html?edit=${tx.id}'" class="btn btn-sm btn-ghost flex-1">
+                        <button onclick="openEditTransactionModal(${JSON.stringify(tx).replace(/"/g, '&quot;')}); transactionDetailModal.close();" class="btn btn-sm btn-ghost flex-1">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                             </svg>
@@ -684,3 +959,18 @@ window.setDashboardDatePreset = function(preset) {
     Utils.showToast(`Date range set to ${preset}`, 'success');
     loadDashboardData();
 };
+
+// Setup event listeners for transaction form
+document.addEventListener('DOMContentLoaded', () => {
+    // Setup form submission
+    const transactionForm = document.getElementById('transactionForm');
+    if (transactionForm) {
+        transactionForm.addEventListener('submit', window.handleDashboardTransactionSubmit);
+    }
+    
+    // Setup type change handler
+    const transactionType = document.getElementById('transactionType');
+    if (transactionType) {
+        transactionType.addEventListener('change', window.updateDashboardFormForTransactionType);
+    }
+});

@@ -24,9 +24,18 @@ window.editAccount = async (id) => {
     document.getElementById('balance').value = parseFloat(account.balance || 0);
     document.getElementById('accountDescription').value = account.description || '';
     
-    // Update modal title
-    document.querySelector('#accountModal h3').textContent = 'Edit Account';
-    document.querySelector('#accountForm button[type="submit"]').textContent = 'Update Account';
+    // Set icon selection
+    const iconRadios = document.querySelectorAll('input[name="accountIcon"]');
+    iconRadios.forEach(radio => {
+        radio.checked = (radio.value === (account.icon || ''));
+    });
+    
+    // Update modal UI
+    document.getElementById('modalTitle').textContent = 'Edit Account';
+    document.getElementById('submitButtonText').textContent = 'Update Account';
+    
+    // Update preview
+    updateAccountPreview();
     
     // Show modal
     accountModal.showModal();
@@ -60,9 +69,60 @@ window.deleteAccount = async (id) => {
 window.resetAccountModal = () => {
     editingAccountId = null;
     document.getElementById('accountForm').reset();
+    
+    // Reset icon selection to default
+    const defaultIconRadio = document.querySelector('input[name="accountIcon"][value=""]');
+    if (defaultIconRadio) {
+        defaultIconRadio.checked = true;
+    }
+    
+    // Reset modal UI
+    document.getElementById('modalTitle').textContent = 'Add Account';
+    document.getElementById('submitButtonText').textContent = 'Save Account';
+    
+    // Reset preview
+    updateAccountPreview();
     document.querySelector('#accountModal h3').textContent = 'Add Account';
     document.querySelector('#accountForm button[type="submit"]').textContent = 'Save Account';
 };
+
+// Update account preview in modal
+function updateAccountPreview() {
+    const name = document.getElementById('accountName')?.value || 'New Account';
+    const type = document.getElementById('accountType')?.value || 'checking';
+    const currency = document.getElementById('currency')?.value || 'EUR';
+    const balance = parseFloat(document.getElementById('balance')?.value || 0);
+    const selectedIcon = document.querySelector('input[name="accountIcon"]:checked');
+    const iconValue = selectedIcon?.value || '';
+    
+    // Update preview text
+    document.getElementById('previewName').textContent = name || 'New Account';
+    document.getElementById('previewType').textContent = type;
+    document.getElementById('previewCurrency').textContent = currency;
+    
+    // Format balance
+    const currencySymbols = { EUR: '€', USD: '$', GBP: '£' };
+    const symbol = currencySymbols[currency] || currency;
+    const formattedBalance = balance < 0 
+        ? `-${symbol}${Math.abs(balance).toFixed(2)}`
+        : `${symbol}${balance.toFixed(2)}`;
+    document.getElementById('previewBalance').textContent = formattedBalance;
+    
+    // Update preview icon
+    const previewIconContainer = document.getElementById('previewIcon');
+    if (iconValue) {
+        previewIconContainer.innerHTML = `<img src="../assets/icons/banks/${iconValue}" alt="${name}" class="w-full h-full object-contain">`;
+    } else {
+        const typeIcons = {
+            checking: '<svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" /></svg>',
+            savings: '<svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>',
+            credit: '<svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" /></svg>',
+            cash: '<svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" /></svg>',
+            investment: '<svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>'
+        };
+        previewIconContainer.innerHTML = typeIcons[type] || typeIcons.checking;
+    }
+}
 
 document.addEventListener('DOMContentLoaded', async () => {
     if (!Auth.requireAuth()) return;
@@ -150,6 +210,22 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Setup form submission
     document.getElementById('accountForm').addEventListener('submit', handleAccountSubmit);
     
+    // Setup live preview listeners
+    const previewFields = ['accountName', 'accountType', 'currency', 'balance'];
+    previewFields.forEach(fieldId => {
+        const field = document.getElementById(fieldId);
+        if (field) {
+            field.addEventListener('input', updateAccountPreview);
+            field.addEventListener('change', updateAccountPreview);
+        }
+    });
+    
+    // Setup icon preview listeners
+    const iconRadios = document.querySelectorAll('input[name="accountIcon"]');
+    iconRadios.forEach(radio => {
+        radio.addEventListener('change', updateAccountPreview);
+    });
+    
     async function initialize() {
         try {
             accounts = await API.accounts.list();
@@ -213,12 +289,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     async function handleAccountSubmit(e) {
         e.preventDefault();
         
+        const selectedIcon = document.querySelector('input[name="accountIcon"]:checked');
+        const iconValue = selectedIcon && selectedIcon.value ? selectedIcon.value : null;
+        
         const data = {
             name: document.getElementById('accountName').value,
             type: document.getElementById('accountType').value,
             currency: document.getElementById('currency').value,
             balance: parseFloat(document.getElementById('balance').value) || 0,
-            description: document.getElementById('accountDescription').value
+            description: document.getElementById('accountDescription').value,
+            icon: iconValue
         };
         
         try {

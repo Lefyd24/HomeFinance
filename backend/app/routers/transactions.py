@@ -33,9 +33,6 @@ def get_transactions(
     search: Optional[str] = None,
 ):
     """Get transactions with filters."""
-    print(
-        f"Fetching transactions for user {current_user.id} with filters: start_date={start_date}, end_date={end_date}, account_id={account_id}, category_id={category_id}, type={type}, search={search}, page={page}, per_page={per_page}"
-    )
     # Calculate skip from page
     skip = (page - 1) * per_page
     query = db.query(Transaction).filter(Transaction.user_id == current_user.id)
@@ -45,7 +42,6 @@ def get_transactions(
     if end_date:
         query = query.filter(Transaction.date <= end_date)
     if account_id:
-        print(f"Filtering transactions for account_id={account_id}")
         query = query.filter(Transaction.account_id == account_id)
     if category_id:
         query = query.filter(Transaction.category_id == category_id)
