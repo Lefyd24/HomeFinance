@@ -170,13 +170,46 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
     
-    function populateCategorySelect() {
-        const selects = document.querySelectorAll('#bulkCategory, select[data-category-select]');
-        selects.forEach(select => {
-            categories.forEach(cat => {
-                select.innerHTML += `<option value="${cat.id}">${cat.name}</option>`;
+    function getCategoryOptionsHtml(selectedValue = null) {
+        // Group and sort categories by type
+        const incomeCats = categories.filter(c => c.type === 'income').sort((a, b) => a.name.localeCompare(b.name));
+        const expenseCats = categories.filter(c => c.type === 'expense').sort((a, b) => a.name.localeCompare(b.name));
+        const transferCats = categories.filter(c => c.type === 'transfer').sort((a, b) => a.name.localeCompare(b.name));
+        
+        let html = '<option value="">Select...</option>';
+        
+        if (incomeCats.length > 0) {
+            html += '<optgroup label="—— Income ——">';
+            incomeCats.forEach(cat => {
+                html += `<option value="${cat.id}" ${selectedValue === cat.id ? 'selected' : ''}>${cat.name}</option>`;
             });
-        });
+            html += '</optgroup>';
+        }
+        
+        if (expenseCats.length > 0) {
+            html += '<optgroup label="—— Expense ——">';
+            expenseCats.forEach(cat => {
+                html += `<option value="${cat.id}" ${selectedValue === cat.id ? 'selected' : ''}>${cat.name}</option>`;
+            });
+            html += '</optgroup>';
+        }
+        
+        if (transferCats.length > 0) {
+            html += '<optgroup label="—— Transfer ——">';
+            transferCats.forEach(cat => {
+                html += `<option value="${cat.id}" ${selectedValue === cat.id ? 'selected' : ''}>${cat.name}</option>`;
+            });
+            html += '</optgroup>';
+        }
+        
+        return html;
+    }
+    
+    function populateCategorySelect() {
+        const bulkSelect = document.getElementById('bulkCategory');
+        if (bulkSelect) {
+            bulkSelect.innerHTML = '<option value="">Bulk assign category...</option>' + getCategoryOptionsHtml().replace('<option value="">Select...</option>', '');
+        }
     }
     
     function setupDragAndDrop() {
@@ -304,10 +337,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 <td><input type="number" class="input input-xs input-bordered" value="${tx.amount}" step="0.01" data-field="amount" data-index="${index}"></td>
                 <td>
                     <select class="select select-xs select-bordered" onchange="updateCategory(${index}, this.value)">
-                        <option value="">Select...</option>
-                        ${categories.map(cat => `
-                            <option value="${cat.id}" ${(tx.category_id === cat.id) ? 'selected' : ''}>${cat.name}</option>
-                        `).join('')}
+                        ${getCategoryOptionsHtml(tx.category_id)}
                     </select>
                     ${tx.suggested_category ? `<span class="badge badge-xs badge-info ml-1">Suggested: ${tx.suggested_category}</span>` : ''}
                 </td>
@@ -355,10 +385,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                             <p class="text-sm text-base-content/60">${Utils.formatDate(tx.date)} • ${Utils.formatCurrency(tx.amount)}</p>
                         </div>
                         <select class="select select-bordered select-sm" onchange="setTransactionCategory(${tx.id}, this.value)">
-                            <option value="">Select Category</option>
-                            ${categories.map(cat => `
-                                <option value="${cat.id}" ${cat.name === tx.suggested_category ? 'selected' : ''}>${cat.name}</option>
-                            `).join('')}
+                            ${getCategoryOptionsHtml(tx.category_id)}
                         </select>
                         <button onclick="createNewCategory('${tx.description}')" class="btn btn-ghost btn-sm">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">

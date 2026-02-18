@@ -5,7 +5,7 @@ from typing import List, Optional
 from app.database import get_db
 from app.utils.security import get_current_user
 from app.schemas import AccountCreate, AccountUpdate, AccountResponse
-from app.models import User, Account
+from app.models import User, Account, Transaction
 
 router = APIRouter(prefix="/accounts", tags=["Accounts"])
 
@@ -15,17 +15,21 @@ def get_accounts(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
     skip: int = 0,
-    limit: int = 100
+    limit: int = 100,
 ):
     """Get all accounts for current user."""
-    accounts = db.query(Account).filter(
-        Account.user_id == current_user.id
-    ).offset(skip).limit(limit).all()
-    
+    accounts = (
+        db.query(Account)
+        .filter(Account.user_id == current_user.id)
+        .offset(skip)
+        .limit(limit)
+        .all()
+    )
+
     # Round balances to 2 decimal places to avoid floating-point precision errors
     for account in accounts:
         account.balance = round(account.balance, 2)
-    
+
     return accounts
 
 
@@ -33,17 +37,14 @@ def get_accounts(
 def create_account(
     account_data: AccountCreate,
     current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """Create a new account."""
-    db_account = Account(
-        user_id=current_user.id,
-        **account_data.model_dump()
-    )
+    db_account = Account(user_id=current_user.id, **account_data.model_dump())
     db.add(db_account)
     db.commit()
     db.refresh(db_account)
-    
+
     return db_account
 
 
@@ -51,23 +52,23 @@ def create_account(
 def get_account(
     account_id: int,
     current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """Get account by ID."""
-    account = db.query(Account).filter(
-        Account.id == account_id,
-        Account.user_id == current_user.id
-    ).first()
-    
+    account = (
+        db.query(Account)
+        .filter(Account.id == account_id, Account.user_id == current_user.id)
+        .first()
+    )
+
     if not account:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Account not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Account not found"
         )
-    
+
     # Round balance to 2 decimal places
     account.balance = round(account.balance, 2)
-    
+
     return account
 
 
@@ -76,28 +77,28 @@ def update_account(
     account_id: int,
     account_data: AccountUpdate,
     current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """Update an account."""
-    account = db.query(Account).filter(
-        Account.id == account_id,
-        Account.user_id == current_user.id
-    ).first()
-    
+    account = (
+        db.query(Account)
+        .filter(Account.id == account_id, Account.user_id == current_user.id)
+        .first()
+    )
+
     if not account:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Account not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Account not found"
         )
-    
+
     # Update fields
     update_data = account_data.model_dump(exclude_unset=True)
     for field, value in update_data.items():
         setattr(account, field, value)
-    
+
     db.commit()
     db.refresh(account)
-    
+
     return account
 
 
@@ -105,25 +106,39 @@ def update_account(
 def delete_account(
     account_id: int,
     current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
-    """Delete an account."""
-    account = db.query(Account).filter(
-        Account.id == account_id,
-        Account.user_id == current_user.id
-    ).first()
-    
+    """Delete an account and all associated transactions."""
+    account = (
+        db.query(Account)
+        .filter(Account.id == account_id, Account.user_id == current_user.id)
+        .first()
+    )
+
     if not account:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Account not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Account not found"
         )
-    
-    # Instead of deleting, mark as inactive
-    account.is_active = False
+
+    # Delete all transactions associated with this account
+    # This includes both regular transactions and transfer destination transactions
+    deleted_count = (
+        db.query(Transaction)
+        .filter(
+            (Transaction.account_id == account_id)
+            | (Transaction.destination_account_id == account_id)
+        )
+        .delete(synchronize_session=False)
+    )
+
+    # Now delete the account
+    db.delete(account)
     db.commit()
-    
-    return {"message": "Account deleted successfully"}
+
+    return {
+        "message": "Account deleted successfully",
+        "deleted_transactions": deleted_count,
+    }
 
 
 @router.get("/{account_id}/transactions")
@@ -132,24 +147,27 @@ def get_account_transactions(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
     skip: int = 0,
-    limit: int = 100
+    limit: int = 100,
 ):
     """Get transactions for a specific account."""
-    account = db.query(Account).filter(
-        Account.id == account_id,
-        Account.user_id == current_user.id
-    ).first()
-    
+    account = (
+        db.query(Account)
+        .filter(Account.id == account_id, Account.user_id == current_user.id)
+        .first()
+    )
+
     if not account:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Account not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Account not found"
         )
-    
-    transactions = db.query(Account).filter(
-        Account.id == account_id
-    ).first().transactions[skip:skip+limit]
-    
+
+    transactions = (
+        db.query(Account)
+        .filter(Account.id == account_id)
+        .first()
+        .transactions[skip : skip + limit]
+    )
+
     return transactions
 
 
@@ -157,24 +175,24 @@ def get_account_transactions(
 def get_account_balance_history(
     account_id: int,
     current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """Get account balance history."""
-    account = db.query(Account).filter(
-        Account.id == account_id,
-        Account.user_id == current_user.id
-    ).first()
-    
+    account = (
+        db.query(Account)
+        .filter(Account.id == account_id, Account.user_id == current_user.id)
+        .first()
+    )
+
     if not account:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Account not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Account not found"
         )
-    
+
     # Return current balance and account info
     return {
         "account_id": account.id,
         "account_name": account.name,
         "current_balance": round(account.balance, 2),
-        "currency": account.currency
+        "currency": account.currency,
     }

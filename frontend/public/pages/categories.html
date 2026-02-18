@@ -4,13 +4,32 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Categories - Personal Finance</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="../assets/css/app.css">
     <link rel="stylesheet" href="../assets/css/custom.css">
+<link rel="icon" type="image/svg+xml" href="../assets/icons/favicon.svg">
+    <link rel="alternate icon" href="../assets/icons/favicon.ico">
+    <link rel="shortcut icon" href="../assets/icons/favicon.ico">
 </head>
 <body class="bg-base-200 min-h-screen">
     <div id="app"></div>
     
-    <!-- Add Category Modal -->
+    <!-- Icon Selector Modal -->
+    <dialog id="iconSelectorModal" class="modal">
+        <div class="modal-box w-11/12 max-w-2xl">
+            <h3 class="font-bold text-lg mb-4">Select Icon</h3>
+            <div id="iconSelectorGrid" class="mb-4">
+                <!-- Icons will be rendered here -->
+            </div>
+            <div class="modal-action">
+                <button type="button" class="btn" onclick="iconSelectorModal.close()">Cancel</button>
+            </div>
+        </div>
+    </dialog>
+
+    <!-- Add/Edit Category Modal -->
     <dialog id="categoryModal" class="modal">
         <div class="modal-box w-11/12 max-w-lg">
             <h3 class="font-bold text-lg mb-4">Add Category</h3>
@@ -36,17 +55,14 @@
                 </div>
                 <div class="form-control">
                     <label class="label"><span class="label-text">Icon</span></label>
-                    <select id="categoryIcon" name="icon" class="select select-bordered w-full">
-                        <option value="default">Default</option>
-                        <option value="shopping">Shopping</option>
-                        <option value="food">Food</option>
-                        <option value="transport">Transport</option>
-                        <option value="home">Home</option>
-                        <option value="health">Health</option>
-                        <option value="entertainment">Entertainment</option>
-                        <option value="bills">Bills</option>
-                        <option value="salary">Salary</option>
-                    </select>
+                    <input type="hidden" id="categoryIcon" name="icon" value="default">
+                    <button type="button" onclick="showIconSelector()" class="btn btn-outline w-full justify-start gap-3" id="selectedIconBtn">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                        </svg>
+                        <span id="selectedIconName">Default</span>
+                        <span class="ml-auto text-sm opacity-50">Click to change</span>
+                    </button>
                 </div>
                 <div class="form-control">
                     <label class="label"><span class="label-text">Parent Category</span></label>
@@ -67,6 +83,7 @@
     <script src="../js/api.js"></script>
     <script src="../js/auth.js"></script>
     <script src="../js/components/layout.js"></script>
+    <script src="../js/components/category-icons.js"></script>
     <script src="../js/pages/categories.js"></script>
 </body>
 </html>

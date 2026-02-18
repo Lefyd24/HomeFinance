@@ -1,0 +1,32 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: personalfinance-app
+    ports:
+      - "8223:8223"    # Backend API
+      - "3100:3100"    # Frontend
+    environment:
+      - APP_NAME=Personal Finance
+      - APP_VERSION=1.0.0
+      - DATABASE_URL=sqlite:///data/finance.db
+      - SECRET_KEY=${SECRET_KEY:-your-secret-key-change-in-production}
+      - DEBUG=${DEBUG:-false}
+      - CORS_ORIGINS=["*"]
+      - ACCESS_TOKEN_EXPIRE_MINUTES=1440 # 24 hours
+      - BACKEND_PORT=8223
+      - FRONTEND_PORT=3100
+    volumes:
+      - ./data:/app/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8223/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+volumes:
+  data:
+    driver: local

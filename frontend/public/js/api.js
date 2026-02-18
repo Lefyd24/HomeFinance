@@ -4,8 +4,18 @@
  */
 
 const API = {
-    // Base URL for API
-    baseURL: 'http://localhost:8000/api',
+    // Base URL for API - dynamically uses current hostname with port 8223
+    baseURL: (() => {
+        // Use explicit override if set
+        if (window.API_BASE_URL) {
+            return window.API_BASE_URL;
+        }
+        // Otherwise construct URL from current hostname
+        // Frontend runs on port 3100, backend on port 8223
+        const protocol = window.location.protocol;
+        const hostname = window.location.hostname;
+        return `${protocol}//${hostname}:8223/api`;
+    })(),
     
     /**
      * Get auth headers

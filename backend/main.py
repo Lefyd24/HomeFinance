@@ -3,10 +3,19 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
 from contextlib import asynccontextmanager
+import os
 
 from app.config import settings
 from app.database import init_db
-from app.routers import auth, accounts, categories, transactions, budgets, import_wizard, reports
+from app.routers import (
+    auth,
+    accounts,
+    categories,
+    transactions,
+    budgets,
+    import_wizard,
+    reports,
+)
 
 
 @asynccontextmanager
@@ -26,13 +35,18 @@ app = FastAPI(
     title=settings.APP_NAME,
     version=settings.APP_VERSION,
     description="Personal Finance Management API",
-    lifespan=lifespan
+    lifespan=lifespan,
 )
 
-# Add CORS middleware
+# Add CORS middleware - allow frontend on port 3100
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.CORS_ORIGINS,
+    allow_origins=[
+        "http://localhost:3100",
+        "http://127.0.0.1:3100",
+        "http://frontend:3100",
+        "*",  # Allow all for development
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -48,10 +62,7 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
     print(f"Request method: {request.method}")
     print(f"Validation errors: {exc.errors()}")
     print("======================\n")
-    return JSONResponse(
-        status_code=422,
-        content={"detail": exc.errors()}
-    )
+    return JSONResponse(status_code=422, content={"detail": exc.errors()})
 
 
 # Global exception handler
@@ -60,7 +71,7 @@ async def global_exception_handler(request: Request, exc: Exception):
     """Handle all unhandled exceptions."""
     return JSONResponse(
         status_code=500,
-        content={"detail": "Internal server error", "message": str(exc)}
+        content={"detail": "Internal server error", "message": str(exc)},
     )
 
 
@@ -83,10 +94,9 @@ app.include_router(reports.router, prefix="/api")
 
 if __name__ == "__main__":
     import uvicorn
+
+    # Use port from environment variable or default to 8223
+    port = int(os.getenv("BACKEND_PORT", 8223))
     uvicorn.run(
-        "main:app",
-        host="0.0.0.0",
-        port=8000,
-        reload=settings.DEBUG,
-        log_level="info"
+        "main:app", host="0.0.0.0", port=port, reload=settings.DEBUG, log_level="info"
     )

@@ -1,5 +1,10 @@
 /* Custom styles for Personal Finance App */
 
+/* Poppins font family for the entire app */
+html, body {
+    font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+}
+
 /* Smooth scrolling */
 html {
     scroll-behavior: smooth;
@@ -118,11 +123,89 @@ canvas {
     }
     
     .card-body {
-        padding: 1rem;
+        padding: 0.75rem;
     }
     
     .steps {
-        font-size: 0.75rem;
+        font-size: 0.7rem;
+    }
+    
+    /* Smaller touch targets on mobile */
+    .btn {
+        min-height: 2.5rem;
+        min-width: 2.5rem;
+    }
+    
+    /* Better table scrolling */
+    .overflow-x-auto {
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    /* Compact forms */
+    .input, .select {
+        min-height: 2.75rem;
+    }
+    
+    /* Toast positioning */
+    .toast {
+        inset-inline-end: 0.5rem;
+        bottom: 0.5rem;
+        max-width: calc(100vw - 1rem);
+    }
+    
+    /* Better modal sizing */
+    .modal-box {
+        margin: 0.5rem;
+        max-height: calc(100vh - 1rem);
+        overflow-y: auto;
+    }
+}
+
+/* Extra small devices */
+@media (max-width: 480px) {
+    .card-body {
+        padding: 0.5rem;
+    }
+    
+    h2.text-2xl {
+        font-size: 1.25rem;
+    }
+    
+    .btn {
+        padding-left: 0.75rem;
+        padding-right: 0.75rem;
+    }
+}
+
+/* Touch-friendly improvements */
+@media (hover: none) and (pointer: coarse) {
+    /* Larger touch targets */
+    .btn, .input, .select, .dropdown > label, 
+    .menu a, .table tbody tr, .card {
+        cursor: pointer;
+    }
+    
+    /* Remove hover effects on touch devices */
+    .card.hover\:shadow-2xl:hover,
+    .stat:hover {
+        transform: none;
+    }
+    
+    /* Better scrolling */
+    * {
+        -webkit-overflow-scrolling: touch;
+    }
+}
+
+/* Safe area insets for notched devices */
+@supports (padding-top: env(safe-area-inset-top)) {
+    .navbar {
+        padding-top: env(safe-area-inset-top);
+    }
+    
+    .drawer-side > aside {
+        padding-top: env(safe-area-inset-top);
+        padding-bottom: env(safe-area-inset-bottom);
     }
 }
 

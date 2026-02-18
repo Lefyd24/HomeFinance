@@ -20,6 +20,9 @@ window.openTransactionModal = () => {
     // Set default date to today
     document.getElementById('transactionDate').value = new Date().toISOString().split('T')[0];
     
+    // Reset category dropdown
+    document.getElementById('categoryId').value = '';
+    
     // Reset form visibility
     window.updateFormForTransactionType();
     transactionModal.showModal();
@@ -209,29 +212,87 @@ document.addEventListener('DOMContentLoaded', async () => {
             accountSelect.innerHTML += `<option value="${acc.id}">${acc.name}</option>`;
         });
         
-        categories.forEach(cat => {
-            categorySelect.innerHTML += `<option value="${cat.id}">${cat.name}</option>`;
-        });
+        // Group categories by type for filter dropdown
+        const incomeCats = categories.filter(c => c.type === 'income');
+        const expenseCats = categories.filter(c => c.type === 'expense');
+        const transferCats = categories.filter(c => c.type === 'transfer');
+        
+        let categoryHtml = '<option value="">All Categories</option>';
+        
+        if (incomeCats.length > 0) {
+            categoryHtml += '<optgroup label="📥 Income">';
+            incomeCats.forEach(cat => {
+                categoryHtml += `<option value="${cat.id}">${cat.name}</option>`;
+            });
+            categoryHtml += '</optgroup>';
+        }
+        
+        if (expenseCats.length > 0) {
+            categoryHtml += '<optgroup label="📤 Expense">';
+            expenseCats.forEach(cat => {
+                categoryHtml += `<option value="${cat.id}">${cat.name}</option>`;
+            });
+            categoryHtml += '</optgroup>';
+        }
+        
+        if (transferCats.length > 0) {
+            categoryHtml += '<optgroup label="🔄 Transfer">';
+            transferCats.forEach(cat => {
+                categoryHtml += `<option value="${cat.id}">${cat.name}</option>`;
+            });
+            categoryHtml += '</optgroup>';
+        }
+        
+        categorySelect.innerHTML = categoryHtml;
     }
     
     function populateModalSelects() {
         const accountSelect = document.getElementById('accountId');
         const destinationSelect = document.getElementById('destinationAccountId');
         const categorySelect = document.getElementById('categoryId');
-        
+
         // Clear existing options except the first one
         accountSelect.innerHTML = '<option value="">Select Account</option>';
         destinationSelect.innerHTML = '<option value="">Select Destination Account</option>';
-        categorySelect.innerHTML = '<option value="">Select Category</option>';
-        
+
         accounts.forEach(acc => {
             accountSelect.innerHTML += `<option value="${acc.id}">${acc.name}</option>`;
             destinationSelect.innerHTML += `<option value="${acc.id}">${acc.name}</option>`;
         });
+
+        // Build category select with optgroups
+        let categoryHtml = '<option value="">Select Category</option>';
         
-        categories.forEach(cat => {
-            categorySelect.innerHTML += `<option value="${cat.id}">${cat.name}</option>`;
-        });
+        // Group categories by type
+        const incomeCats = categories.filter(c => c.type === 'income').sort((a, b) => a.name.localeCompare(b.name));
+        const expenseCats = categories.filter(c => c.type === 'expense').sort((a, b) => a.name.localeCompare(b.name));
+        const transferCats = categories.filter(c => c.type === 'transfer').sort((a, b) => a.name.localeCompare(b.name));
+        
+        if (incomeCats.length > 0) {
+            categoryHtml += '<optgroup label="📥 Income">';
+            incomeCats.forEach(cat => {
+                categoryHtml += `<option value="${cat.id}">${cat.name}</option>`;
+            });
+            categoryHtml += '</optgroup>';
+        }
+        
+        if (expenseCats.length > 0) {
+            categoryHtml += '<optgroup label="📤 Expense">';
+            expenseCats.forEach(cat => {
+                categoryHtml += `<option value="${cat.id}">${cat.name}</option>`;
+            });
+            categoryHtml += '</optgroup>';
+        }
+        
+        if (transferCats.length > 0) {
+            categoryHtml += '<optgroup label="🔄 Transfer">';
+            transferCats.forEach(cat => {
+                categoryHtml += `<option value="${cat.id}">${cat.name}</option>`;
+            });
+            categoryHtml += '</optgroup>';
+        }
+
+        categorySelect.innerHTML = categoryHtml;
     }
     
     async function loadTransactions() {
@@ -425,18 +486,26 @@ document.addEventListener('DOMContentLoaded', async () => {
         try {
             const tx = await API.transactions.get(id);
             
+            // Format date for input type="date" (YYYY-MM-DD)
+            let formattedDate = tx.date;
+            if (tx.date && typeof tx.date === 'string') {
+                // Handle ISO date strings or date-only strings
+                formattedDate = tx.date.split('T')[0];
+            }
+            
             // Populate form
             document.getElementById('transactionId').value = tx.id;
             document.getElementById('transactionType').value = tx.type;
             document.getElementById('amount').value = tx.amount;
             document.getElementById('accountId').value = tx.account_id;
             document.getElementById('description').value = tx.description;
-            document.getElementById('transactionDate').value = tx.date;
+            document.getElementById('transactionDate').value = formattedDate;
             document.getElementById('notes').value = tx.notes || '';
             
             // Handle transfer-specific fields
             if (tx.type === 'transfer') {
                 document.getElementById('destinationAccountId').value = tx.destination_account_id || '';
+                document.getElementById('categoryId').value = '';
             } else {
                 document.getElementById('categoryId').value = tx.category_id || '';
             }

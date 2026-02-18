@@ -10,6 +10,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     // State
     let categories = [];
+    let editingCategoryId = null;
+    let selectedIconKey = 'default';
     
     // Get main content container
     const mainContent = document.getElementById('main-content');
@@ -23,7 +25,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     <h2 class="text-2xl font-bold">Categories</h2>
                     <p class="text-base-content/60">Organize your transactions with categories</p>
                 </div>
-                <button onclick="categoryModal.showModal()" class="btn btn-primary">
+                <button onclick="resetCategoryModal(); categoryModal.showModal()" class="btn btn-primary">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                     </svg>
@@ -96,8 +98,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                         <div class="flex items-start gap-3">
                             <div class="badge badge-primary badge-lg">4</div>
                             <div>
-                                <p class="font-medium">Use Colors</p>
-                                <p class="text-sm text-base-content/60">Assign different colors to categories for better visual organization.</p>
+                                <p class="font-medium">Use Colors & Icons</p>
+                                <p class="text-sm text-base-content/60">Assign different colors and icons to categories for better visual organization.</p>
                             </div>
                         </div>
                     </div>
@@ -151,10 +153,16 @@ document.addEventListener('DOMContentLoaded', async () => {
             return '<p class="text-base-content/60 text-sm">No categories yet</p>';
         }
         
-        return cats.map(cat => `
+        return cats.map(cat => {
+            const iconSvg = CategoryIcons.getSvg(cat.icon || 'default');
+            return `
             <div class="flex items-center justify-between p-3 bg-base-200 rounded-lg group hover:bg-base-300 transition-colors">
                 <div class="flex items-center gap-3">
-                    <div class="w-4 h-4 rounded-full" style="background-color: ${cat.color || '#ccc'}"></div>
+                    <div class="w-8 h-8 rounded-lg flex items-center justify-center" style="background-color: ${cat.color || '#ccc'}20; color: ${cat.color || '#ccc'}">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            ${iconSvg}
+                        </svg>
+                    </div>
                     <div>
                         <span class="font-medium">${cat.name}</span>
                         ${cat.is_system ? '<span class="badge badge-xs badge-ghost ml-2">System</span>' : ''}
@@ -175,7 +183,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     ` : '<span class="text-xs text-base-content/40">Cannot edit</span>'}
                 </div>
             </div>
-        `).join('');
+        `}).join('');
     }
     
     function renderStats() {
@@ -223,15 +231,30 @@ document.addEventListener('DOMContentLoaded', async () => {
             name: document.getElementById('categoryName').value,
             type: document.getElementById('categoryType').value,
             color: document.getElementById('categoryColor').value,
-            icon: document.getElementById('categoryIcon').value,
+            icon: selectedIconKey,
             parent_id: document.getElementById('parentCategory').value || null
         };
         
         try {
-            await API.categories.create(data);
-            Utils.showToast('Category created successfully', 'success');
+            if (editingCategoryId) {
+                // Update existing category
+                await API.categories.update(editingCategoryId, data);
+                Utils.showToast('Category updated successfully', 'success');
+            } else {
+                // Create new category
+                await API.categories.create(data);
+                Utils.showToast('Category created successfully', 'success');
+            }
+            
             categoryModal.close();
             e.target.reset();
+            editingCategoryId = null;
+            selectedIconKey = 'default';
+            updateSelectedIconDisplay();
+            
+            // Reset modal title
+            document.querySelector('#categoryModal h3').textContent = 'Add Category';
+            document.querySelector('#categoryForm button[type="submit"]').textContent = 'Save Category';
             
             // Reload categories
             categories = await API.categories.list();
@@ -240,12 +263,42 @@ document.addEventListener('DOMContentLoaded', async () => {
             populateParentSelect();
             
         } catch (error) {
-            Utils.showToast('Error creating category', 'error');
+            Utils.showToast(editingCategoryId ? 'Error updating category' : 'Error creating category', 'error');
         }
     }
     
-    window.editCategory = (id) => {
-        Utils.showToast('Edit functionality coming soon!', 'info');
+    window.editCategory = async (id) => {
+        const category = categories.find(c => c.id === id);
+        if (!category) {
+            Utils.showToast('Category not found', 'error');
+            return;
+        }
+        
+        // Check if system category
+        if (category.is_system) {
+            Utils.showToast('System categories cannot be edited', 'error');
+            return;
+        }
+        
+        // Set editing mode
+        editingCategoryId = id;
+        selectedIconKey = category.icon || 'default';
+        
+        // Populate form with category data
+        document.getElementById('categoryName').value = category.name;
+        document.getElementById('categoryType').value = category.type;
+        document.getElementById('categoryColor').value = category.color || '#3B82F6';
+        document.getElementById('parentCategory').value = category.parent_id || '';
+        
+        // Update icon display
+        updateSelectedIconDisplay();
+        
+        // Update modal title
+        document.querySelector('#categoryModal h3').textContent = 'Edit Category';
+        document.querySelector('#categoryForm button[type="submit"]').textContent = 'Update Category';
+        
+        // Show modal
+        categoryModal.showModal();
     };
     
     window.deleteCategory = async (id) => {
@@ -262,4 +315,37 @@ document.addEventListener('DOMContentLoaded', async () => {
             Utils.showToast('Error deleting category', 'error');
         }
     };
+    
+    // Reset modal to add mode
+    window.resetCategoryModal = () => {
+        editingCategoryId = null;
+        selectedIconKey = 'default';
+        document.getElementById('categoryForm').reset();
+        updateSelectedIconDisplay();
+        document.querySelector('#categoryModal h3').textContent = 'Add Category';
+        document.querySelector('#categoryForm button[type="submit"]').textContent = 'Save Category';
+    };
+    
+    // Show icon selector modal
+    window.showIconSelector = () => {
+        const grid = document.getElementById('iconSelectorGrid');
+        grid.innerHTML = CategoryIcons.renderSelector(selectedIconKey);
+        iconSelectorModal.showModal();
+    };
+    
+    // Select icon from selector
+    window.selectCategoryIcon = (key) => {
+        selectedIconKey = key;
+        updateSelectedIconDisplay();
+        iconSelectorModal.close();
+    };
+    
+    // Update the selected icon display in the form
+    function updateSelectedIconDisplay() {
+        const iconSvg = CategoryIcons.getSvg(selectedIconKey);
+        const iconName = CategoryIcons.getName(selectedIconKey);
+        
+        document.getElementById('selectedIconName').textContent = iconName;
+        document.getElementById('selectedIconBtn').querySelector('svg').innerHTML = iconSvg;
+    }
 });

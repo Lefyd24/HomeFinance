@@ -18,13 +18,13 @@ document.addEventListener('DOMContentLoaded', async () => {
             <div id="summary-cards"></div>
             
             <!-- Main Grid -->
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6">
                 <!-- Spending Chart -->
                 <div class="lg:col-span-2">
-                    <div class="card bg-base-100 shadow-xl">
-                        <div class="card-body">
-                            <h2 class="card-title">Spending Overview</h2>
-                            <div class="h-80">
+                    <div class="card bg-base-100 shadow-lg lg:shadow-xl">
+                        <div class="card-body p-4 lg:p-6">
+                            <h2 class="card-title text-lg lg:text-xl">Spending Overview</h2>
+                            <div class="h-64 lg:h-80">
                                 <canvas id="spendingChart"></canvas>
                             </div>
                         </div>
@@ -112,7 +112,8 @@ async function loadDashboardData() {
         // Update summary cards
         const summaryContainer = document.getElementById('summary-cards');
         summaryContainer.innerHTML = `
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                <!-- Total Balance Card -->
                 <div class="card bg-base-100 shadow-sm">
                     <div class="card-body">
                         <div class="flex items-center gap-3">
@@ -177,6 +178,33 @@ async function loadDashboardData() {
                     </div>
                 </div>
             </div>
+            
+            <!-- Account Balances Section -->
+            <div class="card bg-base-100 shadow-sm mb-6">
+                <div class="card-body">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="font-bold text-lg flex items-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                            </svg>
+                            Account Balances
+                        </h3>
+                        <a href="accounts.html" class="btn btn-sm btn-ghost">View All</a>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+                        ${accounts.map(acc => `
+                            <div class="bg-base-200 rounded-lg p-3">
+                                <div class="flex flex-col">
+                                    <p class="font-medium text-sm truncate" title="${acc.name}">${acc.name}</p>
+                                    <p class="text-xs text-base-content/60 capitalize">${acc.type}</p>
+                                    <p class="font-bold text-sm mt-1 ${parseFloat(acc.balance) >= 0 ? 'text-success' : 'text-error'}">${Utils.formatCurrency(acc.balance)}</p>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            </div>
+            
         `;
         
         // Load spending chart
