@@ -249,6 +249,9 @@ const API = {
         getTransactions: (id, skip = 0, limit = 50) =>
             API.request(`/budgets/${id}/transactions?skip=${skip}&limit=${limit}`),
         
+        getSummary: (id, year = null) =>
+            API.request(`/budgets/${id}/summary${year ? `?year=${year}` : ''}`),
+        
         addCategory: (id, categoryId, allocatedAmount = null) =>
             API.request(`/budgets/${id}/categories`, { 
                 method: 'POST', 

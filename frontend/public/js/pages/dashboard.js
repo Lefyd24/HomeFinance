@@ -642,12 +642,12 @@ async function loadBudgetOverview() {
                 effectiveEndStr = budgetEndStr;
             }
             
-            // Calculate spent amount from transactions within the effective date range
             const matchingTransactions = transactions.filter(tx => {
                 const txDateStr = tx.date ? tx.date.split('T')[0] : null;
-                const categoryMatch = categoryIds.includes(tx.category_id);
+                const categoryMatch = categoryIds.length === 0 || categoryIds.includes(tx.category_id);
                 const dateMatch = txDateStr >= effectiveStartStr && txDateStr <= effectiveEndStr;
-                return categoryMatch && dateMatch;
+                const isExpense = tx.type === 'expense';
+                return categoryMatch && dateMatch && isExpense;
             });
             
             const spent = matchingTransactions.reduce((sum, tx) => sum + parseFloat(tx.amount || 0), 0);
