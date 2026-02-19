@@ -15,6 +15,7 @@ class User(Base):
     hashed_password = Column(String(255), nullable=False)
     full_name = Column(String(255))
     is_active = Column(Boolean, default=True)
+    api_key = Column(String(255), unique=True, index=True, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
@@ -46,7 +47,4 @@ class User(Base):
     spending_patterns = relationship(
         "SpendingPattern", back_populates="user", cascade="all, delete-orphan"
     )
-    debts = relationship(
-        "Debt", back_populates="user", cascade="all, delete-orphan"
-    )
-
+    debts = relationship("Debt", back_populates="user", cascade="all, delete-orphan")

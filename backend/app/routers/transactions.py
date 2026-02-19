@@ -5,7 +5,7 @@ from typing import List, Optional
 from datetime import datetime, date
 
 from app.database import get_db
-from app.utils.security import get_current_user
+from app.utils.security import get_current_user_authenticated
 from app.schemas import (
     TransactionCreate,
     TransactionUpdate,
@@ -21,7 +21,7 @@ router = APIRouter(prefix="/transactions", tags=["Transactions"])
 
 @router.get("/", response_model=TransactionList)
 def get_transactions(
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user_authenticated),
     db: Session = Depends(get_db),
     page: int = Query(1, ge=1),
     per_page: int = Query(20, ge=1, le=1000, alias="per_page"),
@@ -65,8 +65,10 @@ def get_transactions(
     result = []
     for tx in transactions:
         # Check if transaction has a linked debt payment
-        debt_payment = db.query(DebtPayment).filter(DebtPayment.transaction_id == tx.id).first()
-        
+        debt_payment = (
+            db.query(DebtPayment).filter(DebtPayment.transaction_id == tx.id).first()
+        )
+
         tx_dict = {
             "id": tx.id,
             "user_id": tx.user_id,
@@ -91,7 +93,9 @@ def get_transactions(
             "category_color": tx.category.color if tx.category else None,
             "debt_payment_id": debt_payment.id if debt_payment else None,
             "debt_id": debt_payment.debt_id if debt_payment else None,
-            "debt_name": debt_payment.debt.name if debt_payment and debt_payment.debt else None,
+            "debt_name": debt_payment.debt.name
+            if debt_payment and debt_payment.debt
+            else None,
         }
         result.append(tx_dict)
 
@@ -108,7 +112,7 @@ def get_transactions(
 )
 def create_transaction(
     transaction_data: TransactionCreate,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user_authenticated),
     db: Session = Depends(get_db),
 ):
     """Create a new transaction."""
@@ -208,7 +212,7 @@ def create_transaction(
     result["category_color"] = (
         db_transaction.category.color if db_transaction.category else None
     )
-    
+
     # Initialize debt payment fields (will be populated if linked later)
     result["debt_payment_id"] = None
     result["debt_id"] = None
@@ -220,7 +224,7 @@ def create_transaction(
 @router.get("/{transaction_id}", response_model=TransactionResponse)
 def get_transaction(
     transaction_id: int,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user_authenticated),
     db: Session = Depends(get_db),
 ):
     """Get transaction by ID."""
@@ -251,12 +255,18 @@ def get_transaction(
     result["category_color"] = (
         transaction.category.color if transaction.category else None
     )
-    
+
     # Check if transaction has a linked debt payment
-    debt_payment = db.query(DebtPayment).filter(DebtPayment.transaction_id == transaction.id).first()
+    debt_payment = (
+        db.query(DebtPayment)
+        .filter(DebtPayment.transaction_id == transaction.id)
+        .first()
+    )
     result["debt_payment_id"] = debt_payment.id if debt_payment else None
     result["debt_id"] = debt_payment.debt_id if debt_payment else None
-    result["debt_name"] = debt_payment.debt.name if debt_payment and debt_payment.debt else None
+    result["debt_name"] = (
+        debt_payment.debt.name if debt_payment and debt_payment.debt else None
+    )
 
     return result
 
@@ -265,7 +275,7 @@ def get_transaction(
 def update_transaction(
     transaction_id: int,
     transaction_data: TransactionUpdate,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user_authenticated),
     db: Session = Depends(get_db),
 ):
     """Update a transaction."""
@@ -341,12 +351,18 @@ def update_transaction(
     result["category_color"] = (
         updated_transaction.category.color if updated_transaction.category else None
     )
-    
+
     # Check if transaction has a linked debt payment
-    debt_payment = db.query(DebtPayment).filter(DebtPayment.transaction_id == updated_transaction.id).first()
+    debt_payment = (
+        db.query(DebtPayment)
+        .filter(DebtPayment.transaction_id == updated_transaction.id)
+        .first()
+    )
     result["debt_payment_id"] = debt_payment.id if debt_payment else None
     result["debt_id"] = debt_payment.debt_id if debt_payment else None
-    result["debt_name"] = debt_payment.debt.name if debt_payment and debt_payment.debt else None
+    result["debt_name"] = (
+        debt_payment.debt.name if debt_payment and debt_payment.debt else None
+    )
 
     return result
 
@@ -354,7 +370,7 @@ def update_transaction(
 @router.delete("/{transaction_id}")
 def delete_transaction(
     transaction_id: int,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user_authenticated),
     db: Session = Depends(get_db),
 ):
     """Delete a transaction."""
@@ -382,7 +398,7 @@ def delete_transaction(
 @router.post("/bulk-update")
 def bulk_update_transactions(
     bulk_data: BulkTransactionUpdate,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user_authenticated),
     db: Session = Depends(get_db),
 ):
     """Bulk update transactions."""
@@ -407,7 +423,7 @@ def bulk_update_transactions(
 @router.post("/bulk-delete")
 def bulk_delete_transactions(
     bulk_data: BulkTransactionDelete,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user_authenticated),
     db: Session = Depends(get_db),
 ):
     """Bulk delete transactions."""

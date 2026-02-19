@@ -43,7 +43,14 @@ from app.schemas.report import (
     SavedReportCreate,
     SavedReportResponse,
 )
-from app.schemas.auth import Token, TokenPayload, LoginRequest, PasswordChange
+from app.schemas.auth import (
+    Token,
+    TokenPayload,
+    LoginRequest,
+    PasswordChange,
+    APIKeyResponse,
+    APIKeyStatus,
+)
 from app.schemas.dashboard import (
     DashboardSummary,
     DashboardRecentTransaction,
@@ -127,6 +134,8 @@ __all__ = [
     "TokenPayload",
     "LoginRequest",
     "PasswordChange",
+    "APIKeyResponse",
+    "APIKeyStatus",
     # Dashboard schemas
     "DashboardSummary",
     "DashboardRecentTransaction",

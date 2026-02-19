@@ -105,6 +105,14 @@ const Layout = {
                                             Settings
                                         </a>
                                     </li>
+                                    <li>
+                                        <a href="api-keys.html" class="gap-2">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+                                            </svg>
+                                            API Keys
+                                        </a>
+                                    </li>
                                     <div class="divider my-1"></div>
                                     <li>
                                         <a href="#" onclick="Auth.logout(); return false;" class="text-error gap-2">
@@ -303,6 +311,19 @@ const Layout = {
                                 </div>
                             </div>
                         </div>
+                        
+                        <div class="card bg-base-200">
+                            <div class="card-body p-4">
+                                <h4 class="card-title text-sm">Developer</h4>
+                                <p class="text-xs text-base-content/60 mb-3">Manage API access for programmatic integrations</p>
+                                <a href="api-keys.html" class="btn btn-outline btn-sm w-full">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+                                    </svg>
+                                    Manage API Keys
+                                </a>
+                            </div>
+                        </div>
                     </div>
                     
                     <div class="modal-action">
@@ -362,7 +383,8 @@ const Layout = {
             accounts: 'Accounts',
             categories: 'Categories',
             insights: 'Smart Insights',
-            reports: 'Reports'
+            reports: 'Reports',
+            'api-keys': 'API Keys'
         };
         return titles[page] || 'Personal Finance';
     },

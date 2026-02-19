@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from typing import List, Optional
 
 from app.database import get_db
-from app.utils.security import get_current_user
+from app.utils.security import get_current_user_authenticated
 from app.schemas import AccountCreate, AccountUpdate, AccountResponse
 from app.models import User, Account, Transaction
 
@@ -12,7 +12,7 @@ router = APIRouter(prefix="/accounts", tags=["Accounts"])
 
 @router.get("/", response_model=List[AccountResponse])
 def get_accounts(
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user_authenticated),
     db: Session = Depends(get_db),
     skip: int = 0,
     limit: int = 100,
@@ -36,7 +36,7 @@ def get_accounts(
 @router.post("/", response_model=AccountResponse, status_code=status.HTTP_201_CREATED)
 def create_account(
     account_data: AccountCreate,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user_authenticated),
     db: Session = Depends(get_db),
 ):
     """Create a new account."""
@@ -51,7 +51,7 @@ def create_account(
 @router.get("/{account_id}", response_model=AccountResponse)
 def get_account(
     account_id: int,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user_authenticated),
     db: Session = Depends(get_db),
 ):
     """Get account by ID."""
@@ -76,7 +76,7 @@ def get_account(
 def update_account(
     account_id: int,
     account_data: AccountUpdate,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user_authenticated),
     db: Session = Depends(get_db),
 ):
     """Update an account."""
@@ -105,7 +105,7 @@ def update_account(
 @router.delete("/{account_id}")
 def delete_account(
     account_id: int,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user_authenticated),
     db: Session = Depends(get_db),
 ):
     """Delete an account and all associated transactions."""
@@ -144,7 +144,7 @@ def delete_account(
 @router.get("/{account_id}/transactions")
 def get_account_transactions(
     account_id: int,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user_authenticated),
     db: Session = Depends(get_db),
     skip: int = 0,
     limit: int = 100,
@@ -174,7 +174,7 @@ def get_account_transactions(
 @router.get("/{account_id}/balance")
 def get_account_balance_history(
     account_id: int,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user_authenticated),
     db: Session = Depends(get_db),
 ):
     """Get account balance history."""

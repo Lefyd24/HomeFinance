@@ -22,3 +22,13 @@ class PasswordChange(BaseModel):
     current_password: str
     new_password: str
     confirm_password: str
+
+
+class APIKeyResponse(BaseModel):
+    api_key: str
+    message: str
+
+
+class APIKeyStatus(BaseModel):
+    has_api_key: bool
+    api_key_last_four: Optional[str] = None
