@@ -27,6 +27,7 @@ class BudgetUpdate(BaseModel):
     period: Optional[str] = Field(None, pattern="^(monthly|yearly|custom)$")
     start_date: Optional[datetime] = None
     end_date: Optional[datetime] = None
+    category_ids: Optional[List[int]] = None
     is_active: Optional[bool] = None
 
 

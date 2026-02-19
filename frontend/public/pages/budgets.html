@@ -19,7 +19,7 @@
     <!-- Add Budget Modal -->
     <dialog id="budgetModal" class="modal">
         <div class="modal-box w-11/12 max-w-2xl">
-            <h3 class="font-bold text-lg mb-4">Create Budget</h3>
+            <h3 class="font-bold text-lg mb-4"><span id="budgetModalTitle">Create Budget</span></h3>
             <form id="budgetForm" class="space-y-4">
                 <div class="form-control">
                     <label class="label"><span class="label-text">Budget Name</span></label>
@@ -56,8 +56,8 @@
                     </div>
                 </div>
                 <div class="modal-action">
-                    <button type="button" class="btn" onclick="budgetModal.close()">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Create Budget</button>
+                    <button type="button" class="btn" onclick="budgetModal.close(); resetBudgetModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary"><span id="budgetSubmitButtonText">Create Budget</span></button>
                 </div>
             </form>
         </div>

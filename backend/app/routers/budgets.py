@@ -119,8 +119,29 @@ def update_budget(
     
     # Update fields
     update_data = budget_data.model_dump(exclude_unset=True)
+    category_ids = update_data.pop('category_ids', None)
+    
     for field, value in update_data.items():
         setattr(budget, field, value)
+    
+    # Update categories if provided
+    if category_ids is not None:
+        # Remove existing categories
+        db.query(BudgetCategory).filter(BudgetCategory.budget_id == budget_id).delete()
+        
+        # Add new categories
+        for category_id in category_ids:
+            category = db.query(Category).filter(
+                Category.id == category_id,
+                Category.user_id == current_user.id
+            ).first()
+            
+            if category:
+                budget_category = BudgetCategory(
+                    budget_id=budget_id,
+                    category_id=category_id
+                )
+                db.add(budget_category)
     
     db.commit()
     db.refresh(budget)

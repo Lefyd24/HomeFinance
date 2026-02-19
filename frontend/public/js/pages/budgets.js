@@ -5,10 +5,40 @@
 // State (global for this module)
 let budgets = [];
 let categories = [];
+let editingBudgetId = null;
 
 // Global functions for onclick handlers
-window.editBudget = (id) => {
-    Utils.showToast('Edit functionality coming soon!', 'info');
+window.editBudget = async (id) => {
+    const budget = budgets.find(b => b.id === id);
+    if (!budget) {
+        Utils.showToast('Budget not found', 'error');
+        return;
+    }
+    
+    editingBudgetId = id;
+    
+    document.getElementById('budgetName').value = budget.name;
+    document.getElementById('budgetAmount').value = budget.amount;
+    document.getElementById('budgetPeriod').value = budget.period;
+    document.getElementById('startDate').value = budget.start_date ? budget.start_date.split('T')[0] : '';
+    document.getElementById('endDate').value = budget.end_date ? budget.end_date.split('T')[0] : '';
+    
+    const categoryCheckboxes = document.querySelectorAll('input[name="categories"]');
+    categoryCheckboxes.forEach(cb => {
+        cb.checked = budget.category_ids && budget.category_ids.includes(parseInt(cb.value));
+    });
+    
+    document.getElementById('budgetModalTitle').textContent = 'Edit Budget';
+    document.getElementById('budgetSubmitButtonText').textContent = 'Update Budget';
+    
+    budgetModal.showModal();
+};
+
+window.resetBudgetModal = () => {
+    editingBudgetId = null;
+    document.getElementById('budgetForm').reset();
+    document.getElementById('budgetModalTitle').textContent = 'Create Budget';
+    document.getElementById('budgetSubmitButtonText').textContent = 'Create Budget';
 };
 
 window.deleteBudget = async (id) => {
@@ -137,7 +167,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     <h2 class="text-2xl font-bold">Budgets</h2>
                     <p class="text-base-content/60">Track your spending against budgets</p>
                 </div>
-                <button onclick="budgetModal.showModal()" class="btn btn-primary">
+                <button onclick="resetBudgetModal(); budgetModal.showModal()" class="btn btn-primary">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                     </svg>
@@ -329,10 +359,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         };
         
         try {
-            await API.budgets.create(data);
-            Utils.showToast('Budget created successfully', 'success');
+            if (editingBudgetId) {
+                await API.budgets.update(editingBudgetId, data);
+                Utils.showToast('Budget updated successfully', 'success');
+            } else {
+                await API.budgets.create(data);
+                Utils.showToast('Budget created successfully', 'success');
+            }
+            
             budgetModal.close();
-            e.target.reset();
+            resetBudgetModal();
             
             // Reload budgets
             budgets = await API.budgets.list();
@@ -340,7 +376,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             renderBudgetSummary();
             
         } catch (error) {
-            Utils.showToast('Error creating budget', 'error');
+            Utils.showToast(editingBudgetId ? 'Error updating budget' : 'Error creating budget', 'error');
         }
     }
+
 });
