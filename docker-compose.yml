@@ -10,7 +10,7 @@ services:
     environment:
       - APP_NAME=Personal Finance
       - APP_VERSION=1.0.0
-      - DATABASE_URL=sqlite:///data/finance.db
+      - DATABASE_URL=sqlite:////app/data/finance.db
       - SECRET_KEY=${SECRET_KEY:-your-secret-key-change-in-production}
       - DEBUG=${DEBUG:-false}
       - CORS_ORIGINS=["*"]

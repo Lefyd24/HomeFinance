@@ -97,7 +97,7 @@ if __name__ == "__main__":
     import uvicorn
 
     # Use port from environment variable or default to 8223
-    port = int(os.getenv("BACKEND_PORT", 8224))
+    port = int(os.getenv("BACKEND_PORT", 8223))
     uvicorn.run(
         "main:app", host="0.0.0.0", port=port, reload=settings.DEBUG, log_level="info"
     )

@@ -14,7 +14,7 @@ const API = {
         // Frontend runs on port 3100, backend on port 8223
         const protocol = window.location.protocol;
         const hostname = window.location.hostname;
-        return `${protocol}//${hostname}:8224/api`;
+        return `${protocol}//${hostname}:8223/api`;
     })(),
     
     /**

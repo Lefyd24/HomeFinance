@@ -948,7 +948,7 @@ async function loadGoalsOverview() {
                     <!-- Goals Carousel -->
                     <div class="carousel carousel-center w-full rounded-box" id="goalsCarousel">
                         ${goalsWithCountdown.map((goal, index) => `
-                            <div id="goal${index}" class="carousel-item w-8/12 snap-start mx-2" onclick="showGoalDetailModal(${goal.id})" style="cursor: pointer;">
+                            <div id="goal${index}" class="carousel-item w-10/12 snap-start mx-2" onclick="showGoalDetailModal(${goal.id})" style="cursor: pointer;">
                                 <div class="w-full bg-gradient-to-br from-primary/10 to-secondary/40 rounded-lg p-6 hover:shadow-lg transition-shadow">
                                     <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                                         <!-- Goal Info -->
