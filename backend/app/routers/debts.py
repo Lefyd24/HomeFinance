@@ -72,6 +72,25 @@ def get_debt_summary(
     
     progress_pct = (total_paid / total_original * 100) if total_original > 0 else 0
     
+    total_projected_interest = 0
+    total_amount_due = 0
+    for debt in active_debts:
+        if debt.interest_rate and debt.interest_rate > 0 and debt.minimum_payment and debt.minimum_payment > 0:
+            monthly_rate = debt.interest_rate / 12
+            payment = debt.minimum_payment
+            balance = debt.current_balance
+            
+            if payment > balance * monthly_rate:
+                months = math.log(payment / (payment - balance * monthly_rate)) / math.log(1 + monthly_rate)
+                months = int(math.ceil(months))
+                projected_interest = (payment * months) - balance
+                total_projected_interest += projected_interest
+                total_amount_due += balance + projected_interest
+            else:
+                total_amount_due += balance
+        else:
+            total_amount_due += debt.current_balance
+    
     return DebtSummary(
         total_debts=len(debts),
         active_debts=len(active_debts),
@@ -81,7 +100,9 @@ def get_debt_summary(
         total_paid_off=total_paid,
         total_minimum_payments=total_minimum,
         average_interest_rate=round(avg_interest, 4),
-        overall_progress_percentage=round(progress_pct, 2)
+        overall_progress_percentage=round(progress_pct, 2),
+        total_projected_interest=round(total_projected_interest, 2),
+        total_amount_due=round(total_amount_due, 2)
     )
 
 
@@ -493,31 +514,32 @@ def calculate_debt_metrics(debt: Debt) -> DebtResponse:
     months_to_payoff = None
     total_interest = None
     payoff_date = None
+    total_amount_due = debt.current_balance
     
     if debt.current_balance > 0 and debt.minimum_payment and debt.minimum_payment > 0:
         if debt.interest_rate and debt.interest_rate > 0:
-            # Calculate using amortization formula
             monthly_rate = debt.interest_rate / 12
             payment = debt.minimum_payment
             balance = debt.current_balance
             
             if payment <= balance * monthly_rate:
-                # Payment doesn't cover interest
                 months_to_payoff = float('inf')
+                total_interest = float('inf')
+                total_amount_due = float('inf')
             else:
                 months_to_payoff = math.log(
                     payment / (payment - balance * monthly_rate)
                 ) / math.log(1 + monthly_rate)
                 months_to_payoff = int(math.ceil(months_to_payoff))
                 
-                # Calculate total interest
                 total_paid = payment * months_to_payoff
                 total_interest = total_paid - balance
+                total_amount_due = balance + total_interest
                 payoff_date = date.today() + timedelta(days=months_to_payoff * 30)
         else:
-            # No interest
             months_to_payoff = int(math.ceil(debt.current_balance / debt.minimum_payment))
             total_interest = 0
+            total_amount_due = debt.current_balance
             payoff_date = date.today() + timedelta(days=months_to_payoff * 30)
     
     return DebtResponse(
@@ -546,8 +568,9 @@ def calculate_debt_metrics(debt: Debt) -> DebtResponse:
         created_at=debt.created_at,
         updated_at=debt.updated_at,
         months_to_payoff=months_to_payoff if months_to_payoff != float('inf') else None,
-        total_interest=round(total_interest, 2) if total_interest else None,
-        payoff_date=payoff_date
+        total_interest=round(total_interest, 2) if total_interest and total_interest != float('inf') else None,
+        payoff_date=payoff_date,
+        total_amount_due=round(total_amount_due, 2) if total_amount_due and total_amount_due != float('inf') else None
     )
 
 
