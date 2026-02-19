@@ -5,14 +5,17 @@ from app.models.transaction import Transaction
 from app.models.budget import Budget, BudgetCategory
 from app.models.import_batch import ImportBatch
 from app.models.saved_report import SavedReport
+from app.models.goal import FinancialGoal, GoalTransaction
 
 __all__ = [
     "User",
-    "Account", 
+    "Account",
     "Category",
     "Transaction",
     "Budget",
     "BudgetCategory",
     "ImportBatch",
-    "SavedReport"
+    "SavedReport",
+    "FinancialGoal",
+    "GoalTransaction",
 ]

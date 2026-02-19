@@ -15,6 +15,7 @@ from app.routers import (
     budgets,
     import_wizard,
     reports,
+    goals,
 )
 
 
@@ -85,13 +86,14 @@ app.include_router(transactions.router, prefix="/api")
 app.include_router(budgets.router, prefix="/api")
 app.include_router(import_wizard.router, prefix="/api")
 app.include_router(reports.router, prefix="/api")
+app.include_router(goals.router, prefix="/api")
 
 
 if __name__ == "__main__":
     import uvicorn
 
     # Use port from environment variable or default to 8223
-    port = int(os.getenv("BACKEND_PORT", 8223))
+    port = int(os.getenv("BACKEND_PORT", 8224))
     uvicorn.run(
         "main:app", host="0.0.0.0", port=port, reload=settings.DEBUG, log_level="info"
     )

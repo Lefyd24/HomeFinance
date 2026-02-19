@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light-fin">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Financial Goals - Personal Finance</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../assets/css/app.css">
+    <link rel="stylesheet" href="../assets/css/custom.css">
+    <link rel="icon" type="image/svg+xml" href="../assets/icons/favicon.svg">
+    <link rel="alternate icon" href="../assets/icons/favicon.ico">
+    <link rel="shortcut icon" href="../assets/icons/favicon.ico">
+</head>
+<body class="bg-base-200 min-h-screen">
+    <div id="app"></div>
+    
+    <!-- Create/Edit Goal Modal -->
+    <dialog id="goalModal" class="modal modal-middle sm:modal-middle">
+        <div class="modal-box max-w-xl p-0">
+            <div class="bg-gradient-to-r from-primary to-primary/80 p-6 text-primary-content">
+                <div class="flex items-center justify-between">
+                    <h3 class="font-bold text-xl flex items-center gap-2">
+                        <span id="modalTitle">Create Goal</span>
+                    </h3>
+                    <button type="button" onclick="goalModal.close()" class="btn btn-ghost btn-circle btn-sm">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            
+            <form id="goalForm" class="p-6 space-y-5">
+                <div class="form-control">
+                    <label class="label">
+                        <span class="label-text font-medium">Goal Name</span>
+                        <span class="label-text-alt text-error">*</span>
+                    </label>
+                    <input type="text" id="goalName" name="name" class="input input-bordered w-full" required>
+                </div>
+                
+                <div class="form-control">
+                    <label class="label">
+                        <span class="label-text font-medium">Description</span>
+                        <span class="label-text-alt">Optional</span>
+                    </label>
+                    <textarea id="goalDescription" name="description" class="textarea textarea-bordered w-full" rows="2"></textarea>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="form-control">
+                        <label class="label">
+                            <span class="label-text font-medium">Target Amount</span>
+                            <span class="label-text-alt text-error">*</span>
+                        </label>
+                        <input type="number" id="goalTargetAmount" name="target_amount" step="0.01" class="input input-bordered w-full" required>
+                    </div>
+                    <div class="form-control">
+                        <label class="label">
+                            <span class="label-text font-medium">Currency</span>
+                        </label>
+                        <select id="goalCurrency" name="currency" class="select select-bordered w-full">
+                            <option value="EUR">EUR (€)</option>
+                            <option value="USD">USD ($)</option>
+                            <option value="GBP">GBP (£)</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="form-control">
+                        <label class="label">
+                            <span class="label-text font-medium">Category</span>
+                        </label>
+                        <select id="goalCategory" name="category" class="select select-bordered w-full">
+                            <option value="">Select category</option>
+                            <option value="emergency_fund">Emergency Fund</option>
+                            <option value="vacation">Vacation</option>
+                            <option value="car">Car Purchase</option>
+                            <option value="home">Home Purchase</option>
+                            <option value="education">Education</option>
+                            <option value="retirement">Retirement</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                    <div class="form-control">
+                        <label class="label">
+                            <span class="label-text font-medium">Target Date</span>
+                            <span class="label-text-alt">Optional</span>
+                        </label>
+                        <input type="date" id="goalTargetDate" name="target_date" class="input input-bordered w-full">
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="form-control">
+                        <label class="label">
+                            <span class="label-text font-medium">Icon</span>
+                        </label>
+                        <select id="goalIcon" name="icon" class="select select-bordered w-full">
+                            <option value="🎯">🎯 Target</option>
+                            <option value="💰">💰 Money</option>
+                            <option value="🏠">🏠 Home</option>
+                            <option value="🚗">🚗 Car</option>
+                            <option value="✈️">✈️ Travel</option>
+                            <option value="🎓">🎓 Education</option>
+                            <option value="🏥">🏥 Health</option>
+                            <option value="🎁">🎁 Gift</option>
+                        </select>
+                    </div>
+                    <div class="form-control">
+                        <label class="label">
+                            <span class="label-text font-medium">Color</span>
+                        </label>
+                        <input type="color" id="goalColor" name="color" class="input input-bordered w-full h-12" value="#3B82F6">
+                    </div>
+                </div>
+                
+                <div class="form-control">
+                    <label class="label cursor-pointer justify-start gap-3">
+                        <input type="checkbox" id="goalIsPrimary" name="is_primary" class="checkbox">
+                        <span class="label-text">Set as primary goal</span>
+                    </label>
+                </div>
+                
+                <div class="modal-action pt-2 border-t border-base-200 mt-6">
+                    <button type="button" class="btn btn-ghost" onclick="goalModal.close()">Cancel</button>
+                    <button type="submit" class="btn btn-primary px-6">Save Goal</button>
+                </div>
+            </form>
+        </div>
+    </dialog>
+    
+    <!-- Contribute Modal -->
+    <dialog id="contributeModal" class="modal modal-middle sm:modal-middle">
+        <div class="modal-box max-w-lg p-0">
+            <div class="bg-gradient-to-r from-primary to-primary/80 p-6 text-primary-content">
+                <div class="flex items-center justify-between">
+                    <h3 class="font-bold text-xl">Add Contribution</h3>
+                    <button type="button" onclick="contributeModal.close()" class="btn btn-ghost btn-circle btn-sm">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            
+            <form id="contributeForm" class="p-6 space-y-5">
+                <input type="hidden" id="contributeGoalId">
+                
+                <div class="form-control">
+                    <label class="label">
+                        <span class="label-text font-medium">Amount</span>
+                        <span class="label-text-alt text-error">*</span>
+                    </label>
+                    <input type="number" id="contributeAmount" step="0.01" class="input input-bordered w-full" required>
+                </div>
+                
+                <div class="form-control">
+                    <label class="label">
+                        <span class="label-text font-medium">Type</span>
+                    </label>
+                    <select id="contributeType" class="select select-bordered w-full">
+                        <option value="contribution">Contribution (Add to goal)</option>
+                        <option value="withdrawal">Withdrawal (Remove from goal)</option>
+                    </select>
+                </div>
+                
+                <div class="form-control">
+                    <label class="label">
+                        <span class="label-text font-medium">Description</span>
+                        <span class="label-text-alt">Optional</span>
+                    </label>
+                    <input type="text" id="contributeDescription" class="input input-bordered w-full" placeholder="e.g., Monthly savings">
+                </div>
+                
+                <div class="form-control">
+                    <label class="label">
+                        <span class="label-text font-medium">Date</span>
+                        <span class="label-text-alt text-error">*</span>
+                    </label>
+                    <input type="date" id="contributeDate" class="input input-bordered w-full" required>
+                </div>
+                
+                <div class="modal-action pt-2 border-t border-base-200 mt-6">
+                    <button type="button" class="btn btn-ghost" onclick="contributeModal.close()">Cancel</button>
+                    <button type="submit" class="btn btn-primary px-6">Add Transaction</button>
+                </div>
+            </form>
+        </div>
+    </dialog>
+    
+    <!-- Goal Details Modal -->
+    <dialog id="goalDetailsModal" class="modal modal-middle sm:modal-middle">
+        <div class="modal-box max-w-2xl max-h-[90vh] overflow-y-auto p-0">
+            <div class="bg-gradient-to-r from-primary to-primary/80 p-6 text-primary-content">
+                <div class="flex items-center justify-between">
+                    <h3 class="font-bold text-xl" id="goalDetailsTitle">Goal Details</h3>
+                    <button onclick="goalDetailsModal.close()" class="btn btn-ghost btn-circle btn-sm">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            
+            <div id="goalDetailsContent" class="p-6"></div>
+            
+            <div class="modal-action p-6 pt-0">
+                <button type="button" class="btn" onclick="goalDetailsModal.close()">Close</button>
+            </div>
+        </div>
+    </dialog>
+    
+    <script src="../js/utils.js"></script>
+    <script src="../js/api.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/components/layout.js"></script>
+    <script src="../js/pages/goals.js"></script>
+</body>
+</html>

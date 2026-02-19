@@ -267,9 +267,10 @@ async function loadDashboardData() {
                         </div>
                     </div>
                     
-                    <!-- Budget Overview -->
-                    <div>
+                    <!-- Budget & Goals Overview -->
+                    <div class="space-y-6">
                         <div id="budget-overview"></div>
+                        <div id="goals-overview"></div>
                     </div>
                 </div>
                 
@@ -448,13 +449,16 @@ async function loadDashboardData() {
         `;
         
         // Load spending chart
-        loadSpendingChart();
-        
+        await loadSpendingChart();
+
         // Load budget overview
-        loadBudgetOverview();
-        
+        await loadBudgetOverview();
+
+        // Load goals overview
+        await loadGoalsOverview();
+
         // Load recent transactions
-        loadRecentTransactions();
+        await loadRecentTransactions();
         
     } catch (error) {
         console.error('Error loading dashboard:', error);
@@ -673,6 +677,98 @@ async function loadBudgetOverview() {
         `;
     } catch (error) {
         console.error('Error loading budget overview:', error);
+    }
+}
+
+async function loadGoalsOverview() {
+    try {
+        console.log('Loading goals overview...');
+        const container = document.getElementById('goals-overview');
+        
+        if (!container) {
+            console.error('Goals container not found in DOM!');
+            return;
+        }
+        
+        console.log('Fetching goals from API...');
+        const goals = await API.goals.list();
+        console.log('Goals fetched:', goals);
+        
+        // Filter active goals on the frontend
+        const activeGoals = goals.filter(g => g.status === 'active');
+        console.log('Active goals:', activeGoals);
+
+        if (!activeGoals || activeGoals.length === 0) {
+            console.log('No active goals found, showing empty state');
+            container.innerHTML = `
+                <div class="card bg-base-100 shadow-xl">
+                    <div class="card-body">
+                        <h2 class="card-title mb-4 flex items-center gap-2">
+                            <span class="text-xl">🎯</span> Financial Goals
+                        </h2>
+                        <p class="text-base-content/60 mb-4">No active goals. Create your first goal to start saving!</p>
+                        <div class="card-actions justify-end">
+                            <a href="goals.html" class="btn btn-sm btn-primary">Create Goal</a>
+                        </div>
+                    </div>
+                </div>
+            `;
+            return;
+        }
+
+        // Show top 3 goals
+        const goalsToShow = activeGoals.slice(0, 3);
+        console.log('Rendering', goalsToShow.length, 'goals');
+
+        container.innerHTML = `
+            <div class="card bg-base-100 shadow-xl">
+                <div class="card-body">
+                    <h2 class="card-title mb-4 flex items-center gap-2">
+                        <span class="text-xl">🎯</span> Financial Goals
+                    </h2>
+                    <div class="space-y-4">
+                        ${goalsToShow.map(goal => `
+                            <div class="flex items-center gap-3 p-3 bg-base-200 rounded-lg">
+                                <div class="text-2xl">${goal.icon || '🎯'}</div>
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex justify-between items-center mb-1">
+                                        <span class="font-medium truncate">${goal.name}</span>
+                                        <span class="text-sm">${Math.round(goal.progress_percentage || 0)}%</span>
+                                    </div>
+                                    <progress class="progress progress-primary w-full" 
+                                              value="${goal.progress_percentage || 0}" max="100"></progress>
+                                    <div class="flex justify-between text-xs text-base-content/60 mt-1">
+                                        <span>${Utils.formatCurrency(goal.current_amount || 0)}</span>
+                                        <span>${Utils.formatCurrency(goal.target_amount || 0)}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                    <div class="card-actions justify-end mt-4">
+                        <a href="goals.html" class="btn btn-sm btn-ghost">View All Goals</a>
+                    </div>
+                </div>
+            </div>
+        `;
+        console.log('Goals rendered successfully');
+    } catch (error) {
+        console.error('Error loading goals overview:', error);
+        const container = document.getElementById('goals-overview');
+        if (container) {
+            container.innerHTML = `
+                <div class="card bg-base-100 shadow-xl">
+                    <div class="card-body">
+                        <h2 class="card-title mb-4 flex items-center gap-2">
+                            <span class="text-xl">🎯</span> Financial Goals
+                        </h2>
+                        <div class="alert alert-error">
+                            <span>Error loading goals: ${error.message || 'Unknown error'}</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
     }
 }
 

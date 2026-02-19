@@ -14,7 +14,7 @@ const API = {
         // Frontend runs on port 3100, backend on port 8223
         const protocol = window.location.protocol;
         const hostname = window.location.hostname;
-        return `${protocol}//${hostname}:8223/api`;
+        return `${protocol}//${hostname}:8224/api`;
     })(),
     
     /**
@@ -409,6 +409,39 @@ const API = {
         
         deleteSaved: (id) => 
             API.request(`/reports/saved/${id}`, { method: 'DELETE' })
+    },
+
+    // Goals methods
+    goals: {
+        list: (statusFilter = null) => {
+            let url = '/goals';
+            if (statusFilter) url += `?status_filter=${statusFilter}`;
+            return API.request(url);
+        },
+        
+        create: (data) => 
+            API.request('/goals', { method: 'POST', body: JSON.stringify(data) }),
+        
+        get: (id) => 
+            API.request(`/goals/${id}`),
+        
+        update: (id, data) => 
+            API.request(`/goals/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+        
+        delete: (id) => 
+            API.request(`/goals/${id}`, { method: 'DELETE' }),
+        
+        getSummary: () =>
+            API.request('/goals/summary'),
+        
+        getProgress: (id) =>
+            API.request(`/goals/${id}/progress`),
+        
+        getTransactions: (id, limit = 50) =>
+            API.request(`/goals/${id}/transactions?limit=${limit}`),
+        
+        addTransaction: (id, data) =>
+            API.request(`/goals/${id}/transactions`, { method: 'POST', body: JSON.stringify(data) })
     }
 };
 
