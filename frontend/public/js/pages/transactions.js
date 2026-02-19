@@ -6,6 +6,7 @@
 let transactions = [];
 let accounts = [];
 let categories = [];
+let debts = [];
 let currentPage = 1;
 let totalPages = 1;
 let filters = {};
@@ -22,6 +23,36 @@ window.openTransactionModal = () => {
     
     // Reset category dropdown
     document.getElementById('categoryId').value = '';
+    
+    // Reset debt payment container to original state (in case it was modified during edit)
+    const debtPaymentContainer = document.getElementById('debtPaymentContainer');
+    if (debtPaymentContainer) {
+        debtPaymentContainer.innerHTML = `
+            <label class="label cursor-pointer justify-start gap-3">
+                <input type="checkbox" id="linkToDebt" class="checkbox checkbox-sm" onchange="toggleDebtSelect()">
+                <span class="label-text font-medium">This is a debt payment</span>
+            </label>
+            <div id="debtSelectContainer" class="mt-2 hidden">
+                <label class="label py-1"><span class="label-text font-medium text-sm">Select Debt</span></label>
+                <select id="debtId" name="debtId" class="select select-bordered w-full select-sm sm:select-md">
+                    <option value="">Select a debt...</option>
+                </select>
+                <label class="label">
+                    <span class="label-text-alt text-info">This will create a linked debt payment record</span>
+                </label>
+            </div>
+        `;
+        // Re-populate debt select
+        window.populateDebtSelect();
+    }
+    
+    // Reset debt linking fields
+    const debtCheckbox = document.getElementById('linkToDebt');
+    const debtSelectContainer = document.getElementById('debtSelectContainer');
+    const debtSelect = document.getElementById('debtId');
+    if (debtCheckbox) debtCheckbox.checked = false;
+    if (debtSelectContainer) debtSelectContainer.classList.add('hidden');
+    if (debtSelect) debtSelect.value = '';
     
     // Reset form visibility
     window.updateFormForTransactionType();
@@ -73,6 +104,23 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Initialize (this will replace the skeleton with actual content)
     await initialize();
     
+    // Set default filters to current month
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
+    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0];
+    filters = {
+        start_date: startOfMonth,
+        end_date: endOfMonth
+    };
+    // Populate filter inputs
+    const filterFromDate = document.getElementById('filterFromDate');
+    const filterToDate = document.getElementById('filterToDate');
+    if (filterFromDate) filterFromDate.value = startOfMonth;
+    if (filterToDate) filterToDate.value = endOfMonth;
+    
+    // Load transactions data
+    await loadTransactions();
+    
     // Setup form submission (modal is in HTML, not dynamically rendered)
     const transactionForm = document.getElementById('transactionForm');
     if (transactionForm) {
@@ -85,246 +133,129 @@ document.addEventListener('DOMContentLoaded', async () => {
         transactionType.addEventListener('change', window.updateFormForTransactionType);
     }
     
-    async function initialize() {
-        try {
-            // Load accounts and categories
-            accounts = await API.accounts.list();
-            categories = await API.categories.list();
-            
-            // Render the actual content structure (replacing skeleton)
-            const mainContent = document.getElementById('main-content');
-            mainContent.innerHTML = `
-                <div class="space-y-4 md:space-y-6">
-                    <!-- Header -->
-                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 md:gap-4">
-                        <div>
-                            <h2 class="text-xl md:text-2xl font-bold">Transactions</h2>
-                            <p class="text-sm text-base-content/60">Manage your income and expenses</p>
-                        </div>
-                        <button onclick="openTransactionModal()" class="btn btn-primary btn-sm md:btn-md w-full sm:w-auto">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 md:h-5 md:w-5 mr-1 md:mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                            </svg>
-                            <span class="hidden sm:inline">Add Transaction</span>
-                            <span class="sm:hidden">Add</span>
-                        </button>
-                    </div>
-                    
-                    <!-- Search Bar -->
-                    <div class="card bg-base-100 shadow-sm">
-                        <div class="card-body p-3 md:p-4">
-                            <div class="relative">
-                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-base-content/40" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                                    </svg>
-                                </div>
-                                <input type="text" id="searchDescription" class="input input-bordered w-full pl-10 input-sm md:input-md" placeholder="Search by description..." onkeyup="handleSearch(event)">
-                                <button id="clearSearch" class="absolute inset-y-0 right-0 pr-3 flex items-center hidden" onclick="clearSearch()">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-base-content/40 hover:text-base-content" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                                    </svg>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Filters -->
-                    <div class="card bg-base-100 shadow-sm">
-                        <div class="card-body p-3 md:p-4">
-                            <div class="flex flex-wrap gap-2 md:gap-4">
-                                <div class="form-control w-full sm:w-auto flex-1 sm:flex-none min-w-[140px]">
-                                    <label class="label py-1"><span class="label-text text-xs md:text-sm">From Date</span></label>
-                                    <input type="date" id="filterFromDate" class="input input-bordered input-sm w-full">
-                                </div>
-                                <div class="form-control w-full sm:w-auto flex-1 sm:flex-none min-w-[140px]">
-                                    <label class="label py-1"><span class="label-text text-xs md:text-sm">To Date</span></label>
-                                    <input type="date" id="filterToDate" class="input input-bordered input-sm w-full">
-                                </div>
-                                <div class="form-control w-full sm:w-auto flex-1 sm:flex-none min-w-[140px]">
-                                    <label class="label py-1"><span class="label-text text-xs md:text-sm">Account</span></label>
-                                    <select id="filterAccount" class="select select-bordered select-sm w-full">
-                                        <option value="">All Accounts</option>
-                                    </select>
-                                </div>
-                                <div class="form-control w-full sm:w-auto flex-1 sm:flex-none min-w-[140px]">
-                                    <label class="label py-1"><span class="label-text text-xs md:text-sm">Category</span></label>
-                                    <select id="filterCategory" class="select select-bordered select-sm w-full">
-                                        <option value="">All Categories</option>
-                                    </select>
-                                </div>
-                                <div class="form-control w-full sm:w-auto flex-1 sm:flex-none min-w-[120px]">
-                                    <label class="label py-1"><span class="label-text text-xs md:text-sm">Type</span></label>
-                                    <select id="filterType" class="select select-bordered select-sm w-full">
-                                        <option value="">All Types</option>
-                                        <option value="income">Income</option>
-                                        <option value="expense">Expense</option>
-                                        <option value="transfer">Transfer</option>
-                                    </select>
-                                </div>
-                                <div class="form-control flex items-end w-full sm:w-auto">
-                                    <button onclick="applyFilters()" class="btn btn-sm btn-primary w-full sm:w-auto">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 sm:mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
-                                        </svg>
-                                        <span class="hidden sm:inline">Apply</span>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Transactions Table -->
-                    <div class="card bg-base-100 shadow-xl">
-                        <div class="card-body p-3 md:p-6">
-                            <div id="transactionsTable"></div>
-                            
-                            <!-- Pagination -->
-                            <div id="pagination" class="flex justify-center mt-4"></div>
-                        </div>
-                    </div>
-                </div>
-            `;
-            
-            // Populate filters
-            populateFilterSelects();
-            
-            // Populate modal selects
-            populateModalSelects();
-            
-            // Set default date filters
-            document.getElementById('filterFromDate').value = Utils.getFirstDayOfMonth();
-            document.getElementById('filterToDate').value = Utils.getLastDayOfMonth();
-            
-            // Check for URL parameters and apply as initial filter
-            const urlParams = new URLSearchParams(window.location.search);
-            const accountIdParam = urlParams.get('account_id');
-            const categoryIdParam = urlParams.get('category_id');
-            const typeParam = urlParams.get('type');
-            
-            if (accountIdParam) {
-                document.getElementById('filterAccount').value = accountIdParam;
-            }
-            if (categoryIdParam) {
-                document.getElementById('filterCategory').value = categoryIdParam;
-            }
-            if (typeParam) {
-                document.getElementById('filterType').value = typeParam;
-            }
-            
-            // Clean up URL - remove query parameters
-            if (window.history.replaceState) {
-                window.history.replaceState({}, '', window.location.pathname);
-            }
-            
-            // Set initial filters from URL params or defaults
-            filters = {
-                start_date: document.getElementById('filterFromDate').value,
-                end_date: document.getElementById('filterToDate').value,
-                account_id: document.getElementById('filterAccount').value,
-                category_id: document.getElementById('filterCategory').value,
-                type: document.getElementById('filterType').value
-            };
-            currentPage = 1;
-            
-            // Load transactions with initial filters
-            await loadTransactions();
-            
-        } catch (error) {
-            console.error('Error initializing:', error);
-            Utils.showToast('Error loading data', 'error');
-        }
-    }
-    
-    function populateFilterSelects() {
-        const accountSelect = document.getElementById('filterAccount');
-        const categorySelect = document.getElementById('filterCategory');
-        
-        accounts.forEach(acc => {
-            accountSelect.innerHTML += `<option value="${acc.id}">${acc.name}</option>`;
-        });
-        
-        // Group categories by type for filter dropdown
-        const incomeCats = categories.filter(c => c.type === 'income');
-        const expenseCats = categories.filter(c => c.type === 'expense');
-        const transferCats = categories.filter(c => c.type === 'transfer');
-        
-        let categoryHtml = '<option value="">All Categories</option>';
-        
-        if (incomeCats.length > 0) {
-            categoryHtml += '<optgroup label="📥 Income">';
-            incomeCats.forEach(cat => {
-                categoryHtml += `<option value="${cat.id}">${cat.name}</option>`;
-            });
-            categoryHtml += '</optgroup>';
-        }
-        
-        if (expenseCats.length > 0) {
-            categoryHtml += '<optgroup label="📤 Expense">';
-            expenseCats.forEach(cat => {
-                categoryHtml += `<option value="${cat.id}">${cat.name}</option>`;
-            });
-            categoryHtml += '</optgroup>';
-        }
-        
-        if (transferCats.length > 0) {
-            categoryHtml += '<optgroup label="🔄 Transfer">';
-            transferCats.forEach(cat => {
-                categoryHtml += `<option value="${cat.id}">${cat.name}</option>`;
-            });
-            categoryHtml += '</optgroup>';
-        }
-        
-        categorySelect.innerHTML = categoryHtml;
-    }
-    
-    function populateModalSelects() {
+    // Populate account dropdown selects
+    function populateAccountSelects() {
         const accountSelect = document.getElementById('accountId');
-        const destinationSelect = document.getElementById('destinationAccountId');
-        const categorySelect = document.getElementById('categoryId');
-
-        // Clear existing options except the first one
-        accountSelect.innerHTML = '<option value="">Select Account</option>';
-        destinationSelect.innerHTML = '<option value="">Select Destination Account</option>';
-
+        const destAccountSelect = document.getElementById('destinationAccountId');
+        const filterAccountSelect = document.getElementById('filterAccount');
+        
+        if (!accountSelect) return;
+        
+        let optionsHtml = '<option value="">Select Account</option>';
         accounts.forEach(acc => {
-            accountSelect.innerHTML += `<option value="${acc.id}">${acc.name}</option>`;
-            destinationSelect.innerHTML += `<option value="${acc.id}">${acc.name}</option>`;
+            optionsHtml += `<option value="${acc.id}">${acc.name}</option>`;
         });
-
-        // Build category select with optgroups
-        let categoryHtml = '<option value="">Select Category</option>';
+        
+        accountSelect.innerHTML = optionsHtml;
+        
+        if (destAccountSelect) {
+            destAccountSelect.innerHTML = '<option value="">Select Destination Account</option>' + optionsHtml.replace('<option value="">Select Account</option>', '');
+        }
+        
+        if (filterAccountSelect) {
+            filterAccountSelect.innerHTML = '<option value="">All Accounts</option>' + optionsHtml.replace('<option value="">Select Account</option>', '');
+        }
+    }
+    
+    // Populate category dropdown select
+    function populateCategorySelect() {
+        const categorySelect = document.getElementById('categoryId');
+        const filterCategorySelect = document.getElementById('filterCategory');
+        if (!categorySelect && !filterCategorySelect || !categories || categories.length === 0) return;
         
         // Group categories by type
         const incomeCats = categories.filter(c => c.type === 'income').sort((a, b) => a.name.localeCompare(b.name));
         const expenseCats = categories.filter(c => c.type === 'expense').sort((a, b) => a.name.localeCompare(b.name));
         const transferCats = categories.filter(c => c.type === 'transfer').sort((a, b) => a.name.localeCompare(b.name));
         
+        let optionsHtml = '<option value="">Select Category</option>';
+        
         if (incomeCats.length > 0) {
-            categoryHtml += '<optgroup label="📥 Income">';
+            optionsHtml += '<optgroup label="Income">';
             incomeCats.forEach(cat => {
-                categoryHtml += `<option value="${cat.id}">${cat.name}</option>`;
+                optionsHtml += `<option value="${cat.id}">${cat.name}</option>`;
             });
-            categoryHtml += '</optgroup>';
+            optionsHtml += '</optgroup>';
         }
         
         if (expenseCats.length > 0) {
-            categoryHtml += '<optgroup label="📤 Expense">';
+            optionsHtml += '<optgroup label="Expense">';
             expenseCats.forEach(cat => {
-                categoryHtml += `<option value="${cat.id}">${cat.name}</option>`;
+                optionsHtml += `<option value="${cat.id}">${cat.name}</option>`;
             });
-            categoryHtml += '</optgroup>';
+            optionsHtml += '</optgroup>';
         }
         
         if (transferCats.length > 0) {
-            categoryHtml += '<optgroup label="🔄 Transfer">';
+            optionsHtml += '<optgroup label="Transfer">';
             transferCats.forEach(cat => {
-                categoryHtml += `<option value="${cat.id}">${cat.name}</option>`;
+                optionsHtml += `<option value="${cat.id}">${cat.name}</option>`;
             });
-            categoryHtml += '</optgroup>';
+            optionsHtml += '</optgroup>';
         }
-
-        categorySelect.innerHTML = categoryHtml;
+        
+        if (categorySelect) categorySelect.innerHTML = optionsHtml;
+        if (filterCategorySelect) {
+            filterCategorySelect.innerHTML = '<option value="">All Categories</option>' + optionsHtml.replace('<option value="">Select Category</option>', '');
+        }
+    }
+    
+    // Populate debt dropdown select
+    function populateDebtSelect() {
+        const debtSelect = document.getElementById('debtId');
+        if (!debtSelect || !debts || debts.length === 0) {
+            const container = document.getElementById('debtPaymentContainer');
+            if (container) container.style.display = 'none';
+            return;
+        }
+        
+        // Only show active debts that are not paid off
+        const activeDebts = debts.filter(d => d.is_active && !d.is_paid_off);
+        
+        if (activeDebts.length === 0) {
+            const container = document.getElementById('debtPaymentContainer');
+            if (container) container.style.display = 'none';
+            return;
+        }
+        
+        let optionsHtml = '<option value="">Select a debt...</option>';
+        activeDebts.forEach(debt => {
+            optionsHtml += `<option value="${debt.id}">${debt.name} - ${Utils.formatCurrency(debt.current_balance)} remaining</option>`;
+        });
+        
+        debtSelect.innerHTML = optionsHtml;
+    }
+    
+    // Toggle debt select visibility
+    function toggleDebtSelect() {
+        const checkbox = document.getElementById('linkToDebt');
+        const container = document.getElementById('debtSelectContainer');
+        
+        if (checkbox && container) {
+            container.classList.toggle('hidden', !checkbox.checked);
+        }
+    }
+    
+    // Expose functions to window for HTML event handlers
+    window.toggleDebtSelect = toggleDebtSelect;
+    window.populateDebtSelect = populateDebtSelect;
+    
+    async function initialize() {
+        try {
+            // Load accounts, categories, and debts
+            [accounts, categories, debts] = await Promise.all([
+                API.accounts.list(),
+                API.categories.list(),
+                API.debts.list()
+            ]);
+            
+            populateAccountSelects();
+            populateCategorySelect();
+            populateDebtSelect();
+        } catch (error) {
+            console.error('Error initializing:', error);
+            Utils.showToast('Error loading data', 'error');
+        }
     }
     
     async function loadTransactions() {
@@ -385,7 +316,16 @@ document.addEventListener('DOMContentLoaded', async () => {
                                 </td>
                                 <td class="py-2 md:py-3 max-w-[120px] md:max-w-xs cursor-pointer" onclick="showTransactionDetailModal(${tx.id})">
                                     <div class="flex flex-col">
-                                        <span class="text-xs md:text-sm font-medium truncate" title="${tx.description}">${tx.description}</span>
+                                        <div class="flex items-center gap-1">
+                                            <span class="text-xs md:text-sm font-medium truncate" title="${tx.description}">${tx.description}</span>
+                                            ${tx.debt_payment_id ? `
+                                                <span class="badge badge-error badge-xs gap-0.5 px-1.5 py-0" title="Linked to debt: ${tx.debt_name}">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                                                    </svg>
+                                                </span>
+                                            ` : ''}
+                                        </div>
                                         ${tx.type === 'transfer' 
                                             ? '<span class="md:hidden text-[10px] text-base-content/50 mt-0.5">Transfer</span>'
                                             : `<span class="md:hidden text-[10px] text-base-content/50 mt-0.5 cursor-pointer hover:text-primary" 
@@ -826,6 +766,19 @@ document.addEventListener('DOMContentLoaded', async () => {
                             </div>
                         ` : ''}
                         
+                        ${tx.debt_payment_id ? `
+                            <div class="bg-error/10 border border-error/30 rounded-lg p-3">
+                                <p class="text-xs text-error/70 mb-1 flex items-center gap-1">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                                    </svg>
+                                    Linked Debt Payment
+                                </p>
+                                <p class="font-semibold text-sm text-error">${tx.debt_name || 'Unknown Debt'}</p>
+                                <p class="text-xs text-base-content/60 mt-1">This transaction is linked to a debt payment and cannot be relinked.</p>
+                            </div>
+                        ` : ''}
+                        
                         <!-- Action Buttons - Always visible in modal for both mobile and desktop -->
                         <div class="flex gap-2 pt-3 border-t border-base-300 mt-3">
                             <button onclick="event.stopPropagation(); editTransaction(${tx.id}); transactionDetailModal.close();" class="btn btn-sm btn-ghost flex-1">
@@ -889,14 +842,48 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
         
         try {
+            let savedTransaction;
+            
             if (transactionId) {
                 // Update existing transaction
-                await API.transactions.update(parseInt(transactionId), data);
+                savedTransaction = await API.transactions.update(parseInt(transactionId), data);
                 Utils.showToast('Transaction updated successfully', 'success');
             } else {
                 // Create new transaction
-                await API.transactions.create(data);
+                savedTransaction = await API.transactions.create(data);
                 Utils.showToast('Transaction added successfully', 'success');
+            }
+            
+            // Check if this should be linked to a debt (only for new transactions or unlinked transactions)
+            const linkToDebt = document.getElementById('linkToDebt');
+            const debtId = document.getElementById('debtId');
+            
+            // Only create debt payment if:
+            // 1. Link to debt checkbox exists and is checked
+            // 2. A debt is selected
+            // 3. Transaction was saved successfully
+            // 4. Transaction is not already linked to a debt (for updates)
+            const shouldLinkToDebt = linkToDebt && linkToDebt.checked && debtId && debtId.value && savedTransaction;
+            const isAlreadyLinked = transactionId && savedTransaction && savedTransaction.debt_payment_id;
+            
+            if (shouldLinkToDebt && !isAlreadyLinked) {
+                // Create a debt payment linked to this transaction
+                try {
+                    await API.debts.addPayment(parseInt(debtId.value), {
+                        amount: data.amount,
+                        payment_date: data.date,
+                        principal_amount: null,
+                        interest_amount: null,
+                        notes: data.notes || `Payment from transaction: ${data.description}`,
+                        account_id: data.account_id,
+                        transaction_id: savedTransaction.id,  // Link to the saved transaction
+                        create_transaction: false  // Don't create duplicate transaction
+                    });
+                    Utils.showToast('Debt payment recorded successfully', 'success');
+                } catch (debtError) {
+                    console.error('Error creating debt payment:', debtError);
+                    Utils.showToast('Transaction saved but debt payment failed', 'warning');
+                }
             }
             
             transactionModal.close();
@@ -904,6 +891,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             document.getElementById('transactionId').value = '';
             document.getElementById('modalTitle').textContent = 'Add Transaction';
             window.updateFormForTransactionType();
+            toggleDebtSelect();  // Reset debt select visibility
             loadTransactions();
         } catch (error) {
             console.error('Error saving transaction:', error);
@@ -937,6 +925,51 @@ document.addEventListener('DOMContentLoaded', async () => {
                 document.getElementById('categoryId').value = '';
             } else {
                 document.getElementById('categoryId').value = tx.category_id || '';
+            }
+            
+            // Handle debt payment linking
+            const debtPaymentContainer = document.getElementById('debtPaymentContainer');
+            
+            if (tx.debt_payment_id && tx.debt_id && tx.debt_name) {
+                // Transaction is already linked to a debt - show checkbox checked and debt selected
+                if (debtPaymentContainer) {
+                    debtPaymentContainer.innerHTML = `
+                        <label class="label cursor-pointer justify-start gap-3">
+                            <input type="checkbox" id="linkToDebt" class="checkbox checkbox-sm" checked disabled>
+                            <span class="label-text font-medium">This is a debt payment</span>
+                        </label>
+                        <div id="debtSelectContainer" class="mt-2">
+                            <label class="label py-1"><span class="label-text font-medium text-sm">Linked Debt</span></label>
+                            <select id="debtId" name="debtId" class="select select-bordered w-full select-sm sm:select-md" disabled>
+                                <option value="${tx.debt_id}" selected>${tx.debt_name}</option>
+                            </select>
+                            <label class="label">
+                                <span class="label-text-alt text-warning">This transaction is linked to a debt payment. To change the debt association, delete this transaction and create a new one.</span>
+                            </label>
+                        </div>
+                    `;
+                }
+            } else {
+                // Reset debt payment container to original state
+                if (debtPaymentContainer) {
+                    debtPaymentContainer.innerHTML = `
+                        <label class="label cursor-pointer justify-start gap-3">
+                            <input type="checkbox" id="linkToDebt" class="checkbox checkbox-sm" onchange="toggleDebtSelect()">
+                            <span class="label-text font-medium">This is a debt payment</span>
+                        </label>
+                        <div id="debtSelectContainer" class="mt-2 hidden">
+                            <label class="label py-1"><span class="label-text font-medium text-sm">Select Debt</span></label>
+                            <select id="debtId" name="debtId" class="select select-bordered w-full select-sm sm:select-md">
+                                <option value="">Select a debt...</option>
+                            </select>
+                            <label class="label">
+                                <span class="label-text-alt text-info">This will create a linked debt payment record</span>
+                            </label>
+                        </div>
+                    `;
+                    // Re-populate debt select
+                    populateDebtSelect();
+                }
             }
             
             // Update modal title and visibility

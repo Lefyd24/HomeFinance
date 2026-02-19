@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func
 from datetime import date
 
-from app.models import Transaction, Account, Category
+from app.models import Transaction, Account, Category, Debt, DebtPayment
 from app.schemas import TransactionCreate, TransactionUpdate
 
 
@@ -182,6 +182,25 @@ class TransactionService:
                     ).first()
                     if destination_account:
                         destination_account.balance = round(destination_account.balance - transaction.amount, 2)
+        
+        # Check if transaction is linked to a debt payment and reverse it
+        debt_payment = db.query(DebtPayment).filter(
+            DebtPayment.transaction_id == transaction.id
+        ).first()
+        
+        if debt_payment:
+            # Get the associated debt
+            debt = db.query(Debt).filter(Debt.id == debt_payment.debt_id).first()
+            if debt:
+                # Increase the debt balance by the payment amount (reverse the payment)
+                debt.current_balance = round(debt.current_balance + debt_payment.amount, 2)
+                # If debt was marked as paid off, unmark it
+                if debt.is_paid_off and debt.current_balance > 0:
+                    debt.is_paid_off = False
+                    debt.paid_off_date = None
+            
+            # Delete the debt payment record
+            db.delete(debt_payment)
         
         db.delete(transaction)
         db.commit()

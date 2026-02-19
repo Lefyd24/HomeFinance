@@ -14,7 +14,7 @@ from app.schemas import (
     BulkTransactionUpdate,
     BulkTransactionDelete,
 )
-from app.models import User, Transaction, Account, Category
+from app.models import User, Transaction, Account, Category, DebtPayment
 
 router = APIRouter(prefix="/transactions", tags=["Transactions"])
 
@@ -61,9 +61,12 @@ def get_transactions(
     print(
         f"Fetched {len(transactions)} transactions (total: {total}) for user {current_user.id}"
     )
-    # Enhance with account and category names
+    # Enhance with account, category, and debt payment info
     result = []
     for tx in transactions:
+        # Check if transaction has a linked debt payment
+        debt_payment = db.query(DebtPayment).filter(DebtPayment.transaction_id == tx.id).first()
+        
         tx_dict = {
             "id": tx.id,
             "user_id": tx.user_id,
@@ -86,6 +89,9 @@ def get_transactions(
             else None,
             "category_name": tx.category.name if tx.category else None,
             "category_color": tx.category.color if tx.category else None,
+            "debt_payment_id": debt_payment.id if debt_payment else None,
+            "debt_id": debt_payment.debt_id if debt_payment else None,
+            "debt_name": debt_payment.debt.name if debt_payment and debt_payment.debt else None,
         }
         result.append(tx_dict)
 
@@ -202,6 +208,11 @@ def create_transaction(
     result["category_color"] = (
         db_transaction.category.color if db_transaction.category else None
     )
+    
+    # Initialize debt payment fields (will be populated if linked later)
+    result["debt_payment_id"] = None
+    result["debt_id"] = None
+    result["debt_name"] = None
 
     return result
 
@@ -226,7 +237,7 @@ def get_transaction(
             status_code=status.HTTP_404_NOT_FOUND, detail="Transaction not found"
         )
 
-    # Add account and category names
+    # Add account, category, and debt payment info
     result = transaction.__dict__.copy()
     result["account_name"] = transaction.account.name if transaction.account else None
     result["destination_account_name"] = (
@@ -240,6 +251,12 @@ def get_transaction(
     result["category_color"] = (
         transaction.category.color if transaction.category else None
     )
+    
+    # Check if transaction has a linked debt payment
+    debt_payment = db.query(DebtPayment).filter(DebtPayment.transaction_id == transaction.id).first()
+    result["debt_payment_id"] = debt_payment.id if debt_payment else None
+    result["debt_id"] = debt_payment.debt_id if debt_payment else None
+    result["debt_name"] = debt_payment.debt.name if debt_payment and debt_payment.debt else None
 
     return result
 
@@ -308,7 +325,7 @@ def update_transaction(
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
-    # Add account and category names
+    # Add account, category, and debt payment info
     result = updated_transaction.__dict__.copy()
     result["account_name"] = (
         updated_transaction.account.name if updated_transaction.account else None
@@ -324,6 +341,12 @@ def update_transaction(
     result["category_color"] = (
         updated_transaction.category.color if updated_transaction.category else None
     )
+    
+    # Check if transaction has a linked debt payment
+    debt_payment = db.query(DebtPayment).filter(DebtPayment.transaction_id == updated_transaction.id).first()
+    result["debt_payment_id"] = debt_payment.id if debt_payment else None
+    result["debt_id"] = debt_payment.debt_id if debt_payment else None
+    result["debt_name"] = debt_payment.debt.name if debt_payment and debt_payment.debt else None
 
     return result
 

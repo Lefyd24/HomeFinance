@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light-fin">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Insights - Personal Finance</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../assets/css/app.css">
+    <link rel="stylesheet" href="../assets/css/custom.css">
+    <link rel="icon" type="image/svg+xml" href="../assets/icons/favicon.svg">
+    <link rel="alternate icon" href="../assets/icons/favicon.ico">
+    <link rel="shortcut icon" href="../assets/icons/favicon.ico">
+</head>
+<body class="bg-base-200 min-h-screen">
+    <div id="app"></div>
+    
+    <template id="insights-template">
+        <div class="space-y-6">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div>
+                    <h1 class="text-2xl font-bold flex items-center gap-3">
+                        <span class="text-3xl">💡</span>
+                        Smart Spending Insights
+                    </h1>
+                    <p class="text-base-content/60 mt-1">AI-powered analysis of your spending patterns</p>
+                </div>
+                <div class="flex gap-2">
+                    <button onclick="refreshInsights()" class="btn btn-primary">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                        </svg>
+                        Refresh Analysis
+                    </button>
+                </div>
+            </div>
+            
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4" id="insights-summary"></div>
+            
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div class="lg:col-span-2 space-y-6">
+                    <div class="card bg-base-100 shadow-xl">
+                        <div class="card-body">
+                            <div class="flex justify-between items-center mb-2">
+                                <h2 class="card-title flex items-center gap-2">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                    </svg>
+                                    Active Insights
+                                </h2>
+                                <button onclick="markAllAsRead()" class="btn btn-sm btn-ghost">Mark All Read</button>
+                            </div>
+                            <p class="text-sm text-base-content/60 mb-4">Automated analysis of your last 30 days of transactions. Insights are grouped by category below.</p>
+                            <div id="insights-list" class="space-y-4">
+                                <div class="loading loading-spinner loading-lg mx-auto block"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card bg-base-100 shadow-xl">
+                        <div class="card-body">
+                            <div class="flex justify-between items-center mb-2">
+                                <h2 class="card-title flex items-center gap-2">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" />
+                                    </svg>
+                                    Detected Patterns
+                                </h2>
+                                <button onclick="detectPatterns()" class="btn btn-sm btn-primary">
+                                    Detect Patterns
+                                </button>
+                            </div>
+                            <p class="text-sm text-base-content/60 mb-4">Patterns are identified from your last 180 days of transactions. Includes recurring subscriptions, weekend spending habits, and other behavioral patterns.</p>
+                            <div id="patterns-container" class="overflow-x-auto">
+                                <p class="text-base-content/60 text-center py-4">Click "Detect Patterns" to analyze your spending behavior</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="space-y-6">
+                    <div class="card bg-base-100 shadow-xl">
+                        <div class="card-body">
+                            <h2 class="card-title flex items-center gap-2 mb-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                                </svg>
+                                Trend Analysis
+                            </h2>
+                            <p class="text-xs text-base-content/50 mb-3">Based on last 6 months of spending</p>
+                            <div id="trend-container">
+                                <div class="loading loading-spinner loading-lg mx-auto block"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card bg-base-100 shadow-xl">
+                        <div class="card-body">
+                            <h2 class="card-title flex items-center gap-2 mb-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                </svg>
+                                Statistics
+                            </h2>
+                            <p class="text-xs text-base-content/50 mb-3">Based on last 6 months of transactions</p>
+                            <div id="statistics-container">
+                                <div class="loading loading-spinner loading-lg mx-auto block"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card bg-base-100 shadow-xl">
+                        <div class="card-body">
+                            <h2 class="card-title flex items-center gap-2 mb-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                </svg>
+                                Anomaly Detection
+                            </h2>
+                            <p class="text-xs text-base-content/50 mb-3">Transactions exceeding 2.5x the category average</p>
+                            <div id="anomalies-container">
+                                <button onclick="detectAnomalies()" class="btn btn-sm btn-primary w-full">
+                                    Check for Anomalies
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </template>
+    
+    <script src="../js/utils.js"></script>
+    <script src="../js/api.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/components/layout.js"></script>
+    <script src="../js/pages/insights.js"></script>
+</body>
+</html>

@@ -442,6 +442,81 @@ const API = {
         
         addTransaction: (id, data) =>
             API.request(`/goals/${id}/transactions`, { method: 'POST', body: JSON.stringify(data) })
+    },
+
+    // Insights methods - Smart Spending Insights
+    insights: {
+        list: (days = 30, includeRead = true, includeDismissed = false) => 
+            API.request(`/insights?days=${days}&include_read=${includeRead}&include_dismissed=${includeDismissed}`),
+        
+        getSummary: () =>
+            API.request('/insights/summary'),
+        
+        generate: (days = 30) =>
+            API.request(`/insights/generate?days=${days}`, { method: 'POST' }),
+        
+        markRead: (id) =>
+            API.request(`/insights/${id}/read`, { method: 'PUT' }),
+        
+        dismiss: (id) =>
+            API.request(`/insights/${id}/dismiss`, { method: 'PUT' }),
+        
+        markAllRead: () =>
+            API.request('/insights/mark-all-read', { method: 'POST' }),
+        
+        getTrends: (months = 6) =>
+            API.request(`/insights/trends/analysis?months=${months}`),
+        
+        getStatistics: (months = 6) =>
+            API.request(`/insights/statistics?months=${months}`),
+        
+        detectPatterns: () =>
+            API.request('/insights/patterns/detect', { method: 'POST' }),
+        
+        getPatterns: (includeInactive = false) =>
+            API.request(`/insights/patterns?include_inactive=${includeInactive}`),
+        
+        getCategoryTrend: (categoryName, months = 6) =>
+            API.request(`/insights/category/${encodeURIComponent(categoryName)}/trend?months=${months}`),
+        
+        getAnomalies: (days = 30, threshold = 2.5) =>
+            API.request(`/insights/anomalies?days=${days}&threshold=${threshold}`)
+    },
+
+    // Debts methods - Debt Tracking & Payoff Planner
+    debts: {
+        list: (activeOnly = false) => 
+            API.request(`/debts?active_only=${activeOnly}`),
+        
+        create: (data) => 
+            API.request('/debts', { method: 'POST', body: JSON.stringify(data) }),
+        
+        get: (id) => 
+            API.request(`/debts/${id}`),
+        
+        update: (id, data) => 
+            API.request(`/debts/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+        
+        delete: (id) => 
+            API.request(`/debts/${id}`, { method: 'DELETE' }),
+        
+        getSummary: () =>
+            API.request('/debts/summary'),
+        
+        getPayments: (id, limit = 50) =>
+            API.request(`/debts/${id}/payments?limit=${limit}`),
+        
+        addPayment: (id, data) =>
+            API.request(`/debts/${id}/payments`, { method: 'POST', body: JSON.stringify(data) }),
+        
+        compareStrategies: (extraPayment = 0) =>
+            API.request(`/debts/strategies/compare?extra_payment=${extraPayment}`),
+        
+        getScenarios: () =>
+            API.request('/debts/strategies/scenarios'),
+        
+        getUpcomingPayments: (days = 30) =>
+            API.request(`/debts/upcoming-payments?days=${days}`)
     }
 };
 

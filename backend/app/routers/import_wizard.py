@@ -291,6 +291,7 @@ def confirm_import(
         )
     
     imported_count = 0
+    imported_transactions = []
     
     try:
         for tx_data in request.transactions:
@@ -320,6 +321,16 @@ def confirm_import(
                 source_file=batch.filename
             )
             db.add(transaction)
+            db.flush()  # Flush to get the transaction ID
+            
+            # Store imported transaction info
+            imported_transactions.append({
+                "id": transaction.id,
+                "amount": amount,
+                "date": tx_date.strftime('%Y-%m-%d'),
+                "description": tx_data["description"],
+                "type": tx_type
+            })
             
             # Update account balance with proper rounding to avoid floating-point precision errors
             if tx_type == "income":
@@ -337,7 +348,8 @@ def confirm_import(
         
         return {
             "message": f"Successfully imported {imported_count} transactions",
-            "imported_count": imported_count
+            "imported_count": imported_count,
+            "imported_transactions": imported_transactions
         }
         
     except Exception as e:

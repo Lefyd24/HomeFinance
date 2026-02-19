@@ -419,7 +419,6 @@ def calculate_budget_progress(db: Session, budget: Budget) -> BudgetResponse:
     if category_ids:
         query = query.filter(Transaction.category_id.in_(category_ids))
     
-    print(f"Calculating budget progress for budget_id={budget.id} with category_ids={category_ids} and date range {budget.start_date} to {budget.end_date}")
     # Apply date filters
     if budget.start_date:
         query = query.filter(Transaction.date >= budget.start_date)

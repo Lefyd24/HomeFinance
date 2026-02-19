@@ -8,6 +8,7 @@ let uploadedFile = null;
 let previewData = null;
 let accounts = [];
 let categories = [];
+let debts = [];
 let batchId = null;
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -77,6 +78,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                                         <th>Description</th>
                                         <th>Amount</th>
                                         <th>Category</th>
+                                        <th>Debt Payment</th>
                                         <th>Account</th>
                                         <th>Status</th>
                                     </tr>
@@ -158,8 +160,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     async function initialize() {
         try {
-            accounts = await API.accounts.list();
-            categories = await API.categories.list();
+            [accounts, categories, debts] = await Promise.all([
+                API.accounts.list(),
+                API.categories.list(),
+                API.debts.list(true)  // Load active debts
+            ]);
             
             populateCategorySelect();
             setupDragAndDrop();
@@ -201,6 +206,27 @@ document.addEventListener('DOMContentLoaded', async () => {
             });
             html += '</optgroup>';
         }
+        
+        return html;
+    }
+    
+    function getDebtOptionsHtml(selectedValue = null) {
+        if (!debts || debts.length === 0) {
+            return '<option value="">No debts available</option>';
+        }
+        
+        // Only show active debts
+        const activeDebts = debts.filter(d => d.is_active && !d.is_paid_off);
+        
+        if (activeDebts.length === 0) {
+            return '<option value="">No active debts</option>';
+        }
+        
+        let html = '<option value="">Not a debt payment</option>';
+        
+        activeDebts.forEach(debt => {
+            html += `<option value="${debt.id}" ${selectedValue === debt.id ? 'selected' : ''}>${debt.name} (${Utils.formatCurrency(debt.current_balance)} remaining)</option>`;
+        });
         
         return html;
     }
@@ -340,6 +366,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                         ${getCategoryOptionsHtml(tx.category_id)}
                     </select>
                     ${tx.suggested_category ? `<span class="badge badge-xs badge-info ml-1">Suggested: ${tx.suggested_category}</span>` : ''}
+                </td>
+                <td>
+                    <select class="select select-xs select-bordered" onchange="updateDebt(${index}, this.value)">
+                        ${getDebtOptionsHtml(tx.debt_id)}
+                    </select>
                 </td>
                 <td>
                     <span class="text-sm text-base-content/60">From selector above</span>
@@ -530,10 +561,41 @@ document.addEventListener('DOMContentLoaded', async () => {
             
             const result = await API.import.confirm(batchId, parseInt(selectedAccountId), transactionsToImport);
             
+            // Create debt payments for transactions linked to debts
+            const debtPayments = [];
+            if (result.imported_transactions && result.imported_transactions.length > 0) {
+                for (let i = 0; i < result.imported_transactions.length; i++) {
+                    const importedTx = result.imported_transactions[i];
+                    const originalTx = previewData.transactions[i];
+                    
+                    if (originalTx.debt_id && importedTx.id) {
+                        try {
+                            await API.debts.addPayment(originalTx.debt_id, {
+                                amount: importedTx.amount,
+                                payment_date: importedTx.date,
+                                principal_amount: null,
+                                interest_amount: null,
+                                notes: `Imported payment: ${importedTx.description}`,
+                                account_id: parseInt(selectedAccountId),
+                                create_transaction: false  // Don't create duplicate - transaction already exists
+                            });
+                            debtPayments.push(originalTx.debt_id);
+                        } catch (debtError) {
+                            console.error(`Error creating debt payment for transaction ${importedTx.id}:`, debtError);
+                        }
+                    }
+                }
+            }
+            
             document.getElementById('importCount').textContent = result.imported_count || transactionsToImport.length;
             currentStep = 4;
             updateWizardUI();
-            Utils.showToast('Import completed successfully!', 'success');
+            
+            if (debtPayments.length > 0) {
+                Utils.showToast(`Import completed! Created ${debtPayments.length} debt payment(s).`, 'success');
+            } else {
+                Utils.showToast('Import completed successfully!', 'success');
+            }
             
         } catch (error) {
             console.error('Import error:', error);
@@ -564,6 +626,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     window.updateCategory = (index, categoryId) => {
         if (previewData && previewData.transactions[index]) {
             previewData.transactions[index].category_id = categoryId;
+        }
+    };
+    
+    window.updateDebt = (index, debtId) => {
+        if (previewData && previewData.transactions[index]) {
+            previewData.transactions[index].debt_id = debtId ? parseInt(debtId) : null;
         }
     };
 });

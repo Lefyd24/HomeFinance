@@ -263,14 +263,36 @@ async function loadDashboardData() {
                                 <div class="h-64 lg:h-80">
                                     <canvas id="spendingChart"></canvas>
                                 </div>
+                                <!-- Monthly breakdown chart -->
+                                <h2 class="card-title text-lg lg:text-xl mt-4">Monthly Spending Breakdown</h2>
+                                <div class="h-42 lg:h-50">
+                                    <canvas id="monthlyBreakdownChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Trend Analysis & Statistics -->
+                        <div id="trend-analysis" class="mt-6">
+                            <div class="card bg-base-100 shadow-xl">
+                                <div class="card-body">
+                                    <div class="flex items-center gap-2 mb-4">
+                                        <div class="skeleton h-6 w-40"></div>
+                                    </div>
+                                    <div class="grid grid-cols-2 gap-4">
+                                        <div class="skeleton h-24 rounded-lg"></div>
+                                        <div class="skeleton h-24 rounded-lg"></div>
+                                    </div>
+                                    <div class="skeleton h-32 mt-4 rounded-lg"></div>
+                                </div>
                             </div>
                         </div>
                     </div>
                     
-                    <!-- Budget & Goals Overview -->
+                    <!-- Budget, Goals & Debts Overview -->
                     <div class="space-y-6">
                         <div id="budget-overview"></div>
                         <div id="goals-overview"></div>
+                        <div id="debts-overview"></div>
                     </div>
                 </div>
                 
@@ -451,11 +473,17 @@ async function loadDashboardData() {
         // Load spending chart
         await loadSpendingChart();
 
+        // Load trend analysis
+        await loadTrendAnalysisOverview();
+
         // Load budget overview
         await loadBudgetOverview();
 
         // Load goals overview
         await loadGoalsOverview();
+
+        // Load debts overview
+        await loadDebtsOverview();
 
         // Load recent transactions
         await loadRecentTransactions();
@@ -571,7 +599,9 @@ async function loadBudgetOverview() {
                         <h2 class="card-title mb-4">Budget Overview</h2>
                         <p class="text-base-content/60">No budgets for the selected date range.</p>
                         <div class="card-actions justify-end mt-4">
-                            <a href="budgets.html" class="btn btn-sm btn-primary">Manage Budgets</a>
+                            <a href="budgets.html" class="btn btn-sm btn-primary">
+                                Manage Budgets
+                            </a>
                         </div>
                     </div>
                 </div>
@@ -586,8 +616,8 @@ async function loadBudgetOverview() {
             type: 'expense'
         });
         
-        // Calculate spending for each budget based on the date range
-        const budgetsWithSpending = relevantBudgets.slice(0, 3).map(budget => {
+        // Calculate spending for each budget based on the date range (4 most relevant budgets for display purposes)
+        const budgetsWithSpending = relevantBudgets.slice(0, 4).map(budget => {
             // Get category IDs for this budget
             const categoryIds = budget.category_ids || [];
             
@@ -670,7 +700,12 @@ async function loadBudgetOverview() {
                         `).join('')}
                     </div>
                     <div class="card-actions justify-end mt-4">
-                        <a href="budgets.html" class="btn btn-sm btn-ghost">Manage Budgets</a>
+                        <a href="budgets.html" class="btn btn-sm btn-ghost">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                            </svg>
+                            Manage Budgets
+                        </a>
                     </div>
                 </div>
             </div>
@@ -679,6 +714,171 @@ async function loadBudgetOverview() {
         console.error('Error loading budget overview:', error);
     }
 }
+
+async function loadTrendAnalysisOverview() {
+    try {
+        const container = document.getElementById('trend-analysis');
+        
+        if (!container) {
+            console.error('Trend analysis container not found in DOM!');
+            return;
+        }
+        
+        const [trends, stats] = await Promise.all([
+            API.insights.getTrends(6),
+            API.insights.getStatistics(6)
+        ]);
+        
+        const hasTrends = trends && !trends.error;
+        const hasStats = stats && !stats.error;
+
+        await loadMonthlyBreakdownChart(trends.monthly_data);
+        
+        const trendIcon = hasTrends ? 
+            (trends.trend_direction === 'increasing' ? '📈' : trends.trend_direction === 'decreasing' ? '📉' : '➡️') : '➡️';
+        const trendColor = hasTrends ?
+            (trends.trend_direction === 'increasing' ? 'text-error' : trends.trend_direction === 'decreasing' ? 'text-success' : 'text-info') : 'text-info';
+        const trendText = hasTrends ?
+            (trends.trend_direction === 'increasing' ? 'Increasing' : trends.trend_direction === 'decreasing' ? 'Decreasing' : 'Stable') : 'N/A';
+        const trendPct = hasTrends ? `${trends.trend_percentage > 0 ? '+' : ''}${trends.trend_percentage.toFixed(1)}%` : '-';
+        console.log('Trend analysis data:', { trends, stats });
+        container.innerHTML = `
+            <div class="card bg-base-100 shadow-xl">
+                <div class="card-body">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="card-title flex items-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                            </svg>
+                            Trend Analysis & Statistics
+                        </h2>
+                        <a href="insights.html" class="btn btn-sm btn-ghost">View Details</a>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                        <div class="p-4 bg-base-200 rounded-lg">
+                            <div class="flex items-center gap-3">
+                                <span class="text-3xl">${trendIcon}</span>
+                                <div>
+                                    <p class="text-xs text-base-content/60">Spending Trend (6 months)</p>
+                                    <p class="text-xl font-bold ${trendColor}">${trendText}</p>
+                                </div>
+                            </div>
+                            <div class="flex justify-between mt-2 text-sm">
+                                <span class="text-base-content/60">Change</span>
+                                <span class="font-medium ${trendColor}">${trendPct}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="p-4 bg-base-200 rounded-lg">
+                            <p class="text-xs text-base-content/60 mb-2">6-Month Summary</p>
+                            <div class="space-y-1">
+                                <div class="flex justify-between text-sm">
+                                    <span class="text-base-content/60">Total Spent</span>
+                                    <span class="font-medium">${hasStats ? Utils.formatCurrency(stats.total_spent) : '-'}</span>
+                                </div>
+                                <div class="flex justify-between text-sm">
+                                    <span class="text-base-content/60">Transactions</span>
+                                    <span class="font-medium">${hasStats ? stats.total_transactions : '-'}</span>
+                                </div>
+                                <div class="flex justify-between text-sm">
+                                    <span class="text-base-content/60">Monthly Avg</span>
+                                    <span class="font-medium">${hasStats ? Utils.formatCurrency(stats.average_monthly_spending) : '-'}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="divider text-xs my-2">Statistical Overview</div>
+                    
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                        <div class="text-center p-2 bg-base-200 rounded-lg">
+                            <p class="text-xs text-base-content/60">Avg Transaction</p>
+                            <p class="font-bold">${hasStats ? Utils.formatCurrency(stats.transaction_statistics.mean) : '-'}</p>
+                        </div>
+                        <div class="text-center p-2 bg-base-200 rounded-lg">
+                            <p class="text-xs text-base-content/60">Median</p>
+                            <p class="font-bold">${hasStats ? Utils.formatCurrency(stats.transaction_statistics.median) : '-'}</p>
+                        </div>
+                        <div class="text-center p-2 bg-base-200 rounded-lg">
+                            <p class="text-xs text-base-content/60">Volatility</p>
+                            <p class="font-bold ${hasStats && stats.spending_volatility > 0.3 ? 'text-warning' : 'text-success'}">${hasStats ? (stats.spending_volatility * 100).toFixed(1) + '%' : '-'}</p>
+                        </div>
+                        <div class="text-center p-2 bg-base-200 rounded-lg">
+                            <p class="text-xs text-base-content/60">R² Score</p>
+                            <p class="font-bold">${hasTrends ? trends.r_squared.toFixed(3) : '-'}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    } catch (error) {
+        console.error('Error loading trend analysis:', error);
+        const container = document.getElementById('trend-analysis');
+        if (container) {
+            container.innerHTML = `
+                <div class="card bg-base-100 shadow-xl">
+                    <div class="card-body">
+                        <h2 class="card-title mb-4">Trend Analysis & Statistics</h2>
+                        <div class="alert alert-error">
+                            <span>Failed to load trend analysis</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+    }
+}
+
+async function loadMonthlyBreakdownChart(monthlyData) {
+    try {
+        const ctx = document.getElementById('monthlyBreakdownChart');
+        if (!ctx) return;
+        // data is an array of objects with month and amount breakdown
+        const labels = monthlyData.map(d => d.month);
+        const amounts = monthlyData.map(d => d.amount);
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Monthly Spending',
+                    data: amounts,
+                    fill: true,
+                    backgroundColor: 'rgba(239, 68, 68, 0.2)',
+                    borderColor: '#EF4444',
+                    tension: 0.3,
+                    pointRadius: 4,
+                    pointBackgroundColor: '#EF4444',
+                    pointHoverRadius: 6,
+                    pointHoverBackgroundColor: '#EF4444'
+                }]
+            },  
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        ticks: {
+                            callback: function(value) {
+                                return '€' + value;
+                            }
+                        }
+                    }
+                }
+            },
+        });
+    } catch (error) {
+        console.error('Error loading monthly breakdown chart:', error);
+    }
+}    
+
+
 
 async function loadGoalsOverview() {
     try {
@@ -746,7 +946,12 @@ async function loadGoalsOverview() {
                         `).join('')}
                     </div>
                     <div class="card-actions justify-end mt-4">
-                        <a href="goals.html" class="btn btn-sm btn-ghost">View All Goals</a>
+                        <a href="goals.html" class="btn btn-sm btn-ghost">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                            </svg>
+                            View All Goals
+                        </a>
                     </div>
                 </div>
             </div>
@@ -764,6 +969,188 @@ async function loadGoalsOverview() {
                         </h2>
                         <div class="alert alert-error">
                             <span>Error loading goals: ${error.message || 'Unknown error'}</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+    }
+}
+
+async function loadDebtsOverview() {
+    try {
+        console.log('Loading debts overview...');
+        const container = document.getElementById('debts-overview');
+        
+        if (!container) {
+            console.error('Debts container not found in DOM!');
+            return;
+        }
+        
+        // Get all debts to calculate payment progress
+        const debts = await API.debts.list();
+        
+        // Get upcoming payments for the next 30 days
+        const upcomingPayments = await API.debts.getUpcomingPayments(30);
+        
+        if (!upcomingPayments || upcomingPayments.length === 0) {
+            console.log('No upcoming debt payments, showing empty state');
+            container.innerHTML = `
+                <div class="card bg-base-100 shadow-xl">
+                    <div class="card-body">
+                        <h2 class="card-title mb-4 flex items-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                            </svg>
+                            Upcoming Debt Payments
+                        </h2>
+                        <p class="text-base-content/60 mb-4">No upcoming payments in the next 30 days.</p>
+                        <div class="card-actions justify-end">
+                            <a href="debts.html" class="btn btn-sm btn-error">Manage Debts</a>
+                        </div>
+                    </div>
+                </div>
+            `;
+            return;
+        }
+        
+        // Separate overdue, due soon, and future payments
+        const today = new Date();
+        const overdue = upcomingPayments.filter(p => p.is_overdue);
+        const dueSoon = upcomingPayments.filter(p => !p.is_overdue && p.days_until_due <= 7);
+        const future = upcomingPayments.filter(p => !p.is_overdue && p.days_until_due > 7);
+        
+        // Show first 3 payments with full details
+        const paymentsToShow = upcomingPayments.slice(0, 3);
+        
+        container.innerHTML = `
+            <div class="card bg-base-100 shadow-xl">
+                <div class="card-body">
+                    <h2 class="card-title mb-4 flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-error" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                        </svg>
+                        Upcoming Debt Payments
+                    </h2>
+                    
+                    ${overdue.length > 0 ? `
+                        <div class="alert alert-error mb-4">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 shrink-0 stroke-current" fill="none" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                            </svg>
+                            <div>
+                                <span class="font-bold">${overdue.length} Overdue Payment(s)</span>
+                            </div>
+                        </div>
+                    ` : ''}
+                    
+                    <div class="space-y-4">
+                        ${paymentsToShow.map(payment => {
+                            // Find debt details for this payment
+                            const debt = debts.find(d => d.id === payment.debt_id);
+                            const paymentProgress = debt ? ((debt.original_balance - debt.current_balance) / debt.original_balance * 100) : 0;
+                            
+                            let statusClass = '';
+                            let statusBadge = '';
+                            let daysLeftText = '';
+                            let statusColor = '';
+                            
+                            if (payment.is_overdue) {
+                                statusClass = 'border-error/50 bg-error/5';
+                                statusBadge = '<span class="badge badge-error badge-sm gap-1"><svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>Overdue</span>';
+                                daysLeftText = `${Math.abs(payment.days_until_due)} days overdue`;
+                                statusColor = 'text-error';
+                            } else if (payment.days_until_due === 0) {
+                                statusClass = 'border-warning/50 bg-warning/5';
+                                statusBadge = '<span class="badge badge-warning badge-sm gap-1"><svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>Due Today</span>';
+                                daysLeftText = 'Due today';
+                                statusColor = 'text-warning';
+                            } else if (payment.days_until_due <= 3) {
+                                statusClass = 'border-warning/50 bg-warning/5';
+                                statusBadge = '<span class="badge badge-warning badge-sm gap-1"><svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>Due Soon</span>';
+                                daysLeftText = `${payment.days_until_due} days left`;
+                                statusColor = 'text-warning';
+                            } else {
+                                statusClass = 'border-info/50 bg-info/5';
+                                statusBadge = '<span class="badge badge-info badge-sm gap-1"><svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>Upcoming</span>';
+                                daysLeftText = `${payment.days_until_due} days left`;
+                                statusColor = 'text-info';
+                            }
+                            
+                            return `
+                                <div class="p-4 bg-base-200 rounded-xl border ${statusClass} hover:shadow-md transition-all">
+                                    <!-- Header Row -->
+                                    <div class="flex justify-between items-start mb-3">
+                                        <div class="min-w-0 flex-1">
+                                            <div class="flex items-center gap-2 mb-1">
+                                                <h4 class="font-bold text-base truncate" title="${payment.debt_name}">${payment.debt_name}</h4>
+                                                ${statusBadge}
+                                            </div>
+                                            ${payment.creditor ? `<p class="text-xs text-base-content/60 flex items-center gap-1"><svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>${payment.creditor}</p>` : ''}
+                                        </div>
+                                        <div class="text-right ml-3">
+                                            <p class="text-xl font-bold ${payment.is_overdue ? 'text-error' : 'text-error'}">${Utils.formatCurrency(payment.amount)}</p>
+                                            <p class="text-xs text-base-content/60 flex items-center justify-end gap-1">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                                </svg>
+                                                ${Utils.formatDate(payment.due_date)}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Progress Section (like budgets) -->
+                                    ${debt ? `
+                                        <div class="bg-base-100 rounded-lg p-3">
+                                            <div class="flex justify-between items-center mb-2">
+                                                <div class="flex items-center gap-2">
+                                                    <span class="text-xs font-semibold ${statusColor}">${daysLeftText}</span>
+                                                </div>
+                                                <span class="text-xs text-base-content/60">${paymentProgress.toFixed(1)}% paid off</span>
+                                            </div>
+                                            <div class="flex justify-between text-xs mb-1">
+                                                <span class="text-base-content/50">Balance: ${Utils.formatCurrency(debt.current_balance)}</span>
+                                                <span class="text-success">Paid: ${Utils.formatCurrency(debt.original_balance - debt.current_balance)}</span>
+                                            </div>
+                                            <progress class="progress w-full ${payment.is_overdue ? 'progress-error' : payment.days_until_due <= 3 ? 'progress-warning' : 'progress-info'}" value="${paymentProgress}" max="100"></progress>
+                                        </div>
+                                    ` : ''}
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                    
+                    ${upcomingPayments.length > 3 ? `
+                        <p class="text-sm text-base-content/60 mt-3 text-center">+ ${upcomingPayments.length - 3} more payment(s)</p>
+                    ` : ''}
+                    
+                    <div class="card-actions justify-end mt-4 pt-3 border-t border-base-200">
+                        <a href="debts.html" class="btn btn-sm btn-ghost gap-1">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                            </svg>
+                            View All Debts
+                        </a>
+                    </div>
+                </div>
+            </div>
+        `;
+        console.log('Debts overview rendered successfully');
+    } catch (error) {
+        console.error('Error loading debts overview:', error);
+        const container = document.getElementById('debts-overview');
+        if (container) {
+            container.innerHTML = `
+                <div class="card bg-base-100 shadow-xl">
+                    <div class="card-body">
+                        <h2 class="card-title mb-4 flex items-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-error" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                            </svg>
+                            Debt Payments
+                        </h2>
+                        <div class="alert alert-error">
+                            <span>Error loading debt payments: ${error.message || 'Unknown error'}</span>
                         </div>
                     </div>
                 </div>

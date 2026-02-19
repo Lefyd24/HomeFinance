@@ -30,3 +30,4 @@ class Transaction(Base):
     account = relationship("Account", back_populates="transactions", foreign_keys="Transaction.account_id")
     destination_account = relationship("Account", foreign_keys="Transaction.destination_account_id")
     category = relationship("Category", back_populates="transactions")
+    debt_payment = relationship("DebtPayment", back_populates="transaction", uselist=False)

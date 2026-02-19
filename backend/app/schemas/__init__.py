@@ -61,6 +61,21 @@ from app.schemas.goal import (
     GoalTransactionResponse,
     GoalSummary,
 )
+from app.schemas.debt import (
+    DebtBase,
+    DebtCreate,
+    DebtUpdate,
+    DebtResponse,
+    DebtPaymentBase,
+    DebtPaymentCreate,
+    DebtPaymentResponse,
+    DebtSummary,
+    PayoffComparison,
+    PayoffStrategy,
+    PayoffScheduleItem,
+    ExtraPaymentScenario,
+    UpcomingPayment,
+)
 
 __all__ = [
     # User schemas
@@ -127,4 +142,18 @@ __all__ = [
     "GoalTransactionCreate",
     "GoalTransactionResponse",
     "GoalSummary",
+    # Debt schemas
+    "DebtBase",
+    "DebtCreate",
+    "DebtUpdate",
+    "DebtResponse",
+    "DebtPaymentBase",
+    "DebtPaymentCreate",
+    "DebtPaymentResponse",
+    "DebtSummary",
+    "PayoffComparison",
+    "PayoffStrategy",
+    "PayoffScheduleItem",
+    "ExtraPaymentScenario",
+    "UpcomingPayment",
 ]

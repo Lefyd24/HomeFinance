@@ -46,6 +46,9 @@ class TransactionResponse(TransactionBase):
     destination_account_name: Optional[str] = None
     category_name: Optional[str] = None
     category_color: Optional[str] = None
+    debt_payment_id: Optional[int] = None
+    debt_id: Optional[int] = None
+    debt_name: Optional[str] = None
     
     class Config:
         from_attributes = True

@@ -19,48 +19,69 @@
     <!-- Skeleton Loading Template -->
     <template id="transactions-skeleton">
         <div class="space-y-4 md:space-y-6">
-            <!-- Skeleton Header -->
+            <!-- Header -->
             <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 md:gap-4">
                 <div>
-                    <div class="skeleton h-8 w-40 mb-2"></div>
-                    <div class="skeleton h-4 w-56"></div>
+                    <h1 class="text-2xl md:text-3xl font-bold">Transactions</h1>
+                    <p class="text-base-content/60">Manage your financial transactions</p>
                 </div>
-                <div class="skeleton h-10 w-36"></div>
+                <button onclick="openTransactionModal()" class="btn btn-primary btn-sm sm:btn-md">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                    </svg>
+                    Add Transaction
+                </button>
             </div>
             
-            <!-- Skeleton Search Bar -->
+            <!-- Search Bar -->
             <div class="card bg-base-100 shadow-sm">
                 <div class="card-body p-3 md:p-4">
-                    <div class="skeleton h-10 w-full rounded-lg"></div>
+                    <div class="relative">
+                        <input type="text" id="searchDescription" placeholder="Search transactions..." class="input input-bordered w-full input-sm sm:input-md pr-10" oninput="handleSearch(event)">
+                        <button id="clearSearch" class="btn btn-ghost btn-circle btn-sm absolute right-2 top-1/2 transform -translate-y-1/2 hidden" onclick="clearSearch()">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
                 </div>
             </div>
             
-            <!-- Skeleton Filters -->
+            <!-- Filters -->
             <div class="card bg-base-100 shadow-sm">
                 <div class="card-body p-3 md:p-4">
                     <div class="flex flex-wrap gap-2 md:gap-4">
                         <div class="flex-1 min-w-[140px]">
-                            <div class="skeleton h-3 w-16 mb-1"></div>
-                            <div class="skeleton h-10 w-full rounded-lg"></div>
+                            <label class="label py-1"><span class="label-text font-medium text-sm">From Date</span></label>
+                            <input type="date" id="filterFromDate" class="input input-bordered w-full input-sm sm:input-md">
                         </div>
                         <div class="flex-1 min-w-[140px]">
-                            <div class="skeleton h-3 w-16 mb-1"></div>
-                            <div class="skeleton h-10 w-full rounded-lg"></div>
+                            <label class="label py-1"><span class="label-text font-medium text-sm">To Date</span></label>
+                            <input type="date" id="filterToDate" class="input input-bordered w-full input-sm sm:input-md">
                         </div>
                         <div class="flex-1 min-w-[140px]">
-                            <div class="skeleton h-3 w-16 mb-1"></div>
-                            <div class="skeleton h-10 w-full rounded-lg"></div>
+                            <label class="label py-1"><span class="label-text font-medium text-sm">Account</span></label>
+                            <select id="filterAccount" class="select select-bordered w-full select-sm sm:select-md">
+                                <option value="">All Accounts</option>
+                            </select>
                         </div>
                         <div class="flex-1 min-w-[140px]">
-                            <div class="skeleton h-3 w-16 mb-1"></div>
-                            <div class="skeleton h-10 w-full rounded-lg"></div>
+                            <label class="label py-1"><span class="label-text font-medium text-sm">Category</span></label>
+                            <select id="filterCategory" class="select select-bordered w-full select-sm sm:select-md">
+                                <option value="">All Categories</option>
+                            </select>
                         </div>
                         <div class="flex-1 min-w-[120px]">
-                            <div class="skeleton h-3 w-12 mb-1"></div>
-                            <div class="skeleton h-10 w-full rounded-lg"></div>
+                            <label class="label py-1"><span class="label-text font-medium text-sm">Type</span></label>
+                            <select id="filterType" class="select select-bordered w-full select-sm sm:select-md">
+                                <option value="">All Types</option>
+                                <option value="income">Income</option>
+                                <option value="expense">Expense</option>
+                                <option value="transfer">Transfer</option>
+                            </select>
                         </div>
                         <div class="flex items-end">
-                            <div class="skeleton h-10 w-24 rounded-lg"></div>
+                            <button onclick="applyFilters()" class="btn btn-primary btn-sm sm:btn-md">Apply Filters</button>
                         </div>
                     </div>
                 </div>
@@ -69,7 +90,7 @@
             <!-- Skeleton Transactions Table -->
             <div class="card bg-base-100 shadow-xl">
                 <div class="card-body p-3 md:p-6">
-                    <div class="overflow-x-auto -mx-3 md:mx-0">
+                    <div id="transactionsTable" class="overflow-x-auto -mx-3 md:mx-0">
                         <table class="table w-full">
                             <thead>
                                 <tr class="border-b border-base-300">
@@ -186,7 +207,7 @@
                     </div>
                     
                     <!-- Skeleton Pagination -->
-                    <div class="flex justify-center mt-4">
+                    <div id="pagination" class="flex justify-center mt-4">
                         <div class="flex gap-1">
                             <div class="skeleton h-8 w-8 rounded-lg"></div>
                             <div class="skeleton h-8 w-8 rounded-lg"></div>
@@ -255,6 +276,24 @@
                         <input type="text" id="notes" name="notes" class="input input-bordered input-sm sm:input-md" placeholder="Optional notes">
                     </div>
                 </div>
+                
+                <!-- Debt Payment Link -->
+                <div class="form-control border-t border-base-300 pt-4 mt-2" id="debtPaymentContainer">
+                    <label class="label cursor-pointer justify-start gap-3">
+                        <input type="checkbox" id="linkToDebt" class="checkbox checkbox-sm" onchange="toggleDebtSelect()">
+                        <span class="label-text font-medium">This is a debt payment</span>
+                    </label>
+                    <div id="debtSelectContainer" class="mt-2 hidden">
+                        <label class="label py-1"><span class="label-text font-medium text-sm">Select Debt</span></label>
+                        <select id="debtId" name="debtId" class="select select-bordered w-full select-sm sm:select-md">
+                            <option value="">Select a debt...</option>
+                        </select>
+                        <label class="label">
+                            <span class="label-text-alt text-info">This will create a linked debt payment record</span>
+                        </label>
+                    </div>
+                </div>
+                
                 <div class="modal-action pt-2">
                     <button type="button" class="btn btn-sm sm:btn-md btn-ghost" onclick="transactionModal.close()">Cancel</button>
                     <button type="submit" class="btn btn-sm sm:btn-md btn-primary">Save Transaction</button>

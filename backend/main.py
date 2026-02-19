@@ -16,6 +16,8 @@ from app.routers import (
     import_wizard,
     reports,
     goals,
+    insights,
+    debts,
 )
 
 
@@ -87,6 +89,8 @@ app.include_router(budgets.router, prefix="/api")
 app.include_router(import_wizard.router, prefix="/api")
 app.include_router(reports.router, prefix="/api")
 app.include_router(goals.router, prefix="/api")
+app.include_router(insights.router, prefix="/api")
+app.include_router(debts.router, prefix="/api")
 
 
 if __name__ == "__main__":
