@@ -203,8 +203,9 @@ async function loadDebts() {
                                     </svg>
                                 </div>
                                 <div>
-                                    <p class="text-sm text-base-content/60">Current Balance</p>
-                                    <p class="text-2xl font-bold">${Utils.formatCurrency(summary.total_current_balance)}</p>
+                                    <p class="text-sm text-base-content/60">Total Amount Due</p>
+                                    <p class="text-2xl font-bold">${Utils.formatCurrency(summary.total_amount_due || summary.total_current_balance)}</p>
+                                    ${summary.total_projected_interest > 0 ? `<p class="text-xs text-warning">incl. ${Utils.formatCurrency(summary.total_projected_interest)} interest</p>` : ''}
                                 </div>
                             </div>
                         </div>
@@ -303,6 +304,9 @@ function renderDebts() {
 function renderDebtCard(debt) {
     const progress = ((debt.original_balance - debt.current_balance) / debt.original_balance * 100);
     const isPaidOff = debt.is_paid_off;
+    const hasInterest = debt.interest_rate && debt.interest_rate > 0;
+    const displayAmount = hasInterest && debt.total_amount_due ? debt.total_amount_due : debt.current_balance;
+    const interestAmount = hasInterest && debt.total_interest ? debt.total_interest : 0;
     
     // Professional SVG icons for each debt type
     const typeIcons = {
@@ -360,12 +364,14 @@ function renderDebtCard(debt) {
                 <div class="bg-base-200/50 rounded-xl p-4 mb-4">
                     <div class="flex justify-between items-end mb-2">
                         <div>
-                            <p class="text-xs text-base-content/60 uppercase tracking-wider">Current Balance</p>
-                            <p class="text-2xl font-bold ${debt.current_balance > 0 ? 'text-error' : 'text-success'}">${Utils.formatCurrency(debt.current_balance)}</p>
+                            <p class="text-xs text-base-content/60 uppercase tracking-wider">${hasInterest ? 'Amount Due (incl. Interest)' : 'Current Balance'}</p>
+                            <p class="text-2xl font-bold ${displayAmount > 0 ? 'text-error' : 'text-success'}">${Utils.formatCurrency(displayAmount)}</p>
+                            ${hasInterest && interestAmount > 0 ? `<p class="text-xs text-warning">includes ${Utils.formatCurrency(interestAmount)} interest</p>` : ''}
                         </div>
                         <div class="text-right">
-                            <p class="text-xs text-base-content/60">Original</p>
-                            <p class="text-sm font-medium text-base-content/70">${Utils.formatCurrency(debt.original_balance)}</p>
+                            <p class="text-xs text-base-content/60">Principal</p>
+                            <p class="text-sm font-medium text-base-content/70">${Utils.formatCurrency(debt.current_balance)}</p>
+                            <p class="text-xs text-base-content/50">of ${Utils.formatCurrency(debt.original_balance)}</p>
                         </div>
                     </div>
                     
@@ -447,6 +453,9 @@ function renderDebtCard(debt) {
 
 function renderDebtDetails(debt, payments) {
     const progress = ((debt.original_balance - debt.current_balance) / debt.original_balance * 100);
+    const hasInterest = debt.interest_rate && debt.interest_rate > 0;
+    const displayAmount = hasInterest && debt.total_amount_due ? debt.total_amount_due : debt.current_balance;
+    const interestAmount = hasInterest && debt.total_interest ? debt.total_interest : 0;
     const typeLabels = {
         credit_card: 'Credit Card',
         student_loan: 'Student Loan',
@@ -471,11 +480,12 @@ function renderDebtDetails(debt, payments) {
                             <p class="text-lg font-medium">${debt.creditor || 'N/A'}</p>
                         </div>
                         <div>
-                            <p class="text-sm text-base-content/60">Original Balance</p>
-                            <p class="text-lg font-medium">${Utils.formatCurrency(debt.original_balance)}</p>
+                            <p class="text-sm text-base-content/60">Amount Due (incl. Interest)</p>
+                            <p class="text-lg font-medium">${Utils.formatCurrency(displayAmount)}</p>
+                            ${hasInterest && interestAmount > 0 ? `<p class="text-xs text-warning">includes ${Utils.formatCurrency(interestAmount)} projected interest</p>` : ''}
                         </div>
                         <div>
-                            <p class="text-sm text-base-content/60">Current Balance</p>
+                            <p class="text-sm text-base-content/60">Principal Balance</p>
                             <p class="text-lg font-medium">${Utils.formatCurrency(debt.current_balance)}</p>
                         </div>
                         <div>

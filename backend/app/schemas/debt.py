@@ -67,6 +67,7 @@ class DebtResponse(DebtBase):
     months_to_payoff: Optional[int] = None
     total_interest: Optional[float] = None
     payoff_date: Optional[date] = None
+    total_amount_due: Optional[float] = None
     
     class Config:
         from_attributes = True
@@ -151,6 +152,8 @@ class DebtSummary(BaseModel):
     total_minimum_payments: float
     average_interest_rate: float
     overall_progress_percentage: float
+    total_projected_interest: float
+    total_amount_due: float
 
 
 class ExtraPaymentScenario(BaseModel):

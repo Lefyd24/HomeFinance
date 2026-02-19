@@ -20,6 +20,7 @@ class AccountUpdate(BaseModel):
     name: Optional[str] = Field(None, min_length=1, max_length=100)
     type: Optional[str] = Field(None, pattern="^(checking|savings|credit|cash|investment)$")
     currency: Optional[str] = Field(None, pattern="^[A-Z]{3}$")
+    balance: Optional[float] = None
     description: Optional[str] = None
     icon: Optional[str] = None
     is_active: Optional[bool] = None

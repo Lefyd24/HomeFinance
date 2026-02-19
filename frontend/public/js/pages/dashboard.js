@@ -260,6 +260,7 @@ async function loadDashboardData() {
                         <div class="card bg-base-100 shadow-lg lg:shadow-xl">
                             <div class="card-body p-4 lg:p-6">
                                 <h2 class="card-title text-lg lg:text-xl">Spending Overview</h2>
+                                <small class="text-xs text-base-content/60 mt-0">Total expenses over time for the selected date range</small>
                                 <div class="h-64 lg:h-80">
                                     <canvas id="spendingChart"></canvas>
                                 </div>
@@ -288,13 +289,15 @@ async function loadDashboardData() {
                         </div>
                     </div>
                     
-                    <!-- Budget, Goals & Debts Overview -->
+                    <!-- Budget & Debts Overview -->
                     <div class="space-y-6">
                         <div id="budget-overview"></div>
-                        <div id="goals-overview"></div>
                         <div id="debts-overview"></div>
                     </div>
                 </div>
+                
+                <!-- Financial Goals Carousel - Full Width -->
+                <div id="goals-overview" class="mt-6"></div>
                 
                 <!-- Recent Transactions -->
                 <div class="card bg-base-100 shadow-xl">
@@ -639,12 +642,12 @@ async function loadBudgetOverview() {
                 effectiveEndStr = budgetEndStr;
             }
             
-            // Calculate spent amount from transactions within the effective date range
             const matchingTransactions = transactions.filter(tx => {
                 const txDateStr = tx.date ? tx.date.split('T')[0] : null;
-                const categoryMatch = categoryIds.includes(tx.category_id);
+                const categoryMatch = categoryIds.length === 0 || categoryIds.includes(tx.category_id);
                 const dateMatch = txDateStr >= effectiveStartStr && txDateStr <= effectiveEndStr;
-                return categoryMatch && dateMatch;
+                const isExpense = tx.type === 'expense';
+                return categoryMatch && dateMatch && isExpense;
             });
             
             const spent = matchingTransactions.reduce((sum, tx) => sum + parseFloat(tx.amount || 0), 0);
@@ -880,6 +883,11 @@ async function loadMonthlyBreakdownChart(monthlyData) {
 
 
 
+// Store active goals globally for modal access
+let activeGoalsData = [];
+let goalsCarouselInterval = null;
+let countdownIntervals = [];
+
 async function loadGoalsOverview() {
     try {
         console.log('Loading goals overview...');
@@ -897,6 +905,7 @@ async function loadGoalsOverview() {
         // Filter active goals on the frontend
         const activeGoals = goals.filter(g => g.status === 'active');
         console.log('Active goals:', activeGoals);
+        activeGoalsData = activeGoals;
 
         if (!activeGoals || activeGoals.length === 0) {
             console.log('No active goals found, showing empty state');
@@ -916,46 +925,115 @@ async function loadGoalsOverview() {
             return;
         }
 
-        // Show top 3 goals
-        const goalsToShow = activeGoals.slice(0, 3);
-        console.log('Rendering', goalsToShow.length, 'goals');
+        // Calculate countdown for each goal (days until target date)
+        const goalsWithCountdown = activeGoals.map(goal => {
+            const targetDate = goal.target_date ? new Date(goal.target_date) : null;
+            const today = new Date();
+            const daysLeft = targetDate ? Math.ceil((targetDate - today) / (1000 * 60 * 60 * 24)) : null;
+            return { ...goal, daysLeft };
+        });
 
         container.innerHTML = `
             <div class="card bg-base-100 shadow-xl">
-                <div class="card-body">
-                    <h2 class="card-title mb-4 flex items-center gap-2">
-                        <span class="text-xl">🎯</span> Financial Goals
-                    </h2>
-                    <div class="space-y-4">
-                        ${goalsToShow.map(goal => `
-                            <div class="flex items-center gap-3 p-3 bg-base-200 rounded-lg">
-                                <div class="text-2xl">${goal.icon || '🎯'}</div>
-                                <div class="flex-1 min-w-0">
-                                    <div class="flex justify-between items-center mb-1">
-                                        <span class="font-medium truncate">${goal.name}</span>
-                                        <span class="text-sm">${Math.round(goal.progress_percentage || 0)}%</span>
-                                    </div>
-                                    <progress class="progress progress-primary w-full" 
-                                              value="${goal.progress_percentage || 0}" max="100"></progress>
-                                    <div class="flex justify-between text-xs text-base-content/60 mt-1">
-                                        <span>${Utils.formatCurrency(goal.current_amount || 0)}</span>
-                                        <span>${Utils.formatCurrency(goal.target_amount || 0)}</span>
+                <div class="card-body p-4 lg:p-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="card-title text-lg lg:text-xl flex items-center gap-2">
+                            <span class="text-2xl">🎯</span> Financial Goals
+                        </h2>
+                        <a href="goals.html" class="btn btn-sm btn-ghost">
+                            View All
+                        </a>
+                    </div>
+                    
+                    <!-- Goals Carousel -->
+                    <div class="carousel carousel-center w-full rounded-box" id="goalsCarousel">
+                        ${goalsWithCountdown.map((goal, index) => `
+                            <div id="goal${index}" class="carousel-item w-10/12 snap-start mx-2" onclick="showGoalDetailModal(${goal.id})" style="cursor: pointer;">
+                                <div class="w-full bg-gradient-to-br from-primary/10 to-secondary/40 rounded-lg p-6 hover:shadow-lg transition-shadow">
+                                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                                        <!-- Goal Info -->
+                                        <div class="flex-1">
+                                            <div class="flex items-center gap-3 mb-3">
+                                                <span class="text-4xl">${goal.icon || '🎯'}</span>
+                                                <div>
+                                                    <h3 class="text-xl font-bold">${goal.name}</h3>
+                                                    ${goal.description ? `<p class="text-sm text-base-content/60">${goal.description}</p>` : ''}
+                                                </div>
+                                            </div>
+                                            
+                                            <!-- Progress Bar -->
+                                            <div class="mb-2">
+                                                <div class="flex justify-between text-sm mb-1">
+                                                    <span class="font-semibold">Progress</span>
+                                                    <span class="font-bold text-primary">${Math.round(goal.progress_percentage || 0)}%</span>
+                                                </div>
+                                                <progress class="progress progress-primary w-full h-3" value="${goal.progress_percentage || 0}" max="100"></progress>
+                                                <div class="flex justify-between text-xs text-base-content/60 mt-1">
+                                                    <span>${Utils.formatCurrency(goal.current_amount || 0)}</span>
+                                                    <span>${Utils.formatCurrency(goal.target_amount || 0)}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Countdown -->
+                                        ${goal.daysLeft !== null && goal.daysLeft >= 0 ? `
+                                            <div class="p-4">
+                                                <div class="text-center">
+                                                    <div class="text-xs text-base-content/60 mb-2 uppercase tracking-wide">Time Remaining</div>
+                                                    <div class="bg-secondary rounded-box p-3 text-neutral-content">
+                                                        <span class="countdown font-mono text-2xl" id="countdown-${goal.id}" data-target-date="${goal.target_date}">
+                                                            <span style="--value:0;" data-unit="days">0</span>
+                                                            :
+                                                            <span style="--value:0; --digits: 2;" data-unit="hours">0</span>
+                                                            :
+                                                            <span style="--value:0; --digits: 2;" data-unit="minutes">0</span>
+                                                            :
+                                                            <span style="--value:0; --digits: 2;" data-unit="seconds">0</span>
+                                                        </span>
+                                                        <div class="text-xs mt-2 opacity-70">Days : Hours : Min : Sec</div>
+                                                    </div>
+                                                    <div class="text-xs text-base-content/60 mt-2">
+                                                        Target: ${Utils.formatDate(goal.target_date)}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ` : goal.daysLeft !== null ? `
+                                            <div class="bg-base-100 rounded-lg p-4 shadow-md text-center">
+                                                <div class="text-xs text-base-content/60 mb-1">Target date passed</div>
+                                                <div class="text-sm text-error font-bold">Overdue</div>
+                                            </div>
+                                        ` : `
+                                            <div class="bg-base-100 rounded-lg p-4 shadow-md text-center">
+                                                <div class="text-xs text-base-content/60 mb-1">No target date set</div>
+                                                <div class="text-sm text-info">Open goal</div>
+                                            </div>
+                                        `}
                                     </div>
                                 </div>
                             </div>
                         `).join('')}
                     </div>
-                    <div class="card-actions justify-end mt-4">
-                        <a href="goals.html" class="btn btn-sm btn-ghost">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-                            </svg>
-                            View All Goals
-                        </a>
-                    </div>
+                    
+                    <!-- Carousel Indicators -->
+                    ${goalsWithCountdown.length > 1 ? `
+                        <div class="flex w-full justify-center gap-2 py-4">
+                            ${goalsWithCountdown.map((_, index) => `
+                                <button class="btn btn-xs" onclick="navigateToGoalSlide(${index}); resetCarouselAutoSlide(); return false;">${index + 1}</button>
+                            `).join('')}
+                        </div>
+                    ` : ''}
                 </div>
             </div>
         `;
+        
+        // Start auto-slide carousel if more than 1 goal
+        if (goalsWithCountdown.length > 1) {
+            startGoalsCarouselAutoSlide(goalsWithCountdown.length);
+        }
+        
+        // Start live countdowns
+        startLiveCountdowns();
+        
         console.log('Goals rendered successfully');
     } catch (error) {
         console.error('Error loading goals overview:', error);
@@ -976,6 +1054,214 @@ async function loadGoalsOverview() {
         }
     }
 }
+
+// Navigate to goal slide without scrolling the page
+window.navigateToGoalSlide = function(index) {
+    const carousel = document.getElementById('goalsCarousel');
+    const element = document.getElementById(`goal${index}`);
+    if (!carousel || !element) return;
+
+    // Calculate horizontal offset of the target item relative to the carousel
+    const carouselRect = carousel.getBoundingClientRect();
+    const itemRect = element.getBoundingClientRect();
+    const offsetLeft = itemRect.left - carouselRect.left + carousel.scrollLeft;
+
+    // Smooth-scroll only the carousel container horizontally to the target item
+    try {
+        carousel.scrollTo({ left: offsetLeft, behavior: 'smooth' });
+    } catch (e) {
+        // Fallback if smooth option not supported
+        carousel.scrollLeft = offsetLeft;
+    }
+};
+
+// Auto-slide carousel
+function startGoalsCarouselAutoSlide(totalGoals) {
+    // Clear existing interval
+    if (goalsCarouselInterval) {
+        clearInterval(goalsCarouselInterval);
+    }
+    
+    let currentIndex = 0;
+    goalsCarouselInterval = setInterval(() => {
+        currentIndex = (currentIndex + 1) % totalGoals;
+        navigateToGoalSlide(currentIndex);
+    }, 7000); // Change slide every 7 seconds
+}
+
+// Reset auto-slide when user manually navigates
+window.resetCarouselAutoSlide = function() {
+    if (goalsCarouselInterval) {
+        clearInterval(goalsCarouselInterval);
+        // Restart auto-slide after manual navigation
+        setTimeout(() => {
+            const totalGoals = activeGoalsData.length;
+            if (totalGoals > 1) {
+                startGoalsCarouselAutoSlide(totalGoals);
+            }
+        }, 10000); // Wait 10 seconds before resuming auto-slide
+    }
+};
+
+// Start live countdowns for all goals
+function startLiveCountdowns() {
+    // Clear existing intervals
+    countdownIntervals.forEach(interval => clearInterval(interval));
+    countdownIntervals = [];
+    
+    // Find all countdown elements
+    const countdownElements = document.querySelectorAll('[id^="countdown-"]');
+    
+    countdownElements.forEach(element => {
+        const targetDate = new Date(element.dataset.targetDate);
+        
+        // Update function
+        const updateCountdown = () => {
+            const now = new Date();
+            const diff = targetDate - now;
+            
+            if (diff <= 0) {
+                // Time's up
+                const spans = element.querySelectorAll('span[data-unit]');
+                spans.forEach(span => span.style.setProperty('--value', '0'));
+                return;
+            }
+            
+            // Calculate time units
+            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+            
+            // Update each span
+            const daysSpan = element.querySelector('[data-unit="days"]');
+            const hoursSpan = element.querySelector('[data-unit="hours"]');
+            const minutesSpan = element.querySelector('[data-unit="minutes"]');
+            const secondsSpan = element.querySelector('[data-unit="seconds"]');
+            
+            if (daysSpan) daysSpan.style.setProperty('--value', days);
+            if (hoursSpan) hoursSpan.style.setProperty('--value', hours);
+            if (minutesSpan) minutesSpan.style.setProperty('--value', minutes);
+            if (secondsSpan) secondsSpan.style.setProperty('--value', seconds);
+        };
+        
+        // Initial update
+        updateCountdown();
+        
+        // Update every second
+        const interval = setInterval(updateCountdown, 1000);
+        countdownIntervals.push(interval);
+    });
+}
+
+// Show goal detail modal
+window.showGoalDetailModal = async function(goalId) {
+    try {
+        const goal = await API.goals.get(goalId);
+        
+        // Create modal if it doesn't exist
+        let modal = document.getElementById('goalDetailModal');
+        if (!modal) {
+            modal = document.createElement('dialog');
+            modal.id = 'goalDetailModal';
+            modal.className = 'modal modal-middle';
+            document.body.appendChild(modal);
+        }
+        
+        const targetDate = goal.target_date ? new Date(goal.target_date) : null;
+        const today = new Date();
+        const daysLeft = targetDate ? Math.ceil((targetDate - today) / (1000 * 60 * 60 * 24)) : null;
+        const remaining = (goal.target_amount || 0) - (goal.current_amount || 0);
+        
+        modal.innerHTML = `
+            <div class="modal-box max-w-2xl">
+                <div class="flex justify-between items-start mb-4">
+                    <div class="flex items-center gap-3">
+                        <span class="text-5xl">${goal.icon || '🎯'}</span>
+                        <div>
+                            <h3 class="text-2xl font-bold">${goal.name}</h3>
+                            ${goal.description ? `<p class="text-sm text-base-content/60 mt-1">${goal.description}</p>` : ''}
+                        </div>
+                    </div>
+                    <button onclick="goalDetailModal.close()" class="btn btn-ghost btn-circle btn-sm">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+                
+                <!-- Progress Section -->
+                <div class="bg-base-200 rounded-lg p-4 mb-4">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="font-semibold">Progress</span>
+                        <span class="text-2xl font-bold text-primary">${Math.round(goal.progress_percentage || 0)}%</span>
+                    </div>
+                    <progress class="progress progress-primary w-full h-4 mb-2" value="${goal.progress_percentage || 0}" max="100"></progress>
+                    <div class="grid grid-cols-3 gap-2 text-center">
+                        <div>
+                            <div class="text-xs text-base-content/60">Current</div>
+                            <div class="font-bold text-success">${Utils.formatCurrency(goal.current_amount || 0)}</div>
+                        </div>
+                        <div>
+                            <div class="text-xs text-base-content/60">Remaining</div>
+                            <div class="font-bold text-warning">${Utils.formatCurrency(remaining)}</div>
+                        </div>
+                        <div>
+                            <div class="text-xs text-base-content/60">Target</div>
+                            <div class="font-bold text-info">${Utils.formatCurrency(goal.target_amount || 0)}</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Details Grid -->
+                <div class="grid grid-cols-2 gap-4 mb-4">
+                    <div class="bg-base-200 rounded-lg p-3">
+                        <div class="text-xs text-base-content/60 mb-1">Status</div>
+                        <div class="badge ${goal.status === 'active' ? 'badge-success' : goal.status === 'completed' ? 'badge-info' : 'badge-warning'}">
+                            ${goal.status}
+                        </div>
+                    </div>
+                    <div class="bg-base-200 rounded-lg p-3">
+                        <div class="text-xs text-base-content/60 mb-1">Category</div>
+                        <div class="font-medium capitalize">${goal.category || 'General'}</div>
+                    </div>
+                    ${goal.target_date ? `
+                        <div class="bg-base-200 rounded-lg p-3">
+                            <div class="text-xs text-base-content/60 mb-1">Target Date</div>
+                            <div class="font-medium">${Utils.formatDate(goal.target_date)}</div>
+                        </div>
+                        <div class="bg-base-200 rounded-lg p-3">
+                            <div class="text-xs text-base-content/60 mb-1">Days Left</div>
+                            <div class="font-bold ${daysLeft < 0 ? 'text-error' : daysLeft < 30 ? 'text-warning' : 'text-success'}">
+                                ${daysLeft !== null ? (daysLeft >= 0 ? `${daysLeft} days` : 'Overdue') : 'N/A'}
+                            </div>
+                        </div>
+                    ` : ''}
+                </div>
+                
+                ${goal.notes ? `
+                    <div class="bg-base-200 rounded-lg p-3 mb-4">
+                        <div class="text-xs text-base-content/60 mb-1">Notes</div>
+                        <div class="text-sm">${goal.notes}</div>
+                    </div>
+                ` : ''}
+                
+                <div class="modal-action">
+                    <a href="goals.html" class="btn btn-primary">Manage Goals</a>
+                    <button onclick="goalDetailModal.close()" class="btn">Close</button>
+                </div>
+            </div>
+            <form method="dialog" class="modal-backdrop">
+                <button>close</button>
+            </form>
+        `;
+        
+        modal.showModal();
+    } catch (error) {
+        console.error('Error loading goal details:', error);
+        Utils.showToast('Error loading goal details', 'error');
+    }
+};
 
 async function loadDebtsOverview() {
     try {
@@ -1025,94 +1311,62 @@ async function loadDebtsOverview() {
         
         container.innerHTML = `
             <div class="card bg-base-100 shadow-xl">
-                <div class="card-body">
-                    <h2 class="card-title mb-4 flex items-center gap-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-error" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-                        </svg>
-                        Upcoming Debt Payments
-                    </h2>
+                <div class="card-body p-4">
+                    <div class="flex justify-between items-center mb-3">
+                        <h2 class="card-title text-base flex items-center gap-2">
+                            Upcoming Payments
+                        </h2>
+                        <a href="debts.html" class="btn btn-xs btn-ghost">View All</a>
+                    </div>
                     
                     ${overdue.length > 0 ? `
-                        <div class="alert alert-error mb-4">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 shrink-0 stroke-current" fill="none" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                            </svg>
-                            <div>
-                                <span class="font-bold">${overdue.length} Overdue Payment(s)</span>
-                            </div>
+                        <div class="alert alert-error py-2 mb-3">
+                            <span class="text-sm font-bold">${overdue.length} Overdue</span>
                         </div>
                     ` : ''}
                     
-                    <div class="space-y-4">
+                    <div class="space-y-2">
                         ${paymentsToShow.map(payment => {
-                            // Find debt details for this payment
                             const debt = debts.find(d => d.id === payment.debt_id);
                             const paymentProgress = debt ? ((debt.original_balance - debt.current_balance) / debt.original_balance * 100) : 0;
                             
-                            let statusClass = '';
                             let statusBadge = '';
-                            let daysLeftText = '';
                             let statusColor = '';
                             
                             if (payment.is_overdue) {
-                                statusClass = 'border-error/50 bg-error/5';
-                                statusBadge = '<span class="badge badge-error badge-sm gap-1"><svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>Overdue</span>';
-                                daysLeftText = `${Math.abs(payment.days_until_due)} days overdue`;
+                                statusBadge = '<span class="badge badge-error badge-xs">Overdue</span>';
                                 statusColor = 'text-error';
                             } else if (payment.days_until_due === 0) {
-                                statusClass = 'border-warning/50 bg-warning/5';
-                                statusBadge = '<span class="badge badge-warning badge-sm gap-1"><svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>Due Today</span>';
-                                daysLeftText = 'Due today';
+                                statusBadge = '<span class="badge badge-warning badge-xs">Today</span>';
                                 statusColor = 'text-warning';
                             } else if (payment.days_until_due <= 3) {
-                                statusClass = 'border-warning/50 bg-warning/5';
-                                statusBadge = '<span class="badge badge-warning badge-sm gap-1"><svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>Due Soon</span>';
-                                daysLeftText = `${payment.days_until_due} days left`;
+                                statusBadge = '<span class="badge badge-warning badge-xs">Soon</span>';
                                 statusColor = 'text-warning';
                             } else {
-                                statusClass = 'border-info/50 bg-info/5';
-                                statusBadge = '<span class="badge badge-info badge-sm gap-1"><svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>Upcoming</span>';
-                                daysLeftText = `${payment.days_until_due} days left`;
-                                statusColor = 'text-info';
+                                statusBadge = `<span class="badge badge-ghost badge-xs">${payment.days_until_due}d</span>`;
+                                statusColor = 'text-base-content';
                             }
                             
                             return `
-                                <div class="p-4 bg-base-200 rounded-xl border ${statusClass} hover:shadow-md transition-all">
-                                    <!-- Header Row -->
-                                    <div class="flex justify-between items-start mb-3">
-                                        <div class="min-w-0 flex-1">
+                                <div class="bg-base-200 rounded-lg p-3">
+                                    <div class="flex justify-between items-start mb-2">
+                                        <div class="flex-1 min-w-0">
                                             <div class="flex items-center gap-2 mb-1">
-                                                <h4 class="font-bold text-base truncate" title="${payment.debt_name}">${payment.debt_name}</h4>
+                                                <h4 class="font-semibold text-sm truncate">${payment.debt_name}</h4>
                                                 ${statusBadge}
                                             </div>
-                                            ${payment.creditor ? `<p class="text-xs text-base-content/60 flex items-center gap-1"><svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>${payment.creditor}</p>` : ''}
+                                            ${payment.creditor ? `<p class="text-xs text-base-content/60">${payment.creditor}</p>` : ''}
                                         </div>
-                                        <div class="text-right ml-3">
-                                            <p class="text-xl font-bold ${payment.is_overdue ? 'text-error' : 'text-error'}">${Utils.formatCurrency(payment.amount)}</p>
-                                            <p class="text-xs text-base-content/60 flex items-center justify-end gap-1">
-                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                                </svg>
-                                                ${Utils.formatDate(payment.due_date)}
-                                            </p>
+                                        <div class="text-right ml-2">
+                                            <p class="font-bold text-sm ${statusColor}">${Utils.formatCurrency(payment.amount)}</p>
+                                            <p class="text-xs text-base-content/60">${Utils.formatDate(payment.due_date)}</p>
                                         </div>
                                     </div>
-                                    
-                                    <!-- Progress Section (like budgets) -->
                                     ${debt ? `
-                                        <div class="bg-base-100 rounded-lg p-3">
-                                            <div class="flex justify-between items-center mb-2">
-                                                <div class="flex items-center gap-2">
-                                                    <span class="text-xs font-semibold ${statusColor}">${daysLeftText}</span>
-                                                </div>
-                                                <span class="text-xs text-base-content/60">${paymentProgress.toFixed(1)}% paid off</span>
-                                            </div>
-                                            <div class="flex justify-between text-xs mb-1">
-                                                <span class="text-base-content/50">Balance: ${Utils.formatCurrency(debt.current_balance)}</span>
-                                                <span class="text-success">Paid: ${Utils.formatCurrency(debt.original_balance - debt.current_balance)}</span>
-                                            </div>
-                                            <progress class="progress w-full ${payment.is_overdue ? 'progress-error' : payment.days_until_due <= 3 ? 'progress-warning' : 'progress-info'}" value="${paymentProgress}" max="100"></progress>
+                                        <progress class="progress progress-sm w-full ${payment.is_overdue ? 'progress-error' : payment.days_until_due <= 3 ? 'progress-warning' : 'progress-info'}" value="${paymentProgress}" max="100"></progress>
+                                        <div class="flex justify-between text-xs text-base-content/60 mt-1">
+                                            <span>${paymentProgress.toFixed(0)}% paid</span>
+                                            <span>${Utils.formatCurrency(debt.current_balance)} left</span>
                                         </div>
                                     ` : ''}
                                 </div>
@@ -1121,17 +1375,8 @@ async function loadDebtsOverview() {
                     </div>
                     
                     ${upcomingPayments.length > 3 ? `
-                        <p class="text-sm text-base-content/60 mt-3 text-center">+ ${upcomingPayments.length - 3} more payment(s)</p>
+                        <p class="text-xs text-base-content/60 mt-2 text-center">+ ${upcomingPayments.length - 3} more</p>
                     ` : ''}
-                    
-                    <div class="card-actions justify-end mt-4 pt-3 border-t border-base-200">
-                        <a href="debts.html" class="btn btn-sm btn-ghost gap-1">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-                            </svg>
-                            View All Debts
-                        </a>
-                    </div>
                 </div>
             </div>
         `;

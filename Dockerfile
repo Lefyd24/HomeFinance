@@ -52,10 +52,14 @@ RUN mkdir -p /app/data
 # Copy supervisord configuration
 COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
+# Copy entrypoint script
+COPY docker-entrypoint.sh /app/docker-entrypoint.sh
+RUN chmod +x /app/docker-entrypoint.sh
+
 # Set environment variables
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1
-ENV DATABASE_URL=sqlite:///data/finance.db
+ENV DATABASE_URL=sqlite:////app/data/finance.db
 ENV SECRET_KEY=your-secret-key-change-in-production
 ENV DEBUG=false
 ENV CORS_ORIGINS='["*"]'
@@ -65,5 +69,5 @@ ENV FRONTEND_PORT=3100
 # Expose both ports
 EXPOSE 8223 3100
 
-# Start supervisord to manage both processes
-CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
+# Start entrypoint script (runs migrations then supervisord)
+CMD ["/app/docker-entrypoint.sh"]

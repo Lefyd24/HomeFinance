@@ -14,7 +14,7 @@ const API = {
         // Frontend runs on port 3100, backend on port 8223
         const protocol = window.location.protocol;
         const hostname = window.location.hostname;
-        return `${protocol}//${hostname}:8224/api`;
+        return `${protocol}//${hostname}:8223/api`;
     })(),
     
     /**
@@ -248,6 +248,9 @@ const API = {
         
         getTransactions: (id, skip = 0, limit = 50) =>
             API.request(`/budgets/${id}/transactions?skip=${skip}&limit=${limit}`),
+        
+        getSummary: (id, year = null) =>
+            API.request(`/budgets/${id}/summary${year ? `?year=${year}` : ''}`),
         
         addCategory: (id, categoryId, allocatedAmount = null) =>
             API.request(`/budgets/${id}/categories`, { 
