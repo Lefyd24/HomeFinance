@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from datetime import datetime
+from datetime import datetime, date
 from typing import Optional, List
 
 
@@ -45,6 +45,8 @@ class BudgetResponse(BudgetBase):
     spent: float = 0
     remaining: float = 0
     percentage: float = 0
+    period_start: Optional[date] = None
+    period_end: Optional[date] = None
     
     class Config:
         from_attributes = True

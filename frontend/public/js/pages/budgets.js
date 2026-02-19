@@ -55,93 +55,165 @@ window.deleteBudget = async (id) => {
     }
 };
 
-window.viewBudgetDetails = async (id) => {
+window.viewBudgetDetails = async (id, year = null) => {
     try {
-        const response = await API.budgets.getTransactions(id);
-        const budget = response.budget;
-        const transactions = response.items;
-        const total = response.total;
-        
-        // Get full budget details for progress
-        const budgetDetails = await API.budgets.get(id);
-        
-        // Update modal title
+        const summary = await API.budgets.getSummary(id, year);
+        const { budget, periods, year_total } = summary;
+        const displayYear = summary.year;
+
         document.getElementById('budgetDetailsTitle').textContent = budget.name;
-        
-        // Render budget info
+
+        // Determine which period is "current" so we can auto-expand it
+        const today = new Date().toISOString().split('T')[0];
+        const currentPeriodIdx = periods.findIndex(
+            p => today >= p.period_start && today <= p.period_end
+        );
+
+        // Year navigation + overall summary
+        const periodLabel = budget.period === 'monthly' ? '/month' : budget.period === 'yearly' ? '/year' : '';
+        const yearProgressColor = year_total.percentage > 90 ? 'progress-error' : year_total.percentage > 75 ? 'progress-warning' : 'progress-primary';
         const infoContainer = document.getElementById('budgetDetailsInfo');
         infoContainer.innerHTML = `
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div class="stat bg-base-200 rounded-box">
-                    <div class="stat-title">Budget Amount</div>
-                    <div class="stat-value text-lg">${Utils.formatCurrency(budgetDetails.amount)}</div>
+            <div class="flex items-center justify-between mb-3">
+                <button onclick="viewBudgetDetails(${budget.id}, ${displayYear - 1})" class="btn btn-sm btn-ghost gap-1">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+                    <span class="hidden sm:inline">${displayYear - 1}</span>
+                </button>
+                <span class="text-lg sm:text-xl font-bold">${displayYear}</span>
+                <button onclick="viewBudgetDetails(${budget.id}, ${displayYear + 1})" class="btn btn-sm btn-ghost gap-1">
+                    <span class="hidden sm:inline">${displayYear + 1}</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                </button>
+            </div>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-3">
+                <div class="bg-base-200 rounded-xl p-2.5">
+                    <div class="text-xs text-base-content/60 mb-0.5">Budget ${periodLabel}</div>
+                    <div class="font-bold text-sm sm:text-base">${Utils.formatCurrency(budget.amount)}</div>
                 </div>
-                <div class="stat bg-base-200 rounded-box">
-                    <div class="stat-title">Spent</div>
-                    <div class="stat-value text-lg text-error">${Utils.formatCurrency(budgetDetails.spent)}</div>
+                <div class="bg-base-200 rounded-xl p-2.5">
+                    <div class="text-xs text-base-content/60 mb-0.5">Year Budget</div>
+                    <div class="font-bold text-sm sm:text-base">${Utils.formatCurrency(year_total.budget_amount)}</div>
                 </div>
-                <div class="stat bg-base-200 rounded-box">
-                    <div class="stat-title">Remaining</div>
-                    <div class="stat-value text-lg ${budgetDetails.remaining < 0 ? 'text-error' : 'text-success'}">${Utils.formatCurrency(Math.abs(budgetDetails.remaining))}${budgetDetails.remaining < 0 ? ' over' : ''}</div>
+                <div class="bg-base-200 rounded-xl p-2.5">
+                    <div class="text-xs text-base-content/60 mb-0.5">Year Spent</div>
+                    <div class="font-bold text-sm sm:text-base text-error">${Utils.formatCurrency(year_total.spent)}</div>
                 </div>
-                <div class="stat bg-base-200 rounded-box">
-                    <div class="stat-title">Usage</div>
-                    <div class="stat-value text-lg">${budgetDetails.percentage}%</div>
-                    <progress class="progress ${budgetDetails.percentage > 90 ? 'progress-error' : budgetDetails.percentage > 75 ? 'progress-warning' : 'progress-primary'} w-full" value="${budgetDetails.percentage}" max="100"></progress>
+                <div class="bg-base-200 rounded-xl p-2.5">
+                    <div class="text-xs text-base-content/60 mb-0.5">Year Remaining</div>
+                    <div class="font-bold text-sm sm:text-base ${year_total.remaining < 0 ? 'text-error' : 'text-success'}">${year_total.remaining < 0 ? '-' : ''}${Utils.formatCurrency(Math.abs(year_total.remaining))}</div>
                 </div>
             </div>
-            <div class="mt-4 text-sm text-base-content/60">
-                <span class="font-medium">Period:</span> ${Utils.formatDate(budget.start_date)} - ${Utils.formatDate(budget.end_date)}
+            <div class="w-full mb-1">
+                <div class="flex justify-between text-xs text-base-content/60 mb-1">
+                    <span>Year usage</span>
+                    <span>${year_total.percentage}%</span>
+                </div>
+                <progress class="progress ${yearProgressColor} w-full" value="${year_total.percentage}" max="100"></progress>
             </div>
         `;
-        
-        // Render transactions table
+
+        // Period breakdown (collapsible accordions)
         const tableContainer = document.getElementById('budgetTransactionsTable');
-        
-        if (transactions.length === 0) {
+
+        if (periods.length === 0) {
             tableContainer.innerHTML = `
                 <div class="text-center py-8">
-                    <p class="text-base-content/60">No transactions found for this budget period</p>
+                    <p class="text-base-content/60">No data for this year</p>
                 </div>
             `;
         } else {
             tableContainer.innerHTML = `
-                <div class="overflow-x-auto">
-                    <table class="table table-sm">
-                        <thead>
-                            <tr>
-                                <th>Date</th>
-                                <th>Description</th>
-                                <th>Category</th>
-                                <th>Account</th>
-                                <th class="text-right">Amount</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${transactions.map(tx => `
-                                <tr class="hover">
-                                    <td>${Utils.formatDate(tx.date)}</td>
-                                    <td>${tx.description}</td>
-                                    <td>
-                                        <span class="badge badge-sm" style="background-color: ${tx.category_color || 'var(--fallback-bc, oklch(var(--bc)))'}20; color: ${tx.category_color || 'inherit'};">
-                                            ${tx.category_name || 'Uncategorized'}
-                                        </span>
-                                    </td>
-                                    <td>${tx.account_name || '-'}</td>
-                                    <td class="text-right font-medium text-error">-${Utils.formatCurrency(tx.amount)}</td>
-                                </tr>
-                            `).join('')}
-                        </tbody>
-                    </table>
+                <div class="space-y-2">
+                    ${periods.map((period, idx) => {
+                        const isCurrent = idx === currentPeriodIdx;
+                        const progressColor = period.percentage > 90 ? 'progress-error' : period.percentage > 75 ? 'progress-warning' : 'progress-primary';
+                        const statusBadge = period.percentage > 100
+                            ? '<span class="badge badge-error badge-xs">Over</span>'
+                            : period.percentage > 90
+                            ? '<span class="badge badge-warning badge-xs">Almost</span>'
+                            : period.spent === 0
+                            ? '<span class="badge badge-ghost badge-xs">No spending</span>'
+                            : '';
+
+                        return `
+                            <div class="collapse collapse-arrow bg-base-100 border border-base-300 rounded-lg ${isCurrent ? 'border-primary' : ''}">
+                                <input type="checkbox" ${isCurrent ? 'checked' : ''} />
+                                <div class="collapse-title py-3 pr-10 pl-3 sm:pl-4">
+                                    <div class="flex items-center justify-between gap-2">
+                                        <div class="flex items-center gap-1.5 min-w-0">
+                                            <span class="font-semibold text-sm sm:text-base truncate">${period.label}</span>
+                                            ${isCurrent ? '<span class="badge badge-primary badge-xs shrink-0">Current</span>' : ''}
+                                            ${statusBadge ? `<span class="shrink-0">${statusBadge}</span>` : ''}
+                                        </div>
+                                        <div class="flex items-center gap-1.5 text-xs sm:text-sm shrink-0">
+                                            <span class="font-semibold ${period.spent > period.budget_amount ? 'text-error' : ''}">${Utils.formatCurrency(period.spent)}</span>
+                                            <span class="text-base-content/40">/</span>
+                                            <span class="text-base-content/50">${Utils.formatCurrency(period.budget_amount)}</span>
+                                        </div>
+                                    </div>
+                                    <progress class="progress ${progressColor} w-full mt-1.5 h-1" value="${Math.min(period.percentage, 100)}" max="100"></progress>
+                                </div>
+                                <div class="collapse-content px-2 sm:px-4">
+                                    ${period.transactions.length === 0
+                                        ? '<p class="text-sm text-base-content/50 py-2">No transactions in this period</p>'
+                                        : `
+                                            <div class="overflow-x-auto -mx-2 sm:mx-0">
+                                                <table class="table table-xs w-full">
+                                                    <thead>
+                                                        <tr>
+                                                            <th class="whitespace-nowrap">Date</th>
+                                                            <th>Description</th>
+                                                            <th class="hidden sm:table-cell">Category</th>
+                                                            <th class="hidden md:table-cell">Account</th>
+                                                            <th class="text-right whitespace-nowrap">Amount</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        ${period.transactions.map(tx => `
+                                                            <tr class="hover">
+                                                                <td class="whitespace-nowrap text-xs">${Utils.formatDate(tx.date)}</td>
+                                                                <td class="max-w-[120px] sm:max-w-none">
+                                                                    <div class="truncate">${tx.description}</div>
+                                                                    <div class="sm:hidden mt-0.5">
+                                                                        <span class="badge badge-xs" style="background-color: ${tx.category_color || 'var(--fallback-bc, oklch(var(--bc)))'}20; color: ${tx.category_color || 'inherit'};">
+                                                                            ${tx.category_name || 'Uncategorized'}
+                                                                        </span>
+                                                                    </div>
+                                                                </td>
+                                                                <td class="hidden sm:table-cell">
+                                                                    <span class="badge badge-xs" style="background-color: ${tx.category_color || 'var(--fallback-bc, oklch(var(--bc)))'}20; color: ${tx.category_color || 'inherit'};">
+                                                                        ${tx.category_name || 'Uncategorized'}
+                                                                    </span>
+                                                                </td>
+                                                                <td class="hidden md:table-cell text-xs">${tx.account_name || '-'}</td>
+                                                                <td class="text-right font-medium text-error whitespace-nowrap">-${Utils.formatCurrency(tx.amount)}</td>
+                                                            </tr>
+                                                        `).join('')}
+                                                    </tbody>
+                                                    <tfoot>
+                                                        <tr class="font-semibold text-xs">
+                                                            <td colspan="2" class="sm:hidden">Total (${period.transactions.length})</td>
+                                                            <td colspan="3" class="hidden sm:table-cell">Total (${period.transactions.length} transaction${period.transactions.length !== 1 ? 's' : ''})</td>
+                                                            <td class="hidden md:table-cell"></td>
+                                                            <td class="text-right text-error">-${Utils.formatCurrency(period.spent)}</td>
+                                                        </tr>
+                                                    </tfoot>
+                                                </table>
+                                            </div>
+                                            <div class="flex justify-between items-center mt-2 pt-2 border-t border-base-200 text-xs">
+                                                <span class="text-base-content/60">${Math.round(period.percentage)}% of budget used</span>
+                                                <span class="font-medium ${period.remaining < 0 ? 'text-error' : 'text-success'}">${period.remaining < 0 ? '-' : ''}${Utils.formatCurrency(Math.abs(period.remaining))} ${period.remaining < 0 ? 'over' : 'left'}</span>
+                                            </div>
+                                        `
+                                    }
+                                </div>
+                            </div>
+                        `;
+                    }).join('')}
                 </div>
-                ${total > transactions.length ? `
-                    <div class="text-center mt-4 text-sm text-base-content/60">
-                        Showing ${transactions.length} of ${total} transactions
-                    </div>
-                ` : ''}
             `;
         }
-        
+
         budgetDetailsModal.showModal();
     } catch (error) {
         console.error('Error loading budget details:', error);
@@ -263,7 +335,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                     </div>
                     
                     <div class="text-xs text-base-content/50 mb-3">
-                        ${Utils.formatDate(budget.start_date)} - ${Utils.formatDate(budget.end_date)}
+                        ${budget.period_start || budget.period_end 
+                            ? `${Utils.formatDate(budget.period_start)} - ${Utils.formatDate(budget.period_end)}`
+                            : `${Utils.formatDate(budget.start_date)} - ${Utils.formatDate(budget.end_date)}`}
                     </div>
                     
                     <div class="mb-4">
