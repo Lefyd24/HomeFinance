@@ -32,6 +32,7 @@ class Settings(BaseSettings):
         "http://homeserver.burbot-karat.ts.net:3100",
         "http://100.101.125.41:3100",
         "http://localhost:3101",
+        "http://100.65.10.29"
     ]
 
     # File Upload

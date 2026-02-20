@@ -682,10 +682,28 @@ async function loadBudgetOverview() {
             };
         });
         
+        // Calculate total spent vs total budget
+        const totalBudget = budgetsWithSpending.reduce((sum, b) => sum + (b.adjustedAmount || 0), 0);
+        const totalSpent = budgetsWithSpending.reduce((sum, b) => sum + (b.spent || 0), 0);
+        const totalPercentage = totalBudget > 0 ? (totalSpent / totalBudget * 100) : 0;
+        
+        // Determine badge color based on percentage
+        let badgeClass = 'badge-primary';
+        if (totalPercentage > 90) {
+            badgeClass = 'badge-error';
+        } else if (totalPercentage > 75) {
+            badgeClass = 'badge-warning';
+        }
+        
         container.innerHTML = `
             <div class="card bg-base-100 shadow-xl">
                 <div class="card-body">
-                    <h2 class="card-title mb-4">Budget Overview</h2>
+                    <div class="flex justify-between items-center gap-2 mb-4">
+                        <h2 class="card-title">Budget Overview</h2>
+                        <span class="badge ${badgeClass} badge-sm badge-soft">
+                            ${Utils.formatCurrency(totalSpent)} / ${Utils.formatCurrency(totalBudget)}
+                        </span>
+                    </div>
                     <div class="space-y-4">
                         ${budgetsWithSpending.map(budget => `
                             <div>
@@ -1276,10 +1294,50 @@ async function loadDebtsOverview() {
         // Get all debts to calculate payment progress
         const debts = await API.debts.list();
         
-        // Get upcoming payments for the next 30 days
+        // Get upcoming payments for the next 30 days (recurring debts)
         const upcomingPayments = await API.debts.getUpcomingPayments(30);
         
-        if (!upcomingPayments || upcomingPayments.length === 0) {
+        // Also include non-recurring debts whose next_payment_date falls within the selected date range
+        const rangeStart = dashboardDateRange.startDate;
+        const rangeEnd = dashboardDateRange.endDate;
+        const today = new Date();
+        const todayStr = today.toISOString().split('T')[0];
+        
+        const nonRecurringPayments = debts
+            .filter(d => {
+                // Non-recurring: no recurrence_unit (recurrence_unit is null/empty)
+                const isNonRecurring = !d.recurrence_unit;
+                // Must be active, not paid off, and have a payment date
+                return isNonRecurring && d.is_active && !d.is_paid_off && d.current_balance > 0 && d.next_payment_date;
+            })
+            .filter(d => {
+                // Payment date must fall within the selected dashboard date range
+                const payDate = d.next_payment_date.split('T')[0];
+                return payDate >= rangeStart && payDate <= rangeEnd;
+            })
+            .map(d => {
+                const payDate = d.next_payment_date.split('T')[0];
+                const daysUntil = Math.round((new Date(payDate) - today) / (1000 * 60 * 60 * 24));
+                return {
+                    debt_id: d.id,
+                    debt_name: d.name,
+                    creditor: d.creditor,
+                    amount: d.minimum_payment || d.current_balance,
+                    due_date: d.next_payment_date,
+                    days_until_due: daysUntil,
+                    is_overdue: daysUntil < 0,
+                    debt_type: d.type,
+                    is_one_time: true
+                };
+            });
+        
+        // Merge recurring upcoming payments with non-recurring ones, avoiding duplicates
+        const recurringDebtIds = new Set(upcomingPayments.map(p => p.debt_id));
+        const uniqueNonRecurring = nonRecurringPayments.filter(p => !recurringDebtIds.has(p.debt_id));
+        const allUpcomingPayments = [...upcomingPayments, ...uniqueNonRecurring]
+            .sort((a, b) => new Date(a.due_date) - new Date(b.due_date));
+        
+        if (!allUpcomingPayments || allUpcomingPayments.length === 0) {
             console.log('No upcoming debt payments, showing empty state');
             container.innerHTML = `
                 <div class="card bg-base-100 shadow-xl">
@@ -1290,7 +1348,7 @@ async function loadDebtsOverview() {
                             </svg>
                             Upcoming Debt Payments
                         </h2>
-                        <p class="text-base-content/60 mb-4">No upcoming payments in the next 30 days.</p>
+                        <p class="text-base-content/60 mb-4">No upcoming payments in the selected date range.</p>
                         <div class="card-actions justify-end">
                             <a href="debts.html" class="btn btn-sm btn-error">Manage Debts</a>
                         </div>
@@ -1301,13 +1359,12 @@ async function loadDebtsOverview() {
         }
         
         // Separate overdue, due soon, and future payments
-        const today = new Date();
-        const overdue = upcomingPayments.filter(p => p.is_overdue);
-        const dueSoon = upcomingPayments.filter(p => !p.is_overdue && p.days_until_due <= 7);
-        const future = upcomingPayments.filter(p => !p.is_overdue && p.days_until_due > 7);
+        const overdue = allUpcomingPayments.filter(p => p.is_overdue);
+        const dueSoon = allUpcomingPayments.filter(p => !p.is_overdue && p.days_until_due <= 7);
+        const future = allUpcomingPayments.filter(p => !p.is_overdue && p.days_until_due > 7);
         
         // Show first 3 payments with full details
-        const paymentsToShow = upcomingPayments.slice(0, 3);
+        const paymentsToShow = allUpcomingPayments.slice(0, 3);
         
         container.innerHTML = `
             <div class="card bg-base-100 shadow-xl">
@@ -1347,6 +1404,8 @@ async function loadDebtsOverview() {
                                 statusColor = 'text-base-content';
                             }
                             
+                            const oneTimeBadge = payment.is_one_time ? '<span class="badge badge-warning badge-xs">One-Time</span>' : '';
+                            
                             return `
                                 <div class="bg-base-200 rounded-lg p-3">
                                     <div class="flex justify-between items-start mb-2">
@@ -1354,6 +1413,7 @@ async function loadDebtsOverview() {
                                             <div class="flex items-center gap-2 mb-1">
                                                 <h4 class="font-semibold text-sm truncate">${payment.debt_name}</h4>
                                                 ${statusBadge}
+                                                ${oneTimeBadge}
                                             </div>
                                             ${payment.creditor ? `<p class="text-xs text-base-content/60">${payment.creditor}</p>` : ''}
                                         </div>
@@ -1374,8 +1434,8 @@ async function loadDebtsOverview() {
                         }).join('')}
                     </div>
                     
-                    ${upcomingPayments.length > 3 ? `
-                        <p class="text-xs text-base-content/60 mt-2 text-center">+ ${upcomingPayments.length - 3} more</p>
+                    ${allUpcomingPayments.length > 3 ? `
+                        <p class="text-xs text-base-content/60 mt-2 text-center">+ ${allUpcomingPayments.length - 3} more</p>
                     ` : ''}
                 </div>
             </div>

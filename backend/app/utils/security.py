@@ -139,7 +139,7 @@ async def get_current_user_by_api_key(
 
 
 async def get_current_user_authenticated(
-    token: str = Depends(oauth2_scheme),
+    token: Optional[str] = Depends(oauth2_scheme),
     api_key: Optional[str] = Security(api_key_header),
     db: Session = Depends(get_db),
 ) -> User:
@@ -157,6 +157,9 @@ async def get_current_user_authenticated(
             return user
 
     # Fall back to JWT token
+    if not token:
+        raise credentials_exception
+
     payload = decode_token(token)
     if payload is None:
         raise credentials_exception

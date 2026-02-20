@@ -39,6 +39,7 @@ app = FastAPI(
     version=settings.APP_VERSION,
     description="Personal Finance Management API",
     lifespan=lifespan,
+    redirect_slashes=True,
 )
 
 # Add CORS middleware - allow frontend on port 3100

@@ -518,8 +518,12 @@ const API = {
         getScenarios: () =>
             API.request('/debts/strategies/scenarios'),
         
-        getUpcomingPayments: (days = 30) =>
-            API.request(`/debts/upcoming-payments?days=${days}`)
+        getUpcomingPayments: (days = 30, startDate = null, endDate = null) => {
+            let url = `/debts/upcoming-payments?days=${days}`;
+            if (startDate) url += `&start_date=${startDate}`;
+            if (endDate) url += `&end_date=${endDate}`;
+            return API.request(url);
+        }
     }
 };
 

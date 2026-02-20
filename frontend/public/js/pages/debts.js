@@ -307,6 +307,7 @@ function renderDebtCard(debt) {
     const hasInterest = debt.interest_rate && debt.interest_rate > 0;
     const displayAmount = hasInterest && debt.total_amount_due ? debt.total_amount_due : debt.current_balance;
     const interestAmount = hasInterest && debt.total_interest ? debt.total_interest : 0;
+    const isNonRecurring = !debt.recurrence_unit;
     
     // Professional SVG icons for each debt type
     const typeIcons = {
@@ -391,6 +392,25 @@ function renderDebtCard(debt) {
                     </div>
                 </div>
                 
+                ${isNonRecurring && debt.next_payment_date ? `
+                <!-- One-Time Payment Info -->
+                <div class="bg-warning/10 border border-warning/30 rounded-xl p-3 mb-4 flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-warning shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        <div>
+                            <p class="text-xs text-base-content/60 uppercase tracking-wider">One-Time Payment</p>
+                            <p class="font-bold text-sm">${Utils.formatCurrency(debt.minimum_payment || debt.current_balance)}</p>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-xs text-base-content/60">Payment Date</p>
+                        <p class="font-semibold text-sm">${Utils.formatDate(debt.next_payment_date)}</p>
+                    </div>
+                </div>
+                ` : ''}
+
                 <!-- Debt Details Grid -->
                 <div class="grid grid-cols-2 gap-3 mb-4">
                     ${debt.interest_rate ? `
@@ -399,19 +419,19 @@ function renderDebtCard(debt) {
                             <p class="font-semibold text-sm">${(debt.interest_rate * 100).toFixed(2)}%</p>
                         </div>
                     ` : ''}
-                    ${debt.minimum_payment ? `
+                    ${!isNonRecurring && debt.minimum_payment ? `
                         <div class="bg-base-100 border border-base-200 rounded-lg p-2">
                             <p class="text-xs text-base-content/50 mb-1 flex items-center gap-1"><svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>Min. Payment</p>
                             <p class="font-semibold text-sm">${Utils.formatCurrency(debt.minimum_payment)}/mo</p>
                         </div>
                     ` : ''}
-                    ${debt.months_to_payoff ? `
+                    ${!isNonRecurring && debt.months_to_payoff ? `
                         <div class="bg-base-100 border border-base-200 rounded-lg p-2">
                             <p class="text-xs text-base-content/50 mb-1 flex items-center gap-1"><svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>Payoff Time</p>
                             <p class="font-semibold text-sm">${debt.months_to_payoff} months</p>
                         </div>
                     ` : ''}
-                    ${debt.payoff_date ? `
+                    ${!isNonRecurring && debt.payoff_date ? `
                         <div class="bg-base-100 border border-base-200 rounded-lg p-2">
                             <p class="text-xs text-base-content/50 mb-1 flex items-center gap-1"><svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>Payoff Date</p>
                             <p class="font-semibold text-sm">${Utils.formatDate(debt.payoff_date)}</p>

@@ -1955,6 +1955,46 @@
       }
     }
   }
+  .mockup-code {
+    @layer daisyui.l1.l2.l3 {
+      position: relative;
+      overflow: hidden;
+      overflow-x: auto;
+      border-radius: var(--radius-box);
+      background-color: var(--color-neutral);
+      padding-block: calc(0.25rem * 5);
+      color: var(--color-neutral-content);
+      font-size: 0.875rem;
+      direction: ltr;
+      &:before {
+        content: "";
+        margin-bottom: calc(0.25rem * 4);
+        display: block;
+        height: calc(0.25rem * 3);
+        width: calc(0.25rem * 3);
+        border-radius: calc(infinity * 1px);
+        opacity: 30%;
+        box-shadow: 1.4em 0, 2.8em 0, 4.2em 0;
+      }
+      pre {
+        padding-right: calc(0.25rem * 5);
+        &:before {
+          content: "";
+          margin-right: 2ch;
+        }
+        &[data-prefix] {
+          &:before {
+            --tw-content: attr(data-prefix);
+            content: var(--tw-content);
+            display: inline-block;
+            width: calc(0.25rem * 8);
+            text-align: right;
+            opacity: 50%;
+          }
+        }
+      }
+    }
+  }
   .avatar {
     @layer daisyui.l1.l2.l3 {
       position: relative;
@@ -3278,9 +3318,6 @@
   .h-1 {
     height: calc(var(--spacing) * 1);
   }
-  .h-1\.5 {
-    height: calc(var(--spacing) * 1.5);
-  }
   .h-2 {
     height: calc(var(--spacing) * 2);
   }
@@ -3401,11 +3438,11 @@
   .w-8 {
     width: calc(var(--spacing) * 8);
   }
-  .w-8\/12 {
-    width: calc(8/12 * 100%);
-  }
   .w-10 {
     width: calc(var(--spacing) * 10);
+  }
+  .w-10\/12 {
+    width: calc(10/12 * 100%);
   }
   .w-11 {
     width: calc(var(--spacing) * 11);
@@ -3448,9 +3485,6 @@
   }
   .max-w-4xl {
     max-width: var(--container-4xl);
-  }
-  .max-w-5xl {
-    max-width: var(--container-5xl);
   }
   .max-w-7xl {
     max-width: var(--container-7xl);
@@ -3779,6 +3813,20 @@
       background-image: none;
     }
   }
+  .badge-soft {
+    @layer daisyui.l1.l2 {
+      color: var(--badge-color, var(--color-base-content));
+      background-color: var(--badge-color, var(--color-base-content));
+      @supports (color: color-mix(in lab, red, red)) {
+        background-color: color-mix( in oklab, var(--badge-color, var(--color-base-content)) 8%, var(--color-base-100) );
+      }
+      border-color: var(--badge-color, var(--color-base-content));
+      @supports (color: color-mix(in lab, red, red)) {
+        border-color: color-mix( in oklab, var(--badge-color, var(--color-base-content)) 10%, var(--color-base-100) );
+      }
+      background-image: none;
+    }
+  }
   .border-base-200 {
     border-color: var(--color-base-200);
   }
@@ -3833,6 +3881,12 @@
   .border-success {
     border-color: var(--color-success);
   }
+  .border-success\/20 {
+    border-color: var(--color-success);
+    @supports (color: color-mix(in lab, red, red)) {
+      border-color: color-mix(in oklab, var(--color-success) 20%, transparent);
+    }
+  }
   .border-transparent {
     border-color: transparent;
   }
@@ -3843,6 +3897,12 @@
     border-color: var(--color-warning);
     @supports (color: color-mix(in lab, red, red)) {
       border-color: color-mix(in oklab, var(--color-warning) 20%, transparent);
+    }
+  }
+  .border-warning\/30 {
+    border-color: var(--color-warning);
+    @supports (color: color-mix(in lab, red, red)) {
+      border-color: color-mix(in oklab, var(--color-warning) 30%, transparent);
     }
   }
   .table-zebra {
@@ -3936,6 +3996,9 @@
     @supports (color: color-mix(in lab, red, red)) {
       background-color: color-mix(in oklab, var(--color-info) 10%, transparent);
     }
+  }
+  .bg-neutral {
+    background-color: var(--color-neutral);
   }
   .bg-primary {
     background-color: var(--color-primary);
@@ -4134,6 +4197,9 @@
   .p-6 {
     padding: calc(var(--spacing) * 6);
   }
+  .p-8 {
+    padding: calc(var(--spacing) * 8);
+  }
   .p-12 {
     padding: calc(var(--spacing) * 12);
   }
@@ -4203,6 +4269,9 @@
   .px-2 {
     padding-inline: calc(var(--spacing) * 2);
   }
+  .px-3 {
+    padding-inline: calc(var(--spacing) * 3);
+  }
   .px-4 {
     padding-inline: calc(var(--spacing) * 4);
   }
@@ -4211,6 +4280,9 @@
   }
   .py-0 {
     padding-block: calc(var(--spacing) * 0);
+  }
+  .py-0\.5 {
+    padding-block: calc(var(--spacing) * 0.5);
   }
   .py-1 {
     padding-block: calc(var(--spacing) * 1);
@@ -4256,9 +4328,6 @@
   }
   .pr-3 {
     padding-right: calc(var(--spacing) * 3);
-  }
-  .pr-8 {
-    padding-right: calc(var(--spacing) * 8);
   }
   .pr-10 {
     padding-right: calc(var(--spacing) * 10);
@@ -4704,6 +4773,12 @@
       --fontsize: 0.6875rem;
       --btn-p: 0.5rem;
       --size: calc(var(--size-field, 0.25rem) * 6);
+    }
+  }
+  .badge-accent {
+    @layer daisyui.l1.l2 {
+      --badge-color: var(--color-accent);
+      --badge-fg: var(--color-accent-content);
     }
   }
   .badge-error {
