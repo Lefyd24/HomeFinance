@@ -220,7 +220,15 @@ const API = {
             API.request('/transactions/bulk-update', { method: 'POST', body: JSON.stringify({ ids, data }) }),
         
         bulkDelete: (ids) => 
-            API.request('/transactions/bulk-delete', { method: 'POST', body: JSON.stringify({ ids }) })
+            API.request('/transactions/bulk-delete', { method: 'POST', body: JSON.stringify({ ids }) }),
+        
+        incomeVsSpending: (startDate, endDate, groupBy = 'month') => {
+            const params = new URLSearchParams();
+            if (startDate) params.append('start_date', startDate);
+            if (endDate) params.append('end_date', endDate);
+            params.append('group_by', groupBy);
+            return API.request(`/transactions/income-vs-spending?${params.toString()}`);
+        }
     },
 
     // Budgets methods
@@ -524,6 +532,110 @@ const API = {
             if (endDate) url += `&end_date=${endDate}`;
             return API.request(url);
         }
+    },
+
+    // Analytics methods - ML-powered financial analytics
+    analytics: {
+        getSpendingForecast: (days = 30, confidence = 0.85) =>
+            API.request(`/analytics/spending-forecast?days=${days}&confidence=${confidence}`),
+        
+        getCategoryForecast: (days = 30) =>
+            API.request(`/analytics/spending-forecast/by-category?days=${days}`),
+        
+        getSpendingClusters: () =>
+            API.request('/analytics/spending-clusters'),
+        
+        getSpendingPersona: () =>
+            API.request('/analytics/spending-persona'),
+        
+        getCategoryPredictions: (limit = 10) =>
+            API.request(`/analytics/category-predictions?limit=${limit}`),
+        
+        predictCategory: (description) =>
+            API.request(`/analytics/category-predictions/predict?description=${encodeURIComponent(description)}`, { method: 'POST' }),
+        
+        getBudgetRecommendations: (savingsTarget = null, months = 3) => {
+            let url = '/analytics/budget-recommendations';
+            const params = new URLSearchParams();
+            if (savingsTarget) params.append('savings_target', savingsTarget);
+            params.append('months', months);
+            return API.request(`${url}?${params.toString()}`);
+        },
+        
+        getCashflowProjection: (months = 6) =>
+            API.request(`/analytics/cashflow-projection?months=${months}`),
+        
+        getCashflowScenarios: (months = 12) =>
+            API.request(`/analytics/cashflow-scenarios?months=${months}`),
+        
+        getSpendingHeatmap: (months = 3) =>
+            API.request(`/analytics/spending-heatmap?months=${months}`),
+        
+        getCategoryCorrelations: (months = 6) =>
+            API.request(`/analytics/category-correlations?months=${months}`),
+        
+        getFinancialHealthScore: () =>
+            API.request('/analytics/financial-health-score'),
+        
+        getGoalPredictions: () =>
+            API.request('/analytics/goals/predictions'),
+        
+        getGoalPrediction: (goalId) =>
+            API.request(`/analytics/goals/${goalId}/prediction`),
+        
+        getGoalSavingsPlan: (goalId) =>
+            API.request(`/analytics/goals/${goalId}/savings-plan`),
+        
+        getSummary: () =>
+            API.request('/analytics/summary')
+    },
+
+    // Advisor methods - Financial planning calculators
+    advisor: {
+        calculateInvestment: (data) =>
+            API.request('/advisor/investment/calculate', { method: 'POST', body: JSON.stringify(data) }),
+        
+        calculateRetirement: (data) =>
+            API.request('/advisor/investment/retirement', { method: 'POST', body: JSON.stringify(data) }),
+        
+        compareInvestmentScenarios: (scenarios) =>
+            API.request('/advisor/investment/compare', { method: 'POST', body: JSON.stringify({ scenarios }) }),
+        
+        calculateLoanAmortization: (data) =>
+            API.request('/advisor/loan/amortization', { method: 'POST', body: JSON.stringify(data) }),
+        
+        calculateEarlyPayoff: (data) =>
+            API.request('/advisor/loan/early-payoff', { method: 'POST', body: JSON.stringify(data) }),
+        
+        compareRefinance: (data) =>
+            API.request('/advisor/loan/refinance-compare', { method: 'POST', body: JSON.stringify(data) }),
+        
+        getEmergencyFundRecommendation: () =>
+            API.request('/advisor/emergency-fund/recommendation'),
+        
+        getNetWorth: () =>
+            API.request('/advisor/net-worth'),
+        
+        getNetWorthHistory: (months = 12) =>
+            API.request(`/advisor/net-worth/history?months=${months}`),
+        
+        getNetWorthProjection: (months = 12, monthlySavings = null) => {
+            let url = `/advisor/net-worth/projection?months=${months}`;
+            if (monthlySavings) url += `&monthly_savings=${monthlySavings}`;
+            return API.request(url);
+        },
+        
+        estimateTax: (data) =>
+            API.request('/advisor/tax/estimate', { method: 'POST', body: JSON.stringify(data) }),
+        
+        calculateMarginalTax: (data) =>
+            API.request('/advisor/tax/marginal', { method: 'POST', body: JSON.stringify(data) }),
+        
+        compareTaxLevels: (incomes) =>
+            API.request(`/advisor/tax/compare?incomes=${incomes.join(',')}`),
+        
+        getAvailableTools: () =>
+            API.request('/advisor/tools')
     }
 };
 

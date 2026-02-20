@@ -264,26 +264,33 @@ async function loadDashboardData() {
                                 <div class="h-64 lg:h-80">
                                     <canvas id="spendingChart"></canvas>
                                 </div>
-                                <!-- Monthly breakdown chart -->
-                                <h2 class="card-title text-lg lg:text-xl mt-4">Monthly Spending Breakdown</h2>
+                                <!-- Income vs Spending chart -->
+                                <h2 class="card-title text-lg lg:text-xl mt-4">Income vs Spending</h2>
+                                <div class="flex items-center gap-2 mt-1 mb-2">
+                                    <div class="join">
+                                        <button class="join-item btn btn-sm" id="breakdownMonthlyBtn" onclick="setIncomeSpendingMode('month')">Monthly</button>
+                                        <button class="join-item btn btn-sm btn-ghost" id="breakdownWeeklyBtn" onclick="setIncomeSpendingMode('week')">Weekly</button>
+                                    </div>
+                                </div>
                                 <div class="h-42 lg:h-50">
-                                    <canvas id="monthlyBreakdownChart"></canvas>
+                                    <canvas id="incomeVsSpendingChart"></canvas>
                                 </div>
                             </div>
                         </div>
                         
-                        <!-- Trend Analysis & Statistics -->
-                        <div id="trend-analysis" class="mt-6">
+                        <!-- Budget Optimization -->
+                        <div id="budget-optimization" class="mt-6">
                             <div class="card bg-base-100 shadow-xl">
                                 <div class="card-body">
-                                    <div class="flex items-center gap-2 mb-4">
-                                        <div class="skeleton h-6 w-40"></div>
+                                    <h2 class="card-title text-lg">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-success" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                                        </svg>
+                                        Budget Optimization
+                                    </h2>
+                                    <div id="budgetOptContainer" class="mt-2">
+                                        <div class="loading loading-spinner loading-md mx-auto block"></div>
                                     </div>
-                                    <div class="grid grid-cols-2 gap-4">
-                                        <div class="skeleton h-24 rounded-lg"></div>
-                                        <div class="skeleton h-24 rounded-lg"></div>
-                                    </div>
-                                    <div class="skeleton h-32 mt-4 rounded-lg"></div>
                                 </div>
                             </div>
                         </div>
@@ -475,9 +482,12 @@ async function loadDashboardData() {
         
         // Load spending chart
         await loadSpendingChart();
+        
+        // Load income vs spending chart
+        await loadIncomeVsSpendingChart();
 
-        // Load trend analysis
-        await loadTrendAnalysisOverview();
+        // Load budget optimization (replaces trend analysis)
+        await loadBudgetOptimization();
 
         // Load budget overview
         await loadBudgetOverview();
@@ -736,151 +746,204 @@ async function loadBudgetOverview() {
     }
 }
 
-async function loadTrendAnalysisOverview() {
+function calculateBudgetDateRange(months) {
+    const endDate = new Date();
+    const startDate = new Date();
+    startDate.setMonth(startDate.getMonth() - months);
+    
+    const formatDate = (date) => {
+        return date.toLocaleDateString('en-GB', { month: 'short', year: 'numeric' });
+    };
+    
+    return `${formatDate(startDate)} - ${formatDate(endDate)}`;
+}
+
+async function loadBudgetOptimization(months = budgetOptimizationMonths) {
     try {
-        const container = document.getElementById('trend-analysis');
+        budgetOptimizationMonths = months;
+        const data = await API.analytics.getBudgetRecommendations(null, months);
+        const container = document.getElementById('budgetOptContainer');
         
         if (!container) {
-            console.error('Trend analysis container not found in DOM!');
+            console.error('Budget optimization container not found in DOM!');
             return;
         }
         
-        const [trends, stats] = await Promise.all([
-            API.insights.getTrends(6),
-            API.insights.getStatistics(6)
-        ]);
+        if (data.error) {
+            container.innerHTML = `<p class="text-sm text-base-content/60">${data.error}</p>`;
+            return;
+        }
         
-        const hasTrends = trends && !trends.error;
-        const hasStats = stats && !stats.error;
-
-        await loadMonthlyBreakdownChart(trends.monthly_data);
+        const current = data.current_breakdown;
+        const dateRange = calculateBudgetDateRange(months);
         
-        const trendIcon = hasTrends ? 
-            (trends.trend_direction === 'increasing' ? '📈' : trends.trend_direction === 'decreasing' ? '📉' : '➡️') : '➡️';
-        const trendColor = hasTrends ?
-            (trends.trend_direction === 'increasing' ? 'text-error' : trends.trend_direction === 'decreasing' ? 'text-success' : 'text-info') : 'text-info';
-        const trendText = hasTrends ?
-            (trends.trend_direction === 'increasing' ? 'Increasing' : trends.trend_direction === 'decreasing' ? 'Decreasing' : 'Stable') : 'N/A';
-        const trendPct = hasTrends ? `${trends.trend_percentage > 0 ? '+' : ''}${trends.trend_percentage.toFixed(1)}%` : '-';
-        console.log('Trend analysis data:', { trends, stats });
-        container.innerHTML = `
-            <div class="card bg-base-100 shadow-xl">
-                <div class="card-body">
-                    <div class="flex justify-between items-center mb-4">
-                        <h2 class="card-title flex items-center gap-2">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-                            </svg>
-                            Trend Analysis & Statistics
-                        </h2>
-                        <a href="insights.html" class="btn btn-sm btn-ghost">View Details</a>
+        let overallAssessment = '';
+        const needsPct = current.needs?.percentage || 0;
+        const wantsPct = current.wants?.percentage || 0;
+        const savingsPct = current.savings?.percentage || 0;
+        
+        if (savingsPct >= 20 && needsPct <= 55 && wantsPct <= 35) {
+            overallAssessment = 'Your budget allocation is well-balanced! You\'re following healthy financial principles.';
+        } else if (savingsPct < 10) {
+            overallAssessment = 'Your savings rate is low. Try reducing discretionary spending to increase savings to at least 20%.';
+        } else if (wantsPct > 40) {
+            overallAssessment = 'Discretionary spending is high. Consider cutting back on wants to improve your savings.';
+        } else {
+            overallAssessment = 'There\'s room to optimize your budget. Review the breakdown below for specific areas.';
+        }
+        
+        let html = `
+            <div class="space-y-4">
+                <div class="flex justify-between items-center mb-2">
+                    <div class="text-xs text-base-content/50">
+                        <span class="font-medium">Analysis period:</span> ${dateRange}
                     </div>
-                    
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-                        <div class="p-4 bg-base-200 rounded-lg">
-                            <div class="flex items-center gap-3">
-                                <span class="text-3xl">${trendIcon}</span>
-                                <div>
-                                    <p class="text-xs text-base-content/60">Spending Trend (6 months)</p>
-                                    <p class="text-xl font-bold ${trendColor}">${trendText}</p>
-                                </div>
-                            </div>
-                            <div class="flex justify-between mt-2 text-sm">
-                                <span class="text-base-content/60">Change</span>
-                                <span class="font-medium ${trendColor}">${trendPct}</span>
-                            </div>
-                        </div>
-                        
-                        <div class="p-4 bg-base-200 rounded-lg">
-                            <p class="text-xs text-base-content/60 mb-2">6-Month Summary</p>
-                            <div class="space-y-1">
-                                <div class="flex justify-between text-sm">
-                                    <span class="text-base-content/60">Total Spent</span>
-                                    <span class="font-medium">${hasStats ? Utils.formatCurrency(stats.total_spent) : '-'}</span>
-                                </div>
-                                <div class="flex justify-between text-sm">
-                                    <span class="text-base-content/60">Transactions</span>
-                                    <span class="font-medium">${hasStats ? stats.total_transactions : '-'}</span>
-                                </div>
-                                <div class="flex justify-between text-sm">
-                                    <span class="text-base-content/60">Monthly Avg</span>
-                                    <span class="font-medium">${hasStats ? Utils.formatCurrency(stats.average_monthly_spending) : '-'}</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="divider text-xs my-2">Statistical Overview</div>
-                    
-                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                        <div class="text-center p-2 bg-base-200 rounded-lg">
-                            <p class="text-xs text-base-content/60">Avg Transaction</p>
-                            <p class="font-bold">${hasStats ? Utils.formatCurrency(stats.transaction_statistics.mean) : '-'}</p>
-                        </div>
-                        <div class="text-center p-2 bg-base-200 rounded-lg">
-                            <p class="text-xs text-base-content/60">Median</p>
-                            <p class="font-bold">${hasStats ? Utils.formatCurrency(stats.transaction_statistics.median) : '-'}</p>
-                        </div>
-                        <div class="text-center p-2 bg-base-200 rounded-lg">
-                            <p class="text-xs text-base-content/60">Volatility</p>
-                            <p class="font-bold ${hasStats && stats.spending_volatility > 0.3 ? 'text-warning' : 'text-success'}">${hasStats ? (stats.spending_volatility * 100).toFixed(1) + '%' : '-'}</p>
-                        </div>
-                        <div class="text-center p-2 bg-base-200 rounded-lg">
-                            <p class="text-xs text-base-content/60">R² Score</p>
-                            <p class="font-bold">${hasTrends ? trends.r_squared.toFixed(3) : '-'}</p>
-                        </div>
-                    </div>
+                    <select id="budgetMonthsSelect" class="select select-bordered select-xs w-24" onchange="window.setBudgetOptimizationMonths(this.value)">
+                        <option value="1" ${months === 1 ? 'selected' : ''}>1 month</option>
+                        <option value="3" ${months === 3 ? 'selected' : ''}>3 months</option>
+                        <option value="6" ${months === 6 ? 'selected' : ''}>6 months</option>
+                        <option value="12" ${months === 12 ? 'selected' : ''}>12 months</option>
+                    </select>
                 </div>
-            </div>
+                
+                <p class="text-xs text-base-content/60">${overallAssessment}</p>
+                
+                <div class="text-center">
+                    <p class="text-xs text-base-content/50">50/30/20 Rule Comparison</p>
+                </div>
+                
+                <div class="space-y-3">
         `;
-    } catch (error) {
-        console.error('Error loading trend analysis:', error);
-        const container = document.getElementById('trend-analysis');
-        if (container) {
-            container.innerHTML = `
-                <div class="card bg-base-100 shadow-xl">
-                    <div class="card-body">
-                        <h2 class="card-title mb-4">Trend Analysis & Statistics</h2>
-                        <div class="alert alert-error">
-                            <span>Failed to load trend analysis</span>
+        
+        const categories = [
+            { key: 'needs', label: 'Needs (essentials)', color: 'primary', ideal: 50, desc: 'rent, utilities, groceries, insurance' },
+            { key: 'wants', label: 'Wants (discretionary)', color: 'secondary', ideal: 30, desc: 'entertainment, dining out, hobbies' },
+            { key: 'savings', label: 'Savings', color: 'success', ideal: 20, desc: 'emergency fund, investments, goals' }
+        ];
+        
+        for (const cat of categories) {
+            const currentPct = current[cat.key]?.percentage || 0;
+            const isOver = currentPct > cat.ideal + 5;
+            const isUnder = currentPct < cat.ideal - 5;
+            
+            let status = '';
+            if (cat.key === 'savings') {
+                status = currentPct >= cat.ideal ? '✓ On track' : '⚠ Below target';
+            } else {
+                status = currentPct <= cat.ideal + 5 ? '✓ Within range' : '⚠ Over budget';
+            }
+            
+            html += `
+                <div>
+                    <div class="flex justify-between text-xs mb-1">
+                        <span title="${cat.desc}">${cat.label}</span>
+                        <span class="${isOver && cat.key !== 'savings' ? 'text-error' : isUnder && cat.key === 'savings' ? 'text-warning' : 'text-success'}">
+                            ${currentPct.toFixed(0)}% / ${cat.ideal}% ${status}
+                        </span>
+                    </div>
+                    <div class="flex gap-1 h-2">
+                        <div class="bg-${cat.color} rounded-l" style="width: ${Math.min(currentPct, 100)}%"></div>
+                        <div class="bg-base-300 flex-1 rounded-r relative">
+                            <div class="absolute h-full w-0.5 bg-base-content/30" style="left: ${cat.ideal}%"></div>
                         </div>
                     </div>
                 </div>
             `;
         }
+        
+        html += `
+                </div>
+                
+                <div class="divider my-2"></div>
+                
+                <div class="flex justify-between text-sm">
+                    <span>Potential Monthly Savings</span>
+                    <span class="font-bold text-success">+${Utils.formatCurrency(data.potential_monthly_savings)}</span>
+                </div>
+                <p class="text-xs text-base-content/50">
+                    By optimizing your wants spending to the recommended 30%, you could save an additional 
+                    ${Utils.formatCurrency(data.potential_monthly_savings)} per month.
+                </p>
+            </div>
+        `;
+        
+        container.innerHTML = html;
+        
+    } catch (error) {
+        console.error('Error loading budget optimization:', error);
+        const container = document.getElementById('budgetOptContainer');
+        if (container) {
+            container.innerHTML = `
+                <p class="text-sm text-base-content/60">Unable to load budget optimization</p>
+            `;
+        }
     }
 }
 
-async function loadMonthlyBreakdownChart(monthlyData) {
+window.setBudgetOptimizationMonths = function(months) {
+    const numMonths = parseInt(months);
+    loadBudgetOptimization(numMonths);
+};
+
+let incomeVsSpendingChart = null;
+let incomeSpendingMode = 'month';
+let budgetOptimizationMonths = 3;
+
+async function loadIncomeVsSpendingChart() {
     try {
-        const ctx = document.getElementById('monthlyBreakdownChart');
-        if (!ctx) return;
-        // data is an array of objects with month and amount breakdown
-        const labels = monthlyData.map(d => d.month);
-        const amounts = monthlyData.map(d => d.amount);
-        new Chart(ctx, {
+        const canvas = document.getElementById('incomeVsSpendingChart');
+        if (!canvas) return;
+        
+        const ctx = canvas.getContext('2d');
+        
+        const data = await API.transactions.incomeVsSpending(
+            dashboardDateRange.startDate,
+            dashboardDateRange.endDate,
+            incomeSpendingMode
+        );
+        
+        if (incomeVsSpendingChart) {
+            incomeVsSpendingChart.destroy();
+        }
+        
+        incomeVsSpendingChart = new Chart(ctx, {
             type: 'line',
             data: {
-                labels: labels,
-                datasets: [{
-                    label: 'Monthly Spending',
-                    data: amounts,
-                    fill: true,
-                    backgroundColor: 'rgba(239, 68, 68, 0.2)',
-                    borderColor: '#EF4444',
-                    tension: 0.3,
-                    pointRadius: 4,
-                    pointBackgroundColor: '#EF4444',
-                    pointHoverRadius: 6,
-                    pointHoverBackgroundColor: '#EF4444'
-                }]
-            },  
+                labels: data.labels,
+                datasets: [
+                    {
+                        label: 'Income',
+                        data: data.income,
+                        fill: true,
+                        backgroundColor: 'rgba(34, 197, 94, 0.2)',
+                        borderColor: '#22C55E',
+                        tension: 0.3,
+                        pointRadius: 4,
+                        pointBackgroundColor: '#22C55E',
+                        pointHoverRadius: 6,
+                        pointHoverBackgroundColor: '#22C55E'
+                    },
+                    {
+                        label: 'Spending',
+                        data: data.spending,
+                        fill: true,
+                        backgroundColor: 'rgba(239, 68, 68, 0.2)',
+                        borderColor: '#EF4444',
+                        tension: 0.3,
+                        pointRadius: 4,
+                        pointBackgroundColor: '#EF4444',
+                        pointHoverRadius: 6,
+                        pointHoverBackgroundColor: '#EF4444'
+                    }
+                ]
+            },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: {
                     legend: {
-                        display: false
+                        display: true,
+                        position: 'top'
                     }
                 },
                 scales: {
@@ -895,9 +958,26 @@ async function loadMonthlyBreakdownChart(monthlyData) {
             },
         });
     } catch (error) {
-        console.error('Error loading monthly breakdown chart:', error);
+        console.error('Error loading income vs spending chart:', error);
     }
-}    
+}
+
+function setIncomeSpendingMode(mode) {
+    incomeSpendingMode = mode;
+    
+    const monthlyBtn = document.getElementById('breakdownMonthlyBtn');
+    const weeklyBtn = document.getElementById('breakdownWeeklyBtn');
+    
+    if (mode === 'month') {
+        monthlyBtn.classList.remove('btn-ghost');
+        weeklyBtn.classList.add('btn-ghost');
+    } else {
+        monthlyBtn.classList.add('btn-ghost');
+        weeklyBtn.classList.remove('btn-ghost');
+    }
+    
+    loadIncomeVsSpendingChart();
+}
 
 
 

@@ -221,6 +221,90 @@ def create_transaction(
     return result
 
 
+@router.get("/income-vs-spending")
+def get_income_vs_spending(
+    current_user: User = Depends(get_current_user_authenticated),
+    db: Session = Depends(get_db),
+    start_date: Optional[date] = None,
+    end_date: Optional[date] = None,
+    group_by: Optional[str] = Query("month", pattern="^(month|week)$"),
+):
+    """Get income vs spending grouped by month or week.
+    
+    Returns arrays of labels (dates), income amounts, and spending amounts
+    based on the selected time range and grouping.
+    """
+    if not start_date:
+        start_date = date.today().replace(day=1)
+    if not end_date:
+        end_date = date.today()
+    
+    if group_by == "week":
+        date_format = "%Y-W%W"
+        date_label_format = "Week %W, %Y"
+        date_grouping = func.strftime('%Y-W%W', Transaction.date)
+    else:
+        date_format = "%Y-%m"
+        date_label_format = "%b %Y"
+        date_grouping = func.strftime('%Y-%m', Transaction.date)
+    
+    income_data = db.query(
+        date_grouping.label('period'),
+        func.sum(Transaction.amount).label('total')
+    ).filter(
+        Transaction.user_id == current_user.id,
+        Transaction.type == "income",
+        Transaction.date >= start_date,
+        Transaction.date <= end_date
+    ).group_by(date_grouping).order_by('period').all()
+    
+    spending_data = db.query(
+        date_grouping.label('period'),
+        func.sum(Transaction.amount).label('total')
+    ).filter(
+        Transaction.user_id == current_user.id,
+        Transaction.type == "expense",
+        Transaction.date >= start_date,
+        Transaction.date <= end_date
+    ).group_by(date_grouping).order_by('period').all()
+    
+    income_dict = {r.period: float(r.total) for r in income_data}
+    spending_dict = {r.period: float(r.total) for r in spending_data}
+    
+    all_periods = sorted(set(list(income_dict.keys()) + list(spending_dict.keys())))
+    
+    if group_by == "week":
+        labels = []
+        for period in all_periods:
+            try:
+                year, week = period.split('-W')
+                labels.append(f"Week {week}, {year}")
+            except:
+                labels.append(period)
+    else:
+        labels = []
+        for period in all_periods:
+            try:
+                year, month = period.split('-')
+                month_names = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 
+                               'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+                labels.append(f"{month_names[int(month) - 1]} {year}")
+            except:
+                labels.append(period)
+    
+    income = [income_dict.get(p, 0) for p in all_periods]
+    spending = [spending_dict.get(p, 0) for p in all_periods]
+    
+    return {
+        "labels": labels,
+        "income": income,
+        "spending": spending,
+        "group_by": group_by,
+        "start_date": start_date.isoformat() if start_date else None,
+        "end_date": end_date.isoformat() if end_date else None
+    }
+
+
 @router.get("/{transaction_id}", response_model=TransactionResponse)
 def get_transaction(
     transaction_id: int,
@@ -442,3 +526,4 @@ def bulk_delete_transactions(
         TransactionService.delete_transaction(db, transaction)
 
     return {"message": f"Deleted {len(transactions)} transactions"}
+

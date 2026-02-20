@@ -1,8 +1,23 @@
 /**
- * Insights page controller
+ * Financial Analytics Dashboard Controller
+ * ML-powered insights and visualizations
  */
 
-let currentInsights = [];
+let healthScoreGaugeChart = null;
+let forecastChart = null;
+let categoryChart = null;
+let heatmapChart = null;
+let cashflowChart = null;
+
+let analyticsData = {
+    healthScore: null,
+    forecast: null,
+    persona: null,
+    budgetOptimization: null,
+    clusters: null,
+    heatmap: null,
+    cashflow: null
+};
 
 document.addEventListener('DOMContentLoaded', async () => {
     if (!Auth.requireAuth()) return;
@@ -16,484 +31,926 @@ document.addEventListener('DOMContentLoaded', async () => {
         mainContent.appendChild(template.content.cloneNode(true));
     }
     
-    await loadInsightsPage();
+    await loadAnalyticsDashboard();
 });
 
-async function loadInsightsPage() {
+async function loadAnalyticsDashboard() {
     try {
         await Promise.all([
-            loadInsights(),
-            loadInsightsSummary(),
-            loadTrendAnalysis(),
-            loadStatistics()
+            loadHealthScore(),
+            loadSpendingForecast(),
+            loadSpendingPersona(),
+            loadBudgetOptimization(),
+            loadSpendingClusters(),
+            loadSpendingHeatmap(),
+            loadCashflowProjection()
         ]);
     } catch (error) {
-        console.error('Error loading insights page:', error);
-        Utils.showToast('Error loading insights', 'error');
+        console.error('Error loading analytics dashboard:', error);
+        Utils.showToast('Error loading analytics', 'error');
     }
 }
 
-async function loadInsights() {
+async function refreshAnalytics() {
+    Utils.showToast('Refreshing analytics...', 'info');
+    
+    if (healthScoreGaugeChart) healthScoreGaugeChart.destroy();
+    if (forecastChart) forecastChart.destroy();
+    if (categoryChart) categoryChart.destroy();
+    if (heatmapChart) heatmapChart.destroy();
+    if (cashflowChart) cashflowChart.destroy();
+    
+    await loadAnalyticsDashboard();
+    Utils.showToast('Analytics refreshed', 'success');
+}
+
+async function loadHealthScore() {
     try {
-        const container = document.getElementById('insights-list');
-        container.innerHTML = '<div class="loading loading-spinner loading-lg mx-auto block"></div>';
+        const data = await API.analytics.getFinancialHealthScore();
+        analyticsData.healthScore = data;
         
-        const insights = await API.insights.list(30, true, false);
-        currentInsights = insights;
+        renderHealthScoreGauge(data.overall_score, data.grade);
+        renderHealthMetrics(data);
+        renderHealthBreakdown(data);
+        renderRecommendations(data.recommendations);
         
-        renderInsights();
     } catch (error) {
-        console.error('Error loading insights:', error);
-        document.getElementById('insights-list').innerHTML = `
-            <div class="alert alert-error">
-                <span>Failed to load insights: ${error.message}</span>
+        console.error('Error loading health score:', error);
+        document.getElementById('healthScoreValue').textContent = '--';
+        document.getElementById('healthScoreGrade').textContent = 'Error';
+    }
+}
+
+function renderHealthScoreGauge(score, grade) {
+    const canvas = document.getElementById('healthScoreGauge');
+    const ctx = canvas.getContext('2d');
+    
+    const getScoreColor = (score) => {
+        if (score >= 80) return '#10B981';
+        if (score >= 65) return '#3B82F6';
+        if (score >= 50) return '#F59E0B';
+        if (score >= 35) return '#F97316';
+        return '#EF4444';
+    };
+    
+    const color = getScoreColor(score);
+    
+    healthScoreGaugeChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            datasets: [{
+                data: [score, 100 - score],
+                backgroundColor: [color, 'rgba(0,0,0,0.1)'],
+                borderWidth: 0,
+                circumference: 270,
+                rotation: 225
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            cutout: '75%',
+            plugins: {
+                legend: { display: false },
+                tooltip: { enabled: false }
+            }
+        }
+    });
+    
+    document.getElementById('healthScoreValue').textContent = Math.round(score);
+    document.getElementById('healthScoreGrade').textContent = grade;
+    
+    const healthDescEl = document.getElementById('healthScoreDescription');
+    if (healthDescEl) {
+        let description = '';
+        if (score >= 80) {
+            description = 'Excellent financial health! You\'re managing your money wisely with strong savings and controlled spending.';
+        } else if (score >= 65) {
+            description = 'Good financial standing. There\'s room for improvement in savings or debt management.';
+        } else if (score >= 50) {
+            description = 'Fair financial health. Focus on building your emergency fund and reducing unnecessary expenses.';
+        } else if (score >= 35) {
+            description = 'Your finances need attention. Prioritize debt reduction and creating a stricter budget.';
+        } else {
+            description = 'Critical attention needed. Consider seeking financial advice to stabilize your situation.';
+        }
+        healthDescEl.textContent = description;
+    }
+}
+
+function renderHealthMetrics(data) {
+    const savingsScore = data.component_scores?.savings_rate?.score || 0;
+    let savingsRate = 0;
+    if (savingsScore >= 85) savingsRate = 20;
+    else if (savingsScore >= 70) savingsRate = 15;
+    else if (savingsScore >= 55) savingsRate = 10;
+    else if (savingsScore >= 40) savingsRate = 5;
+    else savingsRate = 0;
+    
+    document.getElementById('savingsRateValue').textContent = `${savingsRate}%`;
+    
+    let savingsStatus = '';
+    let savingsClass = '';
+    if (savingsRate >= 15) {
+        savingsStatus = 'Excellent - exceeds recommended 15%';
+        savingsClass = 'text-success';
+    } else if (savingsRate >= 10) {
+        savingsStatus = 'Good - approaching the 15% goal';
+        savingsClass = 'text-info';
+    } else if (savingsRate >= 5) {
+        savingsStatus = 'Below target - aim for 15%+';
+        savingsClass = 'text-warning';
+    } else {
+        savingsStatus = 'Critical - no measurable savings';
+        savingsClass = 'text-error';
+    }
+    
+    document.getElementById('savingsRateStatus').textContent = savingsStatus;
+    document.getElementById('savingsRateStatus').className = `stat-desc text-xs ${savingsClass}`;
+}
+
+function renderHealthBreakdown(data) {
+    const container = document.getElementById('healthBreakdownContainer');
+    const components = data.component_scores;
+    
+    const componentInfo = {
+        savings_rate: {
+            label: 'Savings Rate',
+            getDescription: (score) => {
+                if (score >= 80) return 'You\'re saving a healthy portion of your income';
+                if (score >= 60) return 'Moderate savings - try to increase by 5%';
+                if (score >= 40) return 'Low savings rate - review discretionary spending';
+                return 'Minimal savings detected - prioritize building reserves';
+            }
+        },
+        debt_ratio: {
+            label: 'Debt Management',
+            getDescription: (score) => {
+                if (score >= 80) return 'Excellent debt-to-income ratio';
+                if (score >= 60) return 'Manageable debt levels';
+                if (score >= 40) return 'Debt consuming significant income';
+                return 'High debt burden - consider consolidation';
+            }
+        },
+        budget_adherence: {
+            label: 'Budget Discipline',
+            getDescription: (score) => {
+                if (score >= 80) return 'Consistently staying within budgets';
+                if (score >= 60) return 'Occasionally exceeding budget limits';
+                if (score >= 40) return 'Frequently over budget - review limits';
+                return 'Budget tracking needs improvement';
+            }
+        },
+        spending_stability: {
+            label: 'Spending Stability',
+            getDescription: (score) => {
+                if (score >= 80) return 'Very consistent monthly spending';
+                if (score >= 60) return 'Moderately stable spending patterns';
+                if (score >= 40) return 'Variable spending - consider fixed budgets';
+                return 'Highly volatile spending patterns';
+            }
+        },
+        emergency_fund: {
+            label: 'Emergency Fund',
+            getDescription: (score) => {
+                if (score >= 80) return 'Well-funded for 6+ months of expenses';
+                if (score >= 60) return 'Covers 3-6 months - keep building';
+                if (score >= 40) return 'Limited coverage - prioritize savings';
+                return 'Insufficient emergency reserves';
+            }
+        }
+    };
+    
+    const getColorClass = (score) => {
+        if (score >= 80) return 'progress-success';
+        if (score >= 60) return 'progress-info';
+        if (score >= 40) return 'progress-warning';
+        return 'progress-error';
+    };
+    
+    let html = `
+        <p class="text-xs text-base-content/60 mb-3">
+            Your financial health is measured across 5 key areas. Each score reflects your performance based on the last 3-6 months of data.
+        </p>
+        <div class="space-y-3">
+    `;
+    
+    for (const [key, value] of Object.entries(components)) {
+        const info = componentInfo[key] || { label: key, getDescription: () => '' };
+        html += `
+            <div class="group">
+                <div class="flex justify-between text-sm mb-1">
+                    <span>${info.label}</span>
+                    <span class="font-medium">${Math.round(value.score)}/100</span>
+                </div>
+                <progress class="progress ${getColorClass(value.score)} w-full h-2" value="${value.score}" max="100"></progress>
+                <p class="text-xs text-base-content/50 mt-1">${info.getDescription(value.score)}</p>
             </div>
         `;
     }
+    
+    html += '</div>';
+    container.innerHTML = html;
 }
 
-function renderInsights() {
-    const container = document.getElementById('insights-list');
+function renderRecommendations(recommendations) {
+    const container = document.getElementById('recommendationsContainer');
     
-    if (currentInsights.length === 0) {
+    if (!recommendations || recommendations.length === 0) {
         container.innerHTML = `
-            <div class="text-center py-8">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mx-auto text-base-content/30 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-                </svg>
-                <p class="text-base-content/60">No insights found</p>
+            <div class="text-center py-4">
+                <span class="text-4xl">🎉</span>
+                <p class="text-sm text-base-content/60 mt-2">Great job! No critical recommendations at this time.</p>
+                <p class="text-xs text-base-content/40 mt-1">Keep maintaining your current financial habits.</p>
             </div>
         `;
         return;
     }
     
-    const categorized = {
-        alerts: currentInsights.filter(i => i.severity === 'alert' || i.severity === 'warning'),
-        seasonal: currentInsights.filter(i => i.type === 'seasonal_pattern'),
-        general: currentInsights.filter(i => 
-            i.severity !== 'alert' && 
-            i.severity !== 'warning' && 
-            i.type !== 'seasonal_pattern'
-        )
+    const priorityIcons = {
+        high: '🔴',
+        medium: '🟡',
+        low: '🟢'
     };
     
-    let html = '';
+    let html = `
+        <p class="text-xs text-base-content/60 mb-3">
+            These recommendations are generated based on your actual spending patterns and financial behavior.
+        </p>
+        <div class="space-y-3">
+    `;
     
-    if (categorized.alerts.length > 0) {
-        html += renderInsightCategory('⚠️ Alerts & Warnings', categorized.alerts, 'alert');
+    for (const rec of recommendations.slice(0, 4)) {
+        html += `
+            <div class="p-3 rounded-lg bg-base-200 border-l-4 ${
+                rec.priority === 'high' ? 'border-error' : 
+                rec.priority === 'medium' ? 'border-warning' : 'border-info'
+            }">
+                <div class="flex items-start gap-2">
+                    <span class="text-sm">${priorityIcons[rec.priority] || '💡'}</span>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-sm font-medium">${rec.area}</p>
+                        <p class="text-xs text-base-content/70 mt-1">${rec.message}</p>
+                        ${rec.action ? `<p class="text-xs text-primary mt-2 font-medium">→ ${rec.action}</p>` : ''}
+                    </div>
+                </div>
+            </div>
+        `;
     }
     
-    if (categorized.seasonal.length > 0) {
-        html += renderInsightCategory('📅 Seasonal Patterns', categorized.seasonal, 'seasonal');
-    }
-    
-    if (categorized.general.length > 0) {
-        html += renderInsightCategory('💡 General Insights', categorized.general, 'general');
-    }
-    
+    html += '</div>';
     container.innerHTML = html;
 }
 
-function renderInsightCategory(title, insights, categoryType) {
-    const bgClass = {
-        alert: 'bg-error/5 border-error/20',
-        seasonal: 'bg-info/5 border-info/20',
-        general: 'bg-base-200 border-base-300'
-    };
-    
-    return `
-        <div class="border rounded-lg ${bgClass[categoryType] || bgClass.general}">
-            <div class="px-4 py-2 border-b border-base-300/50">
-                <h3 class="font-semibold text-sm">${title} <span class="badge badge-ghost badge-sm">${insights.length}</span></h3>
-            </div>
-            <div class="divide-y divide-base-300/30 max-h-64 overflow-y-auto">
-                ${insights.map(insight => renderInsightItem(insight)).join('')}
-            </div>
-        </div>
-    `;
-}
-
-function renderInsightItem(insight) {
-    const severityColors = {
-        alert: 'text-error',
-        warning: 'text-warning',
-        info: 'text-info',
-        success: 'text-success'
-    };
-    
-    const severityIcons = {
-        alert: '⚠️',
-        warning: '⚡',
-        info: '💡',
-        success: '✅'
-    };
-    
-    return `
-        <div class="p-3 hover:bg-base-200/50 cursor-pointer transition-colors ${insight.is_read ? 'opacity-60' : ''}" 
-             onclick="toggleInsightDetails(${insight.id})">
-            <div class="flex items-start gap-3">
-                <span class="text-lg mt-0.5">${severityIcons[insight.severity] || '💡'}</span>
-                <div class="flex-1 min-w-0">
-                    <div class="flex items-center gap-2 flex-wrap">
-                        <span class="font-medium text-sm ${severityColors[insight.severity] || ''}">${insight.title}</span>
-                        ${!insight.is_read ? '<span class="w-2 h-2 bg-primary rounded-full"></span>' : ''}
-                    </div>
-                    <p class="text-xs text-base-content/70 mt-1 line-clamp-2">${insight.description}</p>
-                    <div class="flex items-center gap-3 mt-2 flex-wrap">
-                        ${insight.category ? `<span class="text-xs text-base-content/50">${insight.category}</span>` : ''}
-                        ${insight.metric_value ? `<span class="text-xs font-medium">${Utils.formatCurrency(insight.metric_value)}</span>` : ''}
-                        ${insight.percentage_change ? 
-                            `<span class="badge badge-xs ${insight.percentage_change > 0 ? 'badge-error' : 'badge-success'}">
-                                ${insight.percentage_change > 0 ? '+' : ''}${insight.percentage_change.toFixed(1)}%
-                            </span>` : ''}
-                    </div>
-                </div>
-                <div class="flex gap-1 shrink-0">
-                    ${!insight.is_read ? `
-                        <button onclick="event.stopPropagation(); markAsRead(${insight.id})" 
-                                class="btn btn-ghost btn-xs btn-circle" title="Mark as read">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                            </svg>
-                        </button>
-                    ` : ''}
-                    <button onclick="event.stopPropagation(); dismissInsight(${insight.id})" 
-                            class="btn btn-ghost btn-xs btn-circle" title="Dismiss">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                    </button>
-                </div>
-            </div>
-        </div>
-    `;
-}
-
-async function markAsRead(id) {
+async function loadSpendingForecast() {
     try {
-        await API.insights.markRead(id);
-        const insight = currentInsights.find(i => i.id === id);
-        if (insight) insight.is_read = true;
-        renderInsights();
-        Utils.showToast('Marked as read', 'success');
-    } catch (error) {
-        console.error('Error marking insight as read:', error);
-        Utils.showToast('Failed to mark as read', 'error');
-    }
-}
-
-async function markAllAsRead() {
-    try {
-        await API.insights.markAllRead();
-        currentInsights.forEach(i => i.is_read = true);
-        renderInsights();
-        Utils.showToast('All insights marked as read', 'success');
-    } catch (error) {
-        console.error('Error marking all as read:', error);
-        Utils.showToast('Failed to mark all as read', 'error');
-    }
-}
-
-async function dismissInsight(id) {
-    try {
-        await API.insights.dismiss(id);
-        currentInsights = currentInsights.filter(i => i.id !== id);
-        renderInsights();
-        Utils.showToast('Insight dismissed', 'success');
-    } catch (error) {
-        console.error('Error dismissing insight:', error);
-        Utils.showToast('Failed to dismiss insight', 'error');
-    }
-}
-
-async function loadInsightsSummary() {
-    try {
-        const summary = await API.insights.getSummary();
+        const days = parseInt(document.getElementById('forecastDays')?.value || '30');
+        const data = await API.analytics.getSpendingForecast(days);
+        analyticsData.forecast = data;
         
-        document.getElementById('insights-summary').innerHTML = `
-            <div class="card bg-base-100 shadow-sm">
-                <div class="card-body p-4">
-                    <p class="text-sm text-base-content/60">Total Insights</p>
-                    <p class="text-2xl font-bold">${summary.total_count}</p>
-                </div>
-            </div>
-            <div class="card bg-base-100 shadow-sm">
-                <div class="card-body p-4">
-                    <p class="text-sm text-base-content/60">Unread</p>
-                    <p class="text-2xl font-bold ${summary.unread_count > 0 ? 'text-primary' : ''}">${summary.unread_count}</p>
-                </div>
-            </div>
-            <div class="card bg-base-100 shadow-sm">
-                <div class="card-body p-4">
-                    <p class="text-sm text-base-content/60">Warnings</p>
-                    <p class="text-2xl font-bold ${summary.warning_count > 0 ? 'text-warning' : ''}">${summary.warning_count}</p>
-                </div>
-            </div>
-            <div class="card bg-base-100 shadow-sm">
-                <div class="card-body p-4">
-                    <p class="text-sm text-base-content/60">Alerts</p>
-                    <p class="text-2xl font-bold ${summary.alert_count > 0 ? 'text-error' : ''}">${summary.alert_count}</p>
-                </div>
-            </div>
+        document.getElementById('forecastValue').textContent = Utils.formatCurrency(data.summary.total_predicted);
+        document.getElementById('forecastConfidence').textContent = `${(data.summary.confidence_level * 100).toFixed(0)}% confidence`;
+        
+        const changeClass = data.summary.change_percentage > 0 ? 'text-error' : 'text-success';
+        const changeIcon = data.summary.change_percentage > 0 ? '↑' : '↓';
+        const changeAbs = Math.abs(data.summary.change_percentage);
+        
+        document.getElementById('spendingTrendValue').innerHTML = `
+            <span class="${changeClass}">${changeIcon} ${changeAbs.toFixed(1)}%</span>
         `;
-    } catch (error) {
-        console.error('Error loading insights summary:', error);
-    }
-}
-
-async function refreshInsights() {
-    try {
-        Utils.showToast('Generating insights...', 'info');
-        await API.insights.generate(30);
-        await loadInsightsPage();
-        Utils.showToast('Insights refreshed', 'success');
-    } catch (error) {
-        console.error('Error refreshing insights:', error);
-        Utils.showToast('Failed to refresh insights', 'error');
-    }
-}
-
-async function loadTrendAnalysis() {
-    try {
-        const container = document.getElementById('trend-container');
         
-        const trends = await API.insights.getTrends(6);
-        
-        if (trends.error) {
-            container.innerHTML = `<div class="alert alert-info text-sm"><span>${trends.error}</span></div>`;
-            return;
+        let trendDescription = '';
+        if (changeAbs < 3) {
+            trendDescription = 'Spending is stable compared to previous period';
+        } else if (data.summary.change_percentage > 0) {
+            trendDescription = `Spending increased by ${changeAbs.toFixed(1)}% vs last period`;
+        } else {
+            trendDescription = `Spending decreased by ${changeAbs.toFixed(1)}% vs last period`;
         }
+        document.getElementById('spendingTrendChange').textContent = trendDescription;
         
-        const trendIcon = trends.trend_direction === 'increasing' ? '📈' : 
-                         trends.trend_direction === 'decreasing' ? '📉' : '➡️';
-        const trendColor = trends.trend_direction === 'increasing' ? 'text-error' : 
-                          trends.trend_direction === 'decreasing' ? 'text-success' : 'text-info';
-        
-        container.innerHTML = `
-            <div class="space-y-3">
-                <div class="flex items-center justify-between p-3 bg-base-200 rounded-lg">
-                    <div class="flex items-center gap-3">
-                        <span class="text-2xl">${trendIcon}</span>
-                        <div>
-                            <p class="font-bold ${trendColor}">${trends.trend_direction === 'increasing' ? 'Increasing' : trends.trend_direction === 'decreasing' ? 'Decreasing' : 'Stable'}</p>
-                            <p class="text-xs text-base-content/60">Trend Direction</p>
-                        </div>
-                    </div>
-                    <div class="text-right">
-                        <p class="font-bold ${trendColor}">${trends.trend_percentage > 0 ? '+' : ''}${trends.trend_percentage.toFixed(1)}%</p>
-                        <p class="text-xs text-base-content/60">Change</p>
-                    </div>
-                </div>
-                
-                <div class="grid grid-cols-2 gap-2">
-                    <div class="p-2 bg-base-200 rounded-lg text-center">
-                        <p class="text-xs text-base-content/60">R² Value</p>
-                        <p class="font-bold">${trends.r_squared.toFixed(3)}</p>
-                        <p class="text-xs ${trends.is_significant ? 'text-success' : 'text-base-content/50'}">
-                            ${trends.is_significant ? '✓ Significant' : 'Not significant'}
-                        </p>
-                    </div>
-                    <div class="p-2 bg-base-200 rounded-lg text-center">
-                        <p class="text-xs text-base-content/60">Data Points</p>
-                        <p class="font-bold">${trends.months_analyzed} months</p>
-                    </div>
-                </div>
-            </div>
-        `;
-    } catch (error) {
-        console.error('Error loading trend analysis:', error);
-        document.getElementById('trend-container').innerHTML = `
-            <div class="alert alert-error text-sm"><span>Failed to load trends</span></div>
-        `;
-    }
-}
-
-async function loadStatistics() {
-    try {
-        const container = document.getElementById('statistics-container');
-        
-        const stats = await API.insights.getStatistics(6);
-        
-        if (stats.error) {
-            container.innerHTML = `<div class="alert alert-info text-sm"><span>${stats.error}</span></div>`;
-            return;
-        }
-        
-        container.innerHTML = `
-            <div class="space-y-3">
-                <div class="grid grid-cols-2 gap-2">
-                    <div class="p-2 bg-base-200 rounded-lg text-center">
-                        <p class="text-xs text-base-content/60">Total Spent</p>
-                        <p class="font-bold">${Utils.formatCurrency(stats.total_spent)}</p>
-                    </div>
-                    <div class="p-2 bg-base-200 rounded-lg text-center">
-                        <p class="text-xs text-base-content/60">Transactions</p>
-                        <p class="font-bold">${stats.total_transactions}</p>
-                    </div>
-                </div>
-                
-                <div class="space-y-1 text-sm">
-                    <div class="flex justify-between">
-                        <span class="text-base-content/60">Avg Transaction</span>
-                        <span class="font-medium">${Utils.formatCurrency(stats.transaction_statistics.mean)}</span>
-                    </div>
-                    <div class="flex justify-between">
-                        <span class="text-base-content/60">Median</span>
-                        <span class="font-medium">${Utils.formatCurrency(stats.transaction_statistics.median)}</span>
-                    </div>
-                    <div class="flex justify-between">
-                        <span class="text-base-content/60">Monthly Avg</span>
-                        <span class="font-medium">${Utils.formatCurrency(stats.average_monthly_spending)}</span>
-                    </div>
-                    <div class="flex justify-between">
-                        <span class="text-base-content/60">Volatility</span>
-                        <span class="font-medium ${stats.spending_volatility > 0.3 ? 'text-warning' : 'text-success'}">
-                            ${(stats.spending_volatility * 100).toFixed(1)}%
-                        </span>
-                    </div>
-                </div>
-            </div>
-        `;
-    } catch (error) {
-        console.error('Error loading statistics:', error);
-        document.getElementById('statistics-container').innerHTML = `
-            <div class="alert alert-error text-sm"><span>Failed to load statistics</span></div>
-        `;
-    }
-}
-
-async function detectPatterns() {
-    try {
-        const container = document.getElementById('patterns-container');
-        container.innerHTML = '<div class="loading loading-spinner loading-lg mx-auto block"></div>';
-        
-        Utils.showToast('Analyzing spending patterns...', 'info');
-        await API.insights.detectPatterns();
-        const patterns = await API.insights.getPatterns();
-        
-        if (patterns.length === 0) {
-            container.innerHTML = `
-                <div class="alert alert-info">
-                    <span>No patterns detected yet. Continue using the app to build transaction history.</span>
-                </div>
+        const forecastDescEl = document.getElementById('forecastDescription');
+        if (forecastDescEl) {
+            const avgDaily = data.summary.average_daily;
+            const model = data.summary.model === 'ARIMA(1,1,1)' ? 'ARIMA time-series model' : 'weighted moving average';
+            forecastDescEl.innerHTML = `
+                <p class="text-xs text-base-content/60 mb-2">
+                    Based on your historical spending patterns, we predict you'll spend approximately 
+                    <strong>${Utils.formatCurrency(avgDaily)}</strong> per day over the next ${days} days.
+                </p>
+                <p class="text-xs text-base-content/50">
+                    Prediction uses ${model} with ${(data.summary.confidence_level * 100).toFixed(0)}% confidence interval. 
+                    The shaded area shows the range where actual spending is likely to fall.
+                </p>
             `;
-            return;
         }
         
-        const patternTypeLabels = {
-            recurring: 'Recurring',
-            weekend: 'Weekend',
-            seasonal: 'Seasonal',
-            weekly: 'Weekly'
+        renderForecastChart(data);
+        
+    } catch (error) {
+        console.error('Error loading spending forecast:', error);
+        document.getElementById('forecastValue').textContent = '€--';
+        document.getElementById('forecastConfidence').textContent = 'Error loading';
+    }
+}
+
+function renderForecastChart(data) {
+    const ctx = document.getElementById('forecastChart').getContext('2d');
+    
+    if (forecastChart) forecastChart.destroy();
+    
+    const forecastDates = data.forecast.map(d => d.date);
+    const predictions = data.forecast.map(d => d.predicted);
+    const lowerBounds = data.forecast.map(d => d.lower_bound);
+    const upperBounds = data.forecast.map(d => d.upper_bound);
+    
+    const formatDate = (dateStr) => {
+        const date = new Date(dateStr);
+        return date.toLocaleDateString('en-GB', { month: 'short', day: 'numeric' });
+    };
+    
+    forecastChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: forecastDates.map(formatDate),
+            datasets: [
+                {
+                    label: 'Upper Bound',
+                    data: upperBounds,
+                    borderColor: 'transparent',
+                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                    fill: '+1',
+                    pointRadius: 0
+                },
+                {
+                    label: 'Predicted',
+                    data: predictions,
+                    borderColor: '#3B82F6',
+                    backgroundColor: 'rgba(59, 130, 246, 0.2)',
+                    fill: false,
+                    tension: 0.3,
+                    pointRadius: 2,
+                    pointHoverRadius: 5
+                },
+                {
+                    label: 'Lower Bound',
+                    data: lowerBounds,
+                    borderColor: 'transparent',
+                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                    fill: false,
+                    pointRadius: 0
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: {
+                intersect: false,
+                mode: 'index'
+            },
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            if (context.dataset.label === 'Predicted') {
+                                return `Predicted: €${context.raw.toFixed(2)}`;
+                            }
+                            return null;
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    grid: { display: false },
+                    ticks: {
+                        maxTicksLimit: 7,
+                        font: { size: 11 }
+                    }
+                },
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: value => '€' + value
+                    }
+                }
+            }
+        }
+    });
+}
+
+async function loadSpendingPersona() {
+    try {
+        const data = await API.analytics.getSpendingPersona();
+        analyticsData.persona = data;
+        
+        const container = document.getElementById('personaContainer');
+        
+        const personaIcons = {
+            'Saver': '💰',
+            'Balanced': '⚖️',
+            'Spender': '🛒',
+            'Volatile': '📊',
+            'Consistent': '📐',
+            'New User': '👋'
         };
         
-        container.innerHTML = `
-            <table class="table table-sm">
-                <thead>
-                    <tr>
-                        <th>Type</th>
-                        <th>Description</th>
-                        <th class="text-right">Avg Amount</th>
-                        <th class="text-center">Confidence</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    ${patterns.map(pattern => `
-                        <tr class="hover:bg-base-200">
-                            <td>
-                                <span class="badge badge-ghost badge-sm">
-                                    ${patternTypeLabels[pattern.pattern_type] || pattern.pattern_type}
-                                </span>
-                            </td>
-                            <td>
-                                <p class="text-sm truncate max-w-[200px]" title="${pattern.description}">${pattern.description}</p>
-                            </td>
-                            <td class="text-right">
-                                ${pattern.average_amount ? Utils.formatCurrency(pattern.average_amount) : '-'}
-                            </td>
-                            <td class="text-center">
-                                <span class="badge badge-sm ${pattern.confidence_score > 0.8 ? 'badge-success' : 'badge-warning'}">
-                                    ${(pattern.confidence_score * 100).toFixed(0)}%
-                                </span>
-                            </td>
-                        </tr>
-                    `).join('')}
-                </tbody>
-            </table>
+        const personaExplanations = {
+            'Saver': 'You prioritize savings and make thoughtful purchasing decisions. Your spending tends to be below average with a focus on necessities.',
+            'Balanced': 'You maintain a healthy balance between enjoying life and saving for the future. Your spending patterns are sustainable.',
+            'Spender': 'You enjoy spending and make frequent purchases. Consider setting stricter budget limits to increase savings.',
+            'Volatile': 'Your spending varies significantly from month to month. Creating a fixed budget could help stabilize your finances.',
+            'Consistent': 'You have very predictable spending patterns, which makes budgeting easier and financial planning more reliable.',
+            'New User': 'We need more transaction data to accurately identify your spending persona. Keep tracking for better insights!'
+        };
+        
+        let html = `
+            <div class="text-center">
+                <span class="text-5xl">${personaIcons[data.persona] || '🧑'}</span>
+                <h3 class="text-xl font-bold mt-2">${data.persona}</h3>
+                <p class="text-sm text-base-content/70 mt-1">${data.description}</p>
+                <div class="badge badge-outline mt-2">${(data.confidence * 100).toFixed(0)}% confidence</div>
+            </div>
+            <p class="text-xs text-base-content/60 mt-4 text-center">
+                ${personaExplanations[data.persona] || data.description}
+            </p>
         `;
         
-        Utils.showToast(`Detected ${patterns.length} patterns`, 'success');
+        if (data.characteristics && data.characteristics.length > 0) {
+            html += `
+                <div class="mt-4 space-y-2">
+                    <p class="text-sm font-medium">Key traits identified from your data:</p>
+                    <div class="flex flex-wrap gap-2">
+                        ${data.characteristics.map(c => `
+                            <span class="badge badge-sm badge-ghost">${c}</span>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+        
+        container.innerHTML = html;
+        
+        if (data.features) {
+            loadCategoryDistribution(data.features);
+            
+            if (data.features.top_categories && data.features.top_categories.length > 0) {
+                const top = data.features.top_categories[0];
+                const topPct = (top[1] / data.features.total_spent * 100).toFixed(0);
+                document.getElementById('topCategoryValue').textContent = top[0];
+                document.getElementById('topCategoryAmount').textContent = `${Utils.formatCurrency(top[1])} (${topPct}%)`;
+            }
+        }
+        
     } catch (error) {
-        console.error('Error detecting patterns:', error);
-        document.getElementById('patterns-container').innerHTML = `
-            <div class="alert alert-error"><span>Failed to detect patterns</span></div>
+        console.error('Error loading spending persona:', error);
+        document.getElementById('personaContainer').innerHTML = `
+            <div class="text-center text-base-content/60 py-4">
+                <p>Unable to determine spending persona</p>
+                <p class="text-xs mt-1">More transaction data is needed for analysis</p>
+            </div>
         `;
     }
 }
 
-async function detectAnomalies() {
+function loadCategoryDistribution(features) {
+    if (!features.category_distribution) return;
+    
+    const ctx = document.getElementById('categoryChart').getContext('2d');
+    
+    if (categoryChart) categoryChart.destroy();
+    
+    const categories = Object.entries(features.category_distribution)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 6);
+    
+    const colors = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#6B7280'];
+    
+    const categoryDescEl = document.getElementById('categoryDescription');
+    if (categoryDescEl && categories.length > 0) {
+        const total = categories.reduce((sum, c) => sum + c[1], 0);
+        const topThree = categories.slice(0, 3).map(c => c[0]).join(', ');
+        categoryDescEl.innerHTML = `
+            <p class="text-xs text-base-content/60">
+                Your top spending categories are <strong>${topThree}</strong>, 
+                which account for ${((categories.slice(0, 3).reduce((s, c) => s + c[1], 0) / total) * 100).toFixed(0)}% of your total spending.
+            </p>
+        `;
+    }
+    
+    categoryChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: categories.map(c => c[0]),
+            datasets: [{
+                data: categories.map(c => c[1]),
+                backgroundColor: colors,
+                borderWidth: 2,
+                borderColor: '#fff'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            cutout: '60%',
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        boxWidth: 12,
+                        padding: 8,
+                        font: { size: 10 }
+                    }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                            const percentage = ((context.raw / total) * 100).toFixed(1);
+                            return `${context.label}: €${context.raw.toFixed(2)} (${percentage}%)`;
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+async function loadBudgetOptimization() {
     try {
-        const container = document.getElementById('anomalies-container');
-        container.innerHTML = '<div class="loading loading-spinner loading-lg mx-auto block"></div>';
+        const data = await API.analytics.getBudgetRecommendations();
+        analyticsData.budgetOptimization = data;
         
-        Utils.showToast('Checking for anomalies...', 'info');
-        const result = await API.insights.getAnomalies(30, 2.5);
+        const container = document.getElementById('budgetOptContainer');
         
-        if (result.total_anomalies === 0) {
-            container.innerHTML = `
-                <div class="alert alert-success">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <span>No anomalies detected!</span>
+        if (data.error) {
+            container.innerHTML = `<p class="text-sm text-base-content/60">${data.error}</p>`;
+            return;
+        }
+        
+        const current = data.current_breakdown;
+        const ideal = data.ideal_breakdown;
+        
+        let overallAssessment = '';
+        const needsPct = current.needs?.percentage || 0;
+        const wantsPct = current.wants?.percentage || 0;
+        const savingsPct = current.savings?.percentage || 0;
+        
+        if (savingsPct >= 20 && needsPct <= 55 && wantsPct <= 35) {
+            overallAssessment = 'Your budget allocation is well-balanced! You\'re following healthy financial principles.';
+        } else if (savingsPct < 10) {
+            overallAssessment = 'Your savings rate is low. Try reducing discretionary spending to increase savings to at least 20%.';
+        } else if (wantsPct > 40) {
+            overallAssessment = 'Discretionary spending is high. Consider cutting back on wants to improve your savings.';
+        } else {
+            overallAssessment = 'There\'s room to optimize your budget. Review the breakdown below for specific areas.';
+        }
+        
+        let html = `
+            <div class="space-y-4">
+                <p class="text-xs text-base-content/60">${overallAssessment}</p>
+                
+                <div class="text-center">
+                    <p class="text-xs text-base-content/50">50/30/20 Rule Comparison</p>
                 </div>
-                <button onclick="detectAnomalies()" class="btn btn-sm btn-primary w-full mt-3">Check Again</button>
+                
+                <div class="space-y-3">
+        `;
+        
+        const categories = [
+            { key: 'needs', label: 'Needs (essentials)', color: 'primary', ideal: 50, desc: 'rent, utilities, groceries, insurance' },
+            { key: 'wants', label: 'Wants (discretionary)', color: 'secondary', ideal: 30, desc: 'entertainment, dining out, hobbies' },
+            { key: 'savings', label: 'Savings', color: 'success', ideal: 20, desc: 'emergency fund, investments, goals' }
+        ];
+        
+        for (const cat of categories) {
+            const currentPct = current[cat.key]?.percentage || 0;
+            const isOver = currentPct > cat.ideal + 5;
+            const isUnder = currentPct < cat.ideal - 5;
+            
+            let status = '';
+            if (cat.key === 'savings') {
+                status = currentPct >= cat.ideal ? '✓ On track' : '⚠ Below target';
+            } else {
+                status = currentPct <= cat.ideal + 5 ? '✓ Within range' : '⚠ Over budget';
+            }
+            
+            html += `
+                <div>
+                    <div class="flex justify-between text-xs mb-1">
+                        <span title="${cat.desc}">${cat.label}</span>
+                        <span class="${isOver && cat.key !== 'savings' ? 'text-error' : isUnder && cat.key === 'savings' ? 'text-warning' : 'text-success'}">
+                            ${currentPct.toFixed(0)}% / ${cat.ideal}% ${status}
+                        </span>
+                    </div>
+                    <div class="flex gap-1 h-2">
+                        <div class="bg-${cat.color} rounded-l" style="width: ${Math.min(currentPct, 100)}%"></div>
+                        <div class="bg-base-300 flex-1 rounded-r relative">
+                            <div class="absolute h-full w-0.5 bg-base-content/30" style="left: ${cat.ideal}%"></div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        html += `
+                </div>
+                
+                <div class="divider my-2"></div>
+                
+                <div class="flex justify-between text-sm">
+                    <span>Potential Monthly Savings</span>
+                    <span class="font-bold text-success">+${Utils.formatCurrency(data.potential_monthly_savings)}</span>
+                </div>
+                <p class="text-xs text-base-content/50">
+                    By optimizing your wants spending to the recommended 30%, you could save an additional 
+                    ${Utils.formatCurrency(data.potential_monthly_savings)} per month.
+                </p>
+            </div>
+        `;
+        
+        container.innerHTML = html;
+        
+    } catch (error) {
+        console.error('Error loading budget optimization:', error);
+        document.getElementById('budgetOptContainer').innerHTML = `
+            <p class="text-sm text-base-content/60">Unable to load budget optimization</p>
+        `;
+    }
+}
+
+async function loadSpendingClusters() {
+    try {
+        const data = await API.analytics.getSpendingClusters();
+        analyticsData.clusters = data;
+        
+        const container = document.getElementById('clustersContainer');
+        
+        if (data.error || !data.clusters || data.clusters.length === 0) {
+            container.innerHTML = `
+                <p class="text-sm text-base-content/60">Not enough data for cluster analysis</p>
+                <p class="text-xs text-base-content/40 mt-1">Continue tracking expenses to enable this feature</p>
             `;
             return;
         }
         
-        container.innerHTML = `
-            <div class="mb-2 flex items-center justify-between">
-                <span class="text-sm text-base-content/60">${result.total_anomalies} unusual transactions</span>
-                <span class="text-xs text-base-content/50">vs category avg</span>
-            </div>
-            <div class="space-y-2 max-h-72 overflow-y-auto pr-1">
-                ${result.anomalies.map(anomaly => `
-                    <div class="p-3 rounded-lg ${anomaly.severity === 'high' ? 'bg-error/10 border border-error/20' : 'bg-warning/10 border border-warning/20'}">
-                        <div class="flex items-start justify-between gap-2">
-                            <div class="min-w-0 flex-1">
-                                <p class="text-sm font-medium truncate" title="${anomaly.description}">${anomaly.description}</p>
-                                <p class="text-xs text-base-content/50 mt-1">${anomaly.date}</p>
+        const clusterIcons = {
+            'Essential': '🏠',
+            'Discretionary': '🎮',
+            'Occasional': '🎁'
+        };
+        
+        const clusterColors = {
+            'Essential': 'primary',
+            'Discretionary': 'secondary',
+            'Occasional': 'accent'
+        };
+        
+        const clusterDescriptions = {
+            'Essential': 'Regular, necessary expenses that are harder to reduce',
+            'Discretionary': 'Optional spending that can be adjusted based on budget',
+            'Occasional': 'Infrequent purchases that vary month to month'
+        };
+        
+        let html = `
+            <p class="text-xs text-base-content/60 mb-3">
+                Your spending has been grouped into clusters using machine learning to identify patterns.
+            </p>
+            <div class="space-y-3">
+        `;
+        
+        for (const cluster of data.clusters) {
+            html += `
+                <div class="collapse collapse-arrow bg-base-200 rounded-lg">
+                    <input type="checkbox" />
+                    <div class="collapse-title py-2 px-3 min-h-0">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-2">
+                                <span>${clusterIcons[cluster.type] || '📦'}</span>
+                                <div>
+                                    <span class="font-medium text-sm">${cluster.type}</span>
+                                    <p class="text-xs text-base-content/50">${clusterDescriptions[cluster.type] || ''}</p>
+                                </div>
                             </div>
-                            <span class="badge badge-sm ${anomaly.severity === 'high' ? 'badge-error' : 'badge-warning'} shrink-0">
-                                ${anomaly.severity}
-                            </span>
-                        </div>
-                        <div class="flex items-center justify-between mt-2 pt-2 border-t border-base-300/30">
-                            <span class="font-bold">${Utils.formatCurrency(anomaly.amount)}</span>
-                            <span class="text-xs ${anomaly.severity === 'high' ? 'text-error' : 'text-warning'}">
-                                ${anomaly.deviation_percentage > 0 ? '+' : ''}${anomaly.deviation_percentage.toFixed(0)}% above avg
+                            <span class="badge badge-${clusterColors[cluster.type] || 'ghost'} badge-sm">
+                                ${cluster.percentage.toFixed(0)}%
                             </span>
                         </div>
                     </div>
-                `).join('')}
-            </div>
-            <button onclick="detectAnomalies()" class="btn btn-sm btn-primary w-full mt-3">Check Again</button>
-        `;
+                    <div class="collapse-content px-3 pb-2">
+                        <p class="text-xs text-base-content/60 mb-2">Categories in this cluster (${Utils.formatCurrency(cluster.total)} total):</p>
+                        <div class="space-y-1 text-xs">
+                            ${cluster.categories.slice(0, 5).map(cat => `
+                                <div class="flex justify-between">
+                                    <span class="text-base-content/70">${cat.category}</span>
+                                    <span>${Utils.formatCurrency(cat.amount)}</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
         
-        Utils.showToast(`Found ${result.total_anomalies} anomalies`, result.total_anomalies > 5 ? 'warning' : 'info');
+        html += '</div>';
+        container.innerHTML = html;
+        
     } catch (error) {
-        console.error('Error detecting anomalies:', error);
-        document.getElementById('anomalies-container').innerHTML = `
-            <div class="alert alert-error"><span>Failed to detect anomalies</span></div>
-            <button onclick="detectAnomalies()" class="btn btn-sm btn-primary w-full mt-3">Try Again</button>
+        console.error('Error loading spending clusters:', error);
+        document.getElementById('clustersContainer').innerHTML = `
+            <p class="text-sm text-base-content/60">Unable to load clusters</p>
         `;
     }
 }
 
-function toggleInsightDetails(id) {
-    const insight = currentInsights.find(i => i.id === id);
-    if (insight && !insight.is_read) {
-        markAsRead(id);
+async function loadSpendingHeatmap() {
+    try {
+        const months = parseInt(document.getElementById('analysisMonths')?.value || '6');
+        const data = await API.analytics.getSpendingHeatmap(months);
+        analyticsData.heatmap = data;
+        
+        if (data.error) {
+            document.getElementById('heatmapChart').parentElement.innerHTML = `
+                <p class="text-sm text-base-content/60 text-center py-8">${data.error}</p>
+            `;
+            return;
+        }
+        
+        const heatmapDescEl = document.getElementById('heatmapDescription');
+        if (heatmapDescEl) {
+            heatmapDescEl.innerHTML = `
+                <p class="text-xs text-base-content/60">
+                    You spend the most on <strong>${data.peak_day}s</strong> (avg ${Utils.formatCurrency(data.peak_amount)}) 
+                    and the least on <strong>${data.low_day}s</strong> (avg ${Utils.formatCurrency(data.low_amount)}). 
+                    ${data.peak_day === 'Saturday' || data.peak_day === 'Sunday' 
+                        ? 'Weekend spending is elevated - consider setting weekend budgets.' 
+                        : 'Your spending peaks on weekdays, likely from regular bills or work-related expenses.'}
+                </p>
+            `;
+        }
+        
+        renderHeatmapChart(data);
+        
+    } catch (error) {
+        console.error('Error loading spending heatmap:', error);
     }
 }
+
+function renderHeatmapChart(data) {
+    const ctx = document.getElementById('heatmapChart').getContext('2d');
+    
+    if (heatmapChart) heatmapChart.destroy();
+    
+    const days = data.daily_data.map(d => d.day.substring(0, 3));
+    const amounts = data.daily_data.map(d => d.average);
+    const intensities = data.daily_data.map(d => d.intensity);
+    
+    const getColor = (intensity) => {
+        const r = Math.round(59 + (239 - 59) * intensity);
+        const g = Math.round(130 + (68 - 130) * intensity);
+        const b = Math.round(246 + (68 - 246) * intensity);
+        return `rgb(${r}, ${g}, ${b})`;
+    };
+    
+    heatmapChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: days,
+            datasets: [{
+                label: 'Average Spending',
+                data: amounts,
+                backgroundColor: intensities.map(getColor),
+                borderRadius: 4,
+                borderSkipped: false
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: (context) => `Avg: €${context.raw.toFixed(2)}`
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    grid: { display: false }
+                },
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: value => '€' + value
+                    }
+                }
+            }
+        }
+    });
+}
+
+async function loadCashflowProjection() {
+    try {
+        const data = await API.analytics.getCashflowProjection(6);
+        analyticsData.cashflow = data;
+        
+        const trendBadge = document.getElementById('projectionTrend');
+        const trendColors = {
+            positive: 'badge-success',
+            negative: 'badge-error',
+            stable: 'badge-info'
+        };
+        trendBadge.className = `badge badget-soft ${trendColors[data.summary.trend]}`;
+        trendBadge.textContent = data.summary.trend === 'positive' ? 'Growing' : 
+                                 data.summary.trend === 'negative' ? 'Declining' : 'Stable';
+        
+        const cashflowDescEl = document.getElementById('cashflowDescription');
+        if (cashflowDescEl) {
+            const monthlyNet = data.monthly_cashflow.net;
+            let description = '';
+            
+            if (monthlyNet > 0) {
+                description = `Based on your average monthly income (${Utils.formatCurrency(data.monthly_cashflow.income)}) 
+                    and expenses (${Utils.formatCurrency(data.monthly_cashflow.expenses)}), 
+                    you're saving approximately <strong>${Utils.formatCurrency(monthlyNet)}</strong> per month. 
+                    Your balance is projected to reach <strong>${Utils.formatCurrency(data.summary.final_projected_balance)}</strong> in 6 months.`;
+            } else if (monthlyNet < 0) {
+                description = `Warning: You're spending more than you earn by <strong>${Utils.formatCurrency(Math.abs(monthlyNet))}</strong> monthly. 
+                    ${data.warning || 'Review your expenses to prevent balance depletion.'}`;
+            } else {
+                description = `Your income and expenses are roughly balanced. Consider ways to increase your savings rate.`;
+            }
+            
+            cashflowDescEl.innerHTML = `<p class="text-xs text-base-content/60">${description}</p>`;
+        }
+        
+        renderCashflowChart(data);
+        
+    } catch (error) {
+        console.error('Error loading cashflow projection:', error);
+        document.getElementById('projectionTrend').textContent = 'Error';
+    }
+}
+
+function renderCashflowChart(data) {
+    const ctx = document.getElementById('cashflowChart').getContext('2d');
+    
+    if (cashflowChart) cashflowChart.destroy();
+    
+    const labels = ['Now', ...data.projections.map(p => {
+        const [year, month] = p.month.split('-');
+        return new Date(year, month - 1).toLocaleDateString('en-GB', { month: 'short' });
+    })];
+    
+    const balances = [data.current_balance, ...data.projections.map(p => p.projected_balance)];
+    
+    const gradient = ctx.createLinearGradient(0, 0, 0, 250);
+    gradient.addColorStop(0, 'rgba(59, 130, 246, 0.3)');
+    gradient.addColorStop(1, 'rgba(59, 130, 246, 0)');
+    
+    cashflowChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Projected Balance',
+                data: balances,
+                borderColor: '#3B82F6',
+                backgroundColor: gradient,
+                fill: true,
+                tension: 0.3,
+                pointRadius: 4,
+                pointHoverRadius: 6,
+                pointBackgroundColor: '#3B82F6'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: (context) => `Balance: €${context.raw.toFixed(2)}`
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    grid: { display: false }
+                },
+                y: {
+                    ticks: {
+                        callback: value => '€' + (value / 1000).toFixed(1) + 'k'
+                    }
+                }
+            }
+        }
+    });
+}
+
+window.refreshAnalytics = refreshAnalytics;
+window.loadSpendingForecast = loadSpendingForecast;

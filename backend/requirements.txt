@@ -11,3 +11,6 @@ bcrypt
 email-validator
 pandas
 openpyxl
+scikit-learn
+statsmodels
+numpy
