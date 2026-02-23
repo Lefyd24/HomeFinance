@@ -627,28 +627,34 @@ async function loadBudgetOptimization() {
         
         for (const cat of categories) {
             const currentPct = current[cat.key]?.percentage || 0;
+            const idealPct = cat.ideal;
             const isOver = currentPct > cat.ideal + 5;
             const isUnder = currentPct < cat.ideal - 5;
             
             let status = '';
+            let statusClass = '';
             if (cat.key === 'savings') {
                 status = currentPct >= cat.ideal ? '✓ On track' : '⚠ Below target';
+                statusClass = currentPct >= cat.ideal ? 'text-success' : 'text-warning';
             } else {
                 status = currentPct <= cat.ideal + 5 ? '✓ Within range' : '⚠ Over budget';
+                statusClass = currentPct <= cat.ideal + 5 ? 'text-success' : 'text-error';
             }
+
+            const barColor = cat.key === 'needs' ? 'primary' : cat.key === 'wants' ? 'secondary' : 'success';
+            const barColorClass = barColor === 'primary' ? 'bg-primary' : barColor === 'secondary' ? 'bg-secondary' : 'bg-success';
+            const markerColorClass = currentPct > idealPct ? 'bg-error' : 'bg-success';
             
             html += `
-                <div>
-                    <div class="flex justify-between text-xs mb-1">
-                        <span title="${cat.desc}">${cat.label}</span>
-                        <span class="${isOver && cat.key !== 'savings' ? 'text-error' : isUnder && cat.key === 'savings' ? 'text-warning' : 'text-success'}">
-                            ${currentPct.toFixed(0)}% / ${cat.ideal}% ${status}
-                        </span>
+                <div class="space-y-1">
+                    <div class="flex justify-between text-xs">
+                        <span class="font-medium" title="${cat.desc}">${cat.label}</span>
+                        <span class="${statusClass}">${currentPct.toFixed(0)}% / ${idealPct}% ${status}</span>
                     </div>
-                    <div class="flex gap-1 h-2">
-                        <div class="bg-${cat.color} rounded-l" style="width: ${Math.min(currentPct, 100)}%"></div>
-                        <div class="bg-base-300 flex-1 rounded-r relative">
-                            <div class="absolute h-full w-0.5 bg-base-content/30" style="left: ${cat.ideal}%"></div>
+                    <div class="relative h-4 bg-base-300 rounded-full overflow-visible">
+                        <div class="absolute h-full ${barColorClass} rounded-full transition-all duration-300" style="width: ${Math.min(currentPct, 100)}%"></div>
+                        <div class="absolute top-0 bottom-0 w-0.5 ${markerColorClass} z-10" style="left: ${idealPct}%" title="Limit: ${idealPct}%">
+                            <span class="absolute -top-5 left-1/2 transform -translate-x-1/2 text-[8px] font-bold bg-base-100 px-1 rounded whitespace-nowrap">${idealPct}%</span>
                         </div>
                     </div>
                 </div>
