@@ -2,16 +2,22 @@
   "name": "frontend",
   "version": "1.0.0",
   "description": "Frontend for PersonalFinance app",
-  "main": "index.js",
+  "homepage": "",
   "scripts": {
     "build:css": "npx @tailwindcss/cli -i build/css/input.css -o public/assets/css/app.css",
-    "watch:css": "npx @tailwindcss/cli -i build/css/input.css -o public/assets/css/app.css --watch"
+    "watch:css": "npx @tailwindcss/cli -i build/css/input.css -o public/assets/css/app.css --watch",
+    "build": "npm run build:css",
+    "dev": "npm run watch:css"
   },
-  "author": "Lefteris Fthenos",
+  "author": {
+    "name": "Lefteris Fthenos",
+    "email": "lefteris@example.com"
+  },
   "license": "ISC",
   "dependencies": {
     "@tailwindcss/cli": "^4.1.18",
     "daisyui": "^5.5.18",
     "tailwindcss": "^4.1.18"
-  }
+  },
+  "devDependencies": {}
 }

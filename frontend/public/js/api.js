@@ -1,21 +1,47 @@
 /**
  * API Client for Personal Finance App
  * All API calls go through this module
+ * 
+ * Backend URL can be configured via:
+ * - window.API_BASE_URL (global variable)
+ * - localStorage.setItem('backendUrl', 'http://192.168.1.100:8223')
+ * - Default: http://localhost:8223
  */
 
 const API = {
-    // Base URL for API - dynamically uses current hostname with port 8223
+    // Base URL for API
     baseURL: (() => {
-        // Use explicit override if set
+        // 1. Use explicit window override if set
         if (window.API_BASE_URL) {
             return window.API_BASE_URL;
         }
-        // Otherwise construct URL from current hostname
-        // Frontend runs on port 3100, backend on port 8223
-        const protocol = window.location.protocol;
-        const hostname = window.location.hostname;
-        return `${protocol}//${hostname}:8223/api`;
+        
+        // 2. Check localStorage for user-configured URL
+        const storedUrl = localStorage.getItem('backendUrl');
+        if (storedUrl) {
+            return storedUrl;
+        }
+        
+        // 3. Default to localhost:8223
+        return 'http://localhost:8223/api';
     })(),
+    
+    // Method to dynamically change backend URL
+    setBackendUrl: (url) => {
+        localStorage.setItem('backendUrl', url);
+        console.log('Backend URL changed to:', url);
+    },
+    
+    // Method to get current backend URL
+    getBackendUrl: () => {
+        return API.baseURL;
+    },
+    
+    // Method to reset to default
+    resetBackendUrl: () => {
+        localStorage.removeItem('backendUrl');
+        window.API_BASE_URL = null;
+    },
     
     /**
      * Get auth headers
