@@ -13,6 +13,10 @@ class Settings(BaseSettings):
     # Database
     DATABASE_URL: str = "sqlite:///./finance.db"
 
+    # Logging
+    LOG_DIR: str = "/app/logs"
+    LOG_LEVEL: str = "INFO"
+
     # Security
     SECRET_KEY: str = "your-secret-key-change-in-production"
     ALGORITHM: str = "HS256"

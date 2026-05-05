@@ -159,7 +159,7 @@ Environment variables (can be set in `.env` file):
 | Variable | Description | Default |
 |----------|-------------|---------|
 | `SECRET_KEY` | JWT signing key | `your-secret-key-change-in-production` |
-| `DATABASE_URL` | SQLite database path | `sqlite:///data/finance.db` |
+| `DATABASE_URL` | SQLite database path | `sqlite:////app/data/finance.db` |
 | `ACCESS_TOKEN_EXPIRE_MINUTES` | JWT token expiry | `30` |
 | `DEBUG` | Debug mode | `false` |
 | `CORS_ORIGINS` | Allowed CORS origins | `["*"]` |

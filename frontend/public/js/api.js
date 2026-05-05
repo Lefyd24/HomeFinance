@@ -22,8 +22,10 @@ const API = {
             return storedUrl;
         }
         
-        // 3. Default to localhost:8223
-        return 'http://localhost:8223/api';
+        // 3. Default to the same host serving the frontend (works over Tailscale/LAN)
+        const protocol = window.location.protocol || 'http:';
+        const host = window.location.hostname || 'localhost';
+        return `${protocol}//${host}:8223/api`;
     })(),
     
     // Method to dynamically change backend URL

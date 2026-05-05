@@ -46,8 +46,8 @@ COPY backend/ ./backend/
 # Copy frontend files from builder
 COPY --from=frontend-builder /app/frontend/public ./frontend/public
 
-# Create data directory for SQLite database
-RUN mkdir -p /app/data
+# Create data + logs directories for bind mounts
+RUN mkdir -p /app/data /app/logs
 
 # Copy supervisord configuration
 COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
