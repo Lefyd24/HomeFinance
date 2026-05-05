@@ -55,14 +55,25 @@
                             <span class="label-text font-medium">Debt Type</span>
                             <span class="label-text-alt text-error">*</span>
                         </label>
-                        <select id="debtType" name="type" class="select select-bordered w-full" required>
+                        <select id="debtType" name="type" class="select select-bordered w-full" required onchange="toggleCustomType()">
                             <option value="">Select type</option>
-                            <option value="credit_card">Credit Card</option>
-                            <option value="student_loan">Student Loan</option>
-                            <option value="mortgage">Mortgage</option>
-                            <option value="car_loan">Car Loan</option>
-                            <option value="personal_loan">Personal Loan</option>
+                            <optgroup label="Loans &amp; Credit">
+                                <option value="credit_card">Credit Card</option>
+                                <option value="personal_loan">Personal Loan</option>
+                                <option value="student_loan">Student Loan</option>
+                                <option value="mortgage">Mortgage</option>
+                                <option value="car_loan">Car Loan</option>
+                                <option value="informal">Personal / Informal</option>
+                            </optgroup>
+                            <optgroup label="Bills &amp; Obligations">
+                                <option value="utilities">Utilities</option>
+                                <option value="subscription">Subscription</option>
+                                <option value="medical">Medical</option>
+                                <option value="tax">Tax</option>
+                                <option value="legal">Legal</option>
+                            </optgroup>
                             <option value="other">Other</option>
+                            <option value="custom">Custom...</option>
                         </select>
                     </div>
                     <div class="form-control">
@@ -71,6 +82,12 @@
                         </label>
                         <input type="number" id="debtPriority" name="priority" class="input input-bordered w-full" value="0" min="0">
                     </div>
+                </div>
+
+                <!-- Custom type input (shown when type = "custom") -->
+                <div class="form-control hidden" id="customTypeContainer">
+                    <label class="label py-1"><span class="label-text font-medium text-sm">Custom Type Name</span></label>
+                    <input type="text" id="debtCustomType" name="custom_type" class="input input-bordered w-full" placeholder="e.g., Insurance, Rent, HOA Fee">
                 </div>
                 
                 <div class="grid grid-cols-2 gap-4">
@@ -121,6 +138,19 @@
                     </div>
                 </div>
                 
+                <!-- Paid Off Status -->
+                <div class="divider text-sm">Status</div>
+                <div class="form-control" id="paidOffContainer">
+                    <label class="label cursor-pointer justify-start gap-3">
+                        <input type="checkbox" id="debtIsPaidOff" name="is_paid_off" class="checkbox checkbox-sm checkbox-success" onchange="togglePaidOffDate()">
+                        <span class="label-text font-medium">Mark as paid off</span>
+                    </label>
+                    <div id="paidOffDateContainer" class="mt-2 hidden">
+                        <label class="label py-1"><span class="label-text font-medium text-sm">Paid Off Date</span></label>
+                        <input type="date" id="debtPaidOffDate" name="paid_off_date" class="input input-bordered w-full input-sm">
+                    </div>
+                </div>
+
                 <!-- Recurrence Settings -->
                 <div class="divider text-sm">Recurrence Settings</div>
                 

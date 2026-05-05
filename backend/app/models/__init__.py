@@ -8,6 +8,7 @@ from app.models.saved_report import SavedReport
 from app.models.goal import FinancialGoal, GoalTransaction
 from app.models.insight import UserInsight, SpendingPattern
 from app.models.debt import Debt, DebtPayment
+from app.models.recurring_expense import RecurringExpense, RecurringExpensePayment
 
 __all__ = [
     "User",
@@ -24,4 +25,6 @@ __all__ = [
     "SpendingPattern",
     "Debt",
     "DebtPayment",
+    "RecurringExpense",
+    "RecurringExpensePayment",
 ]

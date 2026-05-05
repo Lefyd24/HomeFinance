@@ -562,6 +562,26 @@ const API = {
         }
     },
 
+    recurringExpenses: {
+        list: () =>
+            API.request('/recurring-expenses'),
+
+        create: (data) =>
+            API.request('/recurring-expenses', { method: 'POST', body: JSON.stringify(data) }),
+
+        update: (id, data) =>
+            API.request(`/recurring-expenses/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+
+        delete: (id) =>
+            API.request(`/recurring-expenses/${id}`, { method: 'DELETE' }),
+
+        getUpcoming: (days = 15) =>
+            API.request(`/recurring-expenses/upcoming?days=${days}`),
+
+        recordPayment: (id, data) =>
+            API.request(`/recurring-expenses/${id}/payments`, { method: 'POST', body: JSON.stringify(data) }),
+    },
+
     // Analytics methods - ML-powered financial analytics
     analytics: {
         getSpendingForecast: (days = 30, confidence = 0.85) =>

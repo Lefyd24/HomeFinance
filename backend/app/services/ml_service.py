@@ -421,7 +421,18 @@ class BudgetOptimizer:
         income = self.get_income_estimate(months=months)
 
         if income <= 0:
-            return {"error": "Unable to estimate income from transactions"}
+            return {
+                "income_estimate": 0.0,
+                "total_spending": sum(spending.values()),
+                "current_savings_rate": 0.0,
+                "target_savings_rate": 0.20,
+                "current_breakdown": {},
+                "ideal_breakdown": {},
+                "recommendations": [],
+                "suggested_budgets": {},
+                "potential_monthly_savings": 0.0,
+                "error": "Unable to estimate income from transactions",
+            }
 
         total_spending = sum(spending.values())
         current_savings_rate = (income - total_spending) / income if income > 0 else 0

@@ -50,10 +50,25 @@ function populateAccountSelects() {
     }
 }
 
+window.togglePaidOffDate = () => {
+    const checked = document.getElementById('debtIsPaidOff').checked;
+    document.getElementById('paidOffDateContainer').classList.toggle('hidden', !checked);
+    if (checked && !document.getElementById('debtPaidOffDate').value) {
+        document.getElementById('debtPaidOffDate').value = new Date().toISOString().split('T')[0];
+    }
+};
+
+window.toggleCustomType = () => {
+    const val = document.getElementById('debtType').value;
+    document.getElementById('customTypeContainer').classList.toggle('hidden', val !== 'custom');
+};
+
 // Global functions for onclick handlers
 window.showCreateDebtModal = () => {
     editingDebtId = null;
     document.getElementById('debtForm').reset();
+    document.getElementById('customTypeContainer').classList.add('hidden');
+    document.getElementById('paidOffDateContainer').classList.add('hidden');
     document.getElementById('modalTitle').textContent = 'Add Debt';
     document.getElementById('debtModal').showModal();
 };
@@ -79,14 +94,30 @@ window.editDebt = async (id) => {
     document.getElementById('debtOpenedDate').value = debt.opened_date || '';
     document.getElementById('debtMaturityDate').value = debt.maturity_date || '';
     document.getElementById('debtNotes').value = debt.notes || '';
-    
+
+    // Custom type
+    const customTypeContainer = document.getElementById('customTypeContainer');
+    if (debt.type === 'custom') {
+        customTypeContainer.classList.remove('hidden');
+        document.getElementById('debtCustomType').value = debt.custom_type || '';
+    } else {
+        customTypeContainer.classList.add('hidden');
+        document.getElementById('debtCustomType').value = '';
+    }
+
+    // Paid off status
+    const isPaidOff = debt.is_paid_off || false;
+    document.getElementById('debtIsPaidOff').checked = isPaidOff;
+    document.getElementById('paidOffDateContainer').classList.toggle('hidden', !isPaidOff);
+    document.getElementById('debtPaidOffDate').value = debt.paid_off_date || '';
+
     // Populate recurrence fields
     document.getElementById('debtRecurrenceInterval').value = debt.recurrence_interval || 1;
     document.getElementById('debtRecurrenceUnit').value = debt.recurrence_unit || '';
     document.getElementById('debtRecurrenceDay').value = debt.recurrence_day_of_month || '';
     document.getElementById('debtLinkedAccount').value = debt.linked_account_id || '';
     document.getElementById('debtNextPaymentDate').value = debt.next_payment_date || '';
-    
+
     document.getElementById('modalTitle').textContent = 'Edit Debt';
     document.getElementById('debtModal').showModal();
 };
@@ -325,16 +356,30 @@ function renderDebtCard(debt) {
         mortgage: 'bg-accent/10 text-accent',
         car_loan: 'bg-info/10 text-info',
         personal_loan: 'bg-success/10 text-success',
-        other: 'bg-base-300 text-base-content'
+        informal: 'bg-warning/10 text-warning',
+        utilities: 'bg-orange-100 text-orange-600',
+        subscription: 'bg-purple-100 text-purple-600',
+        medical: 'bg-red-100 text-red-600',
+        tax: 'bg-yellow-100 text-yellow-700',
+        legal: 'bg-slate-100 text-slate-600',
+        other: 'bg-base-300 text-base-content',
+        custom: 'bg-base-300 text-base-content'
     };
-    
+
     const typeLabels = {
         credit_card: 'Credit Card',
         student_loan: 'Student Loan',
         mortgage: 'Mortgage',
         car_loan: 'Car Loan',
         personal_loan: 'Personal Loan',
-        other: 'Other'
+        informal: 'Personal / Informal',
+        utilities: 'Utilities',
+        subscription: 'Subscription',
+        medical: 'Medical',
+        tax: 'Tax',
+        legal: 'Legal',
+        other: 'Other',
+        custom: debt.custom_type || 'Custom'
     };
     
     return `
@@ -482,9 +527,16 @@ function renderDebtDetails(debt, payments) {
         mortgage: 'Mortgage',
         car_loan: 'Car Loan',
         personal_loan: 'Personal Loan',
-        other: 'Other'
+        informal: 'Personal / Informal',
+        utilities: 'Utilities',
+        subscription: 'Subscription',
+        medical: 'Medical',
+        tax: 'Tax',
+        legal: 'Legal',
+        other: 'Other',
+        custom: debt.custom_type || 'Custom'
     };
-    
+
     return `
         <div class="space-y-6">
             <!-- Overview Section -->
@@ -721,10 +773,12 @@ function setupEventListeners() {
         e.preventDefault();
         
         const formData = new FormData(e.target);
+        const isPaidOff = document.getElementById('debtIsPaidOff').checked;
         const data = {
             name: formData.get('name'),
             creditor: formData.get('creditor') || null,
             type: formData.get('type'),
+            custom_type: formData.get('type') === 'custom' ? (formData.get('custom_type') || null) : null,
             original_balance: parseFloat(formData.get('original_balance')),
             current_balance: parseFloat(formData.get('current_balance')),
             interest_rate: formData.get('interest_rate') ? parseFloat(formData.get('interest_rate')) / 100 : null,
@@ -733,7 +787,9 @@ function setupEventListeners() {
             maturity_date: formData.get('maturity_date') || null,
             priority: parseInt(formData.get('priority')) || 0,
             notes: formData.get('notes') || null,
-            
+            is_paid_off: isPaidOff,
+            paid_off_date: isPaidOff ? (formData.get('paid_off_date') || null) : null,
+
             // Recurrence fields
             recurrence_interval: formData.get('recurrence_interval') ? parseInt(formData.get('recurrence_interval')) : null,
             recurrence_unit: formData.get('recurrence_unit') || null,

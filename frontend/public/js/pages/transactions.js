@@ -7,6 +7,7 @@ let transactions = [];
 let accounts = [];
 let categories = [];
 let debts = [];
+let recurringExpenses = [];
 let currentPage = 1;
 let totalPages = 1;
 let filters = {};
@@ -21,9 +22,13 @@ window.openTransactionModal = () => {
     // Set default date to today
     document.getElementById('transactionDate').value = new Date().toISOString().split('T')[0];
     
-    // Reset category dropdown
+    // Reset category combobox
     document.getElementById('categoryId').value = '';
-    
+    const categorySearch = document.getElementById('categorySearch');
+    if (categorySearch) categorySearch.value = '';
+    const categoryDropdownList = document.getElementById('categoryDropdownList');
+    if (categoryDropdownList) categoryDropdownList.classList.add('hidden');
+
     // Reset debt payment container to original state (in case it was modified during edit)
     const debtPaymentContainer = document.getElementById('debtPaymentContainer');
     if (debtPaymentContainer) {
@@ -54,6 +59,13 @@ window.openTransactionModal = () => {
     if (debtSelectContainer) debtSelectContainer.classList.add('hidden');
     if (debtSelect) debtSelect.value = '';
     
+    // Reset recurring expense link
+    window.populateRecurringSelect();
+    const linkToRecurring = document.getElementById('linkToRecurring');
+    const recurringSelectContainer = document.getElementById('recurringSelectContainer');
+    if (linkToRecurring) linkToRecurring.checked = false;
+    if (recurringSelectContainer) recurringSelectContainer.classList.add('hidden');
+
     // Reset form visibility
     window.updateFormForTransactionType();
     transactionModal.showModal();
@@ -127,6 +139,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         transactionForm.addEventListener('submit', handleTransactionSubmit);
     }
     
+    // Close category dropdown when clicking outside
+    document.addEventListener('click', (e) => {
+        const container = document.getElementById('categoryContainer');
+        const list = document.getElementById('categoryDropdownList');
+        if (list && container && !container.contains(e.target)) {
+            list.classList.add('hidden');
+        }
+    });
+
     // Setup type change handler
     const transactionType = document.getElementById('transactionType');
     if (transactionType) {
@@ -161,44 +182,83 @@ document.addEventListener('DOMContentLoaded', async () => {
     function populateCategorySelect() {
         const categorySelect = document.getElementById('categoryId');
         const filterCategorySelect = document.getElementById('filterCategory');
-        if (!categorySelect && !filterCategorySelect || !categories || categories.length === 0) return;
-        
-        // Group categories by type
-        const incomeCats = categories.filter(c => c.type === 'income').sort((a, b) => a.name.localeCompare(b.name));
-        const expenseCats = categories.filter(c => c.type === 'expense').sort((a, b) => a.name.localeCompare(b.name));
-        const transferCats = categories.filter(c => c.type === 'transfer').sort((a, b) => a.name.localeCompare(b.name));
-        
+        const dropdownList = document.getElementById('categoryDropdownList');
+        if (!categories || categories.length === 0) return;
+
+        const groups = [
+            { label: 'Income', list: categories.filter(c => c.type === 'income').sort((a, b) => a.name.localeCompare(b.name)) },
+            { label: 'Expense', list: categories.filter(c => c.type === 'expense').sort((a, b) => a.name.localeCompare(b.name)) },
+            { label: 'Transfer', list: categories.filter(c => c.type === 'transfer').sort((a, b) => a.name.localeCompare(b.name)) },
+        ].filter(g => g.list.length > 0);
+
+        // Hidden select for form submission
         let optionsHtml = '<option value="">Select Category</option>';
-        
-        if (incomeCats.length > 0) {
-            optionsHtml += '<optgroup label="Income">';
-            incomeCats.forEach(cat => {
-                optionsHtml += `<option value="${cat.id}">${cat.name}</option>`;
-            });
+        groups.forEach(g => {
+            optionsHtml += `<optgroup label="${g.label}">`;
+            g.list.forEach(cat => { optionsHtml += `<option value="${cat.id}">${cat.name}</option>`; });
             optionsHtml += '</optgroup>';
-        }
-        
-        if (expenseCats.length > 0) {
-            optionsHtml += '<optgroup label="Expense">';
-            expenseCats.forEach(cat => {
-                optionsHtml += `<option value="${cat.id}">${cat.name}</option>`;
-            });
-            optionsHtml += '</optgroup>';
-        }
-        
-        if (transferCats.length > 0) {
-            optionsHtml += '<optgroup label="Transfer">';
-            transferCats.forEach(cat => {
-                optionsHtml += `<option value="${cat.id}">${cat.name}</option>`;
-            });
-            optionsHtml += '</optgroup>';
-        }
-        
+        });
         if (categorySelect) categorySelect.innerHTML = optionsHtml;
+
+        // Filter select in toolbar
         if (filterCategorySelect) {
-            filterCategorySelect.innerHTML = '<option value="">All Categories</option>' + optionsHtml.replace('<option value="">Select Category</option>', '');
+            filterCategorySelect.innerHTML = '<option value="">All Categories</option>' +
+                optionsHtml.replace('<option value="">Select Category</option>', '');
+        }
+
+        // Build flat list for combobox
+        if (dropdownList) {
+            window._allCategoryItems = [];
+            groups.forEach(g => {
+                g.list.forEach(cat => window._allCategoryItems.push({ id: cat.id, name: cat.name, group: g.label }));
+            });
+            renderCategoryDropdown('');
         }
     }
+
+    function renderCategoryDropdown(query) {
+        const dropdownList = document.getElementById('categoryDropdownList');
+        if (!dropdownList || !window._allCategoryItems) return;
+        const q = query.toLowerCase().trim();
+        const matches = q
+            ? window._allCategoryItems.filter(e => e.name.toLowerCase().includes(q))
+            : window._allCategoryItems;
+        if (matches.length === 0) {
+            dropdownList.innerHTML = '<li class="px-4 py-2 text-sm text-base-content/50">No categories found</li>';
+            return;
+        }
+        dropdownList.innerHTML = matches.map(entry => `
+            <li>
+                <button type="button"
+                    class="w-full text-left px-4 py-2 text-sm hover:bg-base-200 flex items-center gap-2"
+                    onmousedown="selectCategory(${entry.id}, '${entry.name.replace(/'/g, "\\'")}')">
+                    <span class="badge badge-xs badge-ghost">${entry.group}</span>
+                    ${entry.name}
+                </button>
+            </li>`).join('');
+    }
+
+    window.filterCategoryDropdown = () => {
+        const q = document.getElementById('categorySearch')?.value || '';
+        renderCategoryDropdown(q);
+        showCategoryDropdown();
+        const categorySelect = document.getElementById('categoryId');
+        if (categorySelect) categorySelect.value = '';
+    };
+
+    window.showCategoryDropdown = () => {
+        const list = document.getElementById('categoryDropdownList');
+        if (list) list.classList.remove('hidden');
+    };
+
+    window.selectCategory = (id, name) => {
+        const categorySelect = document.getElementById('categoryId');
+        const searchInput = document.getElementById('categorySearch');
+        const list = document.getElementById('categoryDropdownList');
+        if (categorySelect) categorySelect.value = id;
+        if (searchInput) searchInput.value = name;
+        if (list) list.classList.add('hidden');
+    };
     
     // Populate debt dropdown select
     function populateDebtSelect() {
@@ -239,19 +299,37 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Expose functions to window for HTML event handlers
     window.toggleDebtSelect = toggleDebtSelect;
     window.populateDebtSelect = populateDebtSelect;
-    
+
+    window.populateRecurringSelect = () => {
+        const sel = document.getElementById('recurringExpenseId');
+        if (!sel) return;
+        sel.innerHTML = '<option value="">Select a recurring expense...</option>' +
+            recurringExpenses
+                .filter(r => r.is_active)
+                .map(r => `<option value="${r.id}">${r.name} — ${Utils.formatCurrency(r.amount)} (due ${Utils.formatDate(r.next_due_date)})</option>`)
+                .join('');
+    };
+
+    window.toggleRecurringSelect = () => {
+        const container = document.getElementById('recurringSelectContainer');
+        const checked = document.getElementById('linkToRecurring').checked;
+        if (container) container.classList.toggle('hidden', !checked);
+    };
+
     async function initialize() {
         try {
-            // Load accounts, categories, and debts
-            [accounts, categories, debts] = await Promise.all([
+            // Load accounts, categories, debts and recurring expenses
+            [accounts, categories, debts, recurringExpenses] = await Promise.all([
                 API.accounts.list(),
                 API.categories.list(),
-                API.debts.list()
+                API.debts.list(),
+                API.recurringExpenses.list(),
             ]);
-            
+
             populateAccountSelects();
             populateCategorySelect();
             populateDebtSelect();
+            window.populateRecurringSelect();
         } catch (error) {
             console.error('Error initializing:', error);
             Utils.showToast('Error loading data', 'error');
@@ -297,9 +375,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
         
         container.innerHTML = `
-            <div class="overflow-x-auto -mx-3 md:mx-0">
+            <div class="overflow-x-auto overflow-y-auto -mx-3 md:mx-0 max-h-[calc(100vh-420px)] md:max-h-[calc(100vh-380px)]">
                 <table class="table w-full">
-                    <thead>
+                    <thead class="sticky top-0 z-10 bg-base-100">
                         <tr class="border-b border-base-300">
                             <th class="text-xs md:text-sm py-2 md:py-3 pl-3 md:pl-4">Date</th>
                             <th class="text-xs md:text-sm py-2 md:py-3">Description</th>
@@ -613,23 +691,68 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     function renderPagination() {
         const container = document.getElementById('pagination');
+        container.className = 'flex justify-center mt-4 shrink-0';
         
         if (totalPages <= 1) {
             container.innerHTML = '';
             return;
         }
         
-        let pages = '';
-        for (let i = 1; i <= totalPages; i++) {
-            pages += `
-                <button onclick="goToPage(${i})" class="btn btn-sm ${i === currentPage ? 'btn-active' : ''}">${i}</button>
-            `;
+        const maxVisible = 5; // Max page buttons to show
+        let pages = [];
+        
+        // Always show first page
+        pages.push(1);
+        
+        // Calculate range around current page
+        let start = Math.max(2, currentPage - Math.floor(maxVisible / 2));
+        let end = Math.min(totalPages - 1, currentPage + Math.floor(maxVisible / 2));
+        
+        // Adjust range to show maxVisible buttons when possible
+        if (end - start + 1 < maxVisible && totalPages > maxVisible + 2) {
+            if (start === 2) {
+                end = Math.min(totalPages - 1, start + maxVisible - 1);
+            } else if (end === totalPages - 1) {
+                start = Math.max(2, end - maxVisible + 1);
+            }
         }
+        
+        // Add ellipsis after first page if needed
+        if (start > 2) {
+            pages.push('...');
+        }
+        
+        // Add middle pages
+        for (let i = start; i <= end; i++) {
+            pages.push(i);
+        }
+        
+        // Add ellipsis before last page if needed
+        if (end < totalPages - 1) {
+            pages.push('...');
+        }
+        
+        // Always show last page if more than 1 page
+        if (totalPages > 1) {
+            pages.push(totalPages);
+        }
+        
+        // Build pagination HTML
+        let pagesHtml = '';
+        pages.forEach(p => {
+            if (p === '...') {
+                pagesHtml += '<button class="join-item btn btn-sm btn-disabled">…</button>';
+            } else {
+                pagesHtml += `
+                    <button onclick="goToPage(${p})" class="join-item btn btn-sm ${p === currentPage ? 'btn-active' : ''}">${p}</button>
+                `;
+            }
+        });
         
         container.innerHTML = `
             <div class="join">
                 <button onclick="goToPage(${currentPage - 1})" class="join-item btn btn-sm" ${currentPage === 1 ? 'disabled' : ''}>«</button>
-                ${pages}
+                ${pagesHtml}
                 <button onclick="goToPage(${currentPage + 1})" class="join-item btn btn-sm" ${currentPage === totalPages ? 'disabled' : ''}>»</button>
             </div>
         `;
@@ -888,7 +1011,25 @@ document.addEventListener('DOMContentLoaded', async () => {
                     Utils.showToast('Transaction saved but debt payment failed', 'warning');
                 }
             }
-            
+
+            // Link to recurring expense if selected
+            const linkToRecurring = document.getElementById('linkToRecurring');
+            const recurringExpenseId = document.getElementById('recurringExpenseId');
+            if (linkToRecurring && linkToRecurring.checked && recurringExpenseId && recurringExpenseId.value && savedTransaction) {
+                try {
+                    await API.recurringExpenses.recordPayment(parseInt(recurringExpenseId.value), {
+                        amount: data.amount,
+                        payment_date: data.date,
+                        transaction_id: savedTransaction.id,
+                        notes: data.notes || null,
+                    });
+                    Utils.showToast('Recurring expense payment recorded', 'success');
+                } catch (recurringError) {
+                    console.error('Error recording recurring expense payment:', recurringError);
+                    Utils.showToast('Transaction saved but recurring expense link failed', 'warning');
+                }
+            }
+
             transactionModal.close();
             e.target.reset();
             document.getElementById('transactionId').value = '';
@@ -926,8 +1067,14 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (tx.type === 'transfer') {
                 document.getElementById('destinationAccountId').value = tx.destination_account_id || '';
                 document.getElementById('categoryId').value = '';
+                const searchInput = document.getElementById('categorySearch');
+                if (searchInput) searchInput.value = '';
             } else {
                 document.getElementById('categoryId').value = tx.category_id || '';
+                // Pre-fill combobox search input with category name
+                const catName = categories.find(c => c.id === tx.category_id)?.name || '';
+                const searchInput = document.getElementById('categorySearch');
+                if (searchInput) searchInput.value = catName;
             }
             
             // Handle debt payment linking

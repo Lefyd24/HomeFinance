@@ -90,9 +90,9 @@
             <!-- Skeleton Transactions Table -->
             <div class="card bg-base-100 shadow-xl">
                 <div class="card-body p-3 md:p-6">
-                    <div id="transactionsTable" class="overflow-x-auto -mx-3 md:mx-0">
+                    <div id="transactionsTable" class="overflow-x-auto overflow-y-auto -mx-3 md:mx-0 max-h-[calc(100vh-420px)] md:max-h-[calc(100vh-380px)]">
                         <table class="table w-full">
-                            <thead>
+                            <thead class="sticky top-0 z-10 bg-base-100">
                                 <tr class="border-b border-base-300">
                                     <th class="py-2 md:py-3 pl-3 md:pl-4"><div class="skeleton h-4 w-12"></div></th>
                                     <th class="py-2 md:py-3"><div class="skeleton h-4 w-24"></div></th>
@@ -207,7 +207,7 @@
                     </div>
                     
                     <!-- Skeleton Pagination -->
-                    <div id="pagination" class="flex justify-center mt-4">
+                    <div id="pagination" class="flex justify-center mt-4 shrink-0">
                         <div class="flex gap-1">
                             <div class="skeleton h-8 w-8 rounded-lg"></div>
                             <div class="skeleton h-8 w-8 rounded-lg"></div>
@@ -256,9 +256,24 @@
                     </div>
                     <div class="form-control" id="categoryContainer">
                         <label class="label py-1"><span class="label-text font-medium text-sm">Category</span></label>
-                        <select id="categoryId" name="categoryId" class="select select-bordered w-full select-sm sm:select-md" required>
+                        <div class="relative w-full">
+                            <input
+                                type="text"
+                                id="categorySearch"
+                                placeholder="Search category..."
+                                class="input input-bordered w-full input-sm sm:input-md"
+                                autocomplete="off"
+                                oninput="filterCategoryDropdown()"
+                                onfocus="showCategoryDropdown()"
+                            >
+                            <ul
+                                id="categoryDropdownList"
+                                class="absolute z-50 w-full bg-base-100 border border-base-300 rounded-box shadow-lg max-h-52 overflow-y-auto hidden mt-1"
+                            ></ul>
+                        </div>
+                        <!-- Hidden select carries the actual value for form submission -->
+                        <select id="categoryId" name="categoryId" class="hidden" required>
                             <option value="">Select Category</option>
-                            <!-- Categories will be populated here -->
                         </select>
                     </div>
                 </div>
@@ -293,7 +308,24 @@
                         </label>
                     </div>
                 </div>
-                
+
+                <!-- Recurring Expense Link -->
+                <div class="form-control border-t border-base-300 pt-4" id="recurringExpenseLinkContainer">
+                    <label class="label cursor-pointer justify-start gap-3">
+                        <input type="checkbox" id="linkToRecurring" class="checkbox checkbox-sm" onchange="toggleRecurringSelect()">
+                        <span class="label-text font-medium">Link to recurring expense</span>
+                    </label>
+                    <div id="recurringSelectContainer" class="mt-2 hidden">
+                        <label class="label py-1"><span class="label-text font-medium text-sm">Select Recurring Expense</span></label>
+                        <select id="recurringExpenseId" name="recurringExpenseId" class="select select-bordered w-full select-sm sm:select-md">
+                            <option value="">Select a recurring expense...</option>
+                        </select>
+                        <label class="label">
+                            <span class="label-text-alt text-info">This will record a payment for the selected recurring expense</span>
+                        </label>
+                    </div>
+                </div>
+
                 <div class="modal-action pt-2">
                     <button type="button" class="btn btn-sm sm:btn-md btn-ghost" onclick="transactionModal.close()">Cancel</button>
                     <button type="submit" class="btn btn-sm sm:btn-md btn-primary">Save Transaction</button>

@@ -6,7 +6,11 @@ from datetime import date, datetime
 class DebtBase(BaseModel):
     name: str = Field(..., min_length=1, max_length=200)
     creditor: Optional[str] = None
-    type: str = Field(..., pattern="^(credit_card|student_loan|mortgage|car_loan|personal_loan|other)$")
+    type: str = Field(
+        ...,
+        pattern="^(credit_card|student_loan|mortgage|car_loan|personal_loan|utilities|subscription|medical|tax|informal|legal|other|custom)$",
+    )
+    custom_type: Optional[str] = Field(None, max_length=200)
     original_balance: float = Field(..., gt=0)
     current_balance: float = Field(..., ge=0)
     interest_rate: Optional[float] = Field(None, ge=0, le=1)
@@ -33,13 +37,19 @@ class DebtCreate(DebtBase):
 class DebtUpdate(BaseModel):
     name: Optional[str] = Field(None, min_length=1, max_length=200)
     creditor: Optional[str] = None
-    type: Optional[str] = Field(None, pattern="^(credit_card|student_loan|mortgage|car_loan|personal_loan|other)$")
+    type: Optional[str] = Field(
+        None,
+        pattern="^(credit_card|student_loan|mortgage|car_loan|personal_loan|utilities|subscription|medical|tax|informal|legal|other|custom)$",
+    )
+    custom_type: Optional[str] = Field(None, max_length=200)
     current_balance: Optional[float] = Field(None, ge=0)
     interest_rate: Optional[float] = Field(None, ge=0, le=1)
     minimum_payment: Optional[float] = Field(None, gt=0)
     maturity_date: Optional[date] = None
     priority: Optional[int] = None
     is_active: Optional[bool] = None
+    is_paid_off: Optional[bool] = None
+    paid_off_date: Optional[date] = None
     notes: Optional[str] = None
     
     # Recurrence settings

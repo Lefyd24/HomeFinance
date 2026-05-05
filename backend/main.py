@@ -23,6 +23,7 @@ from app.routers import (
     debts,
     analytics,
     advisor,
+    recurring_expenses,
 )
 
 
@@ -120,6 +121,7 @@ app.include_router(goals.router, prefix="/api")
 app.include_router(debts.router, prefix="/api")
 app.include_router(analytics.router, prefix="/api")
 app.include_router(advisor.router, prefix="/api")
+app.include_router(recurring_expenses.router, prefix="/api")
 
 
 if __name__ == "__main__":

@@ -16,7 +16,8 @@ class Debt(Base):
     # Debt details
     name = Column(String(200), nullable=False)
     creditor = Column(String(200))
-    type = Column(String(50))  # 'credit_card', 'student_loan', 'mortgage', 'car_loan', 'personal_loan', 'other'
+    type = Column(String(50))
+    custom_type = Column(String(200))  # used when type == 'custom'
     
     # Financial terms
     original_balance = Column(Float, nullable=False)

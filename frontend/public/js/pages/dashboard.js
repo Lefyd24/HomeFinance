@@ -1323,9 +1323,12 @@ async function loadDebtsOverview() {
         
         // Get all debts to calculate payment progress
         const debts = await API.debts.list();
-        
+
         // Get upcoming payments for the next 30 days (recurring debts)
         const upcomingPayments = await API.debts.getUpcomingPayments(30);
+
+        // Get upcoming recurring expenses for the next 15 days
+        const upcomingRecurring = await API.recurringExpenses.getUpcoming(15);
         
         // Also include non-recurring debts whose next_payment_date falls within the selected date range
         const rangeStart = dashboardDateRange.startDate;
@@ -1364,28 +1367,31 @@ async function loadDebtsOverview() {
         // Merge recurring upcoming payments with non-recurring ones, avoiding duplicates
         const recurringDebtIds = new Set(upcomingPayments.map(p => p.debt_id));
         const uniqueNonRecurring = nonRecurringPayments.filter(p => !recurringDebtIds.has(p.debt_id));
-        const allUpcomingPayments = [...upcomingPayments, ...uniqueNonRecurring]
+        let allUpcomingPayments = [...upcomingPayments, ...uniqueNonRecurring]
             .sort((a, b) => new Date(a.due_date) - new Date(b.due_date));
-        
+
         if (!allUpcomingPayments || allUpcomingPayments.length === 0) {
-            console.log('No upcoming debt payments, showing empty state');
-            container.innerHTML = `
-                <div class="card bg-base-100 shadow-xl">
-                    <div class="card-body">
-                        <h2 class="card-title mb-4 flex items-center gap-2">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-                            </svg>
-                            Upcoming Debt Payments
-                        </h2>
-                        <p class="text-base-content/60 mb-4">No upcoming payments in the selected date range.</p>
-                        <div class="card-actions justify-end">
-                            <a href="debts.html" class="btn btn-sm btn-error">Manage Debts</a>
+            if (upcomingRecurring.length === 0) {
+                console.log('No upcoming debt payments or recurring expenses, showing empty state');
+                container.innerHTML = `
+                    <div class="card bg-base-100 shadow-xl">
+                        <div class="card-body">
+                            <h2 class="card-title mb-4 flex items-center gap-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                                </svg>
+                                Upcoming Payments
+                            </h2>
+                            <p class="text-base-content/60 mb-4">No upcoming payments in the selected date range.</p>
+                            <div class="card-actions justify-end">
+                                <a href="debts.html" class="btn btn-sm btn-error">Manage Debts</a>
+                            </div>
                         </div>
                     </div>
-                </div>
-            `;
-            return;
+                `;
+                return;
+            }
+            allUpcomingPayments = [];
         }
         
         // Separate overdue, due soon, and future payments
@@ -1466,6 +1472,35 @@ async function loadDebtsOverview() {
                     
                     ${allUpcomingPayments.length > 3 ? `
                         <p class="text-xs text-base-content/60 mt-2 text-center">+ ${allUpcomingPayments.length - 3} more</p>
+                    ` : ''}
+
+                    ${upcomingRecurring.length > 0 ? `
+                        <div class="divider text-xs my-3">Upcoming Recurring Expenses</div>
+                        <div class="space-y-2">
+                            ${upcomingRecurring.slice(0, 3).map(r => {
+                                const statusBadge = r.is_overdue
+                                    ? '<span class="badge badge-error badge-xs">Overdue</span>'
+                                    : r.days_until_due === 0
+                                    ? '<span class="badge badge-warning badge-xs">Today</span>'
+                                    : `<span class="badge badge-ghost badge-xs">${r.days_until_due}d</span>`;
+                                return `
+                                    <div class="bg-base-200 rounded-lg p-3 flex justify-between items-center">
+                                        <div class="flex-1 min-w-0">
+                                            <div class="flex items-center gap-2">
+                                                <span class="font-semibold text-sm truncate">${r.name}</span>
+                                                ${statusBadge}
+                                            </div>
+                                            <p class="text-xs text-base-content/60">${Utils.formatDate(r.due_date)}</p>
+                                        </div>
+                                        <span class="font-bold text-sm ml-2">${Utils.formatCurrency(r.amount)}</span>
+                                    </div>
+                                `;
+                            }).join('')}
+                            ${upcomingRecurring.length > 3 ? `<p class="text-xs text-base-content/60 text-center mt-1">+ ${upcomingRecurring.length - 3} more</p>` : ''}
+                        </div>
+                        <div class="mt-2 text-right">
+                            <a href="recurring-expenses.html" class="btn btn-xs btn-ghost">Manage Recurring</a>
+                        </div>
                     ` : ''}
                 </div>
             </div>
