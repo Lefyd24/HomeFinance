@@ -52,9 +52,9 @@ RUN mkdir -p /app/data /app/logs
 # Copy supervisord configuration
 COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
-# Copy entrypoint script
+# Copy entrypoint script (strip CR so Windows CRLF never breaks execve)
 COPY docker-entrypoint.sh /app/docker-entrypoint.sh
-RUN chmod +x /app/docker-entrypoint.sh
+RUN sed -i 's/\r$//' /app/docker-entrypoint.sh && chmod +x /app/docker-entrypoint.sh
 
 # Set environment variables
 ENV PYTHONUNBUFFERED=1

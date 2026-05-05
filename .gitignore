@@ -10,6 +10,10 @@ node_modules/
 .venv
 .env
 
+# Claude
+.claude/
+CLAUDE.md
+
 # Database files
 *.db
 *.log

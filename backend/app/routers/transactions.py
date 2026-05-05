@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
-from sqlalchemy import func, desc
+from sqlalchemy import func, desc, or_
 from typing import List, Optional
 from datetime import datetime, date
 
@@ -48,7 +48,13 @@ def get_transactions(
     if type:
         query = query.filter(Transaction.type == type)
     if search:
-        query = query.filter(Transaction.description.ilike(f"%{search}%"))
+        search_lower = search.lower()
+        query = query.filter(
+            or_(
+                Transaction.description.ilike(f"%{search_lower}%"),
+                Transaction.notes.ilike(f"%{search_lower}%"),
+            )
+        )
 
     # Order by date descending
     query = query.order_by(desc(Transaction.date))

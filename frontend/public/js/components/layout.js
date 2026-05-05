@@ -15,13 +15,13 @@ const Layout = {
         if (!app) return;
         
         app.innerHTML = `
-            <div class="drawer lg:drawer-open min-h-screen bg-base-200">
+            <div id="main-drawer" class="drawer lg:drawer-open min-h-screen">
                 <input id="drawer-toggle" type="checkbox" class="drawer-toggle" />
-                
-                <!-- Main content wrapper -->
-                <div class="drawer-content flex flex-col min-h-screen">
-                    <!-- Navbar -->
-                    <header class="navbar bg-base-100 shadow-lg sticky top-0 z-40 border-b border-base-300 min-h-[3.5rem] lg:min-h-[4rem]">
+
+                <!-- Main content wrapper: base-100 so the concave corner bleeds white -->
+                <div class="drawer-content flex flex-col min-h-screen bg-base-100">
+                    <!-- Navbar: same base-100 as sidebar → they read as one connected element -->
+                    <header class="navbar sticky top-0 z-40 border-b border-base-200 min-h-[3.5rem] lg:min-h-[4rem] bg-base-100">
                         <!-- Mobile hamburger -->
                         <div class="flex-none lg:hidden">
                             <label for="drawer-toggle" class="btn btn-ghost btn-square min-h-[2.75rem] min-w-[2.75rem]" aria-label="Open menu">
@@ -29,6 +29,15 @@ const Layout = {
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
                                 </svg>
                             </label>
+                        </div>
+
+                        <!-- Desktop sidebar toggle -->
+                        <div class="flex-none hidden lg:flex">
+                            <button id="sidebar-toggle-btn" class="btn btn-ghost btn-square btn-sm" onclick="Layout.toggleSidebar()" title="Toggle sidebar">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                                </svg>
+                            </button>
                         </div>
                         
                         <!-- Page title -->
@@ -127,34 +136,35 @@ const Layout = {
                         </div>
                     </header>
                     
-                    <!-- Main content area -->
-                    <main id="main-content" class="flex-1 p-4 lg:p-6 max-w-7xl mx-auto w-full">
-                        <!-- Page content will be injected here -->
-                    </main>
-                    
-                    <!-- Footer -->
-                    <footer class="footer footer-center p-4 bg-base-100 text-base-content border-t border-base-300 mt-auto">
-                        <aside class="flex items-center gap-2 text-sm">
-                            <p>© 2026 Home Finance</p>
-                            <span class="divider divider-horizontal divider-sm"></span>
-                            <p class="opacity-60">v1.0.0</p>
-                        </aside>
-                    </footer>
+                    <!-- Body area: base-100 outer reveals through the rounded corner of the inner base-300 wrapper
+                         This is the concave corner technique — white bleeds through the arc at the top-left -->
+                    <div class="flex-1 flex flex-col bg-base-100">
+                        <div class="flex-1 flex flex-col bg-base-300 lg:rounded-tl-3xl">
+                            <main id="main-content" class="flex-1 p-4 lg:p-6 max-w-7xl mx-auto w-full">
+                                <!-- Page content will be injected here -->
+                            </main>
+                            <footer class="footer footer-center p-4 text-base-content/60 border-t border-base-200/60 mt-auto">
+                                <aside class="flex items-center gap-2 text-sm">
+                                    <p>© 2026 Home Finance</p>
+                                    <span class="divider divider-horizontal divider-sm"></span>
+                                    <p class="opacity-60">v1.0.0</p>
+                                </aside>
+                            </footer>
+                        </div>
+                    </div>
                 </div>
                 
                 <!-- Sidebar drawer -->
                 <div class="drawer-side z-50">
                     <label for="drawer-toggle" class="drawer-overlay bg-black/50 backdrop-blur-sm"></label>
-                    <aside class="bg-base-100 w-64 min-h-full flex flex-col shadow-2xl">
+                    <aside class="bg-base-100 w-64 min-h-full flex flex-col">
                         <!-- Branding -->
-                        <div class="p-4 lg:p-6 border-b border-base-300">
-                            <a href="dashboard.html" class="flex items-center gap-3 hover:opacity-80 transition-opacity">
-                                <div class="bg-primary text-primary-content w-10 h-10 rounded-xl flex items-center justify-center shadow-lg">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                    </svg>
+                        <div class="p-4 lg:p-5">
+                            <a href="dashboard.html" class="sidebar-branding flex items-center gap-3 hover:opacity-80 transition-opacity">
+                                <div class="bg-base-200 text-primary-content w-10 h-10 rounded-xl flex items-center justify-center shadow-lg shrink-0">
+                                    <img src="/assets/icons/favicon.ico" alt="Home Finance" class="h-10 w-10" />
                                 </div>
-                                <div>
+                                <div class="sidebar-brand-text">
                                     <h2 class="text-xl font-bold leading-tight">Home Finance</h2>
                                     <p class="text-xs opacity-60">Personal Finance Manager</p>
                                 </div>
@@ -162,8 +172,8 @@ const Layout = {
                         </div>
                         
                         <!-- Navigation -->
-                        <nav class="flex-1 overflow-y-auto p-4">
-                            <ul class="menu menu-vertical gap-1">
+                        <nav class="flex-1 overflow-y-auto py-3">
+                            <ul class="menu menu-vertical gap-0.5 w-full px-0">
                                 ${this.renderNavItem('dashboard', 'Dashboard', `
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
@@ -182,7 +192,7 @@ const Layout = {
                                     </svg>
                                 `, activePage)}
                                 
-                                <li class="menu-title mt-4 mb-1"><span class="text-xs uppercase tracking-wider">Management</span></li>
+                                <li class="menu-title mt-4 mb-1 px-4"><span class="sidebar-section-label text-xs uppercase tracking-wider opacity-50">Management</span></li>
                                 
                                 ${this.renderNavItem('budgets', 'Budgets', `
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -214,7 +224,7 @@ const Layout = {
                                     </svg>
                                 `, activePage)}
                                 
-                                <li class="menu-title mt-4 mb-1"><span class="text-xs uppercase tracking-wider">Analytics</span></li>
+                                <li class="menu-title mt-4 mb-1 px-4 sidebar-section-label"><span class="text-xs uppercase tracking-wider opacity-50">Analytics</span></li>
                                 
                                 ${this.renderNavItem('insights', 'Smart Insights', `
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -357,6 +367,12 @@ const Layout = {
                 }
             });
         });
+
+        // Restore sidebar collapsed state
+        this.initSidebar();
+
+        // Enable backdrop-click-to-dismiss on all static modals
+        setupModalBackdropDismiss();
     },
 
     /**
@@ -366,10 +382,9 @@ const Layout = {
         const isActive = page === activePage;
         return `
             <li>
-                <a href="${page}.html" class="${isActive ? 'active bg-primary text-primary-content font-medium shadow-md' : 'hover:bg-base-200'} gap-3 py-3 rounded-lg transition-all">
+                <a href="${page}.html" class="nav-item ${isActive ? 'active nav-item-active' : ''} gap-3 py-2.5 px-3 mx-2 rounded-lg transition-colors duration-150">
                     ${icon}
-                    <span>${label}</span>
-                    ${isActive ? '<span class="ml-auto badge badge-sm badge-ghost">●</span>' : ''}
+                    <span class="sidebar-label">${label}</span>
                 </a>
             </li>
         `;
@@ -455,6 +470,26 @@ const Layout = {
             startDate: `${year}-${month}-01`,
             endDate: `${year}-${month}-${day}`
         };
+    },
+
+    /**
+     * Toggle desktop sidebar collapsed state
+     */
+    toggleSidebar() {
+        const drawer = document.getElementById('main-drawer');
+        if (!drawer) return;
+        const isCollapsed = drawer.classList.toggle('sidebar-collapsed');
+        localStorage.setItem('sidebarCollapsed', isCollapsed ? '1' : '0');
+    },
+
+    /**
+     * Restore sidebar state from localStorage
+     */
+    initSidebar() {
+        if (localStorage.getItem('sidebarCollapsed') === '1') {
+            const drawer = document.getElementById('main-drawer');
+            if (drawer) drawer.classList.add('sidebar-collapsed');
+        }
     },
 
     /**
@@ -557,3 +592,20 @@ document.addEventListener('keydown', (e) => {
 
 // Make Layout available globally
 window.Layout = Layout;
+
+/**
+ * Bind backdrop-click-to-dismiss on every dialog.modal in the document.
+ * Safe to call multiple times — uses data-backdrop-bound to avoid duplicates.
+ * Also clears the flag before rebinding on dynamically-rendered modals.
+ */
+function setupModalBackdropDismiss() {
+    document.querySelectorAll('dialog.modal').forEach(modal => {
+        if (modal.dataset.backdropBound) return;
+        modal.dataset.backdropBound = '1';
+        modal.addEventListener('click', function (e) {
+            // Clicks directly on the <dialog> element are backdrop clicks
+            if (e.target === this) this.close();
+        });
+    });
+}
+window.setupModalBackdropDismiss = setupModalBackdropDismiss;

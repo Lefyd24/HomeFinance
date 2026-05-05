@@ -249,90 +249,89 @@ async function loadDashboardData() {
         // First, render the main content structure
         const mainContent = document.getElementById('main-content');
         mainContent.innerHTML = `
-            <div class="space-y-6">
-                <!-- Summary Cards -->
-                <div id="summary-cards"></div>
-                 
-                <!-- Main Grid -->
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6">
-                    <!-- Spending Chart -->
-                    <div class="lg:col-span-2">
-                        <div class="card bg-base-100 shadow-lg lg:shadow-xl">
-                            <div class="card-body p-4 lg:p-6">
-                                <h2 class="card-title text-lg lg:text-xl">Spending Overview</h2>
-                                <small class="text-xs text-base-content/60 mt-0">Total expenses over time for the selected date range</small>
-                                <div class="h-64 lg:h-80">
-                                    <canvas id="spendingChart"></canvas>
-                                </div>
-                                <!-- Income vs Spending chart -->
-                                <h2 class="card-title text-lg lg:text-xl mt-4">Income vs Spending</h2>
-                                <div class="flex items-center gap-2 mt-1 mb-2">
-                                    <div class="join">
-                                        <button class="join-item btn btn-sm" id="breakdownMonthlyBtn" onclick="setIncomeSpendingMode('month')">Monthly</button>
-                                        <button class="join-item btn btn-sm btn-ghost" id="breakdownWeeklyBtn" onclick="setIncomeSpendingMode('week')">Weekly</button>
-                                    </div>
-                                </div>
-                                <div class="h-42 lg:h-50">
-                                    <canvas id="incomeVsSpendingChart"></canvas>
+            <div class="dash-root">
+                <!-- Financial overview: balance + period metrics + accounts -->
+                <div id="summary-cards" class="dash-section"></div>
+
+                <!-- Main analysis grid -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-5 lg:gap-6 dash-section">
+                    <!-- Charts column -->
+                    <div class="lg:col-span-2 flex flex-col gap-5">
+                        <div class="dash-panel">
+                            <div class="dash-panel-header">
+                                <div>
+                                    <h2 class="dash-panel-title">Spending Overview</h2>
+                                    <p class="dash-panel-sub">Total expenses by category for the selected period</p>
                                 </div>
                             </div>
+                            <div class="h-64 lg:h-72">
+                                <canvas id="spendingChart"></canvas>
+                            </div>
+
+                            <div class="dash-panel-divider"></div>
+
+                            <div class="dash-panel-header" style="padding-bottom:0.5rem;">
+                                <h2 class="dash-panel-title">Income vs Spending</h2>
+                                <div class="join">
+                                    <button class="join-item btn btn-xs btn-ghost" id="breakdownMonthlyBtn" onclick="setIncomeSpendingMode('month')">Monthly</button>
+                                    <button class="join-item btn btn-xs btn-ghost" id="breakdownWeeklyBtn" onclick="setIncomeSpendingMode('week')">Weekly</button>
+                                </div>
+                            </div>
+                            <div style="height:10rem;">
+                                <canvas id="incomeVsSpendingChart"></canvas>
+                            </div>
                         </div>
-                        
-                        <!-- Budget Optimization -->
-                        <div id="budget-optimization" class="mt-6">
-                            <div class="card bg-base-100 shadow-xl">
-                                <div class="card-body">
-                                    <h2 class="card-title text-lg">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-success" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                                        </svg>
-                                        Budget Optimization
-                                    </h2>
-                                    <div id="budgetOptContainer" class="mt-2">
-                                        <div class="loading loading-spinner loading-md mx-auto block"></div>
-                                    </div>
+
+                        <div class="dash-panel" id="budget-optimization">
+                            <div class="dash-panel-header">
+                                <div>
+                                    <h2 class="dash-panel-title">Budget Optimization</h2>
+                                    <p class="dash-panel-sub">50/30/20 spending analysis</p>
+                                </div>
+                            </div>
+                            <div id="budgetOptContainer">
+                                <div class="flex justify-center py-4">
+                                    <span class="loading loading-spinner loading-sm"></span>
                                 </div>
                             </div>
                         </div>
                     </div>
-                    
-                    <!-- Budget & Debts Overview -->
-                    <div class="space-y-6">
+
+                    <!-- Right column: budgets + debts -->
+                    <div class="flex flex-col gap-5">
                         <div id="budget-overview"></div>
                         <div id="debts-overview"></div>
                     </div>
                 </div>
-                
-                <!-- Financial Goals Carousel - Full Width -->
-                <div id="goals-overview" class="mt-6"></div>
-                
+
+                <!-- Goals - full width -->
+                <div id="goals-overview" class="dash-section"></div>
+
                 <!-- Recent Transactions -->
-                <div class="card bg-base-100 shadow-xl">
-                    <div class="card-body">
-                        <div class="flex justify-between items-center mb-4">
-                            <h2 class="card-title">Recent Transactions</h2>
-                            <a href="transactions.html" class="btn btn-sm btn-ghost">View All</a>
-                        </div>
-                        <div id="recent-transactions"></div>
+                <div class="dash-panel dash-section">
+                    <div class="dash-panel-header">
+                        <h2 class="dash-panel-title">Recent Transactions</h2>
+                        <a href="transactions.html" class="btn btn-xs btn-ghost">View all</a>
                     </div>
+                    <div id="recent-transactions"></div>
                 </div>
-                
+
                 <!-- Quick Actions -->
-                <div class="flex flex-wrap gap-4">
-                    <button onclick="window.location.href='transactions.html'" class="btn btn-primary">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <div class="flex flex-wrap gap-3 dash-section">
+                    <button onclick="window.location.href='transactions.html'" class="btn btn-primary btn-sm">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                         </svg>
                         Add Transaction
                     </button>
-                    <button onclick="window.location.href='import.html'" class="btn btn-secondary">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <button onclick="window.location.href='import.html'" class="btn btn-ghost btn-sm">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                         </svg>
                         Import Bank File
                     </button>
-                    <button onclick="window.location.href='budgets.html'" class="btn btn-accent">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <button onclick="window.location.href='budgets.html'" class="btn btn-ghost btn-sm">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
                         </svg>
                         Manage Budgets
@@ -372,112 +371,57 @@ async function loadDashboardData() {
         // Format date range for display
         const dateRangeText = formatDateRangeForDisplay(startDate, endDate);
          
-        // Update summary cards
+        // Update summary overview
         const summaryContainer = document.getElementById('summary-cards');
         summaryContainer.innerHTML = `
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-                <!-- Today's Balance Card -->
-                <div class="card bg-base-100 shadow-sm border border-primary">
-                    <div class="card-body">
-                        <div class="flex items-center gap-3">
-                            <div class="p-3 rounded-lg">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
-                            </div>
-                            <div>
-                                <p class="text-sm font-medium text-base-content/60">Today's Balance</p>
-                                <p class="text-2xl font-bold text-primary">${Utils.formatCurrency(totalBalance)}</p>
-                            </div>
-                        </div>
-                    </div>
+            <!-- Uniform 4-column metric grid -->
+            <div class="dash-overview-row">
+                <div class="dash-metric-cell">
+                    <p class="dash-metric-label">Total Balance</p>
+                    <p class="dash-metric-value text-primary">${Utils.formatCurrency(totalBalance)}</p>
+                    <p class="dash-metric-hint">${accounts.length} account${accounts.length !== 1 ? 's' : ''}</p>
                 </div>
-                
-                <div class="card bg-base-100 shadow-sm">
-                    <div class="card-body">
-                        <div class="flex items-center gap-3">
-                            <div class="p-3 bg-success/10 rounded-lg">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-success" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 11l5-5m0 0l5 5m-5-5v12" />
-                                </svg>
-                            </div>
-                            <div>
-                                <p class="text-sm text-base-content/60">Income ${dateRangeText}</p>
-                                <p class="text-2xl font-bold text-success">${Utils.formatCurrency(totalIncome)}</p>
-                            </div>
-                        </div>
-                    </div>
+                <div class="dash-metric-cell">
+                    <p class="dash-metric-label">Income</p>
+                    <p class="dash-metric-value text-success">${Utils.formatCurrency(totalIncome)}</p>
+                    <p class="dash-metric-hint">${dateRangeText}</p>
                 </div>
-                
-                <div class="card bg-base-100 shadow-sm">
-                    <div class="card-body">
-                        <div class="flex items-center gap-3">
-                            <div class="p-3 bg-error/10 rounded-lg">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-error" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 13l-5 5m0 0l-5-5m5 5V6" />
-                                </svg>
-                            </div>
-                            <div>
-                                <p class="text-sm text-base-content/60">Expenses ${dateRangeText}</p>
-                                <p class="text-2xl font-bold text-error">${Utils.formatCurrency(totalExpenses)}</p>
-                            </div>
-                        </div>
-                    </div>
+                <div class="dash-metric-cell">
+                    <p class="dash-metric-label">Expenses</p>
+                    <p class="dash-metric-value text-error">${Utils.formatCurrency(totalExpenses)}</p>
+                    <p class="dash-metric-hint">${dateRangeText}</p>
                 </div>
-                
-                <div class="card bg-base-100 shadow-sm">
-                    <div class="card-body">
-                        <div class="flex items-center gap-3">
-                            <div class="p-3 bg-info/10 rounded-lg">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-info" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                                </svg>
-                            </div>
-                            <div>
-                                <p class="text-sm text-base-content/60">Net Savings</p>
-                                <p class="text-2xl font-bold ${netSavings >= 0 ? 'text-info' : 'text-error'}">${netSavings >= 0 ? '' : '-'}${Utils.formatCurrency(Math.abs(netSavings))}</p>
-                            </div>
-                        </div>
-                    </div>
+                <div class="dash-metric-cell">
+                    <p class="dash-metric-label">Net Saved</p>
+                    <p class="dash-metric-value ${netSavings >= 0 ? 'text-success' : 'text-error'}">${netSavings >= 0 ? '' : '−'}${Utils.formatCurrency(Math.abs(netSavings))}</p>
+                    <p class="dash-metric-hint">${dateRangeText}</p>
                 </div>
             </div>
-            
-            <!-- Account Balances Section -->
-            <div class="card bg-base-100 shadow-sm mb-6">
-                <div class="card-body">
-                    <div class="flex justify-between items-center mb-4">
-                        <h3 class="font-bold text-lg flex items-center gap-2">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-                            </svg>
-                            Account Balances
-                        </h3>
-                        <a href="accounts.html" class="btn btn-sm btn-ghost">View All</a>
-                    </div>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-                        ${accounts.map(acc => `
-                            <div class="bg-base-200 rounded-lg p-3">
-                                <div class="flex items-center gap-3">
-                                    ${acc.icon 
-                                        ? `<img src="../assets/icons/banks/${acc.icon}" alt="${acc.name}" class="h-10 w-10 object-contain rounded shrink-0">`
-                                        : `<div class="p-2 rounded-lg bg-primary/10 text-primary shrink-0">
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-                                            </svg>
-                                           </div>`
-                                    }
-                                    <div class="flex flex-col min-w-0">
-                                        <p class="font-medium text-sm truncate" title="${acc.name}">${acc.name}</p>
-                                        <p class="text-xs text-base-content/60 capitalize">${acc.type}</p>
-                                        <p class="font-bold text-sm ${parseFloat(acc.balance) >= 0 ? 'text-success' : 'text-error'}">${Utils.formatCurrency(acc.balance)}</p>
-                                    </div>
-                                </div>
-                            </div>
-                        `).join('')}
-                    </div>
-                </div>
+
+            <!-- Account Balances strip -->
+            <div class="dash-accounts-header">
+                <p class="dash-section-heading">Accounts</p>
+                <a href="accounts.html" class="btn btn-xs btn-ghost">View all</a>
             </div>
-            
+            <div class="dash-accounts-strip">
+                ${accounts.map(acc => `
+                    <div class="dash-account-chip">
+                        ${acc.icon
+                            ? `<img src="../assets/icons/banks/${acc.icon}" alt="${acc.name}" class="dash-account-icon object-contain">`
+                            : `<div class="dash-account-icon-placeholder">
+                                <svg xmlns="http://www.w3.org/2000/svg" style="width:1rem;height:1rem;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
+                                </svg>
+                               </div>`
+                        }
+                        <div class="dash-account-info">
+                            <p class="dash-account-name" title="${acc.name}">${acc.name}</p>
+                            <p class="dash-account-type">${acc.type}</p>
+                            <p class="dash-account-balance ${parseFloat(acc.balance) >= 0 ? 'text-success' : 'text-error'}">${Utils.formatCurrency(acc.balance)}</p>
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
         `;
         
         // Load spending chart

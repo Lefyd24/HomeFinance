@@ -302,3 +302,318 @@ canvas {
         transform: scale(1);
     }
 }
+
+/* ──────────────────────────────────────────────
+   Sidebar: nav items
+   ────────────────────────────────────────────── */
+.nav-item {
+    display: flex;
+    align-items: center;
+    color: var(--color-base-content);
+    font-size: 0.875rem;
+}
+
+.nav-item:hover:not(.nav-item-active) {
+    background-color: color-mix(in oklch, var(--color-primary) 15%, transparent);
+    color: var(--color-base-content);
+}
+
+.nav-item-active {
+    background-color: var(--color-primary) !important;
+    color: var(--color-primary-content) !important;
+    font-weight: 600;
+}
+
+/* ──────────────────────────────────────────────
+   Sidebar: collapsible (desktop)
+   ────────────────────────────────────────────── */
+.drawer-side > aside {
+    transition: width 300ms cubic-bezier(0.16, 1, 0.3, 1);
+    overflow: hidden;
+}
+
+/* Collapsed: show icon-only rail (4rem = 64px) */
+.sidebar-collapsed .drawer-side > aside {
+    width: 4rem !important;
+}
+
+/* Hide text labels, section headings, and brand text when collapsed */
+.sidebar-collapsed .sidebar-label,
+.sidebar-collapsed .sidebar-section-label,
+.sidebar-collapsed .sidebar-brand-text {
+    display: none;
+}
+
+/* Center icons when collapsed */
+.sidebar-collapsed .nav-item {
+    justify-content: center;
+    padding-left: 0;
+    padding-right: 0;
+    margin-left: 0.375rem;
+    margin-right: 0.375rem;
+}
+
+/* Collapse the branding area to icon-only */
+.sidebar-collapsed .sidebar-branding {
+    justify-content: center;
+    padding-left: 0;
+    padding-right: 0;
+}
+
+/* Rotate toggle chevron when collapsed */
+#sidebar-toggle-btn {
+    transition: transform 300ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.sidebar-collapsed #sidebar-toggle-btn {
+    transform: rotate(180deg);
+}
+
+
+/* ──────────────────────────────────────────────
+   Dashboard layout
+   ────────────────────────────────────────────── */
+
+/* Root container: vertical stack with consistent gaps */
+.dash-root {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    padding: 1.25rem;
+}
+
+@media (min-width: 1024px) {
+    .dash-root {
+        gap: 1.5rem;
+        padding: 1.5rem;
+    }
+}
+
+/* Generic section spacing (used on individual full-width blocks) */
+.dash-section {
+    /* inherits gap from dash-root flex */
+}
+
+/* ── Panel (card-like surface) ── */
+.dash-panel {
+    background-color: var(--color-base-100);
+    border-radius: 0.75rem;
+    box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.07), 0 1px 2px -1px rgb(0 0 0 / 0.07);
+    padding: 1.25rem;
+}
+
+@media (min-width: 1024px) {
+    .dash-panel {
+        padding: 1.5rem;
+    }
+}
+
+.dash-panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+}
+
+.dash-panel-title {
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: var(--color-base-content);
+    letter-spacing: -0.01em;
+}
+
+.dash-panel-sub {
+    font-size: 0.75rem;
+    color: color-mix(in oklch, var(--color-base-content) 50%, transparent);
+    margin-top: 0.125rem;
+}
+
+/* Thin ruled divider between panel sections */
+.dash-panel-divider {
+    height: 1px;
+    background-color: color-mix(in oklch, var(--color-base-content) 8%, transparent);
+    margin: 1rem -1.25rem;
+}
+
+@media (min-width: 1024px) {
+    .dash-panel-divider {
+        margin: 1.25rem -1.5rem;
+    }
+}
+
+/* ── Overview row: 4-column uniform metric grid ── */
+.dash-overview-row {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0;
+    padding: 0;
+    background-color: var(--color-base-100);
+    border-radius: 0.75rem;
+    box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.07), 0 1px 2px -1px rgb(0 0 0 / 0.07);
+    overflow: hidden;
+}
+
+@media (min-width: 640px) {
+    .dash-overview-row {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+
+/* Unused but kept for compat */
+.dash-balance-cell,
+.dash-balance-number,
+.dash-metrics-group {
+    display: contents;
+}
+
+/* Metric label */
+.dash-metric-label {
+    font-size: 0.6875rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: color-mix(in oklch, var(--color-base-content) 50%, transparent);
+}
+
+/* Supporting hint text */
+.dash-metric-hint {
+    font-size: 0.6875rem;
+    color: color-mix(in oklch, var(--color-base-content) 40%, transparent);
+    margin-top: 0.25rem;
+}
+
+/* Uniform metric cells */
+.dash-metric-cell {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    padding: 1.25rem 1.5rem;
+    position: relative;
+}
+
+/* Right border divider between cells (except last) */
+.dash-metric-cell:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: 20%;
+    height: 60%;
+    width: 1px;
+    background-color: color-mix(in oklch, var(--color-base-content) 10%, transparent);
+}
+
+/* Top border for 2nd row on mobile (3rd and 4th cells) */
+@media (max-width: 639px) {
+    .dash-metric-cell:nth-child(3),
+    .dash-metric-cell:nth-child(4) {
+        border-top: 1px solid color-mix(in oklch, var(--color-base-content) 8%, transparent);
+    }
+    /* No right divider for even cells on mobile (last in row) */
+    .dash-metric-cell:nth-child(2)::after,
+    .dash-metric-cell:nth-child(4)::after {
+        display: none;
+    }
+}
+
+.dash-metric-value {
+    font-size: 1.375rem;
+    font-weight: 700;
+    letter-spacing: -0.025em;
+    line-height: 1.1;
+}
+
+/* Vertical divider (kept for compat — no longer injected in JS) */
+.dash-metric-divider {
+    display: none;
+}
+
+/* ── Accounts strip ── */
+.dash-accounts-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 1rem 0 0.5rem;
+}
+
+.dash-section-heading {
+    font-size: 0.6875rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: color-mix(in oklch, var(--color-base-content) 50%, transparent);
+}
+
+.dash-accounts-strip {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 0.25rem;
+}
+
+/* Individual account chip — fixed uniform size */
+.dash-account-chip {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.875rem 1rem;
+    background-color: var(--color-base-100);
+    border-radius: 0.75rem;
+    box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.07);
+    width: 18rem;
+    flex-shrink: 0;
+    transition: box-shadow 0.15s ease, transform 0.15s ease;
+    cursor: default;
+}
+
+.dash-account-chip:hover {
+    box-shadow: 0 4px 12px 0 rgb(0 0 0 / 0.1);
+    transform: translateY(-1px);
+}
+
+.dash-account-icon {
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 0.5rem;
+    flex-shrink: 0;
+}
+
+.dash-account-icon-placeholder {
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 0.5rem;
+    background-color: color-mix(in oklch, var(--color-primary) 12%, transparent);
+    color: var(--color-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.dash-account-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    min-width: 0;
+}
+
+.dash-account-name {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 12rem;
+}
+
+.dash-account-type {
+    font-size: 0.6875rem;
+    color: color-mix(in oklch, var(--color-base-content) 45%, transparent);
+    text-transform: capitalize;
+}
+
+.dash-account-balance {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+}

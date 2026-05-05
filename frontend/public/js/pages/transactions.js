@@ -801,6 +801,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                 </form>
             `;
             
+            // Reset binding flag so backdrop-dismiss is re-applied after innerHTML replace
+            modal.dataset.backdropBound = '';
+            setupModalBackdropDismiss();
             modal.showModal();
         } catch (error) {
             console.error('Error loading transaction details:', error);

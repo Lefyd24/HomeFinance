@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Register - Personal Finance</title>
+    <title>Create Account - Personal Finance</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -12,165 +12,344 @@
     <link rel="icon" type="image/svg+xml" href="../assets/icons/favicon.svg">
     <link rel="alternate icon" href="../assets/icons/favicon.ico">
     <link rel="shortcut icon" href="../assets/icons/favicon.ico">
+    <style>
+        .brand-panel {
+            background-color: oklch(52% 0.105 223.128);
+            background-image:
+                radial-gradient(circle at 75% 20%, oklch(62% 0.12 223.128 / 0.45) 0%, transparent 55%),
+                radial-gradient(circle at 15% 85%, oklch(42% 0.09 223.128 / 0.5) 0%, transparent 50%),
+                radial-gradient(oklch(100% 0 0 / 0.06) 1.5px, transparent 1.5px);
+            background-size: 100% 100%, 100% 100%, 28px 28px;
+        }
+
+        .brand-panel-text { color: oklch(98% 0.019 200.873); }
+
+        .step-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.875rem;
+        }
+
+        .step-number {
+            width: 1.75rem;
+            height: 1.75rem;
+            border-radius: 50%;
+            background: oklch(100% 0 0 / 0.18);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: oklch(98% 0.019 200.873);
+            margin-top: 0.1rem;
+        }
+
+        .trust-bar {
+            background: oklch(100% 0 0 / 0.12);
+            border: 1px solid oklch(100% 0 0 / 0.2);
+            border-radius: 0.75rem;
+            padding: 1rem 1.25rem;
+        }
+
+        .form-panel { background-color: var(--color-base-100, #fff); }
+
+        .form-input-group { position: relative; }
+
+        .form-input-icon {
+            position: absolute;
+            left: 0.75rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--color-base-content, #333);
+            opacity: 0.35;
+            pointer-events: none;
+        }
+
+        .form-input-padded { padding-left: 2.25rem; }
+        .form-input-padded-right { padding-right: 2.25rem; }
+
+        .password-toggle {
+            position: absolute;
+            right: 0.75rem;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--color-base-content, #333);
+            opacity: 0.4;
+            padding: 0;
+            display: flex;
+            align-items: center;
+        }
+        .password-toggle:hover { opacity: 0.7; }
+
+        .mobile-logo {
+            width: 2.75rem;
+            height: 2.75rem;
+            background-color: oklch(52% 0.105 223.128);
+            color: oklch(98% 0.019 200.873);
+            border-radius: 0.75rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn-register {
+            height: 2.75rem;
+            font-weight: 600;
+            letter-spacing: 0.01em;
+            transition: all 200ms cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .btn-register:hover:not(:disabled) {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 20px oklch(52% 0.105 223.128 / 0.35);
+        }
+
+        .strength-bar {
+            height: 3px;
+            border-radius: 2px;
+            background: var(--color-base-300, #e5e7eb);
+            overflow: hidden;
+            transition: all 200ms ease;
+        }
+        .strength-fill {
+            height: 100%;
+            border-radius: 2px;
+            width: 0%;
+            transition: width 300ms ease, background-color 300ms ease;
+        }
+    </style>
 </head>
-<body class="bg-gradient-to-br from-base-200 via-base-100 to-base-200 min-h-screen flex items-center justify-center p-4">
-    <div class="card w-full max-w-sm md:max-w-md bg-base-100 shadow-2xl rounded-2xl border border-base-300/50">
-        <div class="card-body p-6 md:p-8">
-            <!-- Logo / Icon -->
-            <div class="flex justify-center mb-4">
-                <div class="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/>
-                    </svg>
+<body class="min-h-screen flex">
+
+    <!-- ─── Left brand panel (desktop only) ─────────────────── -->
+    <div class="brand-panel hidden lg:flex lg:w-[44%] xl:w-[42%] flex-col justify-between p-10 xl:p-14 relative overflow-hidden">
+
+        <!-- Logo + name -->
+        <div class="flex items-center gap-3">
+            <div style="width:2.5rem;height:2.5rem;background:oklch(100% 0 0 / 0.2);border-radius:0.625rem;display:flex;align-items:center;justify-content:center;">
+                <svg xmlns="http://www.w3.org/2000/svg" style="width:1.25rem;height:1.25rem;color:oklch(98% 0.019 200.873);" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+            </div>
+            <span class="brand-panel-text font-bold text-lg tracking-tight" style="opacity:0.9;">Home Finance</span>
+        </div>
+
+        <!-- Main copy -->
+        <div>
+            <p class="brand-panel-text text-xs font-semibold tracking-widest uppercase mb-4" style="opacity:0.55;">Get started in minutes</p>
+            <h1 class="brand-panel-text font-bold leading-tight mb-6" style="font-size:clamp(1.875rem, 3.25vw, 2.5rem);">
+                Take control of<br>your finances.
+            </h1>
+            <p class="brand-panel-text text-base leading-relaxed mb-10" style="opacity:0.7;max-width:34ch;">
+                Join and start tracking every euro in and out — from groceries to goals.
+            </p>
+
+            <!-- Steps -->
+            <div style="display:flex;flex-direction:column;gap:1.125rem;">
+                <div class="step-item">
+                    <div class="step-number">1</div>
+                    <div>
+                        <p class="brand-panel-text font-semibold text-sm">Create your account</p>
+                        <p class="brand-panel-text text-xs" style="opacity:0.6;margin-top:0.15rem;">Takes under 30 seconds, no credit card needed</p>
+                    </div>
+                </div>
+                <div class="step-item">
+                    <div class="step-number">2</div>
+                    <div>
+                        <p class="brand-panel-text font-semibold text-sm">Add your accounts</p>
+                        <p class="brand-panel-text text-xs" style="opacity:0.6;margin-top:0.15rem;">Bank accounts, cash, savings — all in one view</p>
+                    </div>
+                </div>
+                <div class="step-item">
+                    <div class="step-number">3</div>
+                    <div>
+                        <p class="brand-panel-text font-semibold text-sm">Start tracking</p>
+                        <p class="brand-panel-text text-xs" style="opacity:0.6;margin-top:0.15rem;">Import past transactions or add them manually</p>
+                    </div>
                 </div>
             </div>
-            
-            <h1 class="text-2xl md:text-3xl font-bold text-center text-base-content mb-2">Create Account</h1>
-            <p class="text-center text-base-content/60 text-sm md:text-base mb-6">Start your financial journey today</p>
-            
-            <form id="registerForm" class="space-y-4">
-                <!-- Full Name Field -->
-                <div class="form-control">
-                    <label class="label py-1 px-0" for="fullName">
-                        <span class="label-text font-medium text-sm">Full Name</span>
-                    </label>
-                    <div class="relative">
-                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-base-content/40" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        </div>
+
+        <!-- Trust bar -->
+        <div class="trust-bar">
+            <p class="brand-panel-text text-xs font-semibold mb-2" style="opacity:0.6;">Your data stays yours</p>
+            <p class="brand-panel-text text-sm" style="opacity:0.85;">All data is stored locally on your own server. No third-party analytics, no data selling.</p>
+        </div>
+    </div>
+
+    <!-- ─── Right form panel ─────────────────────────────────── -->
+    <div class="form-panel flex-1 flex flex-col items-center justify-center p-6 sm:p-8 lg:p-12 min-h-screen overflow-y-auto">
+
+        <div style="width:100%;max-width:22rem;padding-top:1.5rem;padding-bottom:1.5rem;">
+
+            <!-- Mobile-only logo -->
+            <div class="flex lg:hidden items-center gap-3 mb-7">
+                <div class="mobile-logo">
+                    <svg xmlns="http://www.w3.org/2000/svg" style="width:1.375rem;height:1.375rem;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                </div>
+                <span class="font-bold text-lg text-base-content">Home Finance</span>
+            </div>
+
+            <!-- Heading -->
+            <div style="margin-bottom:1.75rem;">
+                <h2 class="text-2xl sm:text-3xl font-bold text-base-content" style="line-height:1.2;letter-spacing:-0.02em;">Create account</h2>
+                <p class="text-base-content mt-2 text-sm" style="opacity:0.55;">Fill in your details to get started</p>
+            </div>
+
+            <!-- Form -->
+            <form id="registerForm" style="display:flex;flex-direction:column;gap:1rem;">
+
+                <!-- Full Name -->
+                <div>
+                    <label for="fullName" class="text-sm font-medium text-base-content" style="display:block;margin-bottom:0.3rem;opacity:0.8;">Full name</label>
+                    <div class="form-input-group">
+                        <span class="form-input-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" style="width:0.9rem;height:0.9rem;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
                             </svg>
-                        </div>
-                        <input type="text" id="fullName" name="fullName" placeholder="John Doe" 
-                               class="input input-bordered w-full pl-10 h-11 focus:input-primary transition-all duration-200" required>
+                        </span>
+                        <input type="text" id="fullName" name="fullName" placeholder="John Doe"
+                               class="input input-bordered w-full form-input-padded"
+                               style="height:2.625rem;" required autocomplete="name">
                     </div>
                 </div>
-                
-                <!-- Email Field -->
-                <div class="form-control">
-                    <label class="label py-1 px-0" for="email">
-                        <span class="label-text font-medium text-sm">Email Address</span>
-                    </label>
-                    <div class="relative">
-                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-base-content/40" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+
+                <!-- Email -->
+                <div>
+                    <label for="email" class="text-sm font-medium text-base-content" style="display:block;margin-bottom:0.3rem;opacity:0.8;">Email address</label>
+                    <div class="form-input-group">
+                        <span class="form-input-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" style="width:0.9rem;height:0.9rem;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207"/>
                             </svg>
-                        </div>
-                        <input type="email" id="email" name="email" placeholder="name@example.com" 
-                               class="input input-bordered w-full pl-10 h-11 focus:input-primary transition-all duration-200" required>
+                        </span>
+                        <input type="email" id="email" name="email" placeholder="name@example.com"
+                               class="input input-bordered w-full form-input-padded"
+                               style="height:2.625rem;" required autocomplete="email">
                     </div>
                 </div>
-                
-                <!-- Password Field -->
-                <div class="form-control">
-                    <label class="label py-1 px-0" for="password">
-                        <span class="label-text font-medium text-sm">Password</span>
-                    </label>
-                    <div class="relative">
-                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-base-content/40" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+
+                <!-- Password -->
+                <div>
+                    <label for="password" class="text-sm font-medium text-base-content" style="display:block;margin-bottom:0.3rem;opacity:0.8;">Password <span style="opacity:0.45;font-weight:400;font-size:0.75rem;">(min. 8 characters)</span></label>
+                    <div class="form-input-group">
+                        <span class="form-input-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" style="width:0.9rem;height:0.9rem;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
                             </svg>
-                        </div>
-                        <input type="password" id="password" name="password" placeholder="Create a strong password" 
-                               class="input input-bordered w-full pl-10 h-11 focus:input-primary transition-all duration-200" required minlength="8">
-                        <button type="button" class="absolute inset-y-0 right-0 pr-3 flex items-center" onclick="togglePassword('password', 'eyeIcon1')">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-base-content/40 hover:text-base-content/60 cursor-pointer" fill="none" viewBox="0 0 24 24" stroke="currentColor" id="eyeIcon1">
+                        </span>
+                        <input type="password" id="password" name="password" placeholder="Create a strong password"
+                               class="input input-bordered w-full form-input-padded form-input-padded-right"
+                               style="height:2.625rem;" required minlength="8" autocomplete="new-password"
+                               oninput="updatePasswordStrength(this.value)">
+                        <button type="button" class="password-toggle" onclick="togglePassword('password','eyeIcon1')" aria-label="Toggle password">
+                            <svg xmlns="http://www.w3.org/2000/svg" style="width:0.9rem;height:0.9rem;" fill="none" viewBox="0 0 24 24" stroke="currentColor" id="eyeIcon1">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
                             </svg>
                         </button>
                     </div>
-                    <label class="label py-1 px-0">
-                        <span class="label-text-alt text-xs text-base-content/50">Minimum 8 characters</span>
-                    </label>
+                    <!-- Strength indicator -->
+                    <div style="margin-top:0.375rem;display:flex;gap:0.25rem;">
+                        <div class="strength-bar" style="flex:1;"><div class="strength-fill" id="s1"></div></div>
+                        <div class="strength-bar" style="flex:1;"><div class="strength-fill" id="s2"></div></div>
+                        <div class="strength-bar" style="flex:1;"><div class="strength-fill" id="s3"></div></div>
+                        <div class="strength-bar" style="flex:1;"><div class="strength-fill" id="s4"></div></div>
+                    </div>
                 </div>
-                
-                <!-- Confirm Password Field -->
-                <div class="form-control">
-                    <label class="label py-1 px-0" for="confirmPassword">
-                        <span class="label-text font-medium text-sm">Confirm Password</span>
-                    </label>
-                    <div class="relative">
-                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-base-content/40" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+
+                <!-- Confirm Password -->
+                <div>
+                    <label for="confirmPassword" class="text-sm font-medium text-base-content" style="display:block;margin-bottom:0.3rem;opacity:0.8;">Confirm password</label>
+                    <div class="form-input-group">
+                        <span class="form-input-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" style="width:0.9rem;height:0.9rem;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                             </svg>
-                        </div>
-                        <input type="password" id="confirmPassword" name="confirmPassword" placeholder="Confirm your password" 
-                               class="input input-bordered w-full pl-10 h-11 focus:input-primary transition-all duration-200" required>
-                        <button type="button" class="absolute inset-y-0 right-0 pr-3 flex items-center" onclick="togglePassword('confirmPassword', 'eyeIcon2')">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-base-content/40 hover:text-base-content/60 cursor-pointer" fill="none" viewBox="0 0 24 24" stroke="currentColor" id="eyeIcon2">
+                        </span>
+                        <input type="password" id="confirmPassword" name="confirmPassword" placeholder="Repeat your password"
+                               class="input input-bordered w-full form-input-padded form-input-padded-right"
+                               style="height:2.625rem;" required autocomplete="new-password">
+                        <button type="button" class="password-toggle" onclick="togglePassword('confirmPassword','eyeIcon2')" aria-label="Toggle password">
+                            <svg xmlns="http://www.w3.org/2000/svg" style="width:0.9rem;height:0.9rem;" fill="none" viewBox="0 0 24 24" stroke="currentColor" id="eyeIcon2">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
                             </svg>
                         </button>
                     </div>
                 </div>
-                
-                <!-- Terms Checkbox -->
-                <div class="form-control">
-                    <label class="label cursor-pointer justify-start gap-3 py-2">
-                        <input type="checkbox" class="checkbox checkbox-primary checkbox-sm" required>
-                        <span class="label-text text-xs text-base-content/70">I agree to the <a href="#" class="link link-primary">Terms of Service</a> and <a href="#" class="link link-primary">Privacy Policy</a></span>
-                    </label>
-                </div>
-                
-                <!-- Error Message -->
-                <div id="errorMessage" class="alert alert-error alert-sm hidden rounded-lg">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-5 w-5" fill="none" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+
+                <!-- Terms -->
+                <label style="display:flex;align-items:flex-start;gap:0.625rem;cursor:pointer;margin-top:0.125rem;">
+                    <input type="checkbox" class="checkbox checkbox-primary checkbox-sm" style="margin-top:0.1rem;flex-shrink:0;" required>
+                    <span class="text-xs text-base-content" style="opacity:0.65;line-height:1.5;">
+                        I agree to the <a href="#" class="text-primary font-medium" style="opacity:1;">Terms of Service</a> and <a href="#" class="text-primary font-medium" style="opacity:1;">Privacy Policy</a>
+                    </span>
+                </label>
+
+                <!-- Error -->
+                <div id="errorMessage" class="alert alert-error hidden" style="padding:0.625rem 0.875rem;border-radius:0.5rem;">
+                    <svg xmlns="http://www.w3.org/2000/svg" style="width:1rem;height:1rem;flex-shrink:0;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                     </svg>
                     <span id="errorText" class="text-sm"></span>
                 </div>
-                
-                <!-- Submit Button -->
-                <button type="submit" id="submitBtn" class="btn btn-primary w-full h-11 text-base font-semibold shadow-lg hover:shadow-xl transition-all duration-200">
-                    <span id="btnText">Create Account</span>
+
+                <!-- Submit -->
+                <button type="submit" id="submitBtn" class="btn btn-primary w-full btn-register" style="margin-top:0.25rem;">
+                    <span id="btnText">Create account</span>
                     <span id="loadingSpinner" class="loading loading-spinner loading-sm hidden"></span>
+                    <svg id="arrowIcon" xmlns="http://www.w3.org/2000/svg" style="width:1rem;height:1rem;margin-left:0.25rem;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/>
+                    </svg>
                 </button>
             </form>
-            
-            <!-- Divider -->
-            <div class="divider text-base-content/40 text-sm my-5">or sign up with</div>
-            
-            <!-- Social Login -->
-            <div class="grid grid-cols-2 gap-3 mb-5">
-                <button type="button" class="btn btn-outline btn-sm h-10 normal-case font-normal hover:bg-base-200">
-                    <svg class="w-5 h-5 mr-2" viewBox="0 0 24 24">
-                        <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                        <path fill="currentColor" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                        <path fill="currentColor" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                        <path fill="currentColor" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-                    </svg>
-                    Google
-                </button>
-                <button type="button" class="btn btn-outline btn-sm h-10 normal-case font-normal hover:bg-base-200">
-                    <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M12 2C6.477 2 2 6.477 2 12c0 4.42 2.87 8.17 6.84 9.5.5.08.66-.23.66-.5v-1.69c-2.77.6-3.36-1.34-3.36-1.34-.46-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.87 1.52 2.34 1.07 2.91.83.09-.65.35-1.09.63-1.34-2.22-.25-4.55-1.11-4.55-4.92 0-1.11.38-2 1.03-2.71-.1-.25-.45-1.29.1-2.64 0 0 .84-.27 2.75 1.02.79-.22 1.65-.33 2.5-.33.85 0 1.71.11 2.5.33 1.91-1.29 2.75-1.02 2.75-1.02.55 1.35.2 2.39.1 2.64.65.71 1.03 1.6 1.03 2.71 0 3.82-2.34 4.66-4.57 4.91.36.31.69.92.69 1.85V21c0 .27.16.59.67.5C19.14 20.16 22 16.42 22 12A10 10 0 0012 2z"/>
-                    </svg>
-                    GitHub
-                </button>
-            </div>
-            
-            <!-- Sign In Link -->
-            <p class="text-center text-sm text-base-content/70">
-                Already have an account? 
-                <a href="../index.html" class="link link-primary font-semibold hover:link-primary-focus transition-colors">Sign in</a>
+
+            <!-- Sign in link -->
+            <p class="text-sm text-center text-base-content" style="margin-top:1.5rem;opacity:0.6;">
+                Already have an account?
+                <a href="../index.html" class="text-primary font-semibold" style="opacity:1;">Sign in</a>
             </p>
         </div>
     </div>
-    
+
     <script>
         function togglePassword(inputId, iconId) {
-            const passwordInput = document.getElementById(inputId);
-            const eyeIcon = document.getElementById(iconId);
-            if (passwordInput.type === 'password') {
-                passwordInput.type = 'text';
-                eyeIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7a10.05 10.05 0 011.574-2.912m2.197-2.197A10.05 10.05 0 0112 5c4.478 0 8.268 2.943 9.542 7a10.05 10.05 0 01-2.033 3.533M9 9l3 3m-3 3l6-6"/>';
+            const input = document.getElementById(inputId);
+            const icon = document.getElementById(iconId);
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7a10.05 10.05 0 011.574-2.912m2.197-2.197A10.05 10.05 0 0112 5c4.478 0 8.268 2.943 9.542 7a10.05 10.05 0 01-2.033 3.533M9 9l3 3m-3 3l6-6"/>';
             } else {
-                passwordInput.type = 'password';
-                eyeIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>';
+                input.type = 'password';
+                icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>';
+            }
+        }
+
+        function updatePasswordStrength(val) {
+            const colors = [
+                'oklch(71% 0.194 13.428)',   /* weak - red */
+                'oklch(82% 0.189 84.429)',   /* fair - amber */
+                'oklch(72% 0.219 149.579)',  /* good - green */
+                'oklch(62% 0.15 149.579)'   /* strong - deeper green */
+            ];
+            let score = 0;
+            if (val.length >= 8)  score++;
+            if (/[A-Z]/.test(val)) score++;
+            if (/[0-9]/.test(val)) score++;
+            if (/[^A-Za-z0-9]/.test(val)) score++;
+
+            for (let i = 1; i <= 4; i++) {
+                const bar = document.getElementById('s' + i);
+                if (bar) {
+                    bar.style.width = i <= score ? '100%' : '0%';
+                    bar.style.backgroundColor = i <= score ? colors[score - 1] : 'transparent';
+                }
             }
         }
     </script>
