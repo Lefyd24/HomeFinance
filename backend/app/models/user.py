@@ -41,10 +41,4 @@ class User(Base):
     goals = relationship(
         "FinancialGoal", back_populates="user", cascade="all, delete-orphan"
     )
-    insights = relationship(
-        "UserInsight", back_populates="user", cascade="all, delete-orphan"
-    )
-    spending_patterns = relationship(
-        "SpendingPattern", back_populates="user", cascade="all, delete-orphan"
-    )
     debts = relationship("Debt", back_populates="user", cascade="all, delete-orphan")

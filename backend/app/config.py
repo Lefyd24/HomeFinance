@@ -1,5 +1,19 @@
-from pydantic_settings import BaseSettings
 from functools import lru_cache
+from pathlib import Path
+
+from pydantic import Field
+from pydantic_settings import BaseSettings
+
+
+def _default_log_dir() -> str:
+    """`<repo>/logs`: same folder Docker maps as `./logs:/app/logs` (WORKDIR /app ⇒ repo root there)."""
+    repo_root = Path(__file__).resolve().parent.parent.parent
+    return str(repo_root / "logs")
+
+
+def _default_documents_dir() -> str:
+    repo_root = Path(__file__).resolve().parent.parent.parent
+    return str(repo_root / "data" / "documents")
 
 
 class Settings(BaseSettings):
@@ -14,7 +28,7 @@ class Settings(BaseSettings):
     DATABASE_URL: str = "sqlite:///./finance.db"
 
     # Logging
-    LOG_DIR: str = "/app/logs"
+    LOG_DIR: str = Field(default_factory=_default_log_dir)
     LOG_LEVEL: str = "INFO"
 
     # Security
@@ -42,6 +56,10 @@ class Settings(BaseSettings):
     # File Upload
     MAX_UPLOAD_SIZE: int = 10 * 1024 * 1024  # 10MB
     UPLOAD_DIR: str = "./uploads"
+
+    # Documents storage
+    DOCUMENTS_DIR: str = Field(default_factory=_default_documents_dir)
+    DOCUMENTS_MAX_FILE_SIZE: int = 50 * 1024 * 1024  # 50MB
 
     class Config:
         env_file = ".env"

@@ -1,10 +1,39 @@
 import logging
 import os
+import shlex
+import sys
+from pathlib import Path
 from logging.handlers import RotatingFileHandler
 
 
+def _resolve_log_dir(preferred: str) -> str:
+    """Use ``preferred`` if we can create files there; else XDG-style dir under the home folder."""
+    p = Path(preferred)
+    try:
+        p.mkdir(parents=True, exist_ok=True)
+        probe = p / ".write_probe"
+        probe.write_text("", encoding="utf-8")
+        probe.unlink()
+        return str(p.resolve())
+    except OSError:
+        pass
+
+    home = Path.home()
+    xdg = os.environ.get("XDG_STATE_HOME", str(home / ".local" / "state"))
+    fallback = Path(xdg) / "personalfinance" / "logs"
+    fallback.mkdir(parents=True, exist_ok=True)
+    cmd = f"sudo chown -R \"$USER\" {shlex.quote(str(p.resolve()))}"
+    print(
+        "WARNING: Log directory is not writable (often root/nobody after Docker): "
+        f"{str(p.resolve())!r}. Using {str(fallback.resolve())!r} instead. "
+        f"To fix: {cmd}",
+        file=sys.stderr,
+    )
+    return str(fallback.resolve())
+
+
 def setup_logging(*, log_dir: str, log_level: str) -> None:
-    os.makedirs(log_dir, exist_ok=True)
+    log_dir = _resolve_log_dir(log_dir)
 
     level = getattr(logging, (log_level or "INFO").upper(), logging.INFO)
     root = logging.getLogger()

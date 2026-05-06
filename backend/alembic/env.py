@@ -22,8 +22,6 @@ from app.models import (
     SavedReport,
     FinancialGoal,
     GoalTransaction,
-    UserInsight,
-    SpendingPattern,
     Debt,
     DebtPayment,
     RecurringExpense,
