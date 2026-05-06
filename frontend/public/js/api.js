@@ -67,18 +67,62 @@ const API = {
         return headers;
     },
 
+    // Tracks an in-flight refresh so concurrent 401s share one refresh call
+    _refreshPromise: null,
+
+    async _tryRefreshToken() {
+        const refreshToken = localStorage.getItem('refresh_token');
+        if (!refreshToken) return false;
+
+        try {
+            const response = await fetch(
+                `${this.baseURL}/auth/refresh?refresh_token=${encodeURIComponent(refreshToken)}`,
+                { method: 'POST' }
+            );
+            if (!response.ok) return false;
+            const data = await response.json();
+            localStorage.setItem('token', data.access_token);
+            if (data.refresh_token) {
+                localStorage.setItem('refresh_token', data.refresh_token);
+            }
+            return true;
+        } catch {
+            return false;
+        }
+    },
+
+    _parseErrorMessage(error, status) {
+        let errorMsg = `HTTP ${status}`;
+        if (error.detail) {
+            if (Array.isArray(error.detail)) {
+                errorMsg = error.detail.map(e => {
+                    const field = Array.isArray(e.loc) ? e.loc.join('.') : 'field';
+                    return `${field}: ${e.msg}`;
+                }).join(', ');
+            } else if (typeof error.detail === 'string') {
+                errorMsg = error.detail;
+            } else if (typeof error.detail === 'object') {
+                errorMsg = JSON.stringify(error.detail);
+            }
+        } else if (error.message) {
+            errorMsg = error.message;
+        }
+        return errorMsg;
+    },
+
     /**
      * Make API request
      * @param {string} endpoint - API endpoint
      * @param {Object} options - Fetch options
+     * @param {boolean} _isRetry - internal flag to prevent infinite refresh loop
      * @returns {Promise} API response
      */
-    async request(endpoint, options = {}) {
+    async request(endpoint, options = {}, _isRetry = false) {
         const url = `${this.baseURL}${endpoint}`;
-        
+
         // Check if body is FormData - don't set Content-Type for FormData
         const isFormData = options.body instanceof FormData;
-        
+
         const config = {
             ...options,
             headers: {
@@ -86,7 +130,7 @@ const API = {
                 ...options.headers
             }
         };
-        
+
         // Remove Content-Type for FormData uploads (browser will set it with boundary)
         if (isFormData) {
             delete config.headers['Content-Type'];
@@ -94,10 +138,33 @@ const API = {
 
         try {
             const response = await fetch(url, config);
-            
-            if (response.status === 401) {
-                // Token expired or invalid
+
+            if (response.status === 401 && !_isRetry) {
+                // Deduplicate concurrent refresh attempts
+                if (!this._refreshPromise) {
+                    this._refreshPromise = this._tryRefreshToken().finally(() => {
+                        this._refreshPromise = null;
+                    });
+                }
+                const refreshed = await this._refreshPromise;
+
+                if (refreshed) {
+                    // Retry original request with new token
+                    return this.request(endpoint, options, true);
+                }
+
+                // Refresh failed — session is truly expired
                 localStorage.removeItem('token');
+                localStorage.removeItem('refresh_token');
+                localStorage.removeItem('user');
+                window.location.href = '/index.html';
+                return;
+            }
+
+            if (response.status === 401 && _isRetry) {
+                // Even the retry failed — clear and redirect
+                localStorage.removeItem('token');
+                localStorage.removeItem('refresh_token');
                 localStorage.removeItem('user');
                 window.location.href = '/index.html';
                 return;
@@ -107,27 +174,8 @@ const API = {
                 const error = await response.json().catch(() => ({
                     detail: 'An error occurred'
                 }));
-                
-                // Handle different error formats
-                let errorMsg = `HTTP ${response.status}`;
-                if (error.detail) {
-                    if (Array.isArray(error.detail)) {
-                        // FastAPI validation errors (422)
-                        errorMsg = error.detail.map(e => {
-                            const field = Array.isArray(e.loc) ? e.loc.join('.') : 'field';
-                            return `${field}: ${e.msg}`;
-                        }).join(', ');
-                    } else if (typeof error.detail === 'string') {
-                        errorMsg = error.detail;
-                    } else if (typeof error.detail === 'object') {
-                        errorMsg = JSON.stringify(error.detail);
-                    }
-                } else if (error.message) {
-                    errorMsg = error.message;
-                }
-                
+                const errorMsg = this._parseErrorMessage(error, response.status);
                 console.error('API Error:', error);
-                console.error('Error message:', errorMsg);
                 throw new Error(errorMsg);
             }
 
@@ -341,12 +389,26 @@ const API = {
             console.log('Response status:', response.status);
             
             if (response.status === 401) {
+                const refreshed = await API._tryRefreshToken();
+                if (refreshed) {
+                    // Retry with fresh token
+                    const newHeaders = {};
+                    const newToken = localStorage.getItem('token');
+                    if (newToken) newHeaders['Authorization'] = `Bearer ${newToken}`;
+                    const retryResponse = await fetch(`${API.baseURL}/import/upload`, {
+                        method: 'POST',
+                        body: formData,
+                        headers: newHeaders,
+                    });
+                    if (retryResponse.ok) return await retryResponse.json();
+                }
                 localStorage.removeItem('token');
+                localStorage.removeItem('refresh_token');
                 localStorage.removeItem('user');
                 window.location.href = '/index.html';
                 return;
             }
-            
+
             if (!response.ok) {
                 let errorMessage = `HTTP ${response.status}`;
                 try {
