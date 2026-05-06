@@ -20,12 +20,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     mainContent.innerHTML = `
         <div class="space-y-6">
             <!-- Header -->
-            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                <div>
-                    <h2 class="text-2xl font-bold">Categories</h2>
-                    <p class="text-base-content/60">Organize your transactions with categories</p>
-                </div>
-                <button onclick="resetCategoryModal(); categoryModal.showModal()" class="btn btn-primary">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <p class="text-sm text-base-content/60">Organize transactions by creating custom income, expense, and transfer categories. Categories are used across budgets, reports, and analytics.</p>
+                <button onclick="resetCategoryModal(); categoryModal.showModal()" class="btn btn-primary shrink-0">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                     </svg>

@@ -45,5 +45,12 @@ else
     alembic upgrade head
 fi
 
+echo "Writing frontend runtime config (BACKEND_PORT=${BACKEND_PORT:-8223})..."
+BACKEND_PORT="${BACKEND_PORT:-8223}"
+cat > /app/frontend/public/js/runtime-config.js <<EOF
+/** Generated at container start — do not edit; set BACKEND_PORT in .env */
+window.__APP_CONFIG__ = { backendPort: ${BACKEND_PORT} };
+EOF
+
 echo "Starting application..."
 exec /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf

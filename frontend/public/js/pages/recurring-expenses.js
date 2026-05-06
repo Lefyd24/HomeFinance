@@ -61,12 +61,9 @@ function renderPage() {
 
     main.innerHTML = `
         <div class="space-y-6">
-            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-                <div>
-                    <h1 class="text-2xl md:text-3xl font-bold">Recurring Expenses</h1>
-                    <p class="text-base-content/60">Track bills and periodic costs</p>
-                </div>
-                <button onclick="openCreateModal()" class="btn btn-primary btn-sm sm:btn-md">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <p class="text-sm text-base-content/60">Track regular bills, subscriptions, and scheduled payments. Get notified when due dates are approaching or overdue.</p>
+                <button onclick="openCreateModal()" class="btn btn-primary btn-sm sm:btn-md shrink-0">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
                     </svg>

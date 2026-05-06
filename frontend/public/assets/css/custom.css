@@ -377,8 +377,15 @@ canvas {
 .dash-root {
     display: flex;
     flex-direction: column;
-    gap: 1.25rem;
-    padding: 1.25rem;
+    gap: 1rem;
+    padding: 1rem;
+}
+
+@media (min-width: 768px) {
+    .dash-root {
+        gap: 1.25rem;
+        padding: 1.25rem;
+    }
 }
 
 @media (min-width: 1024px) {
@@ -397,8 +404,15 @@ canvas {
 .dash-panel {
     background-color: var(--color-base-100);
     border-radius: 0.75rem;
-    box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.07), 0 1px 2px -1px rgb(0 0 0 / 0.07);
-    padding: 1.25rem;
+    border: 1px solid color-mix(in oklch, var(--color-base-content) 6%, transparent);
+    box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.06);
+    padding: 1rem;
+}
+
+@media (min-width: 768px) {
+    .dash-panel {
+        padding: 1.25rem;
+    }
 }
 
 @media (min-width: 1024px) {
@@ -412,6 +426,7 @@ canvas {
     justify-content: space-between;
     align-items: flex-start;
     margin-bottom: 1rem;
+    gap: 0.5rem;
 }
 
 .dash-panel-title {
@@ -431,7 +446,13 @@ canvas {
 .dash-panel-divider {
     height: 1px;
     background-color: color-mix(in oklch, var(--color-base-content) 8%, transparent);
-    margin: 1rem -1.25rem;
+    margin: 1rem -1rem;
+}
+
+@media (min-width: 768px) {
+    .dash-panel-divider {
+        margin: 1rem -1.25rem;
+    }
 }
 
 @media (min-width: 1024px) {
@@ -448,7 +469,8 @@ canvas {
     padding: 0;
     background-color: var(--color-base-100);
     border-radius: 0.75rem;
-    box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.07), 0 1px 2px -1px rgb(0 0 0 / 0.07);
+    border: 1px solid color-mix(in oklch, var(--color-base-content) 6%, transparent);
+    box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.06);
     overflow: hidden;
 }
 
@@ -486,8 +508,14 @@ canvas {
     display: flex;
     flex-direction: column;
     gap: 0.25rem;
-    padding: 1.25rem 1.5rem;
+    padding: 1rem 1.125rem;
     position: relative;
+}
+
+@media (min-width: 640px) {
+    .dash-metric-cell {
+        padding: 1.25rem 1.5rem;
+    }
 }
 
 /* Right border divider between cells (except last) */
@@ -515,10 +543,16 @@ canvas {
 }
 
 .dash-metric-value {
-    font-size: 1.375rem;
+    font-size: 1.25rem;
     font-weight: 700;
     letter-spacing: -0.025em;
     line-height: 1.1;
+}
+
+@media (min-width: 640px) {
+    .dash-metric-value {
+        font-size: 1.375rem;
+    }
 }
 
 /* Vertical divider (kept for compat — no longer injected in JS) */
@@ -531,27 +565,38 @@ canvas {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin: 1rem 0 0.5rem;
+    margin: 1.25rem 0 0.625rem;
+    padding: 0 0.125rem;
 }
 
 .dash-section-heading {
     font-size: 0.6875rem;
     font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: 0.06em;
-    color: color-mix(in oklch, var(--color-base-content) 50%, transparent);
+    letter-spacing: 0.07em;
+    color: color-mix(in oklch, var(--color-base-content) 45%, transparent);
 }
 
+/* Responsive grid: 1 col on mobile → 2 cols on sm → auto-fill ≥16rem on lg */
 .dash-accounts-strip {
-    display: flex;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: 1fr;
     gap: 0.75rem;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    padding-bottom: 0.25rem;
 }
 
-/* Individual account chip — fixed uniform size */
+@media (min-width: 480px) {
+    .dash-accounts-strip {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (min-width: 1024px) {
+    .dash-accounts-strip {
+        grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+    }
+}
+
+/* Individual account chip — fills its grid cell */
 .dash-account-chip {
     display: flex;
     align-items: center;
@@ -560,8 +605,7 @@ canvas {
     background-color: var(--color-base-100);
     border-radius: 0.75rem;
     box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.07);
-    width: 18rem;
-    flex-shrink: 0;
+    min-width: 0;
     transition: box-shadow 0.15s ease, transform 0.15s ease;
     cursor: default;
 }
@@ -603,7 +647,7 @@ canvas {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    max-width: 12rem;
+    max-width: 100%;
 }
 
 .dash-account-type {

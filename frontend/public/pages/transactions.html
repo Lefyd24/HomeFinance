@@ -20,12 +20,9 @@
     <template id="transactions-skeleton">
         <div class="space-y-4 md:space-y-6">
             <!-- Header -->
-            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 md:gap-4">
-                <div>
-                    <h1 class="text-2xl md:text-3xl font-bold">Transactions</h1>
-                    <p class="text-base-content/60">Manage your financial transactions</p>
-                </div>
-                <button onclick="openTransactionModal()" class="btn btn-primary btn-sm sm:btn-md">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <p class="text-sm text-base-content/60">View, filter, and manage all your income and expense transactions. Use search and filters to find specific entries quickly.</p>
+                <button onclick="openTransactionModal()" class="btn btn-primary btn-sm sm:btn-md shrink-0">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                     </svg>
@@ -341,6 +338,7 @@
     <dialog id="transactionDetailModal" class="modal modal-middle sm:modal-middle"></dialog>
     
     <script src="../js/utils.js"></script>
+    <script src="../js/runtime-config.js"></script>
     <script src="../js/api.js"></script>
     <script src="../js/auth.js"></script>
     <script src="../js/components/layout.js"></script>

@@ -19,16 +19,8 @@
     
     <template id="advisor-template">
         <div class="space-y-6">
-            <!-- Header -->
-            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                <div>
-                    <h1 class="text-2xl font-bold flex items-center gap-3">
-                        Financial Advisor
-                    </h1>
-                    <p class="text-base-content/60 mt-1">Planning tools and calculators for your financial goals</p>
-                </div>
-            </div>
-            
+            <p class="text-sm text-base-content/60">Run financial calculations for investments, loans, emergency funds, and net worth. Select a tool below to get started.</p>
+
             <!-- Tool Selector Grid -->
             <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4" id="toolSelector">
                 <!-- Investment Calculator -->
@@ -133,6 +125,7 @@
     </template>
     
     <script src="../js/utils.js"></script>
+    <script src="../js/runtime-config.js"></script>
     <script src="../js/api.js"></script>
     <script src="../js/auth.js"></script>
     <script src="../js/components/layout.js"></script>

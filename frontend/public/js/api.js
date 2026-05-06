@@ -4,9 +4,15 @@
  * 
  * Backend URL can be configured via:
  * - window.API_BASE_URL (global variable)
- * - localStorage.setItem('backendUrl', 'http://192.168.1.100:8223')
- * - Default: http://localhost:8223
+ * - localStorage.setItem('backendUrl', 'http://192.168.1.100:8443')
+ * - Default: same hostname as this page, port from js/runtime-config.js (BACKEND_PORT / local default 8223)
  */
+
+function resolveDefaultBackendPort() {
+    const cfg = window.__APP_CONFIG__;
+    const p = cfg && cfg.backendPort != null ? Number(cfg.backendPort) : NaN;
+    return Number.isFinite(p) && p > 0 ? p : 8223;
+}
 
 const API = {
     // Base URL for API
@@ -22,10 +28,11 @@ const API = {
             return storedUrl;
         }
         
-        // 3. Default to the same host serving the frontend (works over Tailscale/LAN)
+        // 3. Same host as the frontend, backend port from runtime-config.js or default
         const protocol = window.location.protocol || 'http:';
         const host = window.location.hostname || 'localhost';
-        return `${protocol}//${host}:8223/api`;
+        const port = resolveDefaultBackendPort();
+        return `${protocol}//${host}:${port}/api`;
     })(),
     
     // Method to dynamically change backend URL

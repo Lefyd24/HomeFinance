@@ -254,9 +254,9 @@ async function loadDashboardData() {
                 <div id="summary-cards" class="dash-section"></div>
 
                 <!-- Main analysis grid -->
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-5 lg:gap-6 dash-section">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-5 lg:gap-6 dash-section">
                     <!-- Charts column -->
-                    <div class="lg:col-span-2 flex flex-col gap-5">
+                    <div class="md:col-span-2 flex flex-col gap-4 md:gap-5">
                         <div class="dash-panel">
                             <div class="dash-panel-header">
                                 <div>
@@ -264,7 +264,7 @@ async function loadDashboardData() {
                                     <p class="dash-panel-sub">Total expenses by category for the selected period</p>
                                 </div>
                             </div>
-                            <div class="h-64 lg:h-72">
+                            <div class="h-56 sm:h-64 lg:h-72">
                                 <canvas id="spendingChart"></canvas>
                             </div>
 
@@ -277,28 +277,15 @@ async function loadDashboardData() {
                                     <button class="join-item btn btn-xs btn-ghost" id="breakdownWeeklyBtn" onclick="setIncomeSpendingMode('week')">Weekly</button>
                                 </div>
                             </div>
-                            <div style="height:10rem;">
+                            <div style="height:9rem;">
                                 <canvas id="incomeVsSpendingChart"></canvas>
                             </div>
                         </div>
 
-                        <div class="dash-panel" id="budget-optimization">
-                            <div class="dash-panel-header">
-                                <div>
-                                    <h2 class="dash-panel-title">Budget Optimization</h2>
-                                    <p class="dash-panel-sub">50/30/20 spending analysis</p>
-                                </div>
-                            </div>
-                            <div id="budgetOptContainer">
-                                <div class="flex justify-center py-4">
-                                    <span class="loading loading-spinner loading-sm"></span>
-                                </div>
-                            </div>
-                        </div>
                     </div>
 
                     <!-- Right column: budgets + debts -->
-                    <div class="flex flex-col gap-5">
+                    <div class="flex flex-col gap-4 md:gap-5">
                         <div id="budget-overview"></div>
                         <div id="debts-overview"></div>
                     </div>
@@ -429,9 +416,6 @@ async function loadDashboardData() {
         
         // Load income vs spending chart
         await loadIncomeVsSpendingChart();
-
-        // Load budget optimization (replaces trend analysis)
-        await loadBudgetOptimization();
 
         // Load budget overview
         await loadBudgetOverview();
@@ -690,154 +674,8 @@ async function loadBudgetOverview() {
     }
 }
 
-function calculateBudgetDateRange(months) {
-    const endDate = new Date();
-    const startDate = new Date();
-    startDate.setMonth(startDate.getMonth() - months);
-    
-    const formatDate = (date) => {
-        return date.toLocaleDateString('en-GB', { month: 'short', year: 'numeric' });
-    };
-    
-    return `${formatDate(startDate)} - ${formatDate(endDate)}`;
-}
-
-async function loadBudgetOptimization(months = budgetOptimizationMonths) {
-    try {
-        budgetOptimizationMonths = months;
-        const data = await API.analytics.getBudgetRecommendations(null, months);
-        const container = document.getElementById('budgetOptContainer');
-        
-        if (!container) {
-            console.error('Budget optimization container not found in DOM!');
-            return;
-        }
-        
-        if (data.error) {
-            container.innerHTML = `<p class="text-sm text-base-content/60">${data.error}</p>`;
-            return;
-        }
-        
-        const current = data.current_breakdown;
-        const dateRange = calculateBudgetDateRange(months);
-        
-        let overallAssessment = '';
-        const needsPct = current.needs?.percentage || 0;
-        const wantsPct = current.wants?.percentage || 0;
-        const savingsPct = current.savings?.percentage || 0;
-        
-        if (savingsPct >= 20 && needsPct <= 55 && wantsPct <= 35) {
-            overallAssessment = 'Your budget allocation is well-balanced! You\'re following healthy financial principles.';
-        } else if (savingsPct < 10) {
-            overallAssessment = 'Your savings rate is low. Try reducing discretionary spending to increase savings to at least 20%.';
-        } else if (wantsPct > 40) {
-            overallAssessment = 'Discretionary spending is high. Consider cutting back on wants to improve your savings.';
-        } else {
-            overallAssessment = 'There\'s room to optimize your budget. Review the breakdown below for specific areas.';
-        }
-        
-        let html = `
-            <div class="space-y-4">
-                <div class="flex justify-between items-center mb-2">
-                    <div class="text-xs text-base-content/50">
-                        <span class="font-medium">Analysis period:</span> ${dateRange}
-                    </div>
-                    <select id="budgetMonthsSelect" class="select select-bordered select-xs w-24" onchange="window.setBudgetOptimizationMonths(this.value)">
-                        <option value="1" ${months === 1 ? 'selected' : ''}>1 month</option>
-                        <option value="3" ${months === 3 ? 'selected' : ''}>3 months</option>
-                        <option value="6" ${months === 6 ? 'selected' : ''}>6 months</option>
-                        <option value="12" ${months === 12 ? 'selected' : ''}>12 months</option>
-                    </select>
-                </div>
-                
-                <p class="text-xs text-base-content/60">${overallAssessment}</p>
-                
-                <div class="text-center">
-                    <p class="text-xs text-base-content/50">50/30/20 Rule Comparison</p>
-                </div>
-                
-                <div class="space-y-3">
-        `;
-        
-        const categories = [
-            { key: 'needs', label: 'Needs (essentials)', color: 'primary', ideal: 50, desc: 'rent, utilities, groceries, insurance' },
-            { key: 'wants', label: 'Wants (discretionary)', color: 'secondary', ideal: 30, desc: 'entertainment, dining out, hobbies' },
-            { key: 'savings', label: 'Savings', color: 'success', ideal: 20, desc: 'emergency fund, investments, goals' }
-        ];
-        
-        for (const cat of categories) {
-            const currentPct = current[cat.key]?.percentage || 0;
-            const idealPct = cat.ideal;
-            const isOver = currentPct > cat.ideal + 5;
-            const isUnder = currentPct < cat.ideal - 5;
-            
-            let status = '';
-            let statusClass = '';
-            if (cat.key === 'savings') {
-                status = currentPct >= cat.ideal ? '✓ On track' : '⚠ Below target';
-                statusClass = currentPct >= cat.ideal ? 'text-success' : 'text-warning';
-            } else {
-                status = currentPct <= cat.ideal + 5 ? '✓ Within range' : '⚠ Over budget';
-                statusClass = currentPct <= cat.ideal + 5 ? 'text-success' : 'text-error';
-            }
-
-            const barColor = cat.key === 'needs' ? 'primary' : cat.key === 'wants' ? 'secondary' : 'success';
-            const barColorClass = barColor === 'primary' ? 'bg-primary' : barColor === 'secondary' ? 'bg-secondary' : 'bg-success';
-            const markerColorClass = currentPct > idealPct ? 'bg-error' : 'bg-success';
-            
-            html += `
-                <div class="space-y-1">
-                    <div class="flex justify-between text-xs">
-                        <span class="font-medium" title="${cat.desc}">${cat.label}</span>
-                        <span class="${statusClass}">${currentPct.toFixed(0)}% / ${idealPct}% ${status}</span>
-                    </div>
-                    <div class="relative h-4 bg-base-300 rounded-full overflow-visible">
-                        <div class="absolute h-full ${barColorClass} rounded-full transition-all duration-300" style="width: ${Math.min(currentPct, 100)}%"></div>
-                        <div class="absolute top-0 bottom-0 w-0.5 ${markerColorClass} z-10" style="left: ${idealPct}%" title="Limit: ${idealPct}%">
-                            <span class="absolute -top-5 left-1/2 transform -translate-x-1/2 text-xs font-bold bg-base-100 px-1 rounded whitespace-nowrap">${idealPct}%</span>
-                        </div>
-                    </div>
-                </div>
-            `;
-        }
-        
-        html += `
-                </div>
-                
-                <div class="divider my-2"></div>
-                
-                <div class="flex justify-between text-sm">
-                    <span>Potential Monthly Savings</span>
-                    <span class="font-bold text-success">+${Utils.formatCurrency(data.potential_monthly_savings)}</span>
-                </div>
-                <p class="text-xs text-base-content/50">
-                    By optimizing your wants spending to the recommended 30%, you could save an additional 
-                    ${Utils.formatCurrency(data.potential_monthly_savings)} per month.
-                </p>
-            </div>
-        `;
-        
-        container.innerHTML = html;
-        
-    } catch (error) {
-        console.error('Error loading budget optimization:', error);
-        const container = document.getElementById('budgetOptContainer');
-        if (container) {
-            container.innerHTML = `
-                <p class="text-sm text-base-content/60">Unable to load budget optimization</p>
-            `;
-        }
-    }
-}
-
-window.setBudgetOptimizationMonths = function(months) {
-    const numMonths = parseInt(months);
-    loadBudgetOptimization(numMonths);
-};
-
 let incomeVsSpendingChart = null;
 let incomeSpendingMode = 'month';
-let budgetOptimizationMonths = 3;
 
 async function loadIncomeVsSpendingChart() {
     try {
@@ -938,25 +776,14 @@ let countdownIntervals = [];
 
 async function loadGoalsOverview() {
     try {
-        console.log('Loading goals overview...');
         const container = document.getElementById('goals-overview');
-        
-        if (!container) {
-            console.error('Goals container not found in DOM!');
-            return;
-        }
-        
-        console.log('Fetching goals from API...');
+        if (!container) return;
+
         const goals = await API.goals.list();
-        console.log('Goals fetched:', goals);
-        
-        // Filter active goals on the frontend
         const activeGoals = goals.filter(g => g.status === 'active');
-        console.log('Active goals:', activeGoals);
         activeGoalsData = activeGoals;
 
-        if (!activeGoals || activeGoals.length === 0) {
-            console.log('No active goals found, showing empty state');
+        if (!activeGoals || activeGoals.length === 0) {;
             container.innerHTML = `
                 <div class="card bg-base-100 shadow-xl">
                     <div class="card-body">
@@ -1081,8 +908,6 @@ async function loadGoalsOverview() {
         
         // Start live countdowns
         startLiveCountdowns();
-        
-        console.log('Goals rendered successfully');
     } catch (error) {
         console.error('Error loading goals overview:', error);
         const container = document.getElementById('goals-overview');
@@ -1313,14 +1138,9 @@ window.showGoalDetailModal = async function(goalId) {
 
 async function loadDebtsOverview() {
     try {
-        console.log('Loading debts overview...');
         const container = document.getElementById('debts-overview');
-        
-        if (!container) {
-            console.error('Debts container not found in DOM!');
-            return;
-        }
-        
+        if (!container) return;
+
         // Get all debts to calculate payment progress
         const debts = await API.debts.list();
 
@@ -1505,7 +1325,6 @@ async function loadDebtsOverview() {
                 </div>
             </div>
         `;
-        console.log('Debts overview rendered successfully');
     } catch (error) {
         console.error('Error loading debts overview:', error);
         const container = document.getElementById('debts-overview');
@@ -1750,12 +1569,7 @@ function formatDateRangeForDisplay(startDate, endDate) {
     return `(${formatDate(start)} - ${formatDate(end)})`;
 }
 
-// Apply date range from picker (deprecated, use navbar instead)
-window.applyDashboardDateRange = function() {
-    // This function is kept for compatibility, but date picker is now in navbar
-    // Use setDashboardDateRange or navbar apply button instead
-    console.log('applyDashboardDateRange is deprecated, use navbar date picker');
-};
+window.applyDashboardDateRange = function() {};
 
 // Set date range from navbar or preset buttons
 window.setDashboardDateRange = function(startDate, endDate) {

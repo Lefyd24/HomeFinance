@@ -18,12 +18,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Render page content
     mainContent.innerHTML = `
         <div class="space-y-6">
-            <!-- Header -->
-            <div>
-                <h2 class="text-2xl font-bold">Reports</h2>
-                <p class="text-base-content/60">Generate insights from your financial data</p>
-            </div>
-            
+            <p class="text-sm text-base-content/60">Analyze your finances with spending breakdowns, income trends, cash flow, and balance history. Configure a report below and save your favorites for quick access.</p>
+
             <!-- Report Builder -->
             <div class="card bg-base-100 shadow-xl">
                 <div class="card-body">

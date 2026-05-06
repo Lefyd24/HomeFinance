@@ -1,8 +1,12 @@
 from functools import lru_cache
 from pathlib import Path
+from typing import Self
 
-from pydantic import Field
-from pydantic_settings import BaseSettings
+from pydantic import Field, model_validator
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+_backend_dir = Path(__file__).resolve().parent.parent
+_repo_root = _backend_dir.parent
 
 
 def _default_log_dir() -> str:
@@ -19,10 +23,24 @@ def _default_documents_dir() -> str:
 class Settings(BaseSettings):
     """Application settings loaded from environment variables."""
 
+    model_config = SettingsConfigDict(
+        env_file=(
+            str(_repo_root / ".env"),
+            str(_backend_dir / ".env"),
+        ),
+        env_file_encoding="utf-8",
+        extra="ignore",
+        case_sensitive=True,
+    )
+
     # Application
     APP_NAME: str = "Personal Finance API"
     APP_VERSION: str = "1.0.0"
     DEBUG: bool = False
+
+    # Service ports (compose / .env — also used for CORS localhost origins)
+    BACKEND_PORT: int = 8223
+    FRONTEND_PORT: int = 3100
 
     # Database
     DATABASE_URL: str = "sqlite:///./finance.db"
@@ -39,19 +57,9 @@ class Settings(BaseSettings):
     API_KEY_HEADER: str = "X-API-Key"
     API_KEY_MIN_LENGTH: int = 32
 
-    # CORS
-    CORS_ORIGINS: list = [
-        "http://localhost:8080",
-        "http://127.0.0.1:8080",
-        "http://localhost:3100",
-        "http://127.0.0.1:3100",
-        "http://100.101.185.10:3100",
-        "http://100.101.185.10:8223",
-        "http://homeserver.burbot-karat.ts.net:3100",
-        "http://100.101.125.41:3100",
-        "http://localhost:3101",
-        "http://100.65.10.29"
-    ]
+    # CORS — set CORS_ORIGINS in .env as JSON, e.g. ["*"] or explicit origins.
+    # Non-wildcard lists are merged with http://localhost:{FRONTEND_PORT} and 127.0.0.1.
+    CORS_ORIGINS: list[str] = Field(default_factory=lambda: ["*"])
 
     # File Upload
     MAX_UPLOAD_SIZE: int = 10 * 1024 * 1024  # 10MB
@@ -61,9 +69,17 @@ class Settings(BaseSettings):
     DOCUMENTS_DIR: str = Field(default_factory=_default_documents_dir)
     DOCUMENTS_MAX_FILE_SIZE: int = 50 * 1024 * 1024  # 50MB
 
-    class Config:
-        env_file = ".env"
-        case_sensitive = True
+    @model_validator(mode="after")
+    def normalize_cors_origins(self) -> Self:
+        if any(o.strip() == "*" for o in self.CORS_ORIGINS):
+            self.CORS_ORIGINS = ["*"]
+            return self
+        local = (
+            f"http://127.0.0.1:{self.FRONTEND_PORT}",
+            f"http://localhost:{self.FRONTEND_PORT}",
+        )
+        self.CORS_ORIGINS = list(dict.fromkeys([*self.CORS_ORIGINS, *local]))
+        return self
 
 
 @lru_cache()

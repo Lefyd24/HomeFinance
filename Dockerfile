@@ -1,5 +1,5 @@
 # Multi-stage Dockerfile for Personal Finance App
-# Runs backend on port 8223 and frontend on port 3100
+# BACKEND_PORT / FRONTEND_PORT default here; override via .env / docker compose at runtime
 
 # Stage 1: Build frontend CSS
 FROM node:20-alpine AS frontend-builder
@@ -66,7 +66,7 @@ ENV CORS_ORIGINS='["*"]'
 ENV BACKEND_PORT=8223
 ENV FRONTEND_PORT=3100
 
-# Expose both ports
+# Document typical ports; host mapping uses compose `${BACKEND_PORT}` / `${FRONTEND_PORT}`
 EXPOSE 8223 3100
 
 # Start entrypoint script (runs migrations then supervisord)

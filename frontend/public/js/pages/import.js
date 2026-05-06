@@ -23,12 +23,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Render page content
     mainContent.innerHTML = `
         <div class="space-y-6">
-            <!-- Header -->
-            <div>
-                <h2 class="text-2xl font-bold">Import Transactions</h2>
-                <p class="text-base-content/60">Import bank statements and categorize transactions</p>
-            </div>
-            
+            <p class="text-sm text-base-content/60">Import bank statements and CSV exports to automatically add transactions. Follow the steps below to upload, preview, categorize, and confirm your data.</p>
+
             <!-- Wizard Steps -->
             <ul class="steps w-full">
                 <li class="step ${currentStep >= 1 ? 'step-primary' : ''}">Upload</li>

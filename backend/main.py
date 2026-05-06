@@ -50,7 +50,7 @@ app = FastAPI(
     redirect_slashes=True,
 )
 
-# Add CORS middleware - allow frontend on port 3100
+# CORS — see settings.CORS_ORIGINS and FRONTEND_PORT in app/config.py
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.CORS_ORIGINS,

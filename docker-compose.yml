@@ -5,8 +5,8 @@ services:
       dockerfile: Dockerfile
     container_name: personalfinance-app
     ports:
-      - "${BACKEND_PORT}:${BACKEND_PORT}"
-      - "${FRONTEND_PORT}:${FRONTEND_PORT}"
+      - "${BACKEND_PORT:-8223}:${BACKEND_PORT:-8223}"
+      - "${FRONTEND_PORT:-3100}:${FRONTEND_PORT:-3100}"
     environment:
       - APP_NAME=${APP_NAME}
       - APP_VERSION=${APP_VERSION}
@@ -15,14 +15,14 @@ services:
       - DEBUG=${DEBUG}
       - CORS_ORIGINS=${CORS_ORIGINS}
       - ACCESS_TOKEN_EXPIRE_MINUTES=${ACCESS_TOKEN_EXPIRE_MINUTES}
-      - BACKEND_PORT=${BACKEND_PORT}
-      - FRONTEND_PORT=${FRONTEND_PORT}
+      - BACKEND_PORT=${BACKEND_PORT:-8223}
+      - FRONTEND_PORT=${FRONTEND_PORT:-3100}
     volumes:
       - ./data:/app/data
       - ./logs:/app/logs
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:${BACKEND_PORT}/health"]
+      test: ["CMD-SHELL", "curl -f http://127.0.0.1:${BACKEND_PORT:-8223}/health || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
