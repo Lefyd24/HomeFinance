@@ -7,6 +7,104 @@ let debts = [];
 let editingDebtId = null;
 let accounts = [];
 
+// Map debt types to category ramp tints (1-6) for consistent coloring across cards
+const DEBT_TYPE_TO_TINT = {
+    credit_card: 1,
+    mortgage: 2,
+    car_loan: 3,
+    student_loan: 4,
+    personal_loan: 5,
+    informal: 5,
+    utilities: 3,
+    subscription: 1,
+    medical: 4,
+    tax: 4,
+    legal: 6,
+    other: 6,
+    custom: 6
+};
+
+const DEBT_TYPE_LABEL = {
+    credit_card: 'Credit Card',
+    student_loan: 'Student Loan',
+    mortgage: 'Mortgage',
+    car_loan: 'Car Loan',
+    personal_loan: 'Personal Loan',
+    informal: 'Informal',
+    utilities: 'Utilities',
+    subscription: 'Subscription',
+    medical: 'Medical',
+    tax: 'Tax',
+    legal: 'Legal',
+    other: 'Other',
+    custom: 'Custom'
+};
+
+function maskedDebtId(debt) {
+    const seed = `${debt.id}${debt.name || ''}${debt.creditor || ''}`;
+    let h = 0;
+    for (let i = 0; i < seed.length; i += 1) {
+        h = (h * 31 + seed.charCodeAt(i)) | 0;
+    }
+    const last4 = String(Math.abs(h) % 10000).padStart(4, '0');
+    return `••••${last4}`;
+}
+
+function renderDebtsKpiBar(summary) {
+    const total = parseFloat(summary.total_amount_due ?? summary.total_current_balance ?? 0);
+    const paidOff = parseFloat(summary.total_paid_off ?? 0);
+    const minMonthly = parseFloat(summary.total_minimum_payments ?? 0);
+    const pct = Math.max(0, Math.min(100, parseFloat(summary.overall_progress_percentage ?? 0)));
+    const projInterest = parseFloat(summary.total_projected_interest ?? 0);
+    const activeCount = (summary.total_debts ?? 0) - (summary.paid_off_count ?? 0);
+
+    const r = 28;
+    const c = 2 * Math.PI * r;
+    const offset = c - (pct / 100) * c;
+
+    return `
+        <div class="fin-kpi-bar">
+            <div class="fin-kpi-cell">
+                <span class="fin-kpi-label">Total Outstanding</span>
+                <span class="fin-kpi-value">${Utils.formatCurrency(total)}</span>
+                <span class="fin-kpi-sub">${activeCount > 0 ? `across ${activeCount} active debt${activeCount === 1 ? '' : 's'}` : 'no active debts'}${projInterest > 0 ? ` · incl. ${Utils.formatCurrency(projInterest)} interest` : ''}</span>
+            </div>
+            <div class="fin-kpi-cell">
+                <span class="fin-kpi-label">Paid Off</span>
+                <span class="fin-kpi-value">${Utils.formatCurrency(paidOff)}</span>
+                <span class="fin-kpi-sub">lifetime</span>
+            </div>
+            <div class="fin-kpi-cell">
+                <span class="fin-kpi-label">Overall Progress</span>
+                <div style="display:flex;align-items:center;gap:0.875rem;">
+                    <svg width="64" height="64" viewBox="0 0 64 64" style="flex-shrink:0;">
+                        <circle cx="32" cy="32" r="${r}" fill="none"
+                                stroke="color-mix(in oklch, var(--color-base-content) 8%, transparent)"
+                                stroke-width="6"></circle>
+                        <circle cx="32" cy="32" r="${r}" fill="none"
+                                stroke="var(--color-primary)" stroke-width="6"
+                                stroke-linecap="round"
+                                stroke-dasharray="${c.toFixed(2)}"
+                                stroke-dashoffset="${offset.toFixed(2)}"
+                                transform="rotate(-90 32 32)"
+                                style="transition: stroke-dashoffset 700ms cubic-bezier(0.22, 1, 0.36, 1);"></circle>
+                        <text x="32" y="36" text-anchor="middle"
+                              font-size="14" font-weight="600"
+                              fill="var(--color-base-content)"
+                              style="font-variant-numeric: tabular-nums; letter-spacing:-0.02em;">${pct.toFixed(0)}%</text>
+                    </svg>
+                    <div class="fin-kpi-sub">across<br>all debts</div>
+                </div>
+            </div>
+            <div class="fin-kpi-cell">
+                <span class="fin-kpi-label">Min. Monthly</span>
+                <span class="fin-kpi-value">${Utils.formatCurrency(minMonthly)}</span>
+                <span class="fin-kpi-sub">due each month</span>
+            </div>
+        </div>
+    `;
+}
+
 // Initialize page
 document.addEventListener('DOMContentLoaded', async () => {
     if (!Auth.requireAuth()) return;
@@ -207,91 +305,29 @@ async function loadDebts() {
                     </button>
                 </div>
                 
-                <!-- Summary Cards -->
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4" id="debts-summary">
-                    <div class="card bg-base-100 shadow-sm">
-                        <div class="card-body">
-                            <div class="flex items-center gap-3">
-                                <div class="p-3 bg-error/10 rounded-lg">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-error" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                    </svg>
-                                </div>
-                                <div>
-                                    <p class="text-sm text-base-content/60">Total Debts</p>
-                                    <p class="text-2xl font-bold">${summary.total_debts}</p>
-                                </div>
-                            </div>
-                        </div>
+                <!-- KPI Bar -->
+                ${renderDebtsKpiBar(summary)}
+
+                <!-- Active Debts -->
+                <section id="debts-active-section">
+                    <div class="fin-section-header">
+                        <h2 class="fin-section-title">Active Debts</h2>
+                        <span class="fin-section-count" id="debts-active-count">0</span>
                     </div>
-                    
-                    <div class="card bg-base-100 shadow-sm">
-                        <div class="card-body">
-                            <div class="flex items-center gap-3">
-                                <div class="p-3 bg-warning/10 rounded-lg">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-warning" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-                                    </svg>
-                                </div>
-                                <div>
-                                    <p class="text-sm text-base-content/60">Total Amount Due</p>
-                                    <p class="text-2xl font-bold">${Utils.formatCurrency(summary.total_amount_due || summary.total_current_balance)}</p>
-                                    ${summary.total_projected_interest > 0 ? `<p class="text-xs text-warning">incl. ${Utils.formatCurrency(summary.total_projected_interest)} interest</p>` : ''}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="card bg-base-100 shadow-sm">
-                        <div class="card-body">
-                            <div class="flex items-center gap-3">
-                                <div class="p-3 bg-success/10 rounded-lg">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-success" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                    </svg>
-                                </div>
-                                <div>
-                                    <p class="text-sm text-base-content/60">Paid Off</p>
-                                    <p class="text-2xl font-bold">${Utils.formatCurrency(summary.total_paid_off)}</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="card bg-base-100 shadow-sm">
-                        <div class="card-body">
-                            <div class="flex items-center gap-3">
-                                <div class="p-3 bg-info/10 rounded-lg">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-info" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                                    </svg>
-                                </div>
-                                <div>
-                                    <p class="text-sm text-base-content/60">Progress</p>
-                                    <p class="text-2xl font-bold">${summary.overall_progress_percentage.toFixed(1)}%</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Minimum Payment Alert -->
-                ${summary.total_minimum_payments > 0 ? `
-                    <div class="alert alert-info">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 shrink-0 stroke-current" fill="none" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                        <div>
-                            <h3 class="font-bold">Monthly Minimum Payments</h3>
-                            <p class="text-sm">Your total minimum monthly payments across all active debts: <strong>${Utils.formatCurrency(summary.total_minimum_payments)}</strong></p>
-                        </div>
-                    </div>
-                ` : ''}
-                
-                <!-- Debts Grid -->
-                <div id="debts-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    <!-- Debts will be rendered here -->
-                </div>
+                    <div id="debts-active" class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-5"></div>
+                </section>
+
+                <!-- Paid Off Debts (collapsible) -->
+                <section id="debts-paid-section" class="hidden">
+                    <details class="group">
+                        <summary class="fin-section-header cursor-pointer list-none flex items-center gap-2 select-none">
+                            <h2 class="fin-section-title">Paid Off</h2>
+                            <span class="fin-section-count" id="debts-paid-count">0</span>
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 ml-auto transition-transform group-open:rotate-90" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
+                        </summary>
+                        <div id="debts-paid" class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-5 mt-2"></div>
+                    </details>
+                </section>
                 
                 <!-- Empty State -->
                 <div id="empty-state" class="hidden text-center py-16">
@@ -310,206 +346,155 @@ async function loadDebts() {
 }
 
 function renderDebts() {
-    const container = document.getElementById('debts-grid');
+    const activeContainer = document.getElementById('debts-active');
+    const paidContainer = document.getElementById('debts-paid');
+    const activeSection = document.getElementById('debts-active-section');
+    const paidSection = document.getElementById('debts-paid-section');
     const emptyState = document.getElementById('empty-state');
-    
-    if (!container) return;
-    
+    const activeCountEl = document.getElementById('debts-active-count');
+    const paidCountEl = document.getElementById('debts-paid-count');
+
+    if (!activeContainer || !paidContainer) return;
+
     if (debts.length === 0) {
-        container.innerHTML = '';
+        activeContainer.innerHTML = '';
+        paidContainer.innerHTML = '';
+        activeSection?.classList.add('hidden');
+        paidSection?.classList.add('hidden');
         emptyState?.classList.remove('hidden');
         return;
     }
-    
+
     emptyState?.classList.add('hidden');
-    
-    // Sort: active debts first, then by priority
-    const sortedDebts = [...debts].sort((a, b) => {
-        if (a.is_paid_off !== b.is_paid_off) return a.is_paid_off ? 1 : -1;
-        return (b.priority || 0) - (a.priority || 0);
-    });
-    
-    container.innerHTML = sortedDebts.map(debt => renderDebtCard(debt)).join('');
+
+    const active = debts
+        .filter(d => !d.is_paid_off)
+        .sort((a, b) => (b.priority || 0) - (a.priority || 0));
+    const paid = debts
+        .filter(d => d.is_paid_off)
+        .sort((a, b) => {
+            const da = a.paid_off_date ? new Date(a.paid_off_date) : 0;
+            const db = b.paid_off_date ? new Date(b.paid_off_date) : 0;
+            return db - da;
+        });
+
+    if (activeCountEl) activeCountEl.textContent = active.length;
+    if (paidCountEl) paidCountEl.textContent = paid.length;
+
+    if (active.length > 0) {
+        activeSection?.classList.remove('hidden');
+        activeContainer.innerHTML = active.map(d => renderDebtCard(d)).join('');
+    } else {
+        activeSection?.classList.add('hidden');
+        activeContainer.innerHTML = '';
+    }
+
+    if (paid.length > 0) {
+        paidSection?.classList.remove('hidden');
+        paidContainer.innerHTML = paid.map(d => renderDebtCard(d)).join('');
+    } else {
+        paidSection?.classList.add('hidden');
+        paidContainer.innerHTML = '';
+    }
 }
 
 function renderDebtCard(debt) {
-    const progress = ((debt.original_balance - debt.current_balance) / debt.original_balance * 100);
-    const isPaidOff = debt.is_paid_off;
+    const isPaidOff = !!debt.is_paid_off;
     const hasInterest = debt.interest_rate && debt.interest_rate > 0;
-    const displayAmount = hasInterest && debt.total_amount_due ? debt.total_amount_due : debt.current_balance;
-    const interestAmount = hasInterest && debt.total_interest ? debt.total_interest : 0;
+    const original = parseFloat(debt.original_balance || 0);
+    const current  = parseFloat(debt.current_balance || 0);
+    const progress = original > 0 ? Math.max(0, Math.min(100, ((original - current) / original) * 100)) : (isPaidOff ? 100 : 0);
     const isNonRecurring = !debt.recurrence_unit;
-    
-    // Professional SVG icons for each debt type
-    const typeIcons = {
-        credit_card: `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" /></svg>`,
-        student_loan: `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5zm0 0l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14zm-4 6v-7.5l4-2.222" /></svg>`,
-        mortgage: `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>`,
-        car_loan: `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0" /></svg>`,
-        personal_loan: `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>`,
-        other: `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>`
-    };
-    
-    const typeColors = {
-        credit_card: 'bg-primary/10 text-primary',
-        student_loan: 'bg-secondary/10 text-secondary',
-        mortgage: 'bg-accent/10 text-accent',
-        car_loan: 'bg-info/10 text-info',
-        personal_loan: 'bg-success/10 text-success',
-        informal: 'bg-warning/10 text-warning',
-        utilities: 'bg-orange-100 text-orange-600',
-        subscription: 'bg-purple-100 text-purple-600',
-        medical: 'bg-red-100 text-red-600',
-        tax: 'bg-yellow-100 text-yellow-700',
-        legal: 'bg-slate-100 text-slate-600',
-        other: 'bg-base-300 text-base-content',
-        custom: 'bg-base-300 text-base-content'
-    };
+    const tintIdx = DEBT_TYPE_TO_TINT[debt.type] || 6;
+    const typeLabel = debt.type === 'custom' ? (debt.custom_type || 'Custom') : (DEBT_TYPE_LABEL[debt.type] || (debt.type || 'Other'));
+    const acctId = maskedDebtId(debt);
 
-    const typeLabels = {
-        credit_card: 'Credit Card',
-        student_loan: 'Student Loan',
-        mortgage: 'Mortgage',
-        car_loan: 'Car Loan',
-        personal_loan: 'Personal Loan',
-        informal: 'Personal / Informal',
-        utilities: 'Utilities',
-        subscription: 'Subscription',
-        medical: 'Medical',
-        tax: 'Tax',
-        legal: 'Legal',
-        other: 'Other',
-        custom: debt.custom_type || 'Custom'
-    };
-    
+    const balanceLabel = hasInterest ? 'AMOUNT DUE' : 'CURRENT BALANCE';
+    const balanceValue = hasInterest && debt.total_amount_due ? debt.total_amount_due : current;
+
+    const footnoteParts = [];
+    if (!isPaidOff && !isNonRecurring && debt.next_payment_date) {
+        footnoteParts.push(`Next: ${Utils.formatDate(debt.next_payment_date)}`);
+    }
+    if (!isPaidOff && !isNonRecurring && debt.months_to_payoff) {
+        footnoteParts.push(`${debt.months_to_payoff} mo to payoff`);
+    }
+    if (isPaidOff && debt.paid_off_date) {
+        footnoteParts.push(`Cleared · ${Utils.formatDate(debt.paid_off_date)}`);
+    }
+    if (isNonRecurring && !isPaidOff && debt.next_payment_date) {
+        footnoteParts.push(`One-time · ${Utils.formatDate(debt.next_payment_date)}`);
+    }
+
+    const metaItems = [];
+    if (hasInterest) metaItems.push(`<span class="fin-numeric">${(debt.interest_rate * 100).toFixed(2)}% APR</span>`);
+    if (!isNonRecurring && debt.minimum_payment) metaItems.push(`<span class="fin-numeric">${Utils.formatCurrency(debt.minimum_payment)}/mo</span>`);
+
+    const paidAmount = Math.max(0, original - current);
+
     return `
-        <div class="card bg-base-100 shadow-md hover:shadow-xl transition-all duration-300 ${isPaidOff ? 'border-2 border-success' : 'border border-base-200'}">
-            <div class="card-body p-5">
-                <!-- Header with Icon and Badges -->
-                <div class="flex justify-between items-start mb-4">
-                    <div class="flex items-center gap-3">
-                        <div class="w-12 h-12 rounded-xl flex items-center justify-center ${typeColors[debt.type] || typeColors.other}">
-                            ${typeIcons[debt.type] || typeIcons.other}
-                        </div>
-                        <div class="min-w-0">
-                            <h3 class="font-bold text-lg leading-tight truncate" title="${debt.name}">${debt.name}</h3>
-                            <p class="text-xs text-base-content/60 flex items-center gap-1">
-                                <span class="inline-block w-2 h-2 rounded-full ${typeColors[debt.type] ? typeColors[debt.type].split(' ')[0].replace('/10', '') : 'bg-base-300'}"></span>
-                                ${typeLabels[debt.type] || debt.type}
-                                <!-- Creditor -->
-                                ${debt.creditor ? ` - <b>${debt.creditor}</b>` : ''}
-                        </div>
+        <div class="fin-card fin-tint-${tintIdx} ${isPaidOff ? 'fin-card-paid' : ''}" style="max-width: 640px; width: 100%;">
+            <div class="fin-card-band fin-card-band-debt">
+                <span class="fin-type">${typeLabel}</span>
+                <span class="fin-chip-soft">
+                    ${isPaidOff
+                        ? '✓ Paid off'
+                        : (debt.priority > 0 ? `Priority · P${debt.priority}` : '&nbsp;')}
+                </span>
+            </div>
+            <div class="fin-card-body">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <div class="fin-creditor">${debt.creditor || debt.name}</div>
+                        ${debt.creditor ? `<div class="text-sm font-medium">${debt.name}</div>` : ''}
                     </div>
-                    <div class="flex flex-col items-end gap-1">
-                        ${isPaidOff ? '<span class="badge badge-success badge-sm"><svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>Paid Off</span>' : ''}
-                        ${debt.priority > 0 ? `<span class="badge badge-primary badge-sm">Priority ${debt.priority}</span>` : ''}
-                    </div>
+                    <div class="fin-acct-id">${acctId}</div>
                 </div>
-                
-                <!-- Balance Section -->
-                <div class="bg-base-200/50 rounded-xl p-4 mb-4">
-                    <div class="flex justify-between items-end mb-2">
+                <div>
+                    <div class="text-[0.625rem] font-semibold tracking-wider text-base-content/55 mt-1">${balanceLabel}</div>
+                    <div class="fin-hero-balance">${Utils.formatCurrency(balanceValue)}</div>
+                    ${original > 0 && !isPaidOff ? `<div class="fin-hero-sub">of ${Utils.formatCurrency(original)} original</div>` : ''}
+                </div>
+                ${original > 0 ? `
+                    <div class="grid grid-cols-2 gap-3" style="padding: 0.5rem 0; border-top: 1px solid color-mix(in oklch, var(--color-base-content) 6%, transparent);">
                         <div>
-                            <p class="text-xs text-base-content/60 uppercase tracking-wider">${hasInterest ? 'Amount Due (incl. Interest)' : 'Current Balance'}</p>
-                            <p class="text-2xl font-bold ${displayAmount > 0 ? 'text-error' : 'text-success'}">${Utils.formatCurrency(displayAmount)}</p>
-                            ${hasInterest && interestAmount > 0 ? `<p class="text-xs text-warning">includes ${Utils.formatCurrency(interestAmount)} interest</p>` : ''}
+                            <div class="text-[0.625rem] font-semibold tracking-wider text-base-content/55">PAID</div>
+                            <div class="fin-numeric font-semibold" style="color: oklch(60% 0.13 165);">${Utils.formatCurrency(paidAmount)}</div>
                         </div>
                         <div class="text-right">
-                            <p class="text-xs text-base-content/60">Principal</p>
-                            <p class="text-sm font-medium text-base-content/70">${Utils.formatCurrency(debt.current_balance)}</p>
-                            <p class="text-xs text-base-content/50">of ${Utils.formatCurrency(debt.original_balance)}</p>
+                            <div class="text-[0.625rem] font-semibold tracking-wider text-base-content/55">REMAINING</div>
+                            <div class="fin-numeric font-semibold">${Utils.formatCurrency(current)}</div>
                         </div>
                     </div>
-                    
-                    <!-- Progress Bar -->
-                    <div class="relative pt-1">
-                        <div class="flex mb-1 items-center justify-between">
-                            <span class="text-xs font-semibold inline-block text-base-content/60">
-                                ${progress.toFixed(1)}% paid
-                            </span>
-                            <span class="text-xs font-semibold inline-block text-success">
-                                ${Utils.formatCurrency(debt.original_balance - debt.current_balance)} ↓
-                            </span>
-                        </div>
-                        <div class="overflow-hidden h-2 mb-1 text-xs flex rounded bg-base-300">
-                            <div style="width: ${progress}%" class="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center ${progress >= 100 ? 'bg-success' : progress >= 75 ? 'bg-info' : progress >= 50 ? 'bg-warning' : 'bg-error'} transition-all duration-500"></div>
-                        </div>
-                    </div>
-                </div>
-                
-                ${isNonRecurring && debt.next_payment_date ? `
-                <!-- One-Time Payment Info -->
-                <div class="bg-warning/10 border border-warning/30 rounded-xl p-3 mb-4 flex items-center justify-between">
-                    <div class="flex items-center gap-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-warning shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                        </svg>
-                        <div>
-                            <p class="text-xs text-base-content/60 uppercase tracking-wider">One-Time Payment</p>
-                            <p class="font-bold text-sm">${Utils.formatCurrency(debt.minimum_payment || debt.current_balance)}</p>
-                        </div>
-                    </div>
-                    <div class="text-right">
-                        <p class="text-xs text-base-content/60">Payment Date</p>
-                        <p class="font-semibold text-sm">${Utils.formatDate(debt.next_payment_date)}</p>
-                    </div>
-                </div>
                 ` : ''}
-
-                <!-- Debt Details Grid -->
-                <div class="grid grid-cols-2 gap-3 mb-4">
-                    ${debt.interest_rate ? `
-                        <div class="bg-base-100 border border-base-200 rounded-lg p-2">
-                            <p class="text-xs text-base-content/50 mb-1 flex items-center gap-1"><svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>Interest Rate</p>
-                            <p class="font-semibold text-sm">${(debt.interest_rate * 100).toFixed(2)}%</p>
+                ${!isPaidOff ? `
+                    <div>
+                        <div class="fin-track">
+                            <div class="fin-track-fill" style="width:${progress}%; background: var(--cat-${tintIdx});"></div>
                         </div>
-                    ` : ''}
-                    ${!isNonRecurring && debt.minimum_payment ? `
-                        <div class="bg-base-100 border border-base-200 rounded-lg p-2">
-                            <p class="text-xs text-base-content/50 mb-1 flex items-center gap-1"><svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>Min. Payment</p>
-                            <p class="font-semibold text-sm">${Utils.formatCurrency(debt.minimum_payment)}/mo</p>
+                        <div class="flex items-center justify-between mt-1.5 gap-2">
+                            <span class="text-xs text-base-content/60 fin-numeric">${progress.toFixed(0)}% paid</span>
+                            <span class="text-xs text-base-content/60 flex items-center gap-2">${metaItems.join('<span class="opacity-40">·</span>')}</span>
                         </div>
-                    ` : ''}
-                    ${!isNonRecurring && debt.months_to_payoff ? `
-                        <div class="bg-base-100 border border-base-200 rounded-lg p-2">
-                            <p class="text-xs text-base-content/50 mb-1 flex items-center gap-1"><svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>Payoff Time</p>
-                            <p class="font-semibold text-sm">${debt.months_to_payoff} months</p>
-                        </div>
-                    ` : ''}
-                    ${!isNonRecurring && debt.payoff_date ? `
-                        <div class="bg-base-100 border border-base-200 rounded-lg p-2">
-                            <p class="text-xs text-base-content/50 mb-1 flex items-center gap-1"><svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>Payoff Date</p>
-                            <p class="font-semibold text-sm">${Utils.formatDate(debt.payoff_date)}</p>
-                        </div>
-                    ` : ''}
-                </div>
-                
-                <!-- Action Buttons -->
-                <div class="card-actions justify-end gap-2 pt-2 border-t border-base-200">
-                    ${!isPaidOff ? `
-                        <button onclick="showPaymentModal(${debt.id})" class="btn btn-sm btn-success gap-1">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                            </svg>
-                            Add Payment
-                        </button>
-                    ` : ''}
-                    <div class="flex-1"></div>
-                    <button onclick="showDebtDetails(${debt.id})" class="btn btn-sm btn-ghost btn-circle" title="Details">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                        </svg>
+                    </div>
+                ` : ''}
+                ${footnoteParts.length ? `
+                    <div class="text-xs text-base-content/55 mt-1">${footnoteParts.join(' · ')}</div>
+                ` : ''}
+            </div>
+            <div class="fin-card-footer">
+                ${!isPaidOff ? `
+                    <button onclick="showPaymentModal(${debt.id})" class="btn btn-sm btn-primary">Add Payment</button>
+                ` : ''}
+                <button onclick="showDebtDetails(${debt.id})" class="btn btn-sm btn-ghost">Details</button>
+                <div class="ml-auto dropdown dropdown-end">
+                    <button tabindex="0" class="btn btn-ghost btn-sm btn-square" aria-label="More actions">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="currentColor" viewBox="0 0 24 24"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>
                     </button>
-                    <button onclick="editDebt(${debt.id})" class="btn btn-sm btn-ghost btn-circle" title="Edit">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                        </svg>
-                    </button>
-                    <button onclick="deleteDebt(${debt.id})" class="btn btn-sm btn-ghost btn-circle text-error hover:bg-error/10" title="Delete">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                        </svg>
-                    </button>
+                    <ul tabindex="0" class="dropdown-content menu bg-base-100 rounded-box shadow-lg border border-base-200 z-10 w-44 p-1">
+                        <li><a onclick="editDebt(${debt.id})">Edit</a></li>
+                        <li><a class="text-error" onclick="deleteDebt(${debt.id})">Delete</a></li>
+                    </ul>
                 </div>
             </div>
         </div>

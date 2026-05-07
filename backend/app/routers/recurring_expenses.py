@@ -3,10 +3,11 @@ from datetime import date, timedelta
 from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
 from app.database import get_db
 from app.models import RecurringExpense, RecurringExpensePayment
+from app.models.transaction import Transaction
 from app.models.user import User
 from app.schemas.recurring_expense import (
     RecurringExpenseCreate,
@@ -173,3 +174,106 @@ def record_payment(
     db.commit()
     db.refresh(payment)
     return payment
+
+
+@router.get("/{expense_id}/transactions")
+def get_linked_transactions(
+    expense_id: int,
+    skip: int = 0,
+    limit: int = 50,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Return transactions linked to a recurring expense via its payment records.
+
+    Mirrors the budgets `/budgets/{id}/summary` pattern, but joins via
+    RecurringExpensePayment.transaction_id rather than category filters.
+    """
+    expense = db.query(RecurringExpense).filter(
+        RecurringExpense.id == expense_id,
+        RecurringExpense.user_id == current_user.id,
+    ).first()
+    if not expense:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Recurring expense not found")
+
+    payments_q = (
+        db.query(RecurringExpensePayment)
+        .filter(
+            RecurringExpensePayment.recurring_expense_id == expense_id,
+            RecurringExpensePayment.user_id == current_user.id,
+        )
+        .order_by(RecurringExpensePayment.payment_date.desc())
+    )
+    all_payments = payments_q.all()
+    total_paid = sum(float(p.amount or 0) for p in all_payments)
+    payment_count = len(all_payments)
+    last_payment_date = all_payments[0].payment_date if all_payments else None
+
+    page_payments = payments_q.offset(skip).limit(limit).all()
+    tx_ids = [p.transaction_id for p in page_payments if p.transaction_id is not None]
+    transactions_by_id = {}
+    if tx_ids:
+        tx_rows = (
+            db.query(Transaction)
+            .options(joinedload(Transaction.category), joinedload(Transaction.account))
+            .filter(
+                Transaction.id.in_(tx_ids),
+                Transaction.user_id == current_user.id,
+            )
+            .all()
+        )
+        transactions_by_id = {t.id: t for t in tx_rows}
+
+    rows = []
+    for p in page_payments:
+        t = transactions_by_id.get(p.transaction_id) if p.transaction_id else None
+        if t is not None:
+            rows.append({
+                "payment_id": p.id,
+                "payment_date": p.payment_date,
+                "amount": float(t.amount or 0),
+                "transaction_id": t.id,
+                "description": t.description,
+                "transaction_date": t.date,
+                "category_id": t.category_id,
+                "category_name": t.category.name if t.category else None,
+                "category_color": getattr(t.category, "color", None) if t.category else None,
+                "account_id": t.account_id,
+                "account_name": t.account.name if t.account else None,
+                "notes": p.notes,
+            })
+        else:
+            # Payment recorded without a linked transaction
+            rows.append({
+                "payment_id": p.id,
+                "payment_date": p.payment_date,
+                "amount": float(p.amount or 0),
+                "transaction_id": None,
+                "description": "Payment (no transaction linked)",
+                "transaction_date": p.payment_date,
+                "category_id": None,
+                "category_name": None,
+                "category_color": None,
+                "account_id": None,
+                "account_name": None,
+                "notes": p.notes,
+            })
+
+    return {
+        "recurring_expense": {
+            "id": expense.id,
+            "name": expense.name,
+            "amount": expense.amount,
+            "recurrence_interval": expense.recurrence_interval,
+            "recurrence_unit": expense.recurrence_unit,
+            "next_due_date": expense.next_due_date,
+            "category_id": expense.category_id,
+            "account_id": expense.account_id,
+        },
+        "transactions": rows,
+        "summary": {
+            "total_paid": total_paid,
+            "payment_count": payment_count,
+            "last_payment_date": last_payment_date,
+        },
+    }

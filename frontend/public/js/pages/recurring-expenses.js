@@ -102,55 +102,167 @@ function renderSection(title, items) {
     `;
 }
 
+function tintForId(id) {
+    return ((parseInt(id, 10) || 0) % 6) + 1;
+}
+
+function recurringStatusInfo(expense) {
+    if (!expense.is_active) {
+        return { cls: 'fin-status-future', text: 'Inactive' };
+    }
+    if (expense.is_overdue) {
+        return { cls: 'fin-status-overdue', text: `Overdue · ${Math.abs(expense.days_until_due)}d` };
+    }
+    if (expense.days_until_due === 0) {
+        return { cls: 'fin-status-soon', text: 'Due today' };
+    }
+    if (expense.days_until_due <= 7) {
+        return { cls: 'fin-status-soon', text: `Due in ${expense.days_until_due}d` };
+    }
+    return { cls: 'fin-status-future', text: `In ${expense.days_until_due}d` };
+}
+
 function renderCard(expense) {
     const cat = categories.find(c => c.id === expense.category_id);
     const acc = accounts.find(a => a.id === expense.account_id);
+    const tintIdx = tintForId(expense.category_id || expense.id);
+    const status = recurringStatusInfo(expense);
 
-    let dueLabel, cardAccent;
-    if (expense.is_overdue) {
-        dueLabel = `<span class="badge badge-error badge-sm">${Math.abs(expense.days_until_due)}d overdue</span>`;
-        cardAccent = 'border-l-4 border-l-error';
-    } else if (expense.days_until_due === 0) {
-        dueLabel = `<span class="badge badge-warning badge-sm">Due today</span>`;
-        cardAccent = 'border-l-4 border-l-warning';
-    } else if (expense.days_until_due <= 7) {
-        dueLabel = `<span class="badge badge-warning badge-sm">In ${expense.days_until_due}d</span>`;
-        cardAccent = 'border-l-4 border-l-warning';
-    } else if (!expense.is_active) {
-        dueLabel = `<span class="badge badge-ghost badge-sm">Inactive</span>`;
-        cardAccent = 'opacity-60';
-    } else {
-        dueLabel = `<span class="badge badge-ghost badge-sm">In ${expense.days_until_due}d</span>`;
-        cardAccent = '';
-    }
+    const unit = expense.recurrence_unit || 'months';
+    const interval = expense.recurrence_interval || 1;
+    const cadenceLabel = interval === 1
+        ? ({ days: 'Daily', weeks: 'Weekly', months: 'Monthly' }[unit] || `Every ${unit}`)
+        : `Every ${interval} ${unit}`;
 
-    const periodLabel = `Every ${expense.recurrence_interval} ${expense.recurrence_unit}`;
+    const metaBits = [];
+    if (cat) metaBits.push(cat.name);
+    if (acc) metaBits.push(acc.name);
+    metaBits.push(`Next ${Utils.formatDate(expense.next_due_date)}`);
 
     return `
-        <div class="card bg-base-100 shadow-sm hover:shadow-md transition-shadow ${cardAccent}">
-            <div class="card-body p-5">
-                <div class="flex justify-between items-start gap-2 mb-2">
-                    <div class="flex-1 min-w-0">
-                        <h3 class="font-bold text-base truncate">${expense.name}</h3>
-                        <p class="text-xs text-base-content/50 mt-0.5">${periodLabel}</p>
+        <div class="fin-card fin-tint-${tintIdx} ${expense.is_active ? '' : 'fin-card-paid'}" style="max-width: 560px; width: 100%;">
+            <div class="fin-card-band">
+                <span class="fin-chip">${cadenceLabel}</span>
+                <span class="fin-status ${status.cls}">${status.text}</span>
+            </div>
+            <div class="fin-card-body">
+                <div class="flex items-baseline justify-between gap-3">
+                    <div class="min-w-0">
+                        <h3 class="font-semibold text-base leading-tight truncate" title="${expense.name}">${expense.name}</h3>
+                        <p class="text-xs text-base-content/55 truncate mt-0.5">${metaBits.join(' · ')}</p>
                     </div>
-                    <span class="text-lg font-bold shrink-0">${Utils.formatCurrency(expense.amount)}</span>
+                    <div class="fin-hero-balance shrink-0" style="font-size: 1.5rem;">${Utils.formatCurrency(expense.amount)}</div>
                 </div>
-                <div class="flex flex-wrap gap-1.5 mb-3">
-                    ${dueLabel}
-                    ${cat ? `<span class="badge badge-outline badge-sm">${cat.name}</span>` : ''}
-                    ${acc ? `<span class="badge badge-ghost badge-sm">${acc.name}</span>` : ''}
-                </div>
-                <p class="text-xs text-base-content/40 mb-4">Next due: <span class="font-medium text-base-content/60">${Utils.formatDate(expense.next_due_date)}</span></p>
-                <div class="flex gap-2 justify-end border-t border-base-200 pt-3">
-                    ${expense.is_active ? `<button onclick="openPayModal(${expense.id})" class="btn btn-success btn-xs">Mark Paid</button>` : ''}
-                    <button onclick="openEditModal(${expense.id})" class="btn btn-ghost btn-xs">Edit</button>
-                    <button onclick="deleteExpense(${expense.id})" class="btn btn-error btn-xs btn-outline">Delete</button>
+                ${expense.notes ? `<p class="text-xs text-base-content/55 line-clamp-2">${expense.notes}</p>` : ''}
+            </div>
+            <div class="fin-card-footer">
+                <button onclick="viewRecurringDetails(${expense.id})" class="btn btn-sm btn-ghost text-primary">View Transactions</button>
+                ${expense.is_active ? `<button onclick="openPayModal(${expense.id})" class="btn btn-sm btn-primary">Mark Paid</button>` : ''}
+                <div class="ml-auto dropdown dropdown-end">
+                    <button tabindex="0" class="btn btn-ghost btn-sm btn-square" aria-label="More actions">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="currentColor" viewBox="0 0 24 24"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>
+                    </button>
+                    <ul tabindex="0" class="dropdown-content menu bg-base-100 rounded-box shadow-lg border border-base-200 z-10 w-44 p-1">
+                        <li><a onclick="openEditModal(${expense.id})">Edit</a></li>
+                        <li><a class="text-error" onclick="deleteExpense(${expense.id})">Delete</a></li>
+                    </ul>
                 </div>
             </div>
         </div>
     `;
 }
+
+window.viewRecurringDetails = async (id) => {
+    const expense = recurringExpenses.find(e => e.id === id);
+    if (!expense) return;
+
+    const modal = document.getElementById('recurringDetailsModal');
+    const titleEl = document.getElementById('recurringDetailsTitle');
+    const subtitleEl = document.getElementById('recurringDetailsSubtitle');
+    const bodyEl = document.getElementById('recurringDetailsBody');
+
+    titleEl.textContent = expense.name;
+    const cat = categories.find(c => c.id === expense.category_id);
+    const cadence = expense.recurrence_interval === 1
+        ? ({ days: 'Daily', weeks: 'Weekly', months: 'Monthly' }[expense.recurrence_unit] || expense.recurrence_unit)
+        : `Every ${expense.recurrence_interval} ${expense.recurrence_unit}`;
+    subtitleEl.textContent = `${cadence}${cat ? ' · ' + cat.name : ''} · ${Utils.formatCurrency(expense.amount)}`;
+    bodyEl.innerHTML = '<p class="text-base-content/60 text-sm">Loading…</p>';
+    modal.showModal();
+
+    try {
+        const data = await API.recurringExpenses.getTransactions(id);
+        const txns = data.transactions || [];
+        const summary = data.summary || {};
+
+        const summaryStrip = `
+            <div class="fin-mini-kpis" style="border-bottom: 1px solid color-mix(in oklch, var(--color-base-content) 6%, transparent);">
+                <div>
+                    <div class="fin-mini-kpi-label">Total Paid</div>
+                    <div class="fin-mini-kpi-value">${Utils.formatCurrency(summary.total_paid || 0)}</div>
+                </div>
+                <div>
+                    <div class="fin-mini-kpi-label">Payments</div>
+                    <div class="fin-mini-kpi-value">${summary.payment_count || 0}</div>
+                </div>
+                <div>
+                    <div class="fin-mini-kpi-label">Last Payment</div>
+                    <div class="fin-mini-kpi-value" style="font-size:0.9375rem;">${summary.last_payment_date ? Utils.formatDate(summary.last_payment_date) : '—'}</div>
+                </div>
+            </div>
+        `;
+
+        let body;
+        if (txns.length === 0) {
+            body = `
+                ${summaryStrip}
+                <div class="text-center py-8">
+                    <p class="text-base-content/60 text-sm">No payments recorded yet.</p>
+                    <p class="text-base-content/40 text-xs mt-1">Use "Mark Paid" on the card to record one.</p>
+                </div>
+            `;
+        } else {
+            const rows = txns.map(t => {
+                const accBadge = t.account_name ? `<span class="text-xs text-base-content/55">${t.account_name}</span>` : '';
+                const catChip = t.category_name
+                    ? `<span class="badge badge-ghost badge-sm">${t.category_name}</span>`
+                    : '';
+                return `
+                    <tr>
+                        <td class="text-xs whitespace-nowrap">${Utils.formatDate(t.transaction_date || t.payment_date)}</td>
+                        <td class="text-sm">
+                            <div class="font-medium truncate">${t.description || '—'}</div>
+                            ${accBadge}
+                        </td>
+                        <td>${catChip}</td>
+                        <td class="text-right fin-numeric font-semibold whitespace-nowrap">${Utils.formatCurrency(t.amount)}</td>
+                    </tr>
+                `;
+            }).join('');
+
+            body = `
+                ${summaryStrip}
+                <div class="overflow-x-auto mt-4">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr class="text-xs uppercase tracking-wider text-base-content/55">
+                                <th>Date</th>
+                                <th>Description</th>
+                                <th>Category</th>
+                                <th class="text-right">Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody>${rows}</tbody>
+                    </table>
+                </div>
+            `;
+        }
+        bodyEl.innerHTML = body;
+    } catch (err) {
+        console.error('Failed to load linked transactions:', err);
+        bodyEl.innerHTML = `<p class="text-error text-sm">Error loading transactions: ${err.message || 'Unknown error'}</p>`;
+    }
+};
 
 window.openCreateModal = () => {
     editingId = null;

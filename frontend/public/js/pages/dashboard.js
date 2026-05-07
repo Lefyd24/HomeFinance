@@ -264,7 +264,8 @@ async function loadDashboardData() {
                                     <p class="dash-panel-sub">Total expenses by category for the selected period</p>
                                 </div>
                             </div>
-                            <div class="h-56 sm:h-64 lg:h-72">
+                            <div id="spending-kpis" class="fin-mini-kpis"></div>
+                            <div class="h-64 sm:h-72 lg:h-80">
                                 <canvas id="spendingChart"></canvas>
                             </div>
 
@@ -284,10 +285,10 @@ async function loadDashboardData() {
 
                     </div>
 
-                    <!-- Right column: budgets + debts -->
-                    <div class="flex flex-col gap-4 md:gap-5">
-                        <div id="budget-overview"></div>
+                    <!-- Right column: upcoming payments first, budgets second -->
+                    <div class="flex flex-col gap-4 md:gap-5 fin-stagger">
                         <div id="debts-overview"></div>
+                        <div id="budget-overview"></div>
                     </div>
                 </div>
 
@@ -438,49 +439,135 @@ async function loadDashboardData() {
 // Store chart instance globally
 let spendingChartInstance = null;
 
+function getCategoryRamp() {
+    const root = getComputedStyle(document.documentElement);
+    const ramp = [];
+    for (let i = 1; i <= 6; i += 1) {
+        const v = root.getPropertyValue(`--cat-${i}`).trim();
+        if (v) ramp.push(v);
+    }
+    return ramp.length ? ramp : ['#3B82F6', '#10B981', '#8B5CF6', '#F59E0B', '#EF4444', '#6B7280'];
+}
+
+function gridLineColor(opacity = 0.08) {
+    const root = getComputedStyle(document.documentElement);
+    const baseContent = root.getPropertyValue('--color-base-content').trim() || '#000';
+    return `color-mix(in oklch, ${baseContent} ${Math.round(opacity * 100)}%, transparent)`;
+}
+
 async function loadSpendingChart() {
     const ctx = document.getElementById('spendingChart');
     if (!ctx) return;
-    
+
     try {
         const data = await API.reports.spending({
             start_date: dashboardDateRange.startDate,
             end_date: dashboardDateRange.endDate
         });
-        
-        // Destroy existing chart if it exists
+
+        const labels = data.labels || [];
+        const values = (data.data || []).map(v => parseFloat(v) || 0);
+        const total = values.reduce((s, v) => s + v, 0);
+
+        // Populate KPI strip above the chart
+        const kpiHost = document.getElementById('spending-kpis');
+        if (kpiHost) {
+            if (!labels.length) {
+                kpiHost.innerHTML = '';
+            } else {
+                let topIdx = 0;
+                values.forEach((v, i) => { if (v > values[topIdx]) topIdx = i; });
+                const topShare = total > 0 ? (values[topIdx] / total * 100) : 0;
+                const txCount = data.transaction_count;
+                kpiHost.innerHTML = `
+                    <div>
+                        <div class="fin-mini-kpi-label">Total Spent</div>
+                        <div class="fin-mini-kpi-value">${Utils.formatCurrency(total)}</div>
+                    </div>
+                    <div>
+                        <div class="fin-mini-kpi-label">Top Category</div>
+                        <div class="fin-mini-kpi-value" style="font-size:0.9375rem;">${labels[topIdx] || '—'}</div>
+                        <div class="fin-mini-kpi-delta">${topShare.toFixed(0)}% of spend</div>
+                    </div>
+                    <div>
+                        <div class="fin-mini-kpi-label">Categories</div>
+                        <div class="fin-mini-kpi-value">${labels.length}</div>
+                        ${typeof txCount === 'number' ? `<div class="fin-mini-kpi-delta">${txCount} transactions</div>` : ''}
+                    </div>
+                `;
+            }
+        }
+
         if (spendingChartInstance) {
             spendingChartInstance.destroy();
         }
-        
+
+        const ramp = getCategoryRamp();
+        const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        const tickColor = gridLineColor(0.5);
+
         spendingChartInstance = new Chart(ctx, {
             type: 'bar',
             data: {
-                labels: data.labels || [],
+                labels,
                 datasets: [{
                     label: 'Spending',
-                    data: data.data || [],
-                    backgroundColor: [
-                        '#3B82F6', '#10B981', '#8B5CF6', '#F59E0B', '#EF4444', '#6B7280'
-                    ],
-                    borderRadius: 4
+                    data: values,
+                    backgroundColor: values.map((_, i) => ramp[i % ramp.length]),
+                    hoverBackgroundColor: values.map((_, i) =>
+                        `color-mix(in oklch, ${ramp[i % ramp.length]} 80%, white)`),
+                    borderRadius: { topLeft: 6, topRight: 6, bottomLeft: 0, bottomRight: 0 },
+                    borderSkipped: false,
+                    categoryPercentage: 0.65,
+                    barPercentage: 0.85
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
+                animation: reduceMotion ? false : { duration: 600, easing: 'easeOutQuart' },
                 plugins: {
-                    legend: {
-                        display: false
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: 'rgba(20,20,25,0.92)',
+                        padding: 10,
+                        titleFont: { size: 12, weight: '600' },
+                        bodyFont: { size: 12 },
+                        cornerRadius: 8,
+                        displayColors: false,
+                        callbacks: {
+                            label: (item) => {
+                                const v = item.parsed.y;
+                                const share = total > 0 ? (v / total * 100).toFixed(1) : '0';
+                                return `${Utils.formatCurrency(v)} · ${share}% of total`;
+                            }
+                        }
                     }
                 },
                 scales: {
+                    x: {
+                        border: { display: false },
+                        grid: { display: false },
+                        ticks: {
+                            color: tickColor,
+                            font: { size: 11, weight: '500' },
+                            maxRotation: 0,
+                            autoSkip: true
+                        }
+                    },
                     y: {
                         beginAtZero: true,
+                        border: { display: false },
+                        grid: {
+                            color: gridLineColor(0.06),
+                            drawTicks: false,
+                            lineWidth: 1
+                        },
                         ticks: {
-                            callback: function(value) {
-                                return '€' + value;
-                            }
+                            color: tickColor,
+                            font: { size: 11 },
+                            padding: 8,
+                            callback: function(value) { return '€' + value; }
                         }
                     }
                 }
@@ -498,13 +585,13 @@ async function loadBudgetOverview() {
         
         if (!budgets || budgets.length === 0) {
             container.innerHTML = `
-                <div class="card bg-base-100 shadow-xl">
-                    <div class="card-body">
-                        <h2 class="card-title mb-4">Budget Overview</h2>
-                        <p class="text-base-content/60">No budgets created yet.</p>
-                        <div class="card-actions justify-end mt-4">
-                            <a href="budgets.html" class="btn btn-sm btn-primary">Create Budget</a>
-                        </div>
+                <div class="dash-panel">
+                    <div class="dash-panel-header">
+                        <h2 class="dash-panel-title">Budget Overview</h2>
+                    </div>
+                    <p class="text-base-content/60 text-sm">No budgets created yet.</p>
+                    <div class="flex justify-end mt-3">
+                        <a href="budgets.html" class="btn btn-xs btn-primary">Create Budget</a>
                     </div>
                 </div>
             `;
@@ -535,15 +622,13 @@ async function loadBudgetOverview() {
         
         if (relevantBudgets.length === 0) {
             container.innerHTML = `
-                <div class="card bg-base-100 shadow-xl">
-                    <div class="card-body">
-                        <h2 class="card-title mb-4">Budget Overview</h2>
-                        <p class="text-base-content/60">No budgets for the selected date range.</p>
-                        <div class="card-actions justify-end mt-4">
-                            <a href="budgets.html" class="btn btn-sm btn-primary">
-                                Manage Budgets
-                            </a>
-                        </div>
+                <div class="dash-panel">
+                    <div class="dash-panel-header">
+                        <h2 class="dash-panel-title">Budget Overview</h2>
+                    </div>
+                    <p class="text-base-content/60 text-sm">No budgets for the selected date range.</p>
+                    <div class="flex justify-end mt-3">
+                        <a href="budgets.html" class="btn btn-xs btn-primary">Manage Budgets</a>
                     </div>
                 </div>
             `;
@@ -620,52 +705,48 @@ async function loadBudgetOverview() {
             };
         });
         
-        // Calculate total spent vs total budget
+        // Aggregate
         const totalBudget = budgetsWithSpending.reduce((sum, b) => sum + (b.adjustedAmount || 0), 0);
         const totalSpent = budgetsWithSpending.reduce((sum, b) => sum + (b.spent || 0), 0);
-        const totalPercentage = totalBudget > 0 ? (totalSpent / totalBudget * 100) : 0;
-        
-        // Determine badge color based on percentage
-        let badgeClass = 'badge-primary';
-        if (totalPercentage > 90) {
-            badgeClass = 'badge-error';
-        } else if (totalPercentage > 75) {
-            badgeClass = 'badge-warning';
-        }
-        
+        const onTrackCount = budgetsWithSpending.filter(b => (b.percentage || 0) < 100).length;
+
+        const tintForIndex = (i) => `var(--cat-${(i % 6) + 1})`;
+
         container.innerHTML = `
-            <div class="card bg-base-100 shadow-xl">
-                <div class="card-body">
-                    <div class="flex justify-between items-center gap-2 mb-4">
-                        <h2 class="card-title">Budget Overview</h2>
-                        <span class="badge ${badgeClass} badge-sm badge-soft">
-                            ${Utils.formatCurrency(totalSpent)} / ${Utils.formatCurrency(totalBudget)}
-                        </span>
+            <div class="dash-panel">
+                <div class="dash-panel-header">
+                    <div>
+                        <h2 class="dash-panel-title">Budget Overview</h2>
+                        <p class="dash-panel-sub fin-numeric">${Utils.formatCurrency(totalSpent)} of ${Utils.formatCurrency(totalBudget)}</p>
                     </div>
-                    <div class="space-y-4">
-                        ${budgetsWithSpending.map(budget => `
-                            <div>
-                                <div class="flex justify-between mb-1">
-                                    <span class="font-medium">${budget.name}</span>
-                                    <span class="text-sm">${Utils.formatCurrency(budget.spent || 0)} / ${Utils.formatCurrency(budget.adjustedAmount)}</span>
+                    <a href="budgets.html" class="btn btn-xs btn-ghost">All</a>
+                </div>
+                <div>
+                    ${budgetsWithSpending.map((budget, i) => {
+                        const pct = Math.max(0, Math.min(100, budget.percentage || 0));
+                        const over = (budget.percentage || 0) >= 100;
+                        const tint = tintForIndex(i);
+                        return `
+                            <div class="fin-row">
+                                <div class="fin-row-name" title="${budget.name}">${budget.name}</div>
+                                <div class="fin-row-value">${Math.round(budget.percentage || 0)}%</div>
+                                <div class="grid-cols-1" style="grid-column: 1 / -1;">
+                                    <div class="fin-track" style="margin-top:0.375rem;">
+                                        <div class="fin-track-fill ${over ? 'fin-track-fill-over' : ''}"
+                                             style="width:${pct}%; ${over ? '' : `background:${tint};`}"></div>
+                                    </div>
                                 </div>
-                                <progress class="progress ${(budget.percentage || 0) > 90 ? 'progress-error' : (budget.percentage || 0) > 75 ? 'progress-warning' : 'progress-primary'} w-full" 
-                                          value="${budget.percentage || 0}" max="100"></progress>
-                                <div class="flex justify-between mt-1 text-xs text-base-content/60">
-                                    <span>${Math.round(budget.percentage || 0)}% used ${budget.periodLabel}</span>
-                                    <span class="${budget.remaining < 0 ? 'text-error' : ''}">${Utils.formatCurrency(Math.abs(budget.remaining || 0))} ${budget.remaining < 0 ? 'over' : 'left'}</span>
+                                <div class="fin-row-meta">
+                                    <span class="fin-numeric">${Utils.formatCurrency(budget.spent || 0)} / ${Utils.formatCurrency(budget.adjustedAmount)}</span>
+                                    <span class="${budget.remaining < 0 ? 'text-error' : ''} fin-numeric">${budget.remaining < 0 ? '−' : ''}${Utils.formatCurrency(Math.abs(budget.remaining || 0))} ${budget.remaining < 0 ? 'over' : 'left'}</span>
                                 </div>
                             </div>
-                        `).join('')}
-                    </div>
-                    <div class="card-actions justify-end mt-4">
-                        <a href="budgets.html" class="btn btn-sm btn-ghost">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-                            </svg>
-                            Manage Budgets
-                        </a>
-                    </div>
+                        `;
+                    }).join('')}
+                </div>
+                <div class="flex justify-between items-center mt-3 pt-3" style="border-top: 1px solid color-mix(in oklch, var(--color-base-content) 6%, transparent);">
+                    <span class="text-xs text-base-content/60">${onTrackCount} of ${budgetsWithSpending.length} on track</span>
+                    <a href="budgets.html" class="text-xs font-medium text-primary hover:underline">Manage →</a>
                 </div>
             </div>
         `;
@@ -1192,20 +1273,14 @@ async function loadDebtsOverview() {
 
         if (!allUpcomingPayments || allUpcomingPayments.length === 0) {
             if (upcomingRecurring.length === 0) {
-                console.log('No upcoming debt payments or recurring expenses, showing empty state');
                 container.innerHTML = `
-                    <div class="card bg-base-100 shadow-xl">
-                        <div class="card-body">
-                            <h2 class="card-title mb-4 flex items-center gap-2">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-                                </svg>
-                                Upcoming Payments
-                            </h2>
-                            <p class="text-base-content/60 mb-4">No upcoming payments in the selected date range.</p>
-                            <div class="card-actions justify-end">
-                                <a href="debts.html" class="btn btn-sm btn-error">Manage Debts</a>
-                            </div>
+                    <div class="dash-panel">
+                        <div class="dash-panel-header">
+                            <h2 class="dash-panel-title">Upcoming Payments</h2>
+                        </div>
+                        <p class="text-base-content/60 text-sm">Nothing due in the selected window.</p>
+                        <div class="flex justify-end mt-3">
+                            <a href="debts.html" class="text-xs font-medium text-primary hover:underline">Manage debts →</a>
                         </div>
                     </div>
                 `;
@@ -1214,114 +1289,103 @@ async function loadDebtsOverview() {
             allUpcomingPayments = [];
         }
         
-        // Separate overdue, due soon, and future payments
-        const overdue = allUpcomingPayments.filter(p => p.is_overdue);
-        const dueSoon = allUpcomingPayments.filter(p => !p.is_overdue && p.days_until_due <= 7);
-        const future = allUpcomingPayments.filter(p => !p.is_overdue && p.days_until_due > 7);
-        
-        // Show first 3 payments with full details
-        const paymentsToShow = allUpcomingPayments.slice(0, 3);
-        
-        container.innerHTML = `
-            <div class="card bg-base-100 shadow-xl">
-                <div class="card-body p-4">
-                    <div class="flex justify-between items-center mb-3">
-                        <h2 class="card-title text-base flex items-center gap-2">
-                            Upcoming Payments
-                        </h2>
-                        <a href="debts.html" class="btn btn-xs btn-ghost">View All</a>
-                    </div>
-                    
-                    ${overdue.length > 0 ? `
-                        <div class="alert alert-error py-2 mb-3">
-                            <span class="text-sm font-bold">${overdue.length} Overdue</span>
-                        </div>
-                    ` : ''}
-                    
-                    <div class="space-y-2">
-                        ${paymentsToShow.map(payment => {
-                            const debt = debts.find(d => d.id === payment.debt_id);
-                            const paymentProgress = debt ? ((debt.original_balance - debt.current_balance) / debt.original_balance * 100) : 0;
-                            
-                            let statusBadge = '';
-                            let statusColor = '';
-                            
-                            if (payment.is_overdue) {
-                                statusBadge = '<span class="badge badge-error badge-xs">Overdue</span>';
-                                statusColor = 'text-error';
-                            } else if (payment.days_until_due === 0) {
-                                statusBadge = '<span class="badge badge-warning badge-xs">Today</span>';
-                                statusColor = 'text-warning';
-                            } else if (payment.days_until_due <= 3) {
-                                statusBadge = '<span class="badge badge-warning badge-xs">Soon</span>';
-                                statusColor = 'text-warning';
-                            } else {
-                                statusBadge = `<span class="badge badge-ghost badge-xs">${payment.days_until_due}d</span>`;
-                                statusColor = 'text-base-content';
-                            }
-                            
-                            const oneTimeBadge = payment.is_one_time ? '<span class="badge badge-warning badge-xs">One-Time</span>' : '';
-                            
-                            return `
-                                <div class="bg-base-200 rounded-lg p-3">
-                                    <div class="flex justify-between items-start mb-2">
-                                        <div class="flex-1 min-w-0">
-                                            <div class="flex items-center gap-2 mb-1">
-                                                <h4 class="font-semibold text-sm truncate">${payment.debt_name}</h4>
-                                                ${statusBadge}
-                                                ${oneTimeBadge}
-                                            </div>
-                                            ${payment.creditor ? `<p class="text-xs text-base-content/60">${payment.creditor}</p>` : ''}
-                                        </div>
-                                        <div class="text-right ml-2">
-                                            <p class="font-bold text-sm ${statusColor}">${Utils.formatCurrency(payment.amount)}</p>
-                                            <p class="text-xs text-base-content/60">${Utils.formatDate(payment.due_date)}</p>
-                                        </div>
-                                    </div>
-                                    ${debt ? `
-                                        <progress class="progress progress-sm w-full ${payment.is_overdue ? 'progress-error' : payment.days_until_due <= 3 ? 'progress-warning' : 'progress-info'}" value="${paymentProgress}" max="100"></progress>
-                                        <div class="flex justify-between text-xs text-base-content/60 mt-1">
-                                            <span>${paymentProgress.toFixed(0)}% paid</span>
-                                            <span>${Utils.formatCurrency(debt.current_balance)} left</span>
-                                        </div>
-                                    ` : ''}
-                                </div>
-                            `;
-                        }).join('')}
-                    </div>
-                    
-                    ${allUpcomingPayments.length > 3 ? `
-                        <p class="text-xs text-base-content/60 mt-2 text-center">+ ${allUpcomingPayments.length - 3} more</p>
-                    ` : ''}
+        const overdueCount = allUpcomingPayments.filter(p => p.is_overdue).length;
 
-                    ${upcomingRecurring.length > 0 ? `
-                        <div class="divider text-xs my-3">Upcoming Recurring Expenses</div>
-                        <div class="space-y-2">
-                            ${upcomingRecurring.slice(0, 3).map(r => {
-                                const statusBadge = r.is_overdue
-                                    ? '<span class="badge badge-error badge-xs">Overdue</span>'
-                                    : r.days_until_due === 0
-                                    ? '<span class="badge badge-warning badge-xs">Today</span>'
-                                    : `<span class="badge badge-ghost badge-xs">${r.days_until_due}d</span>`;
-                                return `
-                                    <div class="bg-base-200 rounded-lg p-3 flex justify-between items-center">
-                                        <div class="flex-1 min-w-0">
-                                            <div class="flex items-center gap-2">
-                                                <span class="font-semibold text-sm truncate">${r.name}</span>
-                                                ${statusBadge}
-                                            </div>
-                                            <p class="text-xs text-base-content/60">${Utils.formatDate(r.due_date)}</p>
-                                        </div>
-                                        <span class="font-bold text-sm ml-2">${Utils.formatCurrency(r.amount)}</span>
-                                    </div>
-                                `;
-                            }).join('')}
-                            ${upcomingRecurring.length > 3 ? `<p class="text-xs text-base-content/60 text-center mt-1">+ ${upcomingRecurring.length - 3} more</p>` : ''}
-                        </div>
-                        <div class="mt-2 text-right">
-                            <a href="recurring-expenses.html" class="btn btn-xs btn-ghost">Manage Recurring</a>
-                        </div>
-                    ` : ''}
+        // Combine debts + recurring expenses into a single list, then split by horizon
+        const recurringRows = (upcomingRecurring || []).map(r => ({
+            __type: 'recurring',
+            name: r.name,
+            secondary: r.category_name || 'Recurring',
+            amount: r.amount,
+            due_date: r.due_date,
+            days_until_due: r.days_until_due,
+            is_overdue: r.is_overdue,
+            is_one_time: false
+        }));
+        const debtRows = allUpcomingPayments.map(p => ({
+            __type: 'debt',
+            name: p.debt_name,
+            secondary: p.creditor || '—',
+            amount: p.amount,
+            due_date: p.due_date,
+            days_until_due: p.days_until_due,
+            is_overdue: p.is_overdue,
+            is_one_time: !!p.is_one_time
+        }));
+        const merged = [...debtRows, ...recurringRows].sort((a, b) =>
+            new Date(a.due_date) - new Date(b.due_date));
+
+        const dueThisWeek = merged.filter(p => p.is_overdue || p.days_until_due <= 7);
+        const dueLater    = merged.filter(p => !p.is_overdue && p.days_until_due > 7);
+
+        const renderRow = (p) => {
+            let statusClass = 'fin-status-future';
+            let statusText  = `In ${p.days_until_due}d`;
+            if (p.is_overdue) {
+                statusClass = 'fin-status-overdue';
+                statusText  = `Overdue · ${Math.abs(p.days_until_due)}d`;
+            } else if (p.days_until_due === 0) {
+                statusClass = 'fin-status-soon';
+                statusText  = 'Due today';
+            } else if (p.days_until_due <= 3) {
+                statusClass = 'fin-status-soon';
+                statusText  = `In ${p.days_until_due}d`;
+            }
+            const oneTime = p.is_one_time ? ' · One-time' : '';
+            return `
+                <div class="fin-row" style="grid-template-columns: 1fr auto;">
+                    <div class="min-w-0">
+                        <div class="fin-row-name" title="${p.name}">${p.name}</div>
+                        <div class="text-xs text-base-content/60 truncate">${p.secondary}${oneTime}</div>
+                    </div>
+                    <div class="text-right">
+                        <div class="fin-row-value fin-numeric">${Utils.formatCurrency(p.amount)}</div>
+                        <div class="fin-status ${statusClass}">${statusText}</div>
+                    </div>
+                </div>
+            `;
+        };
+
+        const sectionHeader = (title, count) => `
+            <div class="flex items-baseline justify-between mt-1 mb-1">
+                <span class="text-xs font-semibold uppercase tracking-wider text-base-content/55">${title}</span>
+                <span class="text-xs text-base-content/45 fin-numeric">${count}</span>
+            </div>
+        `;
+
+        const visibleThisWeek = dueThisWeek.slice(0, 5);
+        const visibleLater    = dueLater.slice(0, 3);
+        const hiddenCount     = (dueThisWeek.length - visibleThisWeek.length) + (dueLater.length - visibleLater.length);
+
+        container.innerHTML = `
+            <div class="dash-panel">
+                <div class="dash-panel-header">
+                    <div>
+                        <h2 class="dash-panel-title">Upcoming Payments</h2>
+                        ${overdueCount > 0
+                            ? `<p class="dash-panel-sub" style="color: oklch(58% 0.18 25);">${overdueCount} overdue</p>`
+                            : `<p class="dash-panel-sub">${merged.length} scheduled</p>`}
+                    </div>
+                    <a href="debts.html" class="btn btn-xs btn-ghost">All</a>
+                </div>
+
+                ${visibleThisWeek.length > 0 ? `
+                    ${sectionHeader('Due this week', dueThisWeek.length)}
+                    <div>${visibleThisWeek.map(renderRow).join('')}</div>
+                ` : ''}
+
+                ${visibleLater.length > 0 ? `
+                    ${sectionHeader('Later this month', dueLater.length)}
+                    <div>${visibleLater.map(renderRow).join('')}</div>
+                ` : ''}
+
+                ${visibleThisWeek.length === 0 && visibleLater.length === 0 ? `
+                    <p class="text-base-content/60 text-sm py-2">Nothing due soon.</p>
+                ` : ''}
+
+                <div class="flex justify-between items-center mt-3 pt-3" style="border-top: 1px solid color-mix(in oklch, var(--color-base-content) 6%, transparent);">
+                    <span class="text-xs text-base-content/60">${hiddenCount > 0 ? `+${hiddenCount} more` : ' '}</span>
+                    <a href="debts.html" class="text-xs font-medium text-primary hover:underline">View all →</a>
                 </div>
             </div>
         `;
@@ -1330,18 +1394,11 @@ async function loadDebtsOverview() {
         const container = document.getElementById('debts-overview');
         if (container) {
             container.innerHTML = `
-                <div class="card bg-base-100 shadow-xl">
-                    <div class="card-body">
-                        <h2 class="card-title mb-4 flex items-center gap-2">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-error" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-                            </svg>
-                            Debt Payments
-                        </h2>
-                        <div class="alert alert-error">
-                            <span>Error loading debt payments: ${error.message || 'Unknown error'}</span>
-                        </div>
+                <div class="dash-panel">
+                    <div class="dash-panel-header">
+                        <h2 class="dash-panel-title">Upcoming Payments</h2>
                     </div>
+                    <p class="text-error text-sm">Error loading: ${error.message || 'Unknown error'}</p>
                 </div>
             `;
         }

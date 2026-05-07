@@ -649,6 +649,9 @@ const API = {
 
         recordPayment: (id, data) =>
             API.request(`/recurring-expenses/${id}/payments`, { method: 'POST', body: JSON.stringify(data) }),
+
+        getTransactions: (id, skip = 0, limit = 50) =>
+            API.request(`/recurring-expenses/${id}/transactions?skip=${skip}&limit=${limit}`),
     },
 
     // Analytics methods - ML-powered financial analytics
