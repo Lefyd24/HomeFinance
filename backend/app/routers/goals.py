@@ -5,7 +5,7 @@ from typing import List
 from datetime import date, timedelta
 
 from app.database import get_db
-from app.utils.security import get_current_user
+from app.utils.security import get_current_user_authenticated as get_current_user
 from app.schemas.goal import (
     GoalCreate,
     GoalUpdate,

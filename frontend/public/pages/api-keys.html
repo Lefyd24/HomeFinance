@@ -40,8 +40,9 @@
                         API Key Management
                     </h2>
                     <p class="text-base-content/70 mt-2">
-                        Use API keys to authenticate programmatic access to your transactions. 
-                        API keys can be used to add and retrieve transactions from external scripts or applications.
+                        Use API keys to authenticate programmatic access to your financial data. 
+                        API keys can be used to query accounts, transactions, budgets, debts, reports, and more 
+                        from external scripts, automations, or integrations.
                     </p>
                     
                     <div id="apiKeyStatusContainer" class="mt-6">
@@ -74,23 +75,180 @@
                         
                         <div class="bg-base-200 rounded-lg p-4">
                             <h3 class="font-medium text-sm mb-2">Available Endpoints</h3>
-                            <ul class="space-y-2 text-sm text-base-content/70">
-                                <li class="flex items-start gap-2">
-                                    <span class="badge badge-sm badge-success">GET</span>
-                                    <code class="bg-base-300 px-1 rounded">/api/transactions</code>
-                                    <span>- List transactions with filters</span>
-                                </li>
-                                <li class="flex items-start gap-2">
-                                    <span class="badge badge-sm badge-info">POST</span>
-                                    <code class="bg-base-300 px-1 rounded">/api/transactions</code>
-                                    <span>- Create a new transaction</span>
-                                </li>
-                                <li class="flex items-start gap-2">
-                                    <span class="badge badge-sm badge-success">GET</span>
-                                    <code class="bg-base-300 px-1 rounded">/api/transactions/{id}</code>
-                                    <span>- Get a specific transaction</span>
-                                </li>
-                            </ul>
+                            <p class="text-xs text-base-content/60 mb-3">Pass your API key via the <code class="bg-base-300 px-1 py-0.5 rounded text-xs">X-API-Key</code> header to access any of these endpoints:</p>
+
+                            <details class="mb-2" open>
+                                <summary class="cursor-pointer font-medium text-sm text-primary mb-1">Transactions</summary>
+                                <ul class="space-y-1.5 text-sm text-base-content/70 ml-2">
+                                    <li class="flex items-start gap-2">
+                                        <span class="badge badge-sm badge-success">GET</span>
+                                        <code class="bg-base-300 px-1 rounded text-xs">/api/transactions</code>
+                                        <span>- List with filters</span>
+                                    </li>
+                                    <li class="flex items-start gap-2">
+                                        <span class="badge badge-sm badge-info">POST</span>
+                                        <code class="bg-base-300 px-1 rounded text-xs">/api/transactions</code>
+                                        <span>- Create a new transaction</span>
+                                    </li>
+                                    <li class="flex items-start gap-2">
+                                        <span class="badge badge-sm badge-success">GET</span>
+                                        <code class="bg-base-300 px-1 rounded text-xs">/api/transactions/{id}</code>
+                                        <span>- Get by ID</span>
+                                    </li>
+                                </ul>
+                            </details>
+
+                            <details class="mb-2">
+                                <summary class="cursor-pointer font-medium text-sm text-primary mb-1">Accounts</summary>
+                                <ul class="space-y-1.5 text-sm text-base-content/70 ml-2">
+                                    <li class="flex items-start gap-2">
+                                        <span class="badge badge-sm badge-success">GET</span>
+                                        <code class="bg-base-300 px-1 rounded text-xs">/api/accounts</code>
+                                        <span>- List accounts with balances</span>
+                                    </li>
+                                    <li class="flex items-start gap-2">
+                                        <span class="badge badge-sm badge-info">POST</span>
+                                        <code class="bg-base-300 px-1 rounded text-xs">/api/accounts</code>
+                                        <span>- Create an account</span>
+                                    </li>
+                                </ul>
+                            </details>
+
+                            <details class="mb-2">
+                                <summary class="cursor-pointer font-medium text-sm text-primary mb-1">Budgets</summary>
+                                <ul class="space-y-1.5 text-sm text-base-content/70 ml-2">
+                                    <li class="flex items-start gap-2">
+                                        <span class="badge badge-sm badge-success">GET</span>
+                                        <code class="bg-base-300 px-1 rounded text-xs">/api/budgets</code>
+                                        <span>- List budgets with progress</span>
+                                    </li>
+                                    <li class="flex items-start gap-2">
+                                        <span class="badge badge-sm badge-info">POST</span>
+                                        <code class="bg-base-300 px-1 rounded text-xs">/api/budgets</code>
+                                        <span>- Create a budget</span>
+                                    </li>
+                                    <li class="flex items-start gap-2">
+                                        <span class="badge badge-sm badge-success">GET</span>
+                                        <code class="bg-base-300 px-1 rounded text-xs">/api/budgets/{id}</code>
+                                        <span>- Get budget details</span>
+                                    </li>
+                                    <li class="flex items-start gap-2">
+                                        <span class="badge badge-sm badge-success">GET</span>
+                                        <code class="bg-base-300 px-1 rounded text-xs">/api/budgets/{id}/progress</code>
+                                        <span>- Budget spending progress</span>
+                                    </li>
+                                </ul>
+                            </details>
+
+                            <details class="mb-2">
+                                <summary class="cursor-pointer font-medium text-sm text-primary mb-1">Debts</summary>
+                                <ul class="space-y-1.5 text-sm text-base-content/70 ml-2">
+                                    <li class="flex items-start gap-2">
+                                        <span class="badge badge-sm badge-success">GET</span>
+                                        <code class="bg-base-300 px-1 rounded text-xs">/api/debts</code>
+                                        <span>- List debts</span>
+                                    </li>
+                                    <li class="flex items-start gap-2">
+                                        <span class="badge badge-sm badge-success">GET</span>
+                                        <code class="bg-base-300 px-1 rounded text-xs">/api/debts/summary</code>
+                                        <span>- Debt summary &amp; payoff plan</span>
+                                    </li>
+                                    <li class="flex items-start gap-2">
+                                        <span class="badge badge-sm badge-info">POST</span>
+                                        <code class="bg-base-300 px-1 rounded text-xs">/api/debts</code>
+                                        <span>- Add a new debt</span>
+                                    </li>
+                                </ul>
+                            </details>
+
+                            <details class="mb-2">
+                                <summary class="cursor-pointer font-medium text-sm text-primary mb-1">Categories</summary>
+                                <ul class="space-y-1.5 text-sm text-base-content/70 ml-2">
+                                    <li class="flex items-start gap-2">
+                                        <span class="badge badge-sm badge-success">GET</span>
+                                        <code class="bg-base-300 px-1 rounded text-xs">/api/categories</code>
+                                        <span>- List categories</span>
+                                    </li>
+                                    <li class="flex items-start gap-2">
+                                        <span class="badge badge-sm badge-info">POST</span>
+                                        <code class="bg-base-300 px-1 rounded text-xs">/api/categories</code>
+                                        <span>- Create a category</span>
+                                    </li>
+                                </ul>
+                            </details>
+
+                            <details class="mb-2">
+                                <summary class="cursor-pointer font-medium text-sm text-primary mb-1">Goals &amp; Reports</summary>
+                                <ul class="space-y-1.5 text-sm text-base-content/70 ml-2">
+                                    <li class="flex items-start gap-2">
+                                        <span class="badge badge-sm badge-success">GET</span>
+                                        <code class="bg-base-300 px-1 rounded text-xs">/api/goals</code>
+                                        <span>- List financial goals</span>
+                                    </li>
+                                    <li class="flex items-start gap-2">
+                                        <span class="badge badge-sm badge-info">POST</span>
+                                        <code class="bg-base-300 px-1 rounded text-xs">/api/goals</code>
+                                        <span>- Create a goal</span>
+                                    </li>
+                                    <li class="flex items-start gap-2">
+                                        <span class="badge badge-sm badge-success">GET</span>
+                                        <code class="bg-base-300 px-1 rounded text-xs">/api/reports</code>
+                                        <span>- Spending &amp; cashflow reports</span>
+                                    </li>
+                                    <li class="flex items-start gap-2">
+                                        <span class="badge badge-sm badge-success">GET</span>
+                                        <code class="bg-base-300 px-1 rounded text-xs">/api/reports/saved</code>
+                                        <span>- Saved reports</span>
+                                    </li>
+                                </ul>
+                            </details>
+
+                            <details class="mb-2">
+                                <summary class="cursor-pointer font-medium text-sm text-primary mb-1">Financial Advisor</summary>
+                                <ul class="space-y-1.5 text-sm text-base-content/70 ml-2">
+                                    <li class="flex items-start gap-2">
+                                        <span class="badge badge-sm badge-info">POST</span>
+                                        <code class="bg-base-300 px-1 rounded text-xs">/api/advisor/investment/calculate</code>
+                                        <span>- Investment calculations</span>
+                                    </li>
+                                    <li class="flex items-start gap-2">
+                                        <span class="badge badge-sm badge-info">POST</span>
+                                        <code class="bg-base-300 px-1 rounded text-xs">/api/advisor/loan/amortization</code>
+                                        <span>- Loan amortization tables</span>
+                                    </li>
+                                    <li class="flex items-start gap-2">
+                                        <span class="badge badge-sm badge-info">POST</span>
+                                        <code class="bg-base-300 px-1 rounded text-xs">/api/advisor/investment/retirement</code>
+                                        <span>- Retirement projections</span>
+                                    </li>
+                                </ul>
+                            </details>
+
+                            <details>
+                                <summary class="cursor-pointer font-medium text-sm text-primary mb-1">Documents &amp; Imports</summary>
+                                <ul class="space-y-1.5 text-sm text-base-content/70 ml-2">
+                                    <li class="flex items-start gap-2">
+                                        <span class="badge badge-sm badge-info">POST</span>
+                                        <code class="bg-base-300 px-1 rounded text-xs">/api/documents/upload</code>
+                                        <span>- Upload a document</span>
+                                    </li>
+                                    <li class="flex items-start gap-2">
+                                        <span class="badge badge-sm badge-success">GET</span>
+                                        <code class="bg-base-300 px-1 rounded text-xs">/api/documents</code>
+                                        <span>- List documents</span>
+                                    </li>
+                                    <li class="flex items-start gap-2">
+                                        <span class="badge badge-sm badge-info">POST</span>
+                                        <code class="bg-base-300 px-1 rounded text-xs">/api/import/upload</code>
+                                        <span>- Upload bank files for import</span>
+                                    </li>
+                                    <li class="flex items-start gap-2">
+                                        <span class="badge badge-sm badge-success">GET</span>
+                                        <code class="bg-base-300 px-1 rounded text-xs">/api/import/batches</code>
+                                        <span>- List import batches</span>
+                                    </li>
+                                </ul>
+                            </details>
                         </div>
                     </div>
                 </div>

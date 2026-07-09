@@ -17,6 +17,9 @@ CLAUDE.md
 # Database files
 *.db
 *.log
+*.db-shm
+*.db-wal
 
 # Documents
 data/documents/
+logs/

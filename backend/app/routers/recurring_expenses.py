@@ -17,7 +17,7 @@ from app.schemas.recurring_expense import (
     RecurringExpensePaymentResponse,
     UpcomingRecurringExpense,
 )
-from app.utils.security import get_current_user
+from app.utils.security import get_current_user_authenticated as get_current_user
 
 router = APIRouter(prefix="/recurring-expenses", tags=["Recurring Expenses"])
 

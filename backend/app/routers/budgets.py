@@ -6,7 +6,7 @@ from datetime import datetime, date
 import calendar
 
 from app.database import get_db
-from app.utils.security import get_current_user
+from app.utils.security import get_current_user_authenticated as get_current_user
 from app.schemas import BudgetCreate, BudgetUpdate, BudgetResponse, BudgetProgress
 from app.models import User, Budget, BudgetCategory, Category, Transaction
 

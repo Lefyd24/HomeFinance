@@ -14,7 +14,7 @@ from sqlalchemy.orm import Session
 from typing import List, Optional
 
 from app.database import get_db
-from app.utils.security import get_current_user
+from app.utils.security import get_current_user_authenticated as get_current_user
 from app.models import User
 from app.services.advisor_service import (
     InvestmentCalculator,

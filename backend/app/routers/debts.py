@@ -6,7 +6,7 @@ from datetime import date, timedelta
 import math
 
 from app.database import get_db
-from app.utils.security import get_current_user
+from app.utils.security import get_current_user_authenticated as get_current_user
 from app.schemas.debt import (
     DebtCreate,
     DebtUpdate,

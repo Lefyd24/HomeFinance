@@ -28,7 +28,7 @@ from sqlalchemy.orm import Session
 from app.config import settings
 from app.database import get_db
 from app.models.user import User
-from app.utils.security import decode_token, get_current_user
+from app.utils.security import decode_token, get_current_user_authenticated as get_current_user
 
 router = APIRouter(prefix="/documents", tags=["Documents"])
 
