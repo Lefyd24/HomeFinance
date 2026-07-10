@@ -44,7 +44,9 @@ class Debt(Base):
     is_active = Column(Boolean, default=True)
     is_paid_off = Column(Boolean, default=False)
     paid_off_date = Column(Date)
-    
+    notify_enabled = Column(Boolean, default=False)
+    notify_days_before = Column(Integer, nullable=True)
+
     # Notes
     notes = Column(Text)
     

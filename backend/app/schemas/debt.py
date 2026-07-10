@@ -29,6 +29,9 @@ class DebtBase(BaseModel):
     linked_account_id: Optional[int] = None
     linked_category_id: Optional[int] = None
 
+    notify_enabled: bool = False
+    notify_days_before: Optional[int] = None
+
 
 class DebtCreate(DebtBase):
     pass
@@ -61,6 +64,9 @@ class DebtUpdate(BaseModel):
     # Linked account and category
     linked_account_id: Optional[int] = None
     linked_category_id: Optional[int] = None
+
+    notify_enabled: Optional[bool] = None
+    notify_days_before: Optional[int] = None
 
 
 class DebtResponse(DebtBase):

@@ -5,6 +5,38 @@ let accounts = [];
 let categories = [];
 let recentTransactions = [];
 let editingId = null;
+let notifyFieldsInitialized = false;
+
+function setupNotifyFields() {
+    if (notifyFieldsInitialized) return;
+    notifyFieldsInitialized = true;
+
+    const notesField = document.getElementById('reNotes')?.closest('.form-control');
+    if (!notesField) return;
+
+    notesField.insertAdjacentHTML('beforebegin', `
+        <div class="form-control">
+            <label class="label cursor-pointer justify-start gap-3">
+                <input type="checkbox" id="reNotifyEnabled" name="notify_enabled" class="checkbox checkbox-sm checkbox-primary">
+                <span class="label-text font-medium">Notify me before due</span>
+            </label>
+            <div id="reNotifyDaysContainer" class="mt-2 hidden">
+                <label class="label py-1">
+                    <span class="label-text font-medium text-sm">Days before</span>
+                    <span class="label-text-alt">Optional</span>
+                </label>
+                <input type="number" id="reNotifyDaysBefore" name="notify_days_before" class="input input-bordered w-full input-sm" min="1" max="90" placeholder="Uses default if empty">
+            </div>
+        </div>
+    `);
+
+    document.getElementById('reNotifyEnabled').addEventListener('change', toggleReNotifyDays);
+}
+
+window.toggleReNotifyDays = () => {
+    const checked = document.getElementById('reNotifyEnabled')?.checked;
+    document.getElementById('reNotifyDaysContainer')?.classList.toggle('hidden', !checked);
+};
 
 document.addEventListener('DOMContentLoaded', async () => {
     if (!Auth.requireAuth()) return;
@@ -13,6 +45,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 async function initialize() {
+    setupNotifyFields();
     try {
         [recurringExpenses, accounts, categories, recentTransactions] = await Promise.all([
             API.recurringExpenses.list(),
@@ -271,6 +304,9 @@ window.openCreateModal = () => {
     const today = new Date().toISOString().split('T')[0];
     document.getElementById('reStartDate').value = today;
     document.getElementById('reNextDueDate').value = today;
+    document.getElementById('reNotifyEnabled').checked = false;
+    document.getElementById('reNotifyDaysBefore').value = '';
+    toggleReNotifyDays();
     document.getElementById('recurringModal').showModal();
 };
 
@@ -288,6 +324,9 @@ window.openEditModal = (id) => {
     document.getElementById('reInterval').value = e.recurrence_interval;
     document.getElementById('reUnit').value = e.recurrence_unit;
     document.getElementById('reNotes').value = e.notes || '';
+    document.getElementById('reNotifyEnabled').checked = !!e.notify_enabled;
+    document.getElementById('reNotifyDaysBefore').value = e.notify_days_before ?? '';
+    toggleReNotifyDays();
     document.getElementById('recurringModal').showModal();
 };
 
@@ -328,6 +367,8 @@ function setupEventListeners() {
     document.getElementById('recurringForm').addEventListener('submit', async (e) => {
         e.preventDefault();
         const fd = new FormData(e.target);
+        const notifyEnabled = document.getElementById('reNotifyEnabled').checked;
+        const notifyDaysRaw = fd.get('notify_days_before');
         const data = {
             name: fd.get('name'),
             amount: parseFloat(fd.get('amount')),
@@ -339,6 +380,8 @@ function setupEventListeners() {
             next_due_date: fd.get('next_due_date'),
             notes: fd.get('notes') || null,
             is_active: true,
+            notify_enabled: notifyEnabled,
+            notify_days_before: notifyEnabled && notifyDaysRaw ? parseInt(notifyDaysRaw, 10) : null,
         };
         try {
             if (editingId) {

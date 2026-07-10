@@ -7,7 +7,6 @@
     "build:css": "npx @tailwindcss/cli -i build/css/input.css -o public/assets/css/app.css",
     "watch:css": "npx @tailwindcss/cli -i build/css/input.css -o public/assets/css/app.css --watch",
     "build": "npm run build:css",
-    "dev": "npm run watch:css",
     "sync:runtime-config": "node scripts/sync-runtime-config.cjs"
   },
   "author": {

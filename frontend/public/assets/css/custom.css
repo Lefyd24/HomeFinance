@@ -690,6 +690,11 @@ canvas {
     letter-spacing: -0.01em;
 }
 
+/* ECharts hosts: allow emphasis scale/labels without clipping bars/slices */
+.fin-chart-host {
+    overflow: visible !important;
+}
+
 .fin-surface {
     background: color-mix(in oklch, var(--color-base-100) 94%, var(--color-primary) 6%);
     border: 1px solid color-mix(in oklch, var(--color-base-content) 8%, transparent);
@@ -1050,4 +1055,140 @@ canvas {
     .fin-card { transition: none; }
     .fin-track-fill { transition: none; }
     .fin-stagger > * { animation: none; }
+}
+
+/* ==========================================================================
+   Reports page — filter bar stacking + modern tab strip
+   ========================================================================== */
+
+.report-shell {
+    position: relative;
+}
+
+/* Sticky filter bar sits above tabs/content; lift further when a dropdown is open */
+.report-filter-bar {
+    position: sticky;
+    top: 0;
+    z-index: 40;
+}
+
+.report-filter-bar:has(.dropdown:focus-within),
+.report-filter-bar:has(.dropdown.dropdown-open) {
+    z-index: 60;
+}
+
+.report-filter-card {
+    overflow: visible;
+    border: 1px solid color-mix(in oklch, var(--color-base-content) 8%, transparent);
+    backdrop-filter: blur(8px);
+    background: color-mix(in oklch, var(--color-base-100) 92%, transparent);
+}
+
+.report-filter-card .card-body {
+    overflow: visible;
+}
+
+/* Dropdown menus must paint above the tab strip and chart cards below */
+.report-filter-dropdown {
+    position: relative;
+    z-index: 1;
+}
+
+.report-filter-dropdown:focus-within {
+    z-index: 20;
+}
+
+.report-filter-dropdown .dropdown-content {
+    z-index: 50;
+    margin-top: 0.25rem;
+}
+
+.report-preset-join .btn-ghost:not(.btn-primary) {
+    color: color-mix(in oklch, var(--color-base-content) 70%, transparent);
+}
+
+.report-tabs-wrap {
+    position: relative;
+    z-index: 10;
+}
+
+.report-tab-content {
+    position: relative;
+    z-index: 0;
+}
+
+/* Segmented pill tab strip */
+.report-tabs {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.3125rem;
+    background: color-mix(in oklch, var(--color-base-200) 65%, var(--color-base-100));
+    border: 1px solid color-mix(in oklch, var(--color-base-content) 8%, transparent);
+    border-radius: 0.875rem;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    box-shadow: inset 0 1px 0 color-mix(in oklch, #fff 40%, transparent);
+}
+
+[data-theme="dark-fin"] .report-tabs {
+    box-shadow: inset 0 1px 0 color-mix(in oklch, #fff 6%, transparent);
+}
+
+.report-tabs::-webkit-scrollbar {
+    display: none;
+}
+
+.report-tab {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.5rem 1rem;
+    min-height: 2.25rem;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    line-height: 1.2;
+    color: color-mix(in oklch, var(--color-base-content) 62%, transparent);
+    background: transparent;
+    border: none;
+    border-radius: 0.625rem;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: color 160ms ease, background 160ms ease, box-shadow 160ms ease;
+}
+
+.report-tab:hover {
+    color: var(--color-base-content);
+    background: color-mix(in oklch, var(--color-base-content) 5%, transparent);
+}
+
+.report-tab:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+}
+
+.report-tab-active {
+    color: var(--color-primary);
+    background: var(--color-base-100);
+    box-shadow:
+        0 1px 2px color-mix(in oklch, var(--color-base-content) 10%, transparent),
+        0 0 0 1px color-mix(in oklch, var(--color-base-content) 6%, transparent);
+}
+
+.report-tab-label {
+    letter-spacing: -0.01em;
+}
+
+@media (max-width: 640px) {
+    .report-tab {
+        padding: 0.4375rem 0.75rem;
+        font-size: 0.75rem;
+    }
+}
+
+/* Weekday spend chart container */
+.fin-weekday-chart {
+    overflow: visible;
 }

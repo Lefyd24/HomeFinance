@@ -6,6 +6,38 @@
 let debts = [];
 let editingDebtId = null;
 let accounts = [];
+let debtNotifyFieldsInitialized = false;
+
+function setupDebtNotifyFields() {
+    if (debtNotifyFieldsInitialized) return;
+    debtNotifyFieldsInitialized = true;
+
+    const notesField = document.getElementById('debtNotes')?.closest('.form-control');
+    if (!notesField) return;
+
+    notesField.insertAdjacentHTML('beforebegin', `
+        <div class="form-control">
+            <label class="label cursor-pointer justify-start gap-3">
+                <input type="checkbox" id="debtNotifyEnabled" name="notify_enabled" class="checkbox checkbox-sm checkbox-primary">
+                <span class="label-text font-medium">Notify me before due</span>
+            </label>
+            <div id="debtNotifyDaysContainer" class="mt-2 hidden">
+                <label class="label py-1">
+                    <span class="label-text font-medium text-sm">Days before</span>
+                    <span class="label-text-alt">Optional</span>
+                </label>
+                <input type="number" id="debtNotifyDaysBefore" name="notify_days_before" class="input input-bordered w-full input-sm" min="1" max="90" placeholder="Uses default if empty">
+            </div>
+        </div>
+    `);
+
+    document.getElementById('debtNotifyEnabled').addEventListener('change', toggleDebtNotifyDays);
+}
+
+window.toggleDebtNotifyDays = () => {
+    const checked = document.getElementById('debtNotifyEnabled')?.checked;
+    document.getElementById('debtNotifyDaysContainer')?.classList.toggle('hidden', !checked);
+};
 
 // Map debt types to category ramp tints (1-6) for consistent coloring across cards
 const DEBT_TYPE_TO_TINT = {
@@ -108,6 +140,8 @@ function renderDebtsKpiBar(summary) {
 // Initialize page
 document.addEventListener('DOMContentLoaded', async () => {
     if (!Auth.requireAuth()) return;
+
+    setupDebtNotifyFields();
     
     // Render layout
     Layout.render('debts');
@@ -167,6 +201,9 @@ window.showCreateDebtModal = () => {
     document.getElementById('debtForm').reset();
     document.getElementById('customTypeContainer').classList.add('hidden');
     document.getElementById('paidOffDateContainer').classList.add('hidden');
+    document.getElementById('debtNotifyEnabled').checked = false;
+    document.getElementById('debtNotifyDaysBefore').value = '';
+    toggleDebtNotifyDays();
     document.getElementById('modalTitle').textContent = 'Add Debt';
     document.getElementById('debtModal').showModal();
 };
@@ -215,6 +252,9 @@ window.editDebt = async (id) => {
     document.getElementById('debtRecurrenceDay').value = debt.recurrence_day_of_month || '';
     document.getElementById('debtLinkedAccount').value = debt.linked_account_id || '';
     document.getElementById('debtNextPaymentDate').value = debt.next_payment_date || '';
+    document.getElementById('debtNotifyEnabled').checked = !!debt.notify_enabled;
+    document.getElementById('debtNotifyDaysBefore').value = debt.notify_days_before ?? '';
+    toggleDebtNotifyDays();
 
     document.getElementById('modalTitle').textContent = 'Edit Debt';
     document.getElementById('debtModal').showModal();
@@ -759,6 +799,8 @@ function setupEventListeners() {
         
         const formData = new FormData(e.target);
         const isPaidOff = document.getElementById('debtIsPaidOff').checked;
+        const notifyEnabled = document.getElementById('debtNotifyEnabled').checked;
+        const notifyDaysRaw = formData.get('notify_days_before');
         const data = {
             name: formData.get('name'),
             creditor: formData.get('creditor') || null,
@@ -780,7 +822,9 @@ function setupEventListeners() {
             recurrence_unit: formData.get('recurrence_unit') || null,
             recurrence_day_of_month: formData.get('recurrence_day_of_month') ? parseInt(formData.get('recurrence_day_of_month')) : null,
             linked_account_id: formData.get('linked_account_id') ? parseInt(formData.get('linked_account_id')) : null,
-            next_payment_date: formData.get('next_payment_date') || null
+            next_payment_date: formData.get('next_payment_date') || null,
+            notify_enabled: notifyEnabled,
+            notify_days_before: notifyEnabled && notifyDaysRaw ? parseInt(notifyDaysRaw, 10) : null,
         };
         
         try {

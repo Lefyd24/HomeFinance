@@ -9,6 +9,28 @@ _backend_dir = Path(__file__).resolve().parent.parent
 _repo_root = _backend_dir.parent
 
 
+def _normalize_database_url(url: str) -> str:
+    """Resolve SQLite paths for local dev vs Docker and ensure parent dirs exist."""
+    if not url.lower().startswith("sqlite:"):
+        return url
+
+    # Docker Compose default — remap to <repo>/data/ when /app is not a real path
+    if "/app/data/" in url or url.startswith("sqlite:////app/"):
+        db_path = (_repo_root / "data" / "finance.db").resolve()
+    elif url.startswith("sqlite:////"):
+        # Four slashes = absolute filesystem path (e.g. sqlite:////var/lib/db.sqlite)
+        db_path = Path(url[len("sqlite://") :]).resolve()
+    elif url.startswith("sqlite:///"):
+        # Three slashes = path relative to backend/ (typical local dev CWD)
+        relative = url[len("sqlite:///") :]
+        db_path = (_backend_dir / relative).resolve()
+    else:
+        return url
+
+    db_path.parent.mkdir(parents=True, exist_ok=True)
+    return f"sqlite:///{db_path.as_posix()}"
+
+
 def _default_log_dir() -> str:
     """`<repo>/logs`: same folder Docker maps as `./logs:/app/logs` (WORKDIR /app ⇒ repo root there)."""
     repo_root = Path(__file__).resolve().parent.parent.parent
@@ -68,6 +90,26 @@ class Settings(BaseSettings):
     # Documents storage
     DOCUMENTS_DIR: str = Field(default_factory=_default_documents_dir)
     DOCUMENTS_MAX_FILE_SIZE: int = 50 * 1024 * 1024  # 50MB
+
+    # Notifications
+    NOTIFICATIONS_ENABLED: bool = True
+    NOTIFICATION_ENCRYPTION_KEY: str | None = None
+    # SMTP (defaults; per-user UI settings override these)
+    SMTP_HOST: str | None = None
+    SMTP_PORT: int = 587
+    SMTP_USER: str | None = None
+    SMTP_PASSWORD: str | None = None
+    SMTP_FROM: str | None = None
+    SMTP_USE_TLS: bool = True
+    # Web Push (VAPID)
+    VAPID_PUBLIC_KEY: str | None = None
+    VAPID_PRIVATE_KEY: str | None = None
+    VAPID_SUBJECT: str = "mailto:admin@example.com"
+
+    @model_validator(mode="after")
+    def normalize_database_url(self) -> Self:
+        self.DATABASE_URL = _normalize_database_url(self.DATABASE_URL)
+        return self
 
     @model_validator(mode="after")
     def normalize_cors_origins(self) -> Self:

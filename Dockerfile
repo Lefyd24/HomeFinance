@@ -21,7 +21,22 @@ COPY frontend/public ./public
 # Build CSS
 RUN npm run build:css
 
-# Stage 2: Python application with both frontend and backend
+# Stage 2: Install Python dependencies with uv
+FROM ghcr.io/astral-sh/uv:python3.11-bookworm-slim AS python-builder
+
+WORKDIR /app
+
+ENV UV_COMPILE_BYTECODE=1 \
+    UV_LINK_MODE=copy \
+    UV_NO_DEV=1 \
+    UV_PYTHON_DOWNLOADS=0
+
+COPY pyproject.toml uv.lock ./
+
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --locked --no-install-project
+
+# Stage 3: Python application with both frontend and backend
 FROM python:3.11-slim-bookworm
 
 WORKDIR /app
@@ -34,11 +49,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy Python requirements
-COPY backend/requirements.txt ./
-
-# Install Python dependencies
-RUN pip install --no-cache-dir -r requirements.txt
+# Copy virtualenv from uv builder
+COPY --from=python-builder /app/.venv /app/.venv
+ENV PATH="/app/.venv/bin:$PATH"
 
 # Copy backend code
 COPY backend/ ./backend/

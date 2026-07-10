@@ -14,6 +14,8 @@ class RecurringExpenseBase(BaseModel):
     next_due_date: date
     notes: Optional[str] = None
     is_active: bool = True
+    notify_enabled: bool = False
+    notify_days_before: Optional[int] = None
 
 
 class RecurringExpenseCreate(RecurringExpenseBase):
@@ -30,6 +32,8 @@ class RecurringExpenseUpdate(BaseModel):
     next_due_date: Optional[date] = None
     notes: Optional[str] = None
     is_active: Optional[bool] = None
+    notify_enabled: Optional[bool] = None
+    notify_days_before: Optional[int] = None
 
 
 class RecurringExpenseResponse(RecurringExpenseBase):

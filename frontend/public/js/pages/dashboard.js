@@ -254,9 +254,9 @@ async function loadDashboardData() {
                 <div id="summary-cards" class="dash-section"></div>
 
                 <!-- Main analysis grid -->
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-5 lg:gap-6 dash-section">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6 dash-section">
                     <!-- Charts column -->
-                    <div class="md:col-span-2 flex flex-col gap-4 md:gap-5">
+                    <div class="lg:col-span-2 flex flex-col gap-4">
                         <div class="dash-panel">
                             <div class="dash-panel-header">
                                 <div>
@@ -265,28 +265,26 @@ async function loadDashboardData() {
                                 </div>
                             </div>
                             <div id="spending-kpis" class="fin-mini-kpis"></div>
-                            <div class="h-64 sm:h-72 lg:h-80">
-                                <canvas id="spendingChart"></canvas>
-                            </div>
+                            <div id="spendingChart" style="height:300px;"></div>
 
                             <div class="dash-panel-divider"></div>
 
-                            <div class="dash-panel-header" style="padding-bottom:0.5rem;">
-                                <h2 class="dash-panel-title">Income vs Spending</h2>
-                                <div class="join">
-                                    <button class="join-item btn btn-xs btn-ghost" id="breakdownMonthlyBtn" onclick="setIncomeSpendingMode('month')">Monthly</button>
-                                    <button class="join-item btn btn-xs btn-ghost" id="breakdownWeeklyBtn" onclick="setIncomeSpendingMode('week')">Weekly</button>
+                            <div class="flex items-center justify-between mb-2">
+                                <h2 class="dash-panel-title">Cashflow &amp; Net Worth</h2>
+                                <div class="join" id="heroRange">
+                                    <button class="btn btn-xs join-item" data-range="1M">1M</button>
+                                    <button class="btn btn-xs join-item" data-range="3M">3M</button>
+                                    <button class="btn btn-xs join-item btn-active" data-range="6M">6M</button>
+                                    <button class="btn btn-xs join-item" data-range="1Y">1Y</button>
                                 </div>
                             </div>
-                            <div style="height:9rem;">
-                                <canvas id="incomeVsSpendingChart"></canvas>
-                            </div>
+                            <div id="heroChart" style="height: 180px;"></div>
                         </div>
 
                     </div>
 
                     <!-- Right column: upcoming payments first, budgets second -->
-                    <div class="flex flex-col gap-4 md:gap-5 fin-stagger">
+                    <div class="flex flex-col gap-4 fin-stagger">
                         <div id="debts-overview"></div>
                         <div id="budget-overview"></div>
                     </div>
@@ -415,8 +413,8 @@ async function loadDashboardData() {
         // Load spending chart
         await loadSpendingChart();
         
-        // Load income vs spending chart
-        await loadIncomeVsSpendingChart();
+        // Load hero cashflow + net-worth combo chart
+        await renderHeroChart('6M');
 
         // Load budget overview
         await loadBudgetOverview();
@@ -438,22 +436,6 @@ async function loadDashboardData() {
 
 // Store chart instance globally
 let spendingChartInstance = null;
-
-function getCategoryRamp() {
-    const root = getComputedStyle(document.documentElement);
-    const ramp = [];
-    for (let i = 1; i <= 6; i += 1) {
-        const v = root.getPropertyValue(`--cat-${i}`).trim();
-        if (v) ramp.push(v);
-    }
-    return ramp.length ? ramp : ['#3B82F6', '#10B981', '#8B5CF6', '#F59E0B', '#EF4444', '#6B7280'];
-}
-
-function gridLineColor(opacity = 0.08) {
-    const root = getComputedStyle(document.documentElement);
-    const baseContent = root.getPropertyValue('--color-base-content').trim() || '#000';
-    return `color-mix(in oklch, ${baseContent} ${Math.round(opacity * 100)}%, transparent)`;
-}
 
 async function loadSpendingChart() {
     const ctx = document.getElementById('spendingChart');
@@ -499,80 +481,11 @@ async function loadSpendingChart() {
         }
 
         if (spendingChartInstance) {
-            spendingChartInstance.destroy();
+            spendingChartInstance.dispose();
         }
 
-        const ramp = getCategoryRamp();
-        const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-        const tickColor = gridLineColor(0.5);
-
-        spendingChartInstance = new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels,
-                datasets: [{
-                    label: 'Spending',
-                    data: values,
-                    backgroundColor: values.map((_, i) => ramp[i % ramp.length]),
-                    hoverBackgroundColor: values.map((_, i) =>
-                        `color-mix(in oklch, ${ramp[i % ramp.length]} 80%, white)`),
-                    borderRadius: { topLeft: 6, topRight: 6, bottomLeft: 0, bottomRight: 0 },
-                    borderSkipped: false,
-                    categoryPercentage: 0.65,
-                    barPercentage: 0.85
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                animation: reduceMotion ? false : { duration: 600, easing: 'easeOutQuart' },
-                plugins: {
-                    legend: { display: false },
-                    tooltip: {
-                        backgroundColor: 'rgba(20,20,25,0.92)',
-                        padding: 10,
-                        titleFont: { size: 12, weight: '600' },
-                        bodyFont: { size: 12 },
-                        cornerRadius: 8,
-                        displayColors: false,
-                        callbacks: {
-                            label: (item) => {
-                                const v = item.parsed.y;
-                                const share = total > 0 ? (v / total * 100).toFixed(1) : '0';
-                                return `${Utils.formatCurrency(v)} · ${share}% of total`;
-                            }
-                        }
-                    }
-                },
-                scales: {
-                    x: {
-                        border: { display: false },
-                        grid: { display: false },
-                        ticks: {
-                            color: tickColor,
-                            font: { size: 11, weight: '500' },
-                            maxRotation: 0,
-                            autoSkip: true
-                        }
-                    },
-                    y: {
-                        beginAtZero: true,
-                        border: { display: false },
-                        grid: {
-                            color: gridLineColor(0.06),
-                            drawTicks: false,
-                            lineWidth: 1
-                        },
-                        ticks: {
-                            color: tickColor,
-                            font: { size: 11 },
-                            padding: 8,
-                            callback: function(value) { return '€' + value; }
-                        }
-                    }
-                }
-            }
-        });
+        spendingChartInstance = FinCharts.donut(document.getElementById('spendingChart'),
+            { labels, data: values });
     } catch (error) {
         console.error('Error loading spending chart:', error);
     }
@@ -755,98 +668,59 @@ async function loadBudgetOverview() {
     }
 }
 
-let incomeVsSpendingChart = null;
-let incomeSpendingMode = 'month';
+let heroChartInstance = null;
 
-async function loadIncomeVsSpendingChart() {
+function rangeToDates(range) {
+    const end = new Date();
+    const start = new Date();
+    const map = { '1M': 1, '3M': 3, '6M': 6, '1Y': 12 };
+    start.setMonth(start.getMonth() - (map[range] || 6));
+    const fmt = (d) => d.toISOString().slice(0, 10);
+    return { start_date: fmt(start), end_date: fmt(end) };
+}
+
+async function renderHeroChart(range = '6M') {
     try {
-        const canvas = document.getElementById('incomeVsSpendingChart');
-        if (!canvas) return;
-        
-        const ctx = canvas.getContext('2d');
-        
-        const data = await API.transactions.incomeVsSpending(
-            dashboardDateRange.startDate,
-            dashboardDateRange.endDate,
-            incomeSpendingMode
-        );
-        
-        if (incomeVsSpendingChart) {
-            incomeVsSpendingChart.destroy();
+        const el = document.getElementById('heroChart');
+        if (!el) return;
+
+        const params = { ...rangeToDates(range), group_by: 'month' };
+        const [cf, nw] = await Promise.all([
+            API.reports.cashflow(params),
+            API.reports.netWorth(rangeToDates(range)),
+        ]);
+
+        // Align net-worth data points to the cashflow month labels
+        const nwMap = Object.fromEntries((nw.labels || []).map((l, i) => [l, nw.data[i]]));
+        const nwAligned = (cf.labels || []).map((l) => nwMap[l] ?? null);
+
+        if (heroChartInstance) {
+            heroChartInstance.dispose();
         }
-        
-        incomeVsSpendingChart = new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: data.labels,
-                datasets: [
-                    {
-                        label: 'Income',
-                        data: data.income,
-                        fill: true,
-                        backgroundColor: 'rgba(34, 197, 94, 0.2)',
-                        borderColor: '#22C55E',
-                        tension: 0.3,
-                        pointRadius: 4,
-                        pointBackgroundColor: '#22C55E',
-                        pointHoverRadius: 6,
-                        pointHoverBackgroundColor: '#22C55E'
-                    },
-                    {
-                        label: 'Spending',
-                        data: data.spending,
-                        fill: true,
-                        backgroundColor: 'rgba(239, 68, 68, 0.2)',
-                        borderColor: '#EF4444',
-                        tension: 0.3,
-                        pointRadius: 4,
-                        pointBackgroundColor: '#EF4444',
-                        pointHoverRadius: 6,
-                        pointHoverBackgroundColor: '#EF4444'
-                    }
-                ]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        display: true,
-                        position: 'top'
-                    }
-                },
-                scales: {
-                    y: {
-                        ticks: {
-                            callback: function(value) {
-                                return '€' + value;
-                            }
-                        }
-                    }
-                }
-            },
+
+        const p = FinCharts.palette();
+        heroChartInstance = FinCharts.combo(el, {
+            labels: cf.labels || [],
+            bars: [
+                { name: 'Income', data: cf.income || [], color: p.income },
+                { name: 'Expenses', data: cf.expenses || [], color: p.expense },
+            ],
+            line: { name: 'Net Worth', data: nwAligned, color: p.primary },
         });
     } catch (error) {
-        console.error('Error loading income vs spending chart:', error);
+        console.error('Error loading hero chart:', error);
     }
 }
 
-function setIncomeSpendingMode(mode) {
-    incomeSpendingMode = mode;
-    
-    const monthlyBtn = document.getElementById('breakdownMonthlyBtn');
-    const weeklyBtn = document.getElementById('breakdownWeeklyBtn');
-    
-    if (mode === 'month') {
-        monthlyBtn.classList.remove('btn-ghost');
-        weeklyBtn.classList.add('btn-ghost');
-    } else {
-        monthlyBtn.classList.add('btn-ghost');
-        weeklyBtn.classList.remove('btn-ghost');
-    }
-    
-    loadIncomeVsSpendingChart();
-}
+// Delegated listener: #heroRange is injected dynamically when the dashboard renders,
+// so we bind on document rather than the (not-yet-existent) element.
+document.addEventListener('click', (e) => {
+    const btn = e.target.closest('#heroRange button[data-range]');
+    if (!btn) return;
+    document.querySelectorAll('#heroRange button').forEach((b) => b.classList.remove('btn-active'));
+    btn.classList.add('btn-active');
+    renderHeroChart(btn.dataset.range);
+});
 
 
 

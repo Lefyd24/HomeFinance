@@ -32,9 +32,11 @@ from app.models import (
 # access to the values within the .ini file in use.
 config = context.config
 
-# Override sqlalchemy.url with DATABASE_URL environment variable if set
-if database_url := os.getenv("DATABASE_URL"):
-    config.set_main_option("sqlalchemy.url", database_url)
+# Use the same database URL as the FastAPI app (reads .env via app.config).
+from app.config import settings
+
+database_url = os.getenv("DATABASE_URL") or settings.DATABASE_URL
+config.set_main_option("sqlalchemy.url", database_url)
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.

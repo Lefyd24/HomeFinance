@@ -40,6 +40,9 @@ from app.schemas.report import (
     SpendingReport,
     CashflowReport,
     TrendReport,
+    IncomeReport,
+    ReportSeries,
+    BalanceHistoryReport,
     SavedReportCreate,
     SavedReportResponse,
 )
@@ -82,6 +85,15 @@ from app.schemas.debt import (
     PayoffScheduleItem,
     ExtraPaymentScenario,
     UpcomingPayment,
+)
+from app.schemas.notification import (
+    NotificationSettingsRead,
+    NotificationSettingsUpdate,
+    NotificationRuleCreate,
+    NotificationRuleUpdate,
+    NotificationRuleRead,
+    PushSubscriptionCreate,
+    NotificationLogRead,
 )
 
 __all__ = [
@@ -127,6 +139,9 @@ __all__ = [
     "SpendingReport",
     "CashflowReport",
     "TrendReport",
+    "IncomeReport",
+    "ReportSeries",
+    "BalanceHistoryReport",
     "SavedReportCreate",
     "SavedReportResponse",
     # Auth schemas
@@ -165,4 +180,12 @@ __all__ = [
     "PayoffScheduleItem",
     "ExtraPaymentScenario",
     "UpcomingPayment",
+    # Notification schemas
+    "NotificationSettingsRead",
+    "NotificationSettingsUpdate",
+    "NotificationRuleCreate",
+    "NotificationRuleUpdate",
+    "NotificationRuleRead",
+    "PushSubscriptionCreate",
+    "NotificationLogRead",
 ]

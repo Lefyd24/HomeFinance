@@ -76,6 +76,26 @@ const Layout = {
                         
                         <!-- Right side actions -->
                         <div class="flex-none gap-1 lg:gap-2">
+                            <!-- Notification bell -->
+                            <div class="dropdown dropdown-end">
+                                <button id="notification-bell-btn" tabindex="0" class="btn btn-ghost btn-square btn-sm lg:btn-md" title="Notifications" aria-label="Notifications">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                                    </svg>
+                                </button>
+                                <div tabindex="0" class="dropdown-content bg-base-100 rounded-box z-50 mt-3 w-80 shadow-xl border border-base-300">
+                                    <div class="px-3 py-2 border-b border-base-200">
+                                        <span class="font-semibold text-sm">Recent notifications</span>
+                                    </div>
+                                    <ul id="notification-dropdown-list" class="menu menu-sm p-2 max-h-72 overflow-y-auto">
+                                        <li class="disabled"><span class="text-xs opacity-60">Open to load</span></li>
+                                    </ul>
+                                    <div class="p-2 border-t border-base-200">
+                                        <a href="notifications.html" class="btn btn-ghost btn-sm btn-block">View all</a>
+                                    </div>
+                                </div>
+                            </div>
+
                             <!-- Theme toggle -->
                             <button class="btn btn-ghost btn-square btn-sm lg:btn-md" onclick="Layout.toggleTheme()" title="Toggle theme">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -249,6 +269,12 @@ const Layout = {
                                     </svg>
                                 `, activePage)}
 
+                                ${this.renderNavItem('notifications', 'Notifications', `
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                                    </svg>
+                                `, activePage)}
+
                                 <li class="menu-title mt-3 mb-0.5 px-4 sidebar-section-label"><span class="text-xs uppercase tracking-wider opacity-40">Storage</span></li>
 
                                 ${this.renderNavItem('documents', 'Documents', `
@@ -384,8 +410,26 @@ const Layout = {
         // Restore sidebar collapsed state
         this.initSidebar();
 
+        // Fetch recent notifications when bell is clicked
+        document.getElementById('notification-bell-btn')?.addEventListener('click', () => {
+            this.loadRecentNotifications();
+        });
+
         // Enable backdrop-click-to-dismiss on all static modals
         setupModalBackdropDismiss();
+
+        // Register service worker on all authenticated pages (required for Web Push)
+        this.ensureServiceWorker();
+    },
+
+    /**
+     * Register the service worker once per session (needed for desktop push).
+     */
+    ensureServiceWorker() {
+        if (!('serviceWorker' in navigator) || window.__swRegistered) return;
+        window.__swRegistered = true;
+        navigator.serviceWorker.register('/sw.js', { scope: '/' })
+            .catch((err) => console.warn('Service Worker registration failed:', err));
     },
 
     /**
@@ -418,6 +462,7 @@ const Layout = {
             accounts: 'Accounts',
             categories: 'Categories',
             reports: 'Reports',
+            notifications: 'Notifications',
             documents: 'Documents',
             'api-keys': 'API Keys'
         };
@@ -504,6 +549,42 @@ const Layout = {
             const drawer = document.getElementById('main-drawer');
             if (drawer) drawer.classList.add('sidebar-collapsed');
         }
+    },
+
+    /**
+     * Fetch and render recent notifications in the navbar dropdown
+     */
+    async loadRecentNotifications() {
+        const list = document.getElementById('notification-dropdown-list');
+        if (!list) return;
+
+        list.innerHTML = '<li class="disabled"><span class="loading loading-spinner loading-xs"></span> <span class="text-xs opacity-60 ml-1">Loading…</span></li>';
+
+        try {
+            const items = await API.notifications.log({ limit: 5 });
+            if (!items?.length) {
+                list.innerHTML = '<li class="disabled"><span class="text-xs opacity-60">No notifications yet</span></li>';
+                return;
+            }
+
+            list.innerHTML = items.map((item) => `
+                <li>
+                    <div class="flex flex-col gap-0.5 py-2 pointer-events-none whitespace-normal">
+                        <span class="font-medium text-sm leading-snug">${this._escapeHtml(item.title)}</span>
+                        ${item.body ? `<span class="text-xs opacity-70 line-clamp-2">${this._escapeHtml(item.body)}</span>` : ''}
+                        <span class="text-xs opacity-50">${Utils.formatDate(item.created_at)}</span>
+                    </div>
+                </li>
+            `).join('');
+        } catch {
+            list.innerHTML = '<li class="disabled"><span class="text-xs text-error">Failed to load notifications</span></li>';
+        }
+    },
+
+    _escapeHtml(text) {
+        const el = document.createElement('span');
+        el.textContent = text ?? '';
+        return el.innerHTML;
     },
 
     /**

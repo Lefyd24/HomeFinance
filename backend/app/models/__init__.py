@@ -8,6 +8,12 @@ from app.models.saved_report import SavedReport
 from app.models.goal import FinancialGoal, GoalTransaction
 from app.models.debt import Debt, DebtPayment
 from app.models.recurring_expense import RecurringExpense, RecurringExpensePayment
+from app.models.notification import (
+    NotificationSettings,
+    NotificationRule,
+    PushSubscription,
+    NotificationLog,
+)
 
 __all__ = [
     "User",
@@ -24,4 +30,8 @@ __all__ = [
     "DebtPayment",
     "RecurringExpense",
     "RecurringExpensePayment",
+    "NotificationSettings",
+    "NotificationRule",
+    "PushSubscription",
+    "NotificationLog",
 ]

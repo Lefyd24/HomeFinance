@@ -27,6 +27,21 @@ class TrendReport(BaseModel):
     data: List[float]
 
 
+class IncomeReport(BaseModel):
+    labels: List[str]
+    data: List[float]
+
+
+class ReportSeries(BaseModel):
+    name: str
+    data: List[float]
+
+
+class BalanceHistoryReport(BaseModel):
+    labels: List[str]
+    series: List[ReportSeries]
+
+
 class SavedReportCreate(BaseModel):
     name: str
     report_type: str

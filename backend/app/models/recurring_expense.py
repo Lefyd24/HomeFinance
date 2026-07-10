@@ -22,6 +22,8 @@ class RecurringExpense(Base):
     next_due_date = Column(Date, nullable=False)
     notes = Column(Text)
     is_active = Column(Boolean, default=True)
+    notify_enabled = Column(Boolean, default=False)
+    notify_days_before = Column(Integer, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 

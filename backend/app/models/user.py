@@ -42,3 +42,12 @@ class User(Base):
         "FinancialGoal", back_populates="user", cascade="all, delete-orphan"
     )
     debts = relationship("Debt", back_populates="user", cascade="all, delete-orphan")
+    notification_settings = relationship(
+        "NotificationSettings", uselist=False, cascade="all, delete-orphan"
+    )
+    notification_rules = relationship(
+        "NotificationRule", cascade="all, delete-orphan"
+    )
+    push_subscriptions = relationship(
+        "PushSubscription", cascade="all, delete-orphan"
+    )

@@ -6,8 +6,9 @@ from contextlib import asynccontextmanager
 import os
 
 from app.config import settings
-from app.database import init_db
+from app.database import init_db, SessionLocal
 from app.logging_config import setup_logging
+from app.services.scheduler import start_scheduler, shutdown_scheduler
 from sqlalchemy import text
 from app.database import engine
 import logging
@@ -24,6 +25,7 @@ from app.routers import (
     advisor,
     recurring_expenses,
     documents,
+    notifications,
 )
 
 
@@ -36,8 +38,10 @@ async def lifespan(app: FastAPI):
     logger.info("Initializing database...")
     init_db()
     logger.info("Database initialized successfully!")
+    start_scheduler(settings, SessionLocal)
     yield
     # Shutdown
+    shutdown_scheduler()
     logger.info("Shutting down...")
 
 
@@ -122,13 +126,13 @@ app.include_router(debts.router, prefix="/api")
 app.include_router(advisor.router, prefix="/api")
 app.include_router(recurring_expenses.router, prefix="/api")
 app.include_router(documents.router, prefix="/api")
+app.include_router(notifications.router, prefix="/api")
 
 
 if __name__ == "__main__":
     import uvicorn
 
-    # Use port from environment variable or default to 8223
-    port = int(os.getenv("BACKEND_PORT", 8223))
+    port = settings.BACKEND_PORT
     uvicorn.run(
         "main:app", host="0.0.0.0", port=port, reload=settings.DEBUG, log_level="info"
     )

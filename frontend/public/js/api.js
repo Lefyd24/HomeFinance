@@ -179,7 +179,12 @@ const API = {
                 throw new Error(errorMsg);
             }
 
-            return await response.json();
+            // 204 No Content and empty bodies (e.g. push subscribe/unsubscribe)
+            if (response.status === 204) {
+                return null;
+            }
+            const text = await response.text();
+            return text ? JSON.parse(text) : null;
         } catch (error) {
             console.error('API Error:', error);
             throw error;
@@ -499,8 +504,43 @@ const API = {
             const queryParams = new URLSearchParams(params).toString();
             return API.request(`/reports/balance-history?${queryParams}`);
         },
-        
-        custom: (config) => 
+
+        netWorth: (params) => {
+            const queryParams = new URLSearchParams(params).toString();
+            return API.request(`/reports/net-worth?${queryParams}`);
+        },
+
+        savingsRate: (params) => {
+            const queryParams = new URLSearchParams(params).toString();
+            return API.request(`/reports/savings-rate?${queryParams}`);
+        },
+
+        topMerchants: (params) => {
+            const queryParams = new URLSearchParams(params).toString();
+            return API.request(`/reports/top-merchants?${queryParams}`);
+        },
+
+        spendingMom: (params) => {
+            const queryParams = new URLSearchParams(params).toString();
+            return API.request(`/reports/spending-mom?${queryParams}`);
+        },
+
+        weekdayHeatmap: (params) => {
+            const queryParams = new URLSearchParams(params).toString();
+            return API.request(`/reports/weekday-heatmap?${queryParams}`);
+        },
+
+        budgetPerformance: (params) => {
+            const queryParams = new URLSearchParams(params).toString();
+            return API.request(`/reports/budget-performance?${queryParams}`);
+        },
+
+        debtInsights: (params) => {
+            const queryParams = new URLSearchParams(params).toString();
+            return API.request(`/reports/debt-insights?${queryParams}`);
+        },
+
+        custom: (config) =>
             API.request('/reports/custom', { method: 'POST', body: JSON.stringify(config) }),
         
         save: (name, reportType, configuration) => 
@@ -756,6 +796,22 @@ const API = {
         
         getAvailableTools: () =>
             API.request('/advisor/tools')
+    },
+
+    notifications: {
+        getSettings: () => API.request('/notifications/settings'),
+        updateSettings: (data) => API.request('/notifications/settings', { method: 'PUT', body: JSON.stringify(data) }),
+        listRules: () => API.request('/notifications/rules'),
+        createRule: (data) => API.request('/notifications/rules', { method: 'POST', body: JSON.stringify(data) }),
+        updateRule: (id, data) => API.request(`/notifications/rules/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+        deleteRule: (id) => API.request(`/notifications/rules/${id}`, { method: 'DELETE' }),
+        log: (params) => API.request('/notifications/log' + (params?.limit ? `?limit=${params.limit}` : '')),
+        vapidKey: () => API.request('/notifications/push/vapid-public-key'),
+        pushStatus: () => API.request('/notifications/push/status'),
+        subscribe: (data) => API.request('/notifications/push/subscribe', { method: 'POST', body: JSON.stringify(data) }),
+        unsubscribe: (data) => API.request('/notifications/push/unsubscribe', { method: 'POST', body: JSON.stringify(data) }),
+        test: () => API.request('/notifications/test', { method: 'POST' }),
+        run: () => API.request('/notifications/run', { method: 'POST' }),
     }
 };
 
