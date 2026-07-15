@@ -106,9 +106,9 @@ def test_send_test_notification(client, db, seed_user, monkeypatch):
 
     sent = {"email": False, "push": False}
 
-    def fake_email(user, notif, settings_row, app_settings):
+    def fake_email_detailed(user, notif, settings_row, app_settings):
         sent["email"] = True
-        return True
+        return True, None
 
     def fake_push(db_sess, user, notif, app_settings):
         sent["push"] = True
@@ -116,7 +116,7 @@ def test_send_test_notification(client, db, seed_user, monkeypatch):
 
     import app.services.notification_service as ns
 
-    monkeypatch.setattr(ns, "_send_email", fake_email)
+    monkeypatch.setattr(ns, "_send_email_detailed", fake_email_detailed)
     monkeypatch.setattr(ns, "_send_push", fake_push)
 
     resp = client.post("/api/notifications/test")

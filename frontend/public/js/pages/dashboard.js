@@ -484,8 +484,13 @@ async function loadSpendingChart() {
             spendingChartInstance.dispose();
         }
 
-        spendingChartInstance = FinCharts.donut(document.getElementById('spendingChart'),
-            { labels, data: values });
+        const chartEl = document.getElementById('spendingChart');
+        const cats = labels
+            .map((n, i) => ({ name: n, amount: values[i] }))
+            .sort((a, b) => b.amount - a.amount);
+        chartEl.style.height = Math.max(240, cats.length * 30 + 40) + 'px';
+
+        spendingChartInstance = FinCharts.rankedBar(chartEl, { categories: cats, labelTopN: 6 });
     } catch (error) {
         console.error('Error loading spending chart:', error);
     }

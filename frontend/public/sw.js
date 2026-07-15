@@ -32,10 +32,15 @@ self.addEventListener('push', (event) => {
     body: data.body || '',
     icon,
     badge,
+    tag: data.tag || undefined,
+    timestamp: Date.now(),
+    requireInteraction: false,
+    data: { url: data.url || '/pages/dashboard.html' },
   }));
 });
 
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
-  event.waitUntil(self.clients.openWindow('/pages/dashboard.html'));
+  const url = (event.notification.data && event.notification.data.url) || '/pages/dashboard.html';
+  event.waitUntil(self.clients.openWindow(url));
 });

@@ -57,8 +57,12 @@ const NotificationPage = {
             this.saveChannelToggles();
         });
 
-        document.getElementById('testNotificationBtn')?.addEventListener('click', () => {
-            this.sendTest();
+        document.getElementById('testEmailBtn')?.addEventListener('click', () => {
+            this.sendTest('email');
+        });
+
+        document.getElementById('testPushBtn')?.addEventListener('click', () => {
+            this.sendTest('push');
         });
 
         document.getElementById('runRulesBtn')?.addEventListener('click', () => {
@@ -296,23 +300,24 @@ const NotificationPage = {
         }
     },
 
-    async sendTest() {
-        const btn = document.getElementById('testNotificationBtn');
+    async sendTest(channel) {
+        const btnId = channel === 'email' ? 'testEmailBtn' : 'testPushBtn';
+        const btn = document.getElementById(btnId);
         if (btn) btn.disabled = true;
         try {
-            const result = await API.notifications.test();
-            const parts = [];
-            if (result.email) parts.push('email sent');
-            if (result.push) parts.push('desktop push sent');
-            if (!result.email && !result.push) {
-                const hint = result.push_detail || 'check configuration';
-                Utils.showToast('Test completed — no channels delivered (' + hint + ')', 'warning');
-            } else {
-                let msg = 'Test notification: ' + parts.join(', ');
-                if (result.email && !result.push && result.push_detail) {
-                    msg += ' (push: ' + result.push_detail + ')';
+            const result = await API.notifications.test(channel);
+            if (channel === 'email') {
+                if (result.email) {
+                    Utils.showToast('Test email sent — check your inbox', 'success');
+                } else {
+                    Utils.showToast('Test email failed: ' + (result.email_detail || 'check SMTP settings'), 'error');
                 }
-                Utils.showToast(msg, result.push ? 'success' : 'warning');
+            } else {
+                if (result.push) {
+                    Utils.showToast('Test desktop notification sent', 'success');
+                } else {
+                    Utils.showToast('Test push failed: ' + (result.push_detail || 'check configuration'), 'error');
+                }
             }
         } catch (error) {
             console.error('Test notification failed:', error);

@@ -67,11 +67,11 @@
                                 </svg>
                                 Check rules now
                             </button>
-                            <button type="button" id="testNotificationBtn" class="btn btn-primary btn-sm">
+                            <button type="button" id="testPushBtn" class="btn btn-primary btn-sm">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
                                 </svg>
-                                Send test notification
+                                Send test desktop notification
                             </button>
                         </div>
                     </form>
@@ -154,7 +154,13 @@
                                 </label>
                             </fieldset>
                         </div>
-                        <div class="flex justify-end">
+                        <div class="flex justify-end gap-2">
+                            <button type="button" id="testEmailBtn" class="btn btn-outline btn-sm">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                </svg>
+                                Send test email
+                            </button>
                             <button type="submit" class="btn btn-primary btn-sm">Save SMTP settings</button>
                         </div>
                     </form>
@@ -288,10 +294,10 @@
 
     <script src="../js/utils.js"></script>
     <script src="../js/runtime-config.js"></script>
-    <script src="../js/api.js"></script>
+    <script src="../js/api.js?v=20260715a"></script>
     <script src="../js/auth.js"></script>
     <script src="../js/push-notifications.js"></script>
     <script src="../js/components/layout.js"></script>
-    <script src="../js/pages/notifications.js"></script>
+    <script src="../js/pages/notifications.js?v=20260715a"></script>
 </body>
 </html>

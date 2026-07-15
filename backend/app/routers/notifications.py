@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Literal, Optional
 from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -227,10 +227,15 @@ def push_unsubscribe(
         db.commit()
 
 
+class TestNotificationRequest(BaseModel):
+    channel: Literal["email", "push", "all"] = "all"
+
+
 class TestNotificationResponse(BaseModel):
     email: bool
     push: bool
     push_detail: str | None = None
+    email_detail: str | None = None
 
 
 class PushStatusResponse(BaseModel):
@@ -293,10 +298,15 @@ def run_notifications_now(
 
 @router.post("/test", response_model=TestNotificationResponse)
 def send_test_notification(
+    payload: Optional[TestNotificationRequest] = None,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    """Send a test notification via enabled channels."""
+    """Send a test notification via the requested channel (default: both)."""
+    channel = (payload.channel if payload else "all")
+    want_email = channel in ("email", "all")
+    want_push = channel in ("push", "all")
+
     settings_row = _get_or_create_settings(db, current_user.id)
     notif = ns.Notification(
         dedupe_key=f"test:{current_user.id}:{datetime.utcnow().isoformat()}",
@@ -308,22 +318,32 @@ def send_test_notification(
     email_ok = False
     push_ok = False
     push_detail = None
-    if settings_row.email_enabled:
-        email_ok = ns._send_email(current_user, notif, settings_row, settings)
-    if settings_row.push_enabled:
-        sub_count = (
-            db.query(PushSubscription)
-            .filter(PushSubscription.user_id == current_user.id)
-            .count()
-        )
-        if sub_count == 0:
-            push_detail = "No browser subscription — click Enable desktop notifications first"
-        elif not settings.VAPID_PUBLIC_KEY or not settings.VAPID_PRIVATE_KEY:
-            push_detail = "Server VAPID keys not configured — restart backend after updating .env"
+    email_detail = None
+
+    if want_email:
+        if not settings_row.email_enabled:
+            email_detail = "Email disabled — turn on the Email notifications toggle"
         else:
-            push_ok = ns._send_push(db, current_user, notif, settings)
-            if not push_ok:
-                push_detail = "Push delivery failed — try Disable then Enable desktop notifications"
-    elif push_detail is None:
-        push_detail = "Push disabled — turn on the Push notifications toggle"
-    return TestNotificationResponse(email=email_ok, push=push_ok, push_detail=push_detail)
+            email_ok, email_detail = ns._send_email_detailed(current_user, notif, settings_row, settings)
+            if email_ok:
+                email_detail = None
+
+    if want_push:
+        if not settings_row.push_enabled:
+            push_detail = "Push disabled — turn on the Push notifications toggle"
+        else:
+            sub_count = (
+                db.query(PushSubscription)
+                .filter(PushSubscription.user_id == current_user.id)
+                .count()
+            )
+            if sub_count == 0:
+                push_detail = "No browser subscription — click Enable desktop notifications first"
+            elif not settings.VAPID_PUBLIC_KEY or not settings.VAPID_PRIVATE_KEY:
+                push_detail = "Server VAPID keys not configured — restart backend after updating .env"
+            else:
+                push_ok = ns._send_push(db, current_user, notif, settings)
+                if not push_ok:
+                    push_detail = "Push delivery failed — try Disable then Enable desktop notifications"
+
+    return TestNotificationResponse(email=email_ok, push=push_ok, push_detail=push_detail, email_detail=email_detail)

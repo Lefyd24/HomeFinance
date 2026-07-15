@@ -52,12 +52,13 @@ def make_debt(db, user, name="Car Loan", original_balance=10000.0, current_balan
 
 
 def make_recurring(db, user, account=None, name="Bill", amount=10.0,
-                   next_due_date=None, next_due=None, notify=False, days_before=None):
+                   next_due_date=None, next_due=None, notify=False, days_before=None,
+                   is_active=True):
     due = next_due_date or next_due or date.today()
     r = RecurringExpense(
         user_id=user.id, account_id=account.id, name=name, amount=amount,
         recurrence_interval=1, recurrence_unit="months", start_date=date.today(),
-        next_due_date=due, is_active=True,
+        next_due_date=due, is_active=is_active,
         notify_enabled=notify, notify_days_before=days_before,
     )
     db.add(r); db.commit(); db.refresh(r)

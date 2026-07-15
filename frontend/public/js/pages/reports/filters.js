@@ -353,11 +353,11 @@
             const reportKey = reportMap[activeTab] || 'spending';
 
             try {
-                const query = new URLSearchParams({
+                const queryParams = {
                     report: reportKey,
-                    start_date: this._state.startDate,
-                    end_date: this._state.endDate
-                }).toString();
+                    ...this.params()
+                };
+                const query = new URLSearchParams(queryParams).toString();
 
                 const token = localStorage.getItem('token');
                 const response = await fetch(`${API.baseURL}/reports/export?${query}`, {

@@ -236,6 +236,69 @@
     return chart;
   }
 
+  // Horizontal bar chart for category totals sorted descending. Pass items
+  // already sorted by amount desc; internally reversed for ECharts' bottom-up
+  // category axis, so callers/onClick always deal with the natural order.
+  function rankedBar(el, { categories, labelTopN = 6, valueFormatter, onClick }) {
+    const p = palette();
+    const chart = init(el);
+    const fmt = valueFormatter || ((v) => '€' + Number(v).toLocaleString('en-IE', { maximumFractionDigits: 0 }));
+    const ranked = (categories || []).slice().reverse();
+    const n = ranked.length;
+
+    chart.setOption({
+      ...baseOptions(),
+      tooltip: {
+        trigger: 'item', appendToBody: true, confine: true, transitionDuration: 0,
+        backgroundColor: 'rgba(20,20,25,0.92)', borderWidth: 0,
+        textStyle: { color: '#fff', fontSize: 12 },
+        valueFormatter: fmt,
+      },
+      grid: { left: 8, right: 64, top: 8, bottom: 8, containLabel: true },
+      xAxis: {
+        type: 'value', axisLine: { show: false }, axisTick: { show: false },
+        splitLine: { lineStyle: { color: p.grid } },
+        axisLabel: { color: p.text, formatter: (v) => '€' + v },
+      },
+      yAxis: {
+        type: 'category', data: ranked.map((c) => c.name),
+        axisLine: { show: false }, axisTick: { show: false },
+        axisLabel: { color: p.text },
+      },
+      series: [{
+        type: 'bar', barMaxWidth: 22,
+        data: ranked.map((c, revIdx) => {
+          const rank = n - 1 - revIdx; // 0 = largest, matches caller's sort order
+          const color = c.color || p.ramp[rank % p.ramp.length];
+          const showLabel = rank < labelTopN;
+          const interaction = barInteraction(color);
+          return {
+            value: c.amount,
+            itemStyle: { color, borderRadius: [0, 6, 6, 0] },
+            label: {
+              show: showLabel, position: 'right', color: p.text,
+              fontSize: 11, formatter: () => fmt(c.amount),
+            },
+            ...interaction,
+            emphasis: {
+              ...interaction.emphasis,
+              label: { show: true, position: 'right', color: p.text, fontSize: 11, formatter: () => fmt(c.amount) },
+            },
+          };
+        }),
+      }],
+    });
+
+    if (typeof onClick === 'function') {
+      chart.on('click', (evt) => {
+        const item = ranked[evt.dataIndex];
+        if (item) onClick(item);
+      });
+    }
+
+    return chart;
+  }
+
   function combo(el, { labels, bars, line: lineSeries }) {
     const p = palette();
     const chart = init(el);
@@ -340,5 +403,5 @@
 
   function disposeAll() { instances.forEach((c) => c.dispose()); instances.clear(); }
 
-  window.FinCharts = { init, palette, baseOptions, bar, line, donut, combo, heatmap, weekdaySpend, disposeAll, barInteraction, lineInteraction, seriesInteraction };
+  window.FinCharts = { init, palette, baseOptions, bar, line, donut, rankedBar, combo, heatmap, weekdaySpend, disposeAll, barInteraction, lineInteraction, seriesInteraction };
 })();

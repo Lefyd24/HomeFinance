@@ -107,7 +107,7 @@ function renderPage() {
             ${overdue.length > 0 ? renderSection('Overdue', overdue) : ''}
             ${upcoming.length > 0 ? renderSection('Due within 15 days', upcoming) : ''}
             ${future.length > 0 ? renderSection('Upcoming', future) : ''}
-            ${inactive.length > 0 ? renderSection('Inactive', inactive) : ''}
+            ${inactive.length > 0 ? renderDisabledDisclosure(inactive) : ''}
             ${recurringExpenses.length === 0 ? `
                 <div class="card bg-base-100 shadow-sm">
                     <div class="card-body text-center py-16">
@@ -130,6 +130,22 @@ function renderSection(title, items) {
             <h2 class="text-xs font-semibold uppercase tracking-wider text-base-content/50 mb-3 px-1">${title}</h2>
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 ${items.map(renderCard).join('')}
+            </div>
+        </div>
+    `;
+}
+
+function renderDisabledDisclosure(items) {
+    return `
+        <div class="collapse collapse-arrow bg-base-100 border border-base-200 rounded-box">
+            <input type="checkbox" />
+            <div class="collapse-title text-xs font-semibold uppercase tracking-wider text-base-content/50">
+                Disabled recurring expenses (${items.length})
+            </div>
+            <div class="collapse-content">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 pt-1">
+                    ${items.map(renderCard).join('')}
+                </div>
             </div>
         </div>
     `;
@@ -197,6 +213,10 @@ function renderCard(expense) {
                     </button>
                     <ul tabindex="0" class="dropdown-content menu bg-base-100 rounded-box shadow-lg border border-base-200 z-10 w-44 p-1">
                         <li><a onclick="openEditModal(${expense.id})">Edit</a></li>
+                        ${expense.is_active
+                            ? `<li><a onclick="disableExpense(${expense.id})">Disable</a></li>`
+                            : `<li><a onclick="enableExpense(${expense.id})">Enable</a></li>
+                               <li><a onclick="viewRecurringDetails(${expense.id})">View history</a></li>`}
                         <li><a class="text-error" onclick="deleteExpense(${expense.id})">Delete</a></li>
                     </ul>
                 </div>
@@ -215,6 +235,13 @@ window.viewRecurringDetails = async (id) => {
     const bodyEl = document.getElementById('recurringDetailsBody');
 
     titleEl.textContent = expense.name;
+    const enableBtn = document.getElementById('recurringDetailsEnableBtn');
+    if (expense.is_active) {
+        enableBtn.classList.add('hidden');
+    } else {
+        enableBtn.classList.remove('hidden');
+        enableBtn.dataset.expenseId = String(expense.id);
+    }
     const cat = categories.find(c => c.id === expense.category_id);
     const cadence = expense.recurrence_interval === 1
         ? ({ days: 'Daily', weeks: 'Weekly', months: 'Monthly' }[expense.recurrence_unit] || expense.recurrence_unit)
@@ -352,7 +379,9 @@ window.openPayModal = (id) => {
 };
 
 window.deleteExpense = async (id) => {
-    if (!confirm('Delete this recurring expense? This cannot be undone.')) return;
+    const expense = recurringExpenses.find(e => e.id === id);
+    const name = expense ? expense.name : 'this recurring expense';
+    if (!confirm(`Permanently delete "${name}"? Its payment history will be destroyed. Disable it instead to keep the history.`)) return;
     try {
         await API.recurringExpenses.delete(id);
         Utils.showToast('Deleted', 'success');
@@ -361,6 +390,35 @@ window.deleteExpense = async (id) => {
     } catch (err) {
         Utils.showToast(err.message || 'Error deleting', 'error');
     }
+};
+
+window.disableExpense = async (id) => {
+    try {
+        await API.recurringExpenses.setActive(id, false);
+        Utils.showToast('Recurring expense disabled', 'success');
+        recurringExpenses = await API.recurringExpenses.list();
+        renderPage();
+    } catch (err) {
+        Utils.showToast(err.message || 'Error disabling', 'error');
+    }
+};
+
+window.enableExpense = async (id) => {
+    try {
+        await API.recurringExpenses.setActive(id, true);
+        Utils.showToast('Recurring expense enabled', 'success');
+        recurringExpenses = await API.recurringExpenses.list();
+        renderPage();
+    } catch (err) {
+        Utils.showToast(err.message || 'Error enabling', 'error');
+    }
+};
+
+window.enableFromDetailsModal = async () => {
+    const id = parseInt(document.getElementById('recurringDetailsEnableBtn').dataset.expenseId, 10);
+    if (!id) return;
+    await window.enableExpense(id);
+    document.getElementById('recurringDetailsModal').close();
 };
 
 function setupEventListeners() {
@@ -379,7 +437,7 @@ function setupEventListeners() {
             start_date: fd.get('start_date'),
             next_due_date: fd.get('next_due_date'),
             notes: fd.get('notes') || null,
-            is_active: true,
+            is_active: editingId ? (recurringExpenses.find(r => r.id === editingId)?.is_active ?? true) : true,
             notify_enabled: notifyEnabled,
             notify_days_before: notifyEnabled && notifyDaysRaw ? parseInt(notifyDaysRaw, 10) : null,
         };

@@ -21,6 +21,30 @@ from app.routers.budgets import calculate_budget_progress
 router = APIRouter(prefix="/reports", tags=["Reports"])
 
 
+def _parse_id_list(value: Optional[str]) -> Optional[List[int]]:
+    """Parse a comma-separated id list from a query param, or None if absent.
+
+    Raises 422 (rather than letting int() throw a 500) on malformed input.
+    """
+    if not value:
+        return None
+    try:
+        return [int(v) for v in value.split(",") if v.strip()]
+    except ValueError:
+        raise HTTPException(status_code=422, detail="Invalid id list — expected comma-separated integers")
+
+
+def _apply_filters(query, account_ids: Optional[str], category_ids: Optional[str]):
+    """Apply the account_ids/category_ids query params to a Transaction query."""
+    acc_list = _parse_id_list(account_ids)
+    if acc_list:
+        query = query.filter(Transaction.account_id.in_(acc_list))
+    cat_list = _parse_id_list(category_ids)
+    if cat_list:
+        query = query.filter(Transaction.category_id.in_(cat_list))
+    return query
+
+
 @router.get("/types")
 def get_report_types():
     """Get available report types."""
@@ -64,19 +88,13 @@ def get_spending_report(
     )
     
     # Apply filters
-    if account_ids:
-        account_id_list = [int(id) for id in account_ids.split(",")]
-        query = query.filter(Transaction.account_id.in_(account_id_list))
-    
-    if category_ids:
-        category_id_list = [int(id) for id in category_ids.split(",")]
-        query = query.filter(Transaction.category_id.in_(category_id_list))
-    
+    query = _apply_filters(query, account_ids, category_ids)
+
     results = query.group_by(Category.name).all()
-    
+
     labels = [r.name for r in results]
     data = [float(r.total) for r in results]
-    
+
     return SpendingReport(labels=labels, data=data)
 
 
@@ -84,6 +102,8 @@ def get_spending_report(
 def get_income_report(
     start_date: Optional[date] = None,
     end_date: Optional[date] = None,
+    account_ids: Optional[str] = None,
+    category_ids: Optional[str] = None,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
@@ -92,8 +112,8 @@ def get_income_report(
         start_date = date.today().replace(day=1)
     if not end_date:
         end_date = date.today()
-    
-    results = db.query(
+
+    query = db.query(
         Category.name,
         func.sum(Transaction.amount).label("total")
     ).join(Transaction).filter(
@@ -101,11 +121,13 @@ def get_income_report(
         Transaction.type == "income",
         Transaction.date >= start_date,
         Transaction.date <= end_date
-    ).group_by(Category.name).all()
-    
+    )
+    query = _apply_filters(query, account_ids, category_ids)
+    results = query.group_by(Category.name).all()
+
     labels = [r.name for r in results]
     data = [float(r.total) for r in results]
-    
+
     return {"labels": labels, "data": data}
 
 
@@ -114,6 +136,8 @@ def get_cashflow_report(
     start_date: Optional[date] = None,
     end_date: Optional[date] = None,
     group_by: str = "month",
+    account_ids: Optional[str] = None,
+    category_ids: Optional[str] = None,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
@@ -122,7 +146,7 @@ def get_cashflow_report(
         start_date = date.today() - timedelta(days=180)
     if not end_date:
         end_date = date.today()
-    
+
     # Determine grouping format
     if group_by == "day":
         date_format = "%Y-%m-%d"
@@ -136,9 +160,9 @@ def get_cashflow_report(
     else:  # month
         date_format = "%Y-%m"
         date_trunc = func.strftime("%Y-%m", Transaction.date)
-    
+
     # Get income by period
-    income_results = db.query(
+    income_query = db.query(
         date_trunc.label("period"),
         func.sum(Transaction.amount).label("total")
     ).filter(
@@ -146,10 +170,12 @@ def get_cashflow_report(
         Transaction.type == "income",
         Transaction.date >= start_date,
         Transaction.date <= end_date
-    ).group_by("period").order_by("period").all()
-    
+    )
+    income_query = _apply_filters(income_query, account_ids, category_ids)
+    income_results = income_query.group_by("period").order_by("period").all()
+
     # Get expenses by period
-    expense_results = db.query(
+    expense_query = db.query(
         date_trunc.label("period"),
         func.sum(Transaction.amount).label("total")
     ).filter(
@@ -157,8 +183,10 @@ def get_cashflow_report(
         Transaction.type == "expense",
         Transaction.date >= start_date,
         Transaction.date <= end_date
-    ).group_by("period").order_by("period").all()
-    
+    )
+    expense_query = _apply_filters(expense_query, account_ids, category_ids)
+    expense_results = expense_query.group_by("period").order_by("period").all()
+
     # Combine periods
     all_periods = sorted(set([r.period for r in income_results + expense_results]))
     
@@ -177,6 +205,8 @@ def get_category_breakdown(
     start_date: Optional[date] = None,
     end_date: Optional[date] = None,
     type: str = "expense",
+    account_ids: Optional[str] = None,
+    category_ids: Optional[str] = None,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
@@ -185,8 +215,8 @@ def get_category_breakdown(
         start_date = date.today().replace(day=1)
     if not end_date:
         end_date = date.today()
-    
-    results = db.query(
+
+    query = db.query(
         Category.name,
         Category.color,
         func.sum(Transaction.amount).label("total"),
@@ -196,8 +226,10 @@ def get_category_breakdown(
         Transaction.type == type,
         Transaction.date >= start_date,
         Transaction.date <= end_date
-    ).group_by(Category.id).all()
-    
+    )
+    query = _apply_filters(query, account_ids, category_ids)
+    results = query.group_by(Category.id).all()
+
     return {
         "categories": [
             {
@@ -216,6 +248,8 @@ def get_trend_report(
     start_date: Optional[date] = None,
     end_date: Optional[date] = None,
     category_id: Optional[int] = None,
+    account_ids: Optional[str] = None,
+    category_ids: Optional[str] = None,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
@@ -224,7 +258,7 @@ def get_trend_report(
         start_date = date.today() - timedelta(days=365)
     if not end_date:
         end_date = date.today()
-    
+
     query = db.query(
         func.strftime("%Y-%m", Transaction.date).label("month"),
         func.sum(Transaction.amount).label("total")
@@ -233,10 +267,12 @@ def get_trend_report(
         Transaction.date >= start_date,
         Transaction.date <= end_date
     )
-    
+
     if category_id:
         query = query.filter(Transaction.category_id == category_id)
-    
+
+    query = _apply_filters(query, account_ids, category_ids)
+
     results = query.group_by("month").order_by("month").all()
     
     labels = [r.month for r in results]
@@ -249,6 +285,7 @@ def get_trend_report(
 def get_balance_history(
     start_date: Optional[date] = None,
     end_date: Optional[date] = None,
+    account_ids: Optional[str] = None,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
@@ -257,13 +294,17 @@ def get_balance_history(
         start_date = date.today() - timedelta(days=180)
     if not end_date:
         end_date = date.today()
-    
-    # Get all accounts for user
-    accounts = db.query(Account).filter(
+
+    # Get accounts for user, narrowed to the selected account_ids if any
+    account_query = db.query(Account).filter(
         Account.user_id == current_user.id,
         Account.is_active == True
-    ).all()
-    
+    )
+    acc_id_list = _parse_id_list(account_ids)
+    if acc_id_list:
+        account_query = account_query.filter(Account.id.in_(acc_id_list))
+    accounts = account_query.all()
+
     # Generate date range
     current = start_date
     dates = []
@@ -285,6 +326,7 @@ def get_balance_history(
                     else_=0
                 )
             )).filter(
+                Transaction.user_id == current_user.id,
                 Transaction.account_id == account.id,
                 Transaction.date <= d
             )
@@ -328,13 +370,7 @@ def get_top_merchants(
         Transaction.date <= end_date
     )
 
-    if account_ids:
-        account_id_list = [int(id) for id in account_ids.split(",")]
-        query = query.filter(Transaction.account_id.in_(account_id_list))
-
-    if category_ids:
-        category_id_list = [int(id) for id in category_ids.split(",")]
-        query = query.filter(Transaction.category_id.in_(category_id_list))
+    query = _apply_filters(query, account_ids, category_ids)
 
     results = query.group_by(Transaction.description).order_by(
         func.sum(Transaction.amount).desc()
@@ -373,13 +409,7 @@ def get_weekday_heatmap(
         Transaction.date <= end_date
     )
 
-    if account_ids:
-        account_id_list = [int(id) for id in account_ids.split(",")]
-        query = query.filter(Transaction.account_id.in_(account_id_list))
-
-    if category_ids:
-        category_id_list = [int(id) for id in category_ids.split(",")]
-        query = query.filter(Transaction.category_id.in_(category_id_list))
+    query = _apply_filters(query, account_ids, category_ids)
 
     results = query.group_by("w").all()
     by_weekday = {int(r.w): float(r.total) for r in results}  # 0=Sun..6=Sat
@@ -416,13 +446,7 @@ def get_spending_mom(
         Transaction.date <= end_date
     )
 
-    if account_ids:
-        account_id_list = [int(id) for id in account_ids.split(",")]
-        query = query.filter(Transaction.account_id.in_(account_id_list))
-
-    if category_ids:
-        category_id_list = [int(id) for id in category_ids.split(",")]
-        query = query.filter(Transaction.category_id.in_(category_id_list))
+    query = _apply_filters(query, account_ids, category_ids)
 
     results = query.group_by("month").order_by("month").all()
 
@@ -461,9 +485,7 @@ def get_savings_rate(
             Transaction.date >= start_date,
             Transaction.date <= end_date
         )
-        if account_ids:
-            account_id_list = [int(id) for id in account_ids.split(",")]
-            q = q.filter(Transaction.account_id.in_(account_id_list))
+        q = _apply_filters(q, account_ids, None)
         return {r.month: float(r.total) for r in q.group_by("month").all()}
 
     income_by_month = totals_by_month("income")
@@ -506,9 +528,7 @@ def get_net_worth(
         Transaction.date <= end_date
     )
 
-    if account_ids:
-        account_id_list = [int(id) for id in account_ids.split(",")]
-        query = query.filter(Transaction.account_id.in_(account_id_list))
+    query = _apply_filters(query, account_ids, None)
 
     results = query.group_by("month").order_by("month").all()
 
@@ -599,6 +619,8 @@ def export_report(
     report: str,
     start_date: Optional[date] = None,
     end_date: Optional[date] = None,
+    account_ids: Optional[str] = None,
+    category_ids: Optional[str] = None,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
@@ -608,24 +630,24 @@ def export_report(
     so the exported figures always match what the reports pages show.
     """
     if report == "spending":
-        data = get_spending_report(start_date, end_date, None, None, current_user, db)
+        data = get_spending_report(start_date, end_date, account_ids, category_ids, current_user, db)
         rows = [("Category", "Amount")] + list(zip(data.labels, data.data))
     elif report == "income":
-        data = get_income_report(start_date, end_date, current_user, db)
+        data = get_income_report(start_date, end_date, account_ids, category_ids, current_user, db)
         rows = [("Category", "Amount")] + list(zip(data["labels"], data["data"]))
     elif report == "cashflow":
-        data = get_cashflow_report(start_date, end_date, "month", current_user, db)
+        data = get_cashflow_report(start_date, end_date, "month", account_ids, category_ids, current_user, db)
         rows = [("Period", "Income", "Expenses")] + list(
             zip(data.labels, data.income, data.expenses)
         )
     elif report == "net-worth":
-        data = get_net_worth(start_date, end_date, None, current_user, db)
+        data = get_net_worth(start_date, end_date, account_ids, current_user, db)
         rows = [("Month", "Net Worth")] + list(zip(data["labels"], data["data"]))
     elif report == "savings-rate":
-        data = get_savings_rate(start_date, end_date, None, current_user, db)
+        data = get_savings_rate(start_date, end_date, account_ids, current_user, db)
         rows = [("Month", "Savings %")] + list(zip(data["labels"], data["rate"]))
     elif report == "top-merchants":
-        data = get_top_merchants(start_date, end_date, None, None, "expense", 50, current_user, db)
+        data = get_top_merchants(start_date, end_date, account_ids, category_ids, "expense", 50, current_user, db)
         rows = [("Merchant", "Amount")] + list(zip(data["labels"], data["data"]))
     else:
         rows = [("error", f"unknown report {report}")]

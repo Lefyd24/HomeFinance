@@ -202,51 +202,18 @@
             donutEl.innerHTML = emptyState('No categorized spending for this range');
         }
 
-        // --- Ranked category bars (horizontal) -------------------------------
-        // Built directly on FinCharts.init/palette (rather than FinCharts.bar,
-        // which is a vertical time-series chart) so the y-axis can carry
-        // category names, highest spend first.
+        // --- Ranked category bars (horizontal), top-6 labeled, rest on hover --
         const barEl = document.getElementById('spendingCategoryBar');
         if (cats.length) {
-            const ranked = cats.slice().reverse(); // echarts draws category axis bottom-up
-            rankedBarChart = FinCharts.init(barEl);
-            rankedBarChart.setOption({
-                ...FinCharts.baseOptions(),
-                tooltip: {
-                    trigger: 'item', appendToBody: true, confine: true, transitionDuration: 0,
-                    backgroundColor: 'rgba(20,20,25,0.92)', borderWidth: 0,
-                    textStyle: { color: '#fff', fontSize: 12 },
-                    valueFormatter: (v) => Utils.formatCurrency(Number(v))
-                },
-                grid: { left: 8, right: 24, top: 8, bottom: 8, containLabel: true },
-                xAxis: {
-                    type: 'value', axisLine: { show: false }, axisTick: { show: false },
-                    splitLine: { lineStyle: { color: p.grid } },
-                    axisLabel: { color: p.text, formatter: (v) => '€' + v }
-                },
-                yAxis: {
-                    type: 'category', data: ranked.map(c => c.name),
-                    axisLine: { show: false }, axisTick: { show: false },
-                    axisLabel: { color: p.text }
-                },
-                series: [{
-                    type: 'bar', barMaxWidth: 22,
-                    ...FinCharts.seriesInteraction(),
-                    data: ranked.map((c, i) => {
-                        const color = c.color || p.ramp[i % p.ramp.length];
-                        return {
-                            value: c.amount,
-                            itemStyle: { color, borderRadius: [0, 6, 6, 0] },
-                            emphasis: { itemStyle: { color } }
-                        };
-                    })
-                }]
-            });
-            rankedBarChart.on('click', (evt) => {
-                const cat = ranked[evt.dataIndex];
-                if (!cat) return;
-                const catId = categoryIdByName[cat.name];
-                if (catId !== undefined) loadDrilldown(host, params, catId, cat.name);
+            barEl.style.height = Math.max(240, cats.length * 30 + 40) + 'px';
+            rankedBarChart = FinCharts.rankedBar(barEl, {
+                categories: cats,
+                labelTopN: 6,
+                valueFormatter: (v) => Utils.formatCurrency(Number(v)),
+                onClick: (cat) => {
+                    const catId = categoryIdByName[cat.name];
+                    if (catId !== undefined) loadDrilldown(host, params, catId, cat.name);
+                }
             });
         } else {
             barEl.innerHTML = emptyState('No categorized spending for this range');

@@ -13,7 +13,8 @@ A full-stack personal finance application with a FastAPI backend and a vanilla J
 - **Bank import** — CSV/Excel import wizard
 - **Advisor** — spending forecasts and financial insights
 - **Documents** — attach receipts and statements
-- **Recurring expenses** — scheduled payment tracking
+- **Recurring expenses** — scheduled payment tracking; disable instead of delete to retire a bill while keeping its payment history, re-enable anytime
+- **Notifications** — email + desktop (Web Push) alerts for due bills, low balances, and budget thresholds, with per-channel test sends and quiet hours
 - **PWA** — installable progressive web app
 - **Auth** — JWT login with refresh tokens; optional API keys
 
@@ -192,7 +193,8 @@ uv run pytest backend/tests -v
 | Health | `curl http://localhost:8223/health` | `"status":"healthy"` |
 | Frontend | http://localhost:3100 | Login / register page |
 | API docs | http://localhost:8223/docs | Interactive Swagger UI |
-| Reports | http://localhost:3100/pages/reports.html | Tabbed reports with charts |
+| Reports | http://localhost:3100/pages/reports.html | Tabbed reports with charts; top filter bar (accounts/categories) affects every tab |
+| Notifications | http://localhost:3100/pages/notifications.html | Channel toggles, SMTP settings, rules, and test-send buttons |
 
 ### Troubleshooting (local dev)
 
@@ -267,6 +269,34 @@ Environment variables (set in repo-root `.env`):
 | `BACKEND_PORT` | API listen port | `8223` |
 | `FRONTEND_PORT` | Used for CORS + runtime config | `3100` |
 | `LOG_DIR` | Application log directory | `./logs` |
+
+### Notifications (optional, for local dev)
+
+Email and desktop alerts work without any setup — the app degrades gracefully if unconfigured (email silently no-ops, push shows a clear "not configured" message on the Notifications page). To exercise them locally:
+
+**Email (SMTP)** — set in `.env`, or override per-user from the Notifications page in the UI:
+
+```env
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=you@gmail.com
+SMTP_PASSWORD=your-app-password
+SMTP_FROM=you@gmail.com
+SMTP_USE_TLS=true
+```
+
+Then from the Notifications page (`http://localhost:3100/pages/notifications.html`), click **Send test email** in the SMTP card. Any failure shows the real SMTP error (e.g. auth failure) instead of a generic message.
+
+**Desktop (Web Push / VAPID)** — generate a keypair once and append it to `.env`:
+
+```bash
+cd backend
+uv run python ../scripts/generate_vapid_keys.py
+```
+
+Restart the backend, then on the Notifications page click **Enable desktop notifications** (grants the browser permission) followed by **Send test desktop notification**.
+
+`NOTIFICATION_ENCRYPTION_KEY` encrypts any per-user SMTP password saved via the UI — generate one with `openssl rand -base64 32`; without it, per-user SMTP passwords can't be saved (server SMTP env vars still work).
 
 ---
 

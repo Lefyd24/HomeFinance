@@ -34,17 +34,31 @@ def resolve_smtp_config(row, app) -> "SmtpConfig | None":
     )
 
 
-def send_email(to: str, subject: str, html: str, cfg: SmtpConfig) -> bool:
+def _send(to: str, subject: str, html: str, cfg: SmtpConfig, text: str | None = None) -> tuple[bool, str | None]:
     try:
         msg = EmailMessage()
         msg["Subject"] = subject; msg["From"] = cfg.sender; msg["To"] = to
-        msg.set_content("This message requires an HTML-capable client.")
+        msg.set_content(text or "This message requires an HTML-capable client.")
         msg.add_alternative(html, subtype="html")
-        with smtplib.SMTP(cfg.host, cfg.port, timeout=15) as s:
-            if cfg.use_tls: s.starttls()
-            if cfg.user and cfg.password: s.login(cfg.user, cfg.password)
+        use_ssl = cfg.port == 465
+        smtp_cls = smtplib.SMTP_SSL if use_ssl else smtplib.SMTP
+        with smtp_cls(cfg.host, cfg.port, timeout=15) as s:
+            if cfg.use_tls and not use_ssl:
+                s.starttls()
+            if cfg.user and cfg.password:
+                s.login(cfg.user, cfg.password)
             s.send_message(msg)
-        return True
+        return True, None
     except Exception as exc:
         logger.warning("Email send failed to %s via %s:%s — %s", to, cfg.host, cfg.port, exc)
-        return False
+        return False, str(exc)
+
+
+def send_email(to: str, subject: str, html: str, cfg: SmtpConfig, text: str | None = None) -> bool:
+    ok, _ = _send(to, subject, html, cfg, text)
+    return ok
+
+
+def send_email_detailed(to: str, subject: str, html: str, cfg: SmtpConfig, text: str | None = None) -> tuple[bool, str | None]:
+    """Same as send_email but also returns the error string on failure, for UI diagnostics."""
+    return _send(to, subject, html, cfg, text)

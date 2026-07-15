@@ -692,6 +692,9 @@ const API = {
 
         getTransactions: (id, skip = 0, limit = 50) =>
             API.request(`/recurring-expenses/${id}/transactions?skip=${skip}&limit=${limit}`),
+
+        setActive: (id, active) =>
+            API.request(`/recurring-expenses/${id}`, { method: 'PUT', body: JSON.stringify({ is_active: active }) }),
     },
 
     // Analytics methods - ML-powered financial analytics
@@ -810,7 +813,10 @@ const API = {
         pushStatus: () => API.request('/notifications/push/status'),
         subscribe: (data) => API.request('/notifications/push/subscribe', { method: 'POST', body: JSON.stringify(data) }),
         unsubscribe: (data) => API.request('/notifications/push/unsubscribe', { method: 'POST', body: JSON.stringify(data) }),
-        test: () => API.request('/notifications/test', { method: 'POST' }),
+        test: (channel) => API.request('/notifications/test', {
+            method: 'POST',
+            body: JSON.stringify({ channel: channel || 'all' })
+        }),
         run: () => API.request('/notifications/run', { method: 'POST' }),
     }
 };

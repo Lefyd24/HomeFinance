@@ -2,10 +2,12 @@
  * Reports > Overview tab.
  *
  * KPI stat tiles (net cashflow, total spend, savings rate, net worth) plus
- * a compact cashflow combo chart and a top-categories donut, all driven by
+ * a compact cashflow combo chart and a ranked-categories bar, all driven by
  * the shared ReportFilters/FinCharts building blocks from Task 5/8.
  */
 (function () {
+    let overviewRankedChart = null;
+
     function fmtPct(n) {
         if (n === null || n === undefined || Number.isNaN(n)) return '—';
         return `${n >= 0 ? '' : ''}${n.toFixed(1)}%`;
@@ -81,8 +83,8 @@
                     </div>
                     <div class="card bg-base-100 shadow-sm">
                         <div class="card-body p-4">
-                            <h3 class="card-title text-base">Top Categories</h3>
-                            <div id="overviewCategoryDonut" style="height: 320px;"></div>
+                            <h3 class="card-title text-base">Ranked Categories</h3>
+                            <div id="overviewCategoryRanked" style="height: 320px;"></div>
                         </div>
                     </div>
                 </div>
@@ -101,14 +103,16 @@
             line: { name: 'Net', data: net, color: p.primary }
         });
 
-        const donutEl = document.getElementById('overviewCategoryDonut');
+        const rankedEl = document.getElementById('overviewCategoryRanked');
+        if (overviewRankedChart) {
+            overviewRankedChart.dispose();
+            overviewRankedChart = null;
+        }
         if (categories.length) {
-            FinCharts.donut(donutEl, {
-                labels: categories.map(c => c.name),
-                data: categories.map(c => c.amount)
-            });
+            rankedEl.style.height = Math.max(240, categories.length * 30 + 40) + 'px';
+            overviewRankedChart = FinCharts.rankedBar(rankedEl, { categories, labelTopN: 6 });
         } else {
-            donutEl.innerHTML = '<div class="flex items-center justify-center h-full text-base-content/50 text-sm">No category data for this range</div>';
+            rankedEl.innerHTML = '<div class="flex items-center justify-center h-full text-base-content/50 text-sm">No category data for this range</div>';
         }
     }
 

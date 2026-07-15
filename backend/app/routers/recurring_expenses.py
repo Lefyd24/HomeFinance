@@ -82,15 +82,14 @@ def get_upcoming_recurring_expenses(
 
 @router.get("/", response_model=List[RecurringExpenseResponse])
 def list_recurring_expenses(
+    active_only: bool = False,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    expenses = (
-        db.query(RecurringExpense)
-        .filter(RecurringExpense.user_id == current_user.id)
-        .order_by(RecurringExpense.next_due_date)
-        .all()
-    )
+    query = db.query(RecurringExpense).filter(RecurringExpense.user_id == current_user.id)
+    if active_only:
+        query = query.filter(RecurringExpense.is_active == True)
+    expenses = query.order_by(RecurringExpense.next_due_date).all()
     return [_enrich(e) for e in expenses]
 
 
@@ -133,6 +132,14 @@ def delete_recurring_expense(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
+    """Permanently delete a recurring expense.
+
+    This hard-deletes the row and cascades to its payment history
+    (see RecurringExpense.payments cascade="all, delete-orphan") — the
+    linked Transaction rows themselves are untouched, only the payment
+    link records disappear. Prefer PUT {is_active: false} to retire an
+    expense while keeping its history.
+    """
     expense = db.query(RecurringExpense).filter(
         RecurringExpense.id == expense_id,
         RecurringExpense.user_id == current_user.id,

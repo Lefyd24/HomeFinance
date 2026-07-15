@@ -9,7 +9,7 @@ from app.models.recurring_expense import RecurringExpense
 from app.models.debt import Debt
 from app.models.notification import NotificationRule, NotificationLog, PushSubscription
 from app.routers.budgets import get_period_dates
-from app.services import mail_service, push_service
+from app.services import mail_service, push_service, email_templates
 from app.services.push_service import PushGone
 
 logger = logging.getLogger("app.notifications")
@@ -26,6 +26,10 @@ class Notification:
     title: str
     body: str
     channels: list = field(default_factory=lambda: ["email"])
+    # Structured data for building a typed HTML email (see email_templates.py).
+    # `body` stays short plain text — it's what push notifications and the
+    # NotificationLog show, so it must never carry HTML.
+    meta: dict = field(default_factory=dict)
 
 
 def _window(next_due, today, days):
@@ -42,11 +46,14 @@ def due_recurring(db, user, today, default_days):
     for r in items:
         days = r.notify_days_before or default_days
         if _window(r.next_due_date, today, days):
+            delta = (r.next_due_date - today).days
             out.append(Notification(
                 dedupe_key=f"recurring:{r.id}:{r.next_due_date.isoformat()}",
                 type="recurring_due",
                 title=f"{r.name} due soon",
-                body=f"€{r.amount:.2f} due on {r.next_due_date.isoformat()}."))
+                body=f"€{r.amount:.2f} due on {r.next_due_date.isoformat()}.",
+                meta={"name": r.name, "amount": float(r.amount or 0),
+                      "due_date": r.next_due_date.isoformat(), "days_until_due": delta}))
     return out
 
 
@@ -59,11 +66,14 @@ def due_debts(db, user, today, default_days):
         days = d.notify_days_before or default_days
         if _window(d.next_payment_date, today, days):
             amt = d.minimum_payment or 0
+            delta = (d.next_payment_date - today).days
             out.append(Notification(
                 dedupe_key=f"debt:{d.id}:{d.next_payment_date.isoformat()}",
                 type="debt_due",
                 title=f"{d.name} payment due soon",
-                body=f"€{amt:.2f} due on {d.next_payment_date.isoformat()}."))
+                body=f"€{amt:.2f} due on {d.next_payment_date.isoformat()}.",
+                meta={"name": d.name, "amount": float(amt or 0),
+                      "due_date": d.next_payment_date.isoformat(), "days_until_due": delta}))
     return out
 
 
@@ -99,7 +109,8 @@ def balance_breaches(db, user):
                 type="balance_below",
                 title=f"Low balance: {acc.name}",
                 body=f"{acc.name} is €{balance:.2f} (below €{threshold:.2f}).",
-                channels=_parse_channels(rule.channels)))
+                channels=_parse_channels(rule.channels),
+                meta={"account_name": acc.name, "balance": balance, "threshold": threshold}))
         else:
             logger.info(
                 "Balance rule %s not triggered: %s balance=%.2f threshold=%.2f",
@@ -127,7 +138,8 @@ def budget_breaches(db, user, today):
                 type="budget_percent",
                 title=f"Budget alert: {budget.name}",
                 body=f"You've used {pct:.0f}% of {budget.name} (€{spent:.0f}/€{limit:.0f}).",
-                channels=_parse_channels(rule.channels)))
+                channels=_parse_channels(rule.channels),
+                meta={"budget_name": budget.name, "pct": pct, "spent": spent, "limit": limit}))
     return out
 
 
@@ -164,12 +176,9 @@ def report_due(db, user, rule, now):
         dedupe_key=f"rule:{rule.id}:{now.date().isoformat()}",
         type="scheduled_report",
         title=f"Your {rule.report_type or 'finance'} report",
-        body=_build_report_html(db, user, rule),
-        channels=_parse_channels(rule.channels))
-
-
-def _build_report_html(db, user, rule):
-    return f"<h2>{rule.name}</h2><p>Your scheduled {rule.report_type} summary.</p>"
+        body=f"Your scheduled {rule.report_type} summary is ready.",
+        channels=_parse_channels(rule.channels),
+        meta={"rule_name": rule.name, "report_type": rule.report_type})
 
 
 def _in_quiet_hours(settings_row, now):
@@ -181,20 +190,65 @@ def _in_quiet_hours(settings_row, now):
     return (s <= h < e) if s < e else (h >= s or h < e)
 
 
+def _render_email(notif) -> tuple[str, str]:
+    """Build the (html, text) parts for a Notification via email_templates."""
+    m = notif.meta or {}
+    if notif.type == "recurring_due":
+        return email_templates.recurring_due(
+            m.get("name", notif.title), m.get("amount", 0),
+            m.get("due_date", ""), m.get("days_until_due", 0))
+    if notif.type == "debt_due":
+        return email_templates.debt_due(
+            m.get("name", notif.title), m.get("amount", 0),
+            m.get("due_date", ""), m.get("days_until_due", 0))
+    if notif.type == "balance_below":
+        return email_templates.balance_below(
+            m.get("account_name", notif.title), m.get("balance", 0), m.get("threshold", 0))
+    if notif.type == "budget_percent":
+        return email_templates.budget_percent(
+            m.get("budget_name", notif.title), m.get("pct", 0), m.get("spent", 0), m.get("limit", 0))
+    if notif.type == "scheduled_report":
+        return email_templates.scheduled_report(m.get("rule_name", notif.title), m.get("report_type", ""))
+    if notif.type == "test":
+        return email_templates.test_notification(notif.title, notif.body)
+    return email_templates.render(notif.title, f"<p style='margin:0;font-size:14px;'>{notif.body}</p>")
+
+
 def _send_email(user, notif, settings_row, app_settings):
+    ok, _detail = _send_email_detailed(user, notif, settings_row, app_settings)
+    return ok
+
+
+def _send_email_detailed(user, notif, settings_row, app_settings):
+    """Like _send_email but also returns an error string on failure."""
     cfg = mail_service.resolve_smtp_config(settings_row, app_settings)
     if not cfg:
-        return False
-    html = f"<div style='font-family:sans-serif'><h2>{notif.title}</h2><p>{notif.body}</p></div>"
-    return mail_service.send_email(user.email, notif.title, html, cfg)
+        return False, "No SMTP host configured"
+    html_body, text_body = _render_email(notif)
+    return mail_service.send_email_detailed(user.email, notif.title, html_body, cfg, text=text_body)
+
+
+_NOTIF_URLS = {
+    "recurring_due": "/pages/recurring-expenses.html",
+    "debt_due": "/pages/debts.html",
+    "balance_below": "/pages/accounts.html",
+    "budget_percent": "/pages/budgets.html",
+    "scheduled_report": "/pages/reports.html",
+}
 
 
 def _send_push(db, user, notif, app_settings):
     subs = db.query(PushSubscription).filter(PushSubscription.user_id == user.id).all()
     ok = False
+    payload = {
+        "title": notif.title,
+        "body": notif.body,
+        "tag": notif.dedupe_key,
+        "url": _NOTIF_URLS.get(notif.type, "/pages/dashboard.html"),
+    }
     for sub in subs:
         try:
-            if push_service.send_push(sub, {"title": notif.title, "body": notif.body}, app_settings):
+            if push_service.send_push(sub, payload, app_settings):
                 ok = True
         except PushGone:
             db.delete(sub)
