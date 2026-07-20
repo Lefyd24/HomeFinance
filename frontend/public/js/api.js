@@ -191,6 +191,77 @@ const API = {
         }
     },
 
+    /**
+     * POST a JSON body and consume the response as a stream of SSE events
+     * ("data: {...}\n\n" lines). Mirrors request()'s header/401-refresh
+     * logic but hands parsed events to onEvent as they arrive instead of
+     * awaiting one JSON body.
+     * @param {string} endpoint - API endpoint
+     * @param {Object} body - request body, JSON-serialized
+     * @param {{onEvent?: Function, onError?: Function}} handlers
+     */
+    async streamRequest(endpoint, body, { onEvent, onError } = {}) {
+        const url = `${this.baseURL}${endpoint}`;
+
+        const doFetch = async (isRetry) => {
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: this.getHeaders(),
+                body: JSON.stringify(body)
+            });
+
+            if (response.status === 401 && !isRetry) {
+                if (!this._refreshPromise) {
+                    this._refreshPromise = this._tryRefreshToken().finally(() => {
+                        this._refreshPromise = null;
+                    });
+                }
+                const refreshed = await this._refreshPromise;
+                if (refreshed) {
+                    return doFetch(true);
+                }
+                localStorage.removeItem('token');
+                localStorage.removeItem('refresh_token');
+                localStorage.removeItem('user');
+                window.location.href = '/index.html';
+                return;
+            }
+
+            if (!response.ok || !response.body) {
+                const text = await response.text().catch(() => '');
+                throw new Error(`HTTP ${response.status}: ${text}`);
+            }
+
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+            let buffer = '';
+
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+                buffer += decoder.decode(value, { stream: true });
+                const parts = buffer.split('\n\n');
+                buffer = parts.pop();
+                for (const part of parts) {
+                    const line = part.split('\n').find(l => l.startsWith('data: '));
+                    if (!line) continue;
+                    try {
+                        onEvent && onEvent(JSON.parse(line.slice(6)));
+                    } catch (e) {
+                        console.error('Malformed SSE event:', line, e);
+                    }
+                }
+            }
+        };
+
+        try {
+            await doFetch(false);
+        } catch (error) {
+            console.error('Stream request error:', error);
+            onError && onError(error);
+        }
+    },
+
     // Auth methods
     auth: {
         login: (username, password) => {
@@ -818,6 +889,12 @@ const API = {
             body: JSON.stringify({ channel: channel || 'all' })
         }),
         run: () => API.request('/notifications/run', { method: 'POST' }),
+    },
+
+    ai: {
+        status: () => API.request('/ai/status'),
+        chat: (messages, handlers) =>
+            API.streamRequest('/ai/chat', { messages }, handlers)
     }
 };
 

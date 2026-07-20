@@ -14,3 +14,4 @@ openpyxl
 scikit-learn
 statsmodels
 numpy
+openai>=1.40,<2

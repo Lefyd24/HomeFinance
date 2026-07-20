@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light-fin">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Advisor - Personal Finance</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../assets/css/app.css">
+    <link rel="stylesheet" href="../assets/css/custom.css">
+    <link id="ai-chat-css" rel="stylesheet" href="../assets/css/ai-chat.css">
+    <link rel="icon" type="image/svg+xml" href="../assets/icons/favicon.svg">
+    <link rel="alternate icon" href="../assets/icons/favicon.ico">
+    <link rel="shortcut icon" href="../assets/icons/favicon.ico">
+    <script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js" integrity="sha384-/TQbtLCAerC3jgaim+N78RZSDYV7ryeoBCVqTuzRrFec2akfBkHS7ACQ3PQhvMVi" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.min.js" integrity="sha384-+VfUPEb0PdtChMwmBcBmykRMDd+v6D/oFmB3rZM/puCMDYcIvF968OimRh4KQY9a" crossorigin="anonymous"></script>
+</head>
+<body class="bg-base-200 min-h-screen ai-fullpage">
+    <div id="app"></div>
+
+    <template id="ai-advisor-template">
+        <div class="ai-page-shell">
+            <div id="ai-page-empty" class="ai-page-empty">
+                <span class="ai-dot" style="width:.625rem;height:.625rem;border-radius:999px;background:var(--color-primary);box-shadow:0 0 0 5px color-mix(in oklch, var(--color-primary) 18%, transparent);"></span>
+                <h2>Ask your finances anything</h2>
+                <p>Your advisor can look up transactions, balances, budgets, recurring expenses
+                    and debts in real time, and email you a copy of any analysis on request.</p>
+                <div class="ai-suggestion-grid" id="ai-suggestion-grid"></div>
+            </div>
+
+            <div id="ai-page-transcript" class="ai-page-transcript" hidden></div>
+
+            <div class="ai-page-composer-dock">
+                <form id="ai-page-form" class="ai-page-composer ai-glass">
+                    <div class="ai-composer-inner">
+                        <textarea id="ai-page-input" rows="1" placeholder="Ask about your finances…"></textarea>
+                        <button type="submit" id="ai-page-send" class="ai-send-btn" aria-label="Send">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                            </svg>
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <div id="ai-page-not-configured" class="text-center text-sm opacity-60 py-10" hidden>
+                AI chat isn't configured yet. Ask your administrator to set DEEPSEEK_API_KEY.
+            </div>
+        </div>
+    </template>
+
+    <script src="../js/utils.js"></script>
+    <script src="../js/runtime-config.js"></script>
+    <script src="../js/api.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/components/layout.js"></script>
+    <script src="../js/components/ai-chat-core.js"></script>
+    <script src="../js/pages/ai-advisor.js"></script>
+</body>
+</html>

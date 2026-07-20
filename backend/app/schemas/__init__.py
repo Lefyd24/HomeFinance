@@ -95,6 +95,11 @@ from app.schemas.notification import (
     PushSubscriptionCreate,
     NotificationLogRead,
 )
+from app.schemas.ai_chat import (
+    AiChatMessage,
+    AiChatRequest,
+    AiChatStatus,
+)
 
 __all__ = [
     # User schemas
@@ -188,4 +193,8 @@ __all__ = [
     "NotificationRuleRead",
     "PushSubscriptionCreate",
     "NotificationLogRead",
+    # AI Chat schemas
+    "AiChatMessage",
+    "AiChatRequest",
+    "AiChatStatus",
 ]

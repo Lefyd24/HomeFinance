@@ -26,6 +26,7 @@ from app.routers import (
     recurring_expenses,
     documents,
     notifications,
+    ai_chat,
 )
 
 
@@ -127,6 +128,7 @@ app.include_router(advisor.router, prefix="/api")
 app.include_router(recurring_expenses.router, prefix="/api")
 app.include_router(documents.router, prefix="/api")
 app.include_router(notifications.router, prefix="/api")
+app.include_router(ai_chat.router, prefix="/api")
 
 
 if __name__ == "__main__":

@@ -47,6 +47,109 @@ class TransactionService:
         transactions = query.order_by(Transaction.date.desc()).offset(skip).limit(limit).all()
         
         return transactions, total
+
+    @staticmethod
+    def _period_expr(group_by: str):
+        """SQLite period label expression for day / month / year grouping."""
+        if group_by == "day":
+            return func.date(Transaction.date)
+        if group_by == "year":
+            return func.strftime("%Y", Transaction.date)
+        # month (default grouping granularity)
+        return func.strftime("%Y-%m", Transaction.date)
+
+    @staticmethod
+    def get_totals(
+        db: Session,
+        user_id: int,
+        start_date: Optional[date] = None,
+        end_date: Optional[date] = None,
+        group_by: Optional[str] = None,
+    ) -> dict:
+        """Get income, expenses, and net for the given period.
+
+        Expects optional ``date`` objects (callers parse ISO strings first).
+        When ``group_by`` is ``"day"``, ``"month"``, or ``"year"``, returns a
+        period-keyed ``summary`` plus overall ``totals``.
+        """
+        query = db.query(Transaction).filter(Transaction.user_id == user_id)
+        if start_date:
+            query = query.filter(Transaction.date >= start_date)
+        if end_date:
+            query = query.filter(Transaction.date <= end_date)
+
+        if not group_by:
+            income = float(
+                query.filter(Transaction.type == "income")
+                .with_entities(func.coalesce(func.sum(Transaction.amount), 0))
+                .scalar()
+                or 0
+            )
+            expenses = float(
+                query.filter(Transaction.type == "expense")
+                .with_entities(func.coalesce(func.sum(Transaction.amount), 0))
+                .scalar()
+                or 0
+            )
+            return {
+                "income": income,
+                "expenses": expenses,
+                "net": income - expenses,
+            }
+
+        if group_by not in ("day", "month", "year"):
+            raise ValueError("group_by must be one of: day, month, year")
+
+        period_expr = TransactionService._period_expr(group_by)
+
+        income_rows = (
+            query.filter(Transaction.type == "income")
+            .with_entities(
+                period_expr.label("period"),
+                func.coalesce(func.sum(Transaction.amount), 0).label("total"),
+            )
+            .group_by("period")
+            .order_by("period")
+            .all()
+        )
+        expense_rows = (
+            query.filter(Transaction.type == "expense")
+            .with_entities(
+                period_expr.label("period"),
+                func.coalesce(func.sum(Transaction.amount), 0).label("total"),
+            )
+            .group_by("period")
+            .order_by("period")
+            .all()
+        )
+
+        income_by_period = {str(r.period): float(r.total) for r in income_rows}
+        expense_by_period = {str(r.period): float(r.total) for r in expense_rows}
+        periods = sorted(set(income_by_period) | set(expense_by_period))
+
+        summary: dict[str, dict[str, float]] = {}
+        total_income = 0.0
+        total_expenses = 0.0
+        for period in periods:
+            income = income_by_period.get(period, 0.0)
+            expenses = expense_by_period.get(period, 0.0)
+            summary[period] = {
+                "income": income,
+                "expenses": expenses,
+                "net": income - expenses,
+            }
+            total_income += income
+            total_expenses += expenses
+
+        return {
+            "group_by": group_by,
+            "summary": summary,
+            "totals": {
+                "income": total_income,
+                "expenses": total_expenses,
+                "net": total_income - total_expenses,
+            },
+        }
     
     @staticmethod
     def get_transaction(db: Session, transaction_id: int, user_id: int) -> Optional[Transaction]:

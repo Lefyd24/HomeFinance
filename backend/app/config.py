@@ -106,6 +106,12 @@ class Settings(BaseSettings):
     VAPID_PRIVATE_KEY: str | None = None
     VAPID_SUBJECT: str = "mailto:admin@example.com"
 
+    # AI Chat (DeepSeek)
+    DEEPSEEK_API_KEY: str | None = None
+    DEEPSEEK_BASE_URL: str = "https://api.deepseek.com"
+    DEEPSEEK_MODEL: str = "deepseek-chat"
+    AI_CHAT_MAX_TOOL_ROUNDS: int = 6
+
     @model_validator(mode="after")
     def normalize_database_url(self) -> Self:
         self.DATABASE_URL = _normalize_database_url(self.DATABASE_URL)
