@@ -17,6 +17,11 @@ services:
       - ACCESS_TOKEN_EXPIRE_MINUTES=${ACCESS_TOKEN_EXPIRE_MINUTES}
       - BACKEND_PORT=${BACKEND_PORT:-8223}
       - FRONTEND_PORT=${FRONTEND_PORT:-3100}
+      # AI Chat (DeepSeek) — without these the backend reports configured=false
+      - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY:-}
+      - DEEPSEEK_BASE_URL=${DEEPSEEK_BASE_URL:-https://api.deepseek.com}
+      - DEEPSEEK_MODEL=${DEEPSEEK_MODEL:-deepseek-chat}
+      - AI_CHAT_MAX_TOOL_ROUNDS=${AI_CHAT_MAX_TOOL_ROUNDS:-6}
     volumes:
       - ./data:/app/data
       - ./logs:/app/logs

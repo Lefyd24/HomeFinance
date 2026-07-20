@@ -27,7 +27,9 @@ const AiChatCore = {
     /** Cached GET /ai/status — both surfaces call this on mount; only fetch once. */
     async checkStatus() {
         if (!this._statusPromise) {
-            this._statusPromise = API.ai.status()
+            this._statusPromise = (API?.ai?.status
+                ? API.ai.status()
+                : Promise.reject(new Error('API.ai is unavailable (stale api.js?)')))
                 .then((s) => !!s?.configured)
                 .catch(() => false);
         }
@@ -72,6 +74,10 @@ const AiChatCore = {
      * Handlers receive plain data — no DOM knowledge lives here.
      */
     async send(conversation, { onToken, onToolStart, onToolResult, onDone, onError } = {}) {
+        if (!API?.ai?.chat) {
+            onError && onError('AI client is unavailable. Hard-refresh the page (Ctrl+Shift+R) and try again.');
+            return;
+        }
         let buffer = '';
         await API.ai.chat(conversation, {
             onEvent: (evt) => {

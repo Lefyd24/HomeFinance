@@ -17,9 +17,10 @@ self.addEventListener('activate', event => {
 });
 
 self.addEventListener('fetch', event => {
-  // Always fetch from network, never cache
-  // This ensures you always get the latest files during development
-  event.respondWith(fetch(event.request));
+  // Bypass the HTTP cache as well — default fetch() can still serve a
+  // stale api.js / page after a Docker rebuild (Last-Modified heuristics),
+  // which left AI chat calling API.ai on an old client bundle.
+  event.respondWith(fetch(event.request, { cache: 'no-store' }));
 });
 
 self.addEventListener('push', (event) => {
