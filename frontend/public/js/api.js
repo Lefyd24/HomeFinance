@@ -2,17 +2,23 @@
  * API Client for Personal Finance App
  * All API calls go through this module
  *
- * The backend now serves the frontend itself (same origin, same port), so the
- * default is simply the relative path '/api' — no host/port guessing needed.
- * This is required for Tailscale Funnel, which forwards exactly one port.
+ * The backend serves the frontend itself (same origin), so the default is the
+ * relative path '/api' — no host/port guessing. This is what lets the app sit
+ * behind Tailscale Serve/Funnel, which forwards exactly one port.
  *
- * For the split-port local dev workflow (frontend on :3100, backend on :8223),
- * the default can still be overridden via:
+ * Overrides, in order:
  * - window.API_BASE_URL (global variable)
  * - localStorage.setItem('backendUrl', 'http://192.168.1.100:8223/api')
- * - js/runtime-config.js (window.__APP_CONFIG__.backendPort) as a last-resort
- *   fallback, only used when the page is NOT already being served from the
- *   backend's own port.
+ * - js/runtime-config.js — used ONLY when the page is served from frontendPort
+ *   (the split-port dev workflow). See the comment on that check below.
+ *
+ * Paths: collection endpoints are declared as @router.get("/") on the backend,
+ * so they are requested WITH a trailing slash ('/accounts/'). Without it
+ * FastAPI answers 307 to the canonical URL, and behind a TLS-terminating proxy
+ * that redirect is absolute — it comes back as http:// unless uvicorn is told
+ * to honour X-Forwarded-Proto, and the browser blocks it as mixed content.
+ * Note /documents, /admin/* and /notifications/* are the opposite: they are
+ * declared without the slash, so do NOT add one there.
  */
 
 function resolveConfiguredPort(key, fallback) {
@@ -374,10 +380,10 @@ const API = {
     // Accounts methods
     accounts: {
         list: () => 
-            API.request('/accounts'),
+            API.request('/accounts/'),
         
         create: (data) => 
-            API.request('/accounts', { method: 'POST', body: JSON.stringify(data) }),
+            API.request('/accounts/', { method: 'POST', body: JSON.stringify(data) }),
         
         get: (id) => 
             API.request(`/accounts/${id}`),
@@ -404,7 +410,7 @@ const API = {
         },
         
         create: (data) => 
-            API.request('/categories', { method: 'POST', body: JSON.stringify(data) }),
+            API.request('/categories/', { method: 'POST', body: JSON.stringify(data) }),
         
         get: (id) => 
             API.request(`/categories/${id}`),
@@ -429,11 +435,11 @@ const API = {
                 }
             });
             const queryString = params.toString();
-            return API.request(`/transactions${queryString ? '?' + queryString : ''}`);
+            return API.request(`/transactions/${queryString ? '?' + queryString : ''}`);
         },
         
         create: (data) => 
-            API.request('/transactions', { method: 'POST', body: JSON.stringify(data) }),
+            API.request('/transactions/', { method: 'POST', body: JSON.stringify(data) }),
         
         get: (id) => 
             API.request(`/transactions/${id}`),
@@ -462,10 +468,10 @@ const API = {
     // Budgets methods
     budgets: {
         list: (activeOnly = true) => 
-            API.request(`/budgets?active_only=${activeOnly}`),
+            API.request(`/budgets/?active_only=${activeOnly}`),
         
         create: (data) => 
-            API.request('/budgets', { method: 'POST', body: JSON.stringify(data) }),
+            API.request('/budgets/', { method: 'POST', body: JSON.stringify(data) }),
         
         get: (id) => 
             API.request(`/budgets/${id}`),
@@ -708,7 +714,7 @@ const API = {
         },
         
         create: (data) => 
-            API.request('/goals', { method: 'POST', body: JSON.stringify(data) }),
+            API.request('/goals/', { method: 'POST', body: JSON.stringify(data) }),
         
         get: (id) => 
             API.request(`/goals/${id}`),
@@ -774,10 +780,10 @@ const API = {
     // Debts methods - Debt Tracking & Payoff Planner
     debts: {
         list: (activeOnly = false) => 
-            API.request(`/debts?active_only=${activeOnly}`),
+            API.request(`/debts/?active_only=${activeOnly}`),
         
         create: (data) => 
-            API.request('/debts', { method: 'POST', body: JSON.stringify(data) }),
+            API.request('/debts/', { method: 'POST', body: JSON.stringify(data) }),
         
         get: (id) => 
             API.request(`/debts/${id}`),
@@ -813,10 +819,10 @@ const API = {
 
     recurringExpenses: {
         list: () =>
-            API.request('/recurring-expenses'),
+            API.request('/recurring-expenses/'),
 
         create: (data) =>
-            API.request('/recurring-expenses', { method: 'POST', body: JSON.stringify(data) }),
+            API.request('/recurring-expenses/', { method: 'POST', body: JSON.stringify(data) }),
 
         update: (id, data) =>
             API.request(`/recurring-expenses/${id}`, { method: 'PUT', body: JSON.stringify(data) }),

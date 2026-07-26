@@ -242,10 +242,21 @@ if __name__ == "__main__":
     # Set BIND_HOST=0.0.0.0 to listen on the LAN/tailnet directly. Inside
     # Docker uvicorn is launched by supervisord and must bind 0.0.0.0; the
     # loopback restriction is applied by the compose port mapping instead.
+    # With TRUST_PROXY_HEADERS, honour X-Forwarded-Proto so that anything the
+    # app generates as an absolute URL — most visibly FastAPI's trailing-slash
+    # redirect — says https, not the http that uvicorn sees from the proxy.
+    # Otherwise the browser blocks the redirect as mixed content.
+    #
+    # forwarded_allow_ips must cover the proxy's apparent source address, which
+    # is NOT 127.0.0.1 under Docker (uvicorn sees the bridge gateway). "*" is
+    # safe only because the port is published on loopback, so tailscaled is the
+    # sole possible client — the same precondition TRUST_PROXY_HEADERS needs.
     uvicorn.run(
         "main:app",
         host=settings.BIND_HOST,
         port=settings.BACKEND_PORT,
         reload=settings.DEBUG,
         log_level="info",
+        proxy_headers=settings.TRUST_PROXY_HEADERS,
+        forwarded_allow_ips="*" if settings.TRUST_PROXY_HEADERS else "127.0.0.1",
     )
