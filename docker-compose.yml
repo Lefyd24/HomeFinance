@@ -15,18 +15,16 @@ services:
       # limiter. Set BIND_ADDRESS=0.0.0.0 to expose it on the LAN/tailnet
       # directly, and then set TRUST_PROXY_HEADERS=false.
       - "${BIND_ADDRESS:-127.0.0.1}:${BACKEND_PORT:-8223}:${BACKEND_PORT:-8223}"
+    # The app reads its settings as environment variables INSIDE the container —
+    # it never sees the host's .env file. Forward the whole file rather than
+    # enumerating keys: an enumerated list silently drops every setting someone
+    # forgets to add, which is how NOTIFICATION_ENCRYPTION_KEY, ADMIN_EMAILS,
+    # PUBLIC_BASE_URL, TRUST_PROXY_HEADERS, SMTP_* and VAPID_* all went missing.
+    env_file:
+      - .env
     environment:
-      - APP_NAME=${APP_NAME}
-      - APP_VERSION=${APP_VERSION}
-      - DATABASE_URL=${DATABASE_URL}
-      - SECRET_KEY=${SECRET_KEY}
-      - DEBUG=${DEBUG}
-      - CORS_ORIGINS=${CORS_ORIGINS}
-      - ACCESS_TOKEN_EXPIRE_MINUTES=${ACCESS_TOKEN_EXPIRE_MINUTES}
+      # Only vars that need a fallback when absent from .env.
       - BACKEND_PORT=${BACKEND_PORT:-8223}
-      - FRONTEND_PORT=${FRONTEND_PORT:-3100}
-      # AI Chat (DeepSeek) — without these the backend reports configured=false
-      - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY:-}
       - DEEPSEEK_BASE_URL=${DEEPSEEK_BASE_URL:-https://api.deepseek.com}
       - DEEPSEEK_MODEL=${DEEPSEEK_MODEL:-deepseek-chat}
       - AI_CHAT_MAX_TOOL_ROUNDS=${AI_CHAT_MAX_TOOL_ROUNDS:-6}
