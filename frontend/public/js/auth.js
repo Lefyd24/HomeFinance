@@ -174,7 +174,7 @@ document.addEventListener('DOMContentLoaded', () => {
         'dashboard.html', 'transactions.html', 'budgets.html',
         'import.html', 'reports.html', 'accounts.html', 'categories.html',
         'goals.html', 'debts.html', 'recurring.html', 'analytics.html',
-        'advisor.html', 'documents.html', 'settings.html',
+        'advisor.html', 'documents.html', 'settings.html', 'admin.html',
     ];
     const currentPage = window.location.pathname.split('/').pop();
 

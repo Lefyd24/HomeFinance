@@ -274,7 +274,7 @@
                 <div>
                     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.375rem;">
                         <label for="password" class="text-sm font-medium text-base-content" style="opacity:0.8;">Password</label>
-                        <a href="#" class="text-xs text-primary font-medium" style="opacity:0.8;">Forgot password?</a>
+                        <a href="pages/forgot-password.html" class="text-xs text-primary font-medium" style="opacity:0.8;">Forgot password?</a>
                     </div>
                     <div class="form-input-group">
                         <span class="form-input-icon">
@@ -308,6 +308,9 @@
                     </svg>
                     <span id="errorText" class="text-sm"></span>
                 </div>
+                <button type="button" id="resendVerificationBtn" class="btn btn-ghost btn-xs hidden" style="align-self:flex-start;">
+                    Resend verification email
+                </button>
 
                 <!-- Submit -->
                 <button type="submit" id="submitBtn" class="btn btn-primary w-full btn-signin" style="margin-top:0.25rem;">

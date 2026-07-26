@@ -224,6 +224,8 @@ def _send_email_detailed(user, notif, settings_row, app_settings):
     cfg = mail_service.resolve_smtp_config(settings_row, app_settings)
     if not cfg:
         return False, "No SMTP host configured"
+    if cfg.password_needs_reentry:
+        return False, "SMTP password needs re-entering in Notification Settings"
     html_body, text_body = _render_email(notif)
     return mail_service.send_email_detailed(user.email, notif.title, html_body, cfg, text=text_body)
 

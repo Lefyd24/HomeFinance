@@ -1,6 +1,7 @@
-from sqlalchemy import Column, Integer, String, Boolean, DateTime
-from sqlalchemy.orm import relationship
 from datetime import datetime
+
+from sqlalchemy import Boolean, Column, DateTime, Integer, String
+from sqlalchemy.orm import relationship
 
 from app.database import Base
 
@@ -15,6 +16,9 @@ class User(Base):
     hashed_password = Column(String(255), nullable=False)
     full_name = Column(String(255))
     is_active = Column(Boolean, default=True)
+    is_admin = Column(Boolean, default=False, nullable=False)
+    email_verified = Column(Boolean, default=False, nullable=False)
+    sessions_valid_from = Column(DateTime, default=datetime.utcnow, nullable=False)
     api_key = Column(String(255), unique=True, index=True, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -45,9 +49,5 @@ class User(Base):
     notification_settings = relationship(
         "NotificationSettings", uselist=False, cascade="all, delete-orphan"
     )
-    notification_rules = relationship(
-        "NotificationRule", cascade="all, delete-orphan"
-    )
-    push_subscriptions = relationship(
-        "PushSubscription", cascade="all, delete-orphan"
-    )
+    notification_rules = relationship("NotificationRule", cascade="all, delete-orphan")
+    push_subscriptions = relationship("PushSubscription", cascade="all, delete-orphan")

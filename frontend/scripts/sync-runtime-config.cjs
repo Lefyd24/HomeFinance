@@ -21,8 +21,10 @@ if (fs.existsSync(envPath)) {
 
 const outPath = path.join(__dirname, "..", "public", "js", "runtime-config.js");
 const contents = `/**
- * backendPort from repo-root .env (BACKEND_PORT). Docker overwrites at container start.
- * Local static hosting: npm run sync:runtime-config (from frontend/)
+ * Fallback backendPort used ONLY by js/api.js when the page is served from a
+ * different port than the backend (the split-port local dev workflow). Not
+ * used in Docker or any same-origin deployment — main.py serves the frontend
+ * itself there. Regenerate: npm run sync:runtime-config (from frontend/)
  */
 window.__APP_CONFIG__ = window.__APP_CONFIG__ || { backendPort: ${backendPort} };
 `;

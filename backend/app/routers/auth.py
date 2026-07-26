@@ -1,44 +1,89 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+import logging
+from datetime import datetime
+
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
-from datetime import timedelta
 
+from app.config import settings
 from app.database import get_db
-from app.utils.security import (
-    verify_password,
-    get_password_hash,
-    create_access_token,
-    create_refresh_token,
-    decode_token,
-    get_current_user,
-    get_current_user_authenticated,
-    generate_api_key,
-)
+from app.models import User
+from app.models.invite_code import InviteCode
 from app.schemas import (
+    APIKeyResponse,
+    APIKeyStatus,
+    ForgotPasswordRequest,
+    PasswordChange,
+    ResendVerificationRequest,
+    ResetPasswordRequest,
+    Token,
     UserCreate,
     UserResponse,
     UserUpdate,
-    Token,
-    LoginRequest,
-    PasswordChange,
-    APIKeyResponse,
-    APIKeyStatus,
+    VerifyEmailRequest,
 )
-from app.models import User
-from app.config import settings
+from app.services import auth_tokens, email_templates, mail_service
+from app.utils.rate_limit import clear_rate_limit, enforce_rate_limit
+from app.utils.security import (
+    create_access_token,
+    create_refresh_token,
+    decode_token,
+    generate_api_key,
+    get_current_user,
+    get_current_user_authenticated,
+    get_password_hash,
+    verify_password,
+)
+from app.utils.urls import public_base_url
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
+logger = logging.getLogger("app")
+
+GENERIC_INVITE_ERROR = "Invite code is invalid, expired, or already used."
+
+
+def _send_verification_email(db: Session, user: User, request: Request) -> None:
+    plaintext = auth_tokens.create_user_token(
+        db, user.id, "email_verify", auth_tokens.EMAIL_VERIFY_EXPIRE_MINUTES
+    )
+    verify_url = f"{public_base_url(request)}/pages/verify-email.html?token={plaintext}"
+    html, text = email_templates.verify_email(verify_url)
+    mail_service.send_transactional_email(
+        user.email,
+        "Verify your email",
+        html,
+        text,
+        settings,
+        action_link=verify_url,
+    )
 
 
 @router.post(
     "/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED
 )
-def register(user_data: UserCreate, db: Session = Depends(get_db)):
-    """Register a new user."""
+def register(user_data: UserCreate, request: Request, db: Session = Depends(get_db)):
+    """Register a new user. Requires a valid, unused, unexpired invite code."""
+    enforce_rate_limit(request, email=user_data.email)
+
     # Check if email already exists
     if db.query(User).filter(User.email == user_data.email).first():
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="Email already registered"
+        )
+
+    code_hash = auth_tokens.hash_token(user_data.invite_code)
+    invite = db.query(InviteCode).filter(InviteCode.code_hash == code_hash).first()
+    now = datetime.utcnow()
+    if (
+        invite is None
+        or invite.used_at is not None
+        or invite.revoked_at is not None
+        or (invite.expires_at is not None and invite.expires_at < now)
+    ):
+        # Uniform error regardless of which of the above is true — never reveal
+        # whether a code exists, is expired, or was already used.
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail=GENERIC_INVITE_ERROR
         )
 
     # Create new user
@@ -46,19 +91,49 @@ def register(user_data: UserCreate, db: Session = Depends(get_db)):
         email=user_data.email,
         hashed_password=get_password_hash(user_data.password),
         full_name=user_data.full_name,
+        email_verified=False,
     )
     db.add(db_user)
+    db.flush()  # assign db_user.id without committing yet
+
+    # Atomically claim the invite in the same transaction as the user insert —
+    # a conditional UPDATE (not a read-then-write) closes the race where two
+    # concurrent registrations both pass the check above for the same code.
+    claimed = (
+        db.query(InviteCode)
+        .filter(
+            InviteCode.id == invite.id,
+            InviteCode.used_at.is_(None),
+            InviteCode.revoked_at.is_(None),
+        )
+        .update({"used_at": now, "used_by_user_id": db_user.id})
+    )
+    if not claimed:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail=GENERIC_INVITE_ERROR
+        )
+
     db.commit()
     db.refresh(db_user)
+
+    try:
+        _send_verification_email(db, db_user, request)
+    except Exception:
+        logger.exception("Failed to send verification email to %s", db_user.email)
 
     return db_user
 
 
 @router.post("/login", response_model=Token)
 def login(
-    form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)
+    request: Request,
+    form_data: OAuth2PasswordRequestForm = Depends(),
+    db: Session = Depends(get_db),
 ):
     """Login user and return JWT tokens."""
+    enforce_rate_limit(request, email=form_data.username)
+
     # Find user by email
     user = db.query(User).filter(User.email == form_data.username).first()
 
@@ -73,6 +148,16 @@ def login(
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="Inactive user"
         )
+
+    if not user.email_verified:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Please verify your email before logging in. Check your inbox for a verification link.",
+        )
+
+    # Credentials checked out — don't let a legitimate sign-in eat into the
+    # brute-force budget (see clear_rate_limit).
+    clear_rate_limit(request, email=form_data.username)
 
     # Create tokens
     access_token = create_access_token(data={"sub": str(user.id)})
@@ -169,11 +254,122 @@ def change_password(
             detail="Current password is incorrect",
         )
 
+    if password_data.new_password != password_data.confirm_password:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="New password and confirmation do not match",
+        )
+
     # Update password
     current_user.hashed_password = get_password_hash(password_data.new_password)
+    # Invalidate any JWTs issued before now — see get_current_user's iat check.
+    current_user.sessions_valid_from = datetime.utcnow()
     db.commit()
 
     return {"message": "Password changed successfully"}
+
+
+@router.post("/forgot-password")
+def forgot_password(
+    payload: ForgotPasswordRequest, request: Request, db: Session = Depends(get_db)
+):
+    """Always returns the same response, whether or not the email exists —
+    prevents account enumeration via this endpoint."""
+    enforce_rate_limit(request, email=payload.email)
+
+    user = db.query(User).filter(User.email == payload.email).first()
+    if user is not None and user.is_active:
+        plaintext = auth_tokens.create_user_token(
+            db, user.id, "password_reset", auth_tokens.PASSWORD_RESET_EXPIRE_MINUTES
+        )
+        reset_url = (
+            f"{public_base_url(request)}/pages/reset-password.html?token={plaintext}"
+        )
+        html, text = email_templates.password_reset(
+            reset_url, auth_tokens.PASSWORD_RESET_EXPIRE_MINUTES
+        )
+        try:
+            mail_service.send_transactional_email(
+                user.email,
+                "Reset your password",
+                html,
+                text,
+                settings,
+                action_link=reset_url,
+            )
+        except Exception:
+            logger.exception("Failed to send password reset email to %s", user.email)
+
+    return {
+        "message": "If an account with that email exists, a password reset link has been sent."
+    }
+
+
+@router.post("/reset-password")
+def reset_password(payload: ResetPasswordRequest, db: Session = Depends(get_db)):
+    """Validate a password-reset token, set the new password, invalidate outstanding sessions."""
+    token_row = auth_tokens.consume_user_token(db, payload.token, "password_reset")
+    if token_row is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Reset link is invalid or has expired.",
+        )
+
+    user = db.query(User).filter(User.id == token_row.user_id).first()
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Reset link is invalid or has expired.",
+        )
+
+    user.hashed_password = get_password_hash(payload.new_password)
+    user.sessions_valid_from = datetime.utcnow()
+    db.commit()
+
+    return {"message": "Password has been reset. Please log in with your new password."}
+
+
+@router.post("/verify-email")
+def verify_email(payload: VerifyEmailRequest, db: Session = Depends(get_db)):
+    """Consume an email-verification token and mark the account verified."""
+    token_row = auth_tokens.consume_user_token(db, payload.token, "email_verify")
+    if token_row is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Verification link is invalid or has expired.",
+        )
+
+    user = db.query(User).filter(User.id == token_row.user_id).first()
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Verification link is invalid or has expired.",
+        )
+
+    user.email_verified = True
+    db.commit()
+
+    return {"message": "Email verified. You can now log in."}
+
+
+@router.post("/resend-verification")
+def resend_verification(
+    payload: ResendVerificationRequest, request: Request, db: Session = Depends(get_db)
+):
+    """Resend the verification email. Same generic response either way, to
+    avoid leaking whether an email is registered or already verified."""
+    enforce_rate_limit(request, email=payload.email)
+
+    user = db.query(User).filter(User.email == payload.email).first()
+    if user is not None and user.is_active and not user.email_verified:
+        try:
+            _send_verification_email(db, user, request)
+        except Exception:
+            logger.exception("Failed to resend verification email to %s", user.email)
+
+    return {
+        "message": "If an account with that email exists and isn't verified yet, a new verification link has been sent."
+    }
 
 
 @router.post("/api-key", response_model=APIKeyResponse)

@@ -70,17 +70,18 @@ COPY docker-entrypoint.sh /app/docker-entrypoint.sh
 RUN sed -i 's/\r$//' /app/docker-entrypoint.sh && chmod +x /app/docker-entrypoint.sh
 
 # Set environment variables
+# SECRET_KEY and CORS_ORIGINS are intentionally NOT defaulted here — app/config.py
+# refuses to start without a real SECRET_KEY (unless DEBUG=true), and same-origin
+# deployments need no CORS_ORIGINS at all. Set both explicitly via .env / compose.
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV DATABASE_URL=sqlite:////app/data/finance.db
-ENV SECRET_KEY=your-secret-key-change-in-production
 ENV DEBUG=false
-ENV CORS_ORIGINS='["*"]'
 ENV BACKEND_PORT=8223
 ENV FRONTEND_PORT=3100
 
-# Document typical ports; host mapping uses compose `${BACKEND_PORT}` / `${FRONTEND_PORT}`
-EXPOSE 8223 3100
+# Frontend is served by the backend at BACKEND_PORT — only that port needs exposing.
+EXPOSE 8223
 
 # Start entrypoint script (runs migrations then supervisord)
 CMD ["/app/docker-entrypoint.sh"]

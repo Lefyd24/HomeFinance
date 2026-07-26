@@ -17,6 +17,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const email = document.getElementById('email').value;
         const password = document.getElementById('password').value;
         const confirmPassword = document.getElementById('confirmPassword').value;
+        const inviteCode = document.getElementById('inviteCode').value.trim();
         
         // Validate passwords match
         if (password !== confirmPassword) {
@@ -44,11 +45,12 @@ document.addEventListener('DOMContentLoaded', () => {
             const response = await Auth.register({
                 fullName,
                 email,
-                password
+                password,
+                inviteCode
             });
-            
+
             // Show success
-            Utils.showToast('Registration successful! Please login.', 'success');
+            Utils.showToast('Registration successful! Check your email to verify your account before logging in.', 'success', 5000);
             
             // Redirect to login
             setTimeout(() => {

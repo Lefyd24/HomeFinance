@@ -1,11 +1,18 @@
 /**
  * API Client for Personal Finance App
  * All API calls go through this module
- * 
- * Backend URL can be configured via:
+ *
+ * The backend now serves the frontend itself (same origin, same port), so the
+ * default is simply the relative path '/api' — no host/port guessing needed.
+ * This is required for Tailscale Funnel, which forwards exactly one port.
+ *
+ * For the split-port local dev workflow (frontend on :3100, backend on :8223),
+ * the default can still be overridden via:
  * - window.API_BASE_URL (global variable)
- * - localStorage.setItem('backendUrl', 'http://192.168.1.100:8443')
- * - Default: same hostname as this page, port from js/runtime-config.js (BACKEND_PORT / local default 8223)
+ * - localStorage.setItem('backendUrl', 'http://192.168.1.100:8223/api')
+ * - js/runtime-config.js (window.__APP_CONFIG__.backendPort) as a last-resort
+ *   fallback, only used when the page is NOT already being served from the
+ *   backend's own port.
  */
 
 function resolveDefaultBackendPort() {
@@ -21,18 +28,29 @@ const API = {
         if (window.API_BASE_URL) {
             return window.API_BASE_URL;
         }
-        
+
         // 2. Check localStorage for user-configured URL
         const storedUrl = localStorage.getItem('backendUrl');
         if (storedUrl) {
             return storedUrl;
         }
-        
-        // 3. Same host as the frontend, backend port from runtime-config.js or default
-        const protocol = window.location.protocol || 'http:';
-        const host = window.location.hostname || 'localhost';
-        const port = resolveDefaultBackendPort();
-        return `${protocol}//${host}:${port}/api`;
+
+        // 3. Same-origin default — works out of the box when FastAPI serves the
+        // frontend (production, Docker, Tailscale Funnel).
+        const samePort = window.location.port
+            ? Number(window.location.port)
+            : (window.location.protocol === 'https:' ? 443 : 80);
+        const backendPort = resolveDefaultBackendPort();
+
+        // 4. Split-port local dev fallback: static file server (e.g. :3100)
+        // serving the frontend separately from `uv run python main.py` (:8223).
+        if (backendPort !== samePort) {
+            const protocol = window.location.protocol || 'http:';
+            const host = window.location.hostname || 'localhost';
+            return `${protocol}//${host}:${backendPort}/api`;
+        }
+
+        return '/api';
     })(),
     
     // Method to dynamically change backend URL
@@ -279,14 +297,15 @@ const API = {
             });
         },
         
-        register: (userData) => 
-            API.request('/auth/register', { 
-                method: 'POST', 
+        register: (userData) =>
+            API.request('/auth/register', {
+                method: 'POST',
                 body: JSON.stringify({
                     email: userData.email,
                     password: userData.password,
-                    full_name: userData.fullName
-                }) 
+                    full_name: userData.fullName,
+                    invite_code: userData.inviteCode
+                })
             }),
         
         me: () => 
@@ -299,7 +318,43 @@ const API = {
             API.request('/auth/me', { method: 'PUT', body: JSON.stringify(data) }),
         
         changePassword: (data) =>
-            API.request('/auth/change-password', { method: 'POST', body: JSON.stringify(data) })
+            API.request('/auth/change-password', { method: 'POST', body: JSON.stringify(data) }),
+
+        forgotPassword: (email) =>
+            API.request('/auth/forgot-password', { method: 'POST', body: JSON.stringify({ email }) }),
+
+        resetPassword: (token, newPassword) =>
+            API.request('/auth/reset-password', {
+                method: 'POST',
+                body: JSON.stringify({ token, new_password: newPassword })
+            }),
+
+        verifyEmail: (token) =>
+            API.request('/auth/verify-email', { method: 'POST', body: JSON.stringify({ token }) }),
+
+        resendVerification: (email) =>
+            API.request('/auth/resend-verification', { method: 'POST', body: JSON.stringify({ email }) })
+    },
+
+    // Admin methods (admin-only on the backend)
+    admin: {
+        createInvite: (data) =>
+            API.request('/admin/invites', { method: 'POST', body: JSON.stringify(data) }),
+
+        listInvites: () =>
+            API.request('/admin/invites'),
+
+        revokeInvite: (id) =>
+            API.request(`/admin/invites/${id}/revoke`, { method: 'POST' }),
+
+        listUsers: () =>
+            API.request('/admin/users'),
+
+        setUserActive: (id, isActive) =>
+            API.request(`/admin/users/${id}/active`, {
+                method: 'PATCH',
+                body: JSON.stringify({ is_active: isActive })
+            })
     },
 
     // Accounts methods

@@ -1,33 +1,65 @@
-from fastapi import FastAPI, Request
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
-from fastapi.exceptions import RequestValidationError
+import logging
 from contextlib import asynccontextmanager
-import os
+from pathlib import Path
+from uuid import uuid4
 
 from app.config import settings
-from app.database import init_db, SessionLocal
+from app.database import SessionLocal, engine, init_db
 from app.logging_config import setup_logging
-from app.services.scheduler import start_scheduler, shutdown_scheduler
-from sqlalchemy import text
-from app.database import engine
-import logging
+from app.models import User
 from app.routers import (
-    auth,
     accounts,
-    categories,
-    transactions,
-    budgets,
-    import_wizard,
-    reports,
-    goals,
-    debts,
+    admin,
     advisor,
-    recurring_expenses,
-    documents,
-    notifications,
     ai_chat,
+    auth,
+    budgets,
+    categories,
+    debts,
+    documents,
+    goals,
+    import_wizard,
+    notifications,
+    recurring_expenses,
+    reports,
+    transactions,
 )
+from app.services.scheduler import shutdown_scheduler, start_scheduler
+from fastapi import FastAPI, Request
+from fastapi.exceptions import RequestValidationError
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
+from sqlalchemy import text
+from starlette.routing import Match, Mount
+
+
+def _bootstrap_admins(logger: logging.Logger) -> None:
+    """Grant is_admin=True to any EXISTING user whose email is in ADMIN_EMAILS.
+
+    Does not create accounts — only promotes ones that already registered
+    (normally via invite code). Safe to run on every startup: it's idempotent.
+    """
+    if not settings.ADMIN_EMAILS:
+        return
+    admin_emails = {e.strip().lower() for e in settings.ADMIN_EMAILS if e.strip()}
+    if not admin_emails:
+        return
+    db = SessionLocal()
+    try:
+        users = db.query(User).filter(User.is_admin.is_(False)).all()
+        promoted = [u for u in users if u.email.lower() in admin_emails]
+        for user in promoted:
+            user.is_admin = True
+        if promoted:
+            db.commit()
+            logger.info(
+                "Promoted %d user(s) to admin from ADMIN_EMAILS: %s",
+                len(promoted),
+                ", ".join(u.email for u in promoted),
+            )
+    finally:
+        db.close()
 
 
 @asynccontextmanager
@@ -39,6 +71,7 @@ async def lifespan(app: FastAPI):
     logger.info("Initializing database...")
     init_db()
     logger.info("Database initialized successfully!")
+    _bootstrap_admins(logger)
     start_scheduler(settings, SessionLocal)
     yield
     # Shutdown
@@ -56,13 +89,26 @@ app = FastAPI(
 )
 
 # CORS — see settings.CORS_ORIGINS and FRONTEND_PORT in app/config.py
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=settings.CORS_ORIGINS,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+# Same-origin deployments (frontend served by this app, e.g. behind Tailscale
+# Funnel) need CORS_ORIGINS=[] and no middleware is required at all. A wildcard
+# origin must never be combined with allow_credentials=True (browsers reject it,
+# and it would defeat cookie/token isolation), so we force credentials off in
+# that case rather than silently misconfigure the app.
+_cors_origins = settings.CORS_ORIGINS
+_cors_allow_credentials = True
+if "*" in _cors_origins:
+    _cors_allow_credentials = False
+    logging.getLogger("app").warning(
+        "CORS_ORIGINS includes '*' — forcing allow_credentials=False."
+    )
+if _cors_origins:
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=_cors_origins,
+        allow_credentials=_cors_allow_credentials,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
 
 
 # Validation error handler (for 422 errors)
@@ -83,14 +129,25 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
 # Global exception handler
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
-    """Handle all unhandled exceptions."""
+    """Handle all unhandled exceptions.
+
+    The client only ever sees a generic message plus a short correlation id —
+    never the exception text, which can leak internals (file paths, query
+    fragments, library names). The same id is logged alongside the full
+    traceback so the owner can match a user's bug report to a log line.
+    """
+    correlation_id = uuid4().hex[:12]
     logging.getLogger("app").exception(
-        "Unhandled exception",
+        "Unhandled exception [%s]",
+        correlation_id,
         extra={"request_url": str(request.url), "request_method": request.method},
     )
     return JSONResponse(
         status_code=500,
-        content={"detail": "Internal server error", "message": str(exc)},
+        content={
+            "detail": "Internal server error",
+            "error_id": correlation_id,
+        },
     )
 
 
@@ -116,6 +173,7 @@ def health_check():
 
 # Include routers
 app.include_router(auth.router, prefix="/api")
+app.include_router(admin.router, prefix="/api")
 app.include_router(accounts.router, prefix="/api")
 app.include_router(categories.router, prefix="/api")
 app.include_router(transactions.router, prefix="/api")
@@ -131,10 +189,63 @@ app.include_router(notifications.router, prefix="/api")
 app.include_router(ai_chat.router, prefix="/api")
 
 
+class _FrontendMount(Mount):
+    """A Mount("/") that never claims /api/* paths.
+
+    Starlette's router treats any Mount as a FULL match for every path under
+    its prefix — including "/api/accounts" when only "/api/accounts/" (with
+    trailing slash) is actually registered. A plain Mount("/") therefore wins
+    that FULL match before the router ever falls back to its normal
+    partial-match trailing-slash redirect, which silently breaks every
+    /api/* collection endpoint the frontend calls without a trailing slash
+    (api.js never adds one). Excluding "/api" here lets that redirect logic
+    run as normal for API routes while everything else still falls through to
+    the static frontend.
+    """
+
+    def matches(self, scope):
+        if scope["type"] in ("http", "websocket") and scope.get("path", "").startswith(
+            "/api"
+        ):
+            return Match.NONE, {}
+        return super().matches(scope)
+
+
+# Serve the frontend from the same origin/port as the API (required for Tailscale
+# Funnel, which forwards exactly one port to one local service). Mounted LAST so
+# every /api/* route, /health, /docs, and /openapi.json — all registered above —
+# are matched first; Starlette checks routes in registration order and this Mount
+# only catches whatever nothing else claimed. html=True serves index.html for
+# directory requests and lets sw.js / manifest.json resolve from the root path.
+_frontend_dir = Path(settings.FRONTEND_DIR)
+if _frontend_dir.is_dir():
+    app.router.routes.append(
+        _FrontendMount(
+            "/",
+            app=StaticFiles(directory=str(_frontend_dir), html=True),
+            name="frontend",
+        )
+    )
+else:
+    logging.getLogger("app").warning(
+        "FRONTEND_DIR %r does not exist — skipping static frontend mount "
+        "(API-only mode).",
+        str(_frontend_dir),
+    )
+
+
 if __name__ == "__main__":
     import uvicorn
 
-    port = settings.BACKEND_PORT
+    # Loopback by default so `tailscale serve`/`funnel` (which connects from
+    # 127.0.0.1) is the only way in — see TRUST_PROXY_HEADERS in .env.example.
+    # Set BIND_HOST=0.0.0.0 to listen on the LAN/tailnet directly. Inside
+    # Docker uvicorn is launched by supervisord and must bind 0.0.0.0; the
+    # loopback restriction is applied by the compose port mapping instead.
     uvicorn.run(
-        "main:app", host="0.0.0.0", port=port, reload=settings.DEBUG, log_level="info"
+        "main:app",
+        host=settings.BIND_HOST,
+        port=settings.BACKEND_PORT,
+        reload=settings.DEBUG,
+        log_level="info",
     )

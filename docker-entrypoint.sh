@@ -45,12 +45,11 @@ else
     alembic upgrade head
 fi
 
-echo "Writing frontend runtime config (BACKEND_PORT=${BACKEND_PORT:-8223})..."
-BACKEND_PORT="${BACKEND_PORT:-8223}"
-cat > /app/frontend/public/js/runtime-config.js <<EOF
-/** Generated at container start — do not edit; set BACKEND_PORT in .env */
-window.__APP_CONFIG__ = { backendPort: ${BACKEND_PORT} };
-EOF
+# No runtime-config.js generation needed: main.py now serves the frontend from
+# the same origin/port as the API, so js/api.js's same-origin default ('/api')
+# just works. runtime-config.js's baked-in port is only consulted as a fallback
+# for the split-port local dev workflow (frontend and backend on different
+# ports), which doesn't apply inside this container.
 
 echo "Starting application..."
 exec /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf

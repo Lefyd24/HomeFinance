@@ -1,105 +1,116 @@
-from app.schemas.user import UserBase, UserCreate, UserUpdate, UserResponse, UserInDB
 from app.schemas.account import (
     AccountBase,
     AccountCreate,
-    AccountUpdate,
     AccountResponse,
-)
-from app.schemas.category import (
-    CategoryBase,
-    CategoryCreate,
-    CategoryUpdate,
-    CategoryResponse,
-    CategorySuggestion,
-)
-from app.schemas.transaction import (
-    TransactionBase,
-    TransactionCreate,
-    TransactionUpdate,
-    TransactionResponse,
-    TransactionList,
-    BulkTransactionUpdate,
-    BulkTransactionDelete,
-)
-from app.schemas.budget import (
-    BudgetBase,
-    BudgetCreate,
-    BudgetUpdate,
-    BudgetResponse,
-    BudgetProgress,
-    BudgetCategoryAllocation,
-)
-from app.schemas.import_batch import (
-    ImportTransactionPreview,
-    ImportPreviewResponse,
-    ImportBatchResponse,
-    ImportConfirmRequest,
-)
-from app.schemas.report import (
-    ReportFilter,
-    SpendingReport,
-    CashflowReport,
-    TrendReport,
-    IncomeReport,
-    ReportSeries,
-    BalanceHistoryReport,
-    SavedReportCreate,
-    SavedReportResponse,
-)
-from app.schemas.auth import (
-    Token,
-    TokenPayload,
-    LoginRequest,
-    PasswordChange,
-    APIKeyResponse,
-    APIKeyStatus,
-)
-from app.schemas.dashboard import (
-    DashboardSummary,
-    DashboardRecentTransaction,
-    DashboardBudgetProgress,
-    DashboardData,
-)
-from app.schemas.goal import (
-    GoalBase,
-    GoalCreate,
-    GoalUpdate,
-    GoalResponse,
-    GoalProgress,
-    GoalTransactionBase,
-    GoalTransactionCreate,
-    GoalTransactionResponse,
-    GoalSummary,
-)
-from app.schemas.debt import (
-    DebtBase,
-    DebtCreate,
-    DebtUpdate,
-    DebtResponse,
-    DebtPaymentBase,
-    DebtPaymentCreate,
-    DebtPaymentResponse,
-    DebtSummary,
-    PayoffComparison,
-    PayoffStrategy,
-    PayoffScheduleItem,
-    ExtraPaymentScenario,
-    UpcomingPayment,
-)
-from app.schemas.notification import (
-    NotificationSettingsRead,
-    NotificationSettingsUpdate,
-    NotificationRuleCreate,
-    NotificationRuleUpdate,
-    NotificationRuleRead,
-    PushSubscriptionCreate,
-    NotificationLogRead,
+    AccountUpdate,
 )
 from app.schemas.ai_chat import (
     AiChatMessage,
     AiChatRequest,
     AiChatStatus,
 )
+from app.schemas.auth import (
+    APIKeyResponse,
+    APIKeyStatus,
+    ForgotPasswordRequest,
+    LoginRequest,
+    PasswordChange,
+    ResendVerificationRequest,
+    ResetPasswordRequest,
+    Token,
+    TokenPayload,
+    VerifyEmailRequest,
+)
+from app.schemas.budget import (
+    BudgetBase,
+    BudgetCategoryAllocation,
+    BudgetCreate,
+    BudgetProgress,
+    BudgetResponse,
+    BudgetUpdate,
+)
+from app.schemas.category import (
+    CategoryBase,
+    CategoryCreate,
+    CategoryResponse,
+    CategorySuggestion,
+    CategoryUpdate,
+)
+from app.schemas.dashboard import (
+    DashboardBudgetProgress,
+    DashboardData,
+    DashboardRecentTransaction,
+    DashboardSummary,
+)
+from app.schemas.debt import (
+    DebtBase,
+    DebtCreate,
+    DebtPaymentBase,
+    DebtPaymentCreate,
+    DebtPaymentResponse,
+    DebtResponse,
+    DebtSummary,
+    DebtUpdate,
+    ExtraPaymentScenario,
+    PayoffComparison,
+    PayoffScheduleItem,
+    PayoffStrategy,
+    UpcomingPayment,
+)
+from app.schemas.goal import (
+    GoalBase,
+    GoalCreate,
+    GoalProgress,
+    GoalResponse,
+    GoalSummary,
+    GoalTransactionBase,
+    GoalTransactionCreate,
+    GoalTransactionResponse,
+    GoalUpdate,
+)
+from app.schemas.import_batch import (
+    ImportBatchResponse,
+    ImportConfirmRequest,
+    ImportPreviewResponse,
+    ImportTransactionPreview,
+)
+from app.schemas.invite import (
+    InviteCodeCreate,
+    InviteCodeCreated,
+    InviteCodeRead,
+    UserActiveUpdate,
+    UserAdminRead,
+)
+from app.schemas.notification import (
+    NotificationLogRead,
+    NotificationRuleCreate,
+    NotificationRuleRead,
+    NotificationRuleUpdate,
+    NotificationSettingsRead,
+    NotificationSettingsUpdate,
+    PushSubscriptionCreate,
+)
+from app.schemas.report import (
+    BalanceHistoryReport,
+    CashflowReport,
+    IncomeReport,
+    ReportFilter,
+    ReportSeries,
+    SavedReportCreate,
+    SavedReportResponse,
+    SpendingReport,
+    TrendReport,
+)
+from app.schemas.transaction import (
+    BulkTransactionDelete,
+    BulkTransactionUpdate,
+    TransactionBase,
+    TransactionCreate,
+    TransactionList,
+    TransactionResponse,
+    TransactionUpdate,
+)
+from app.schemas.user import UserBase, UserCreate, UserInDB, UserResponse, UserUpdate
 
 __all__ = [
     # User schemas
@@ -156,6 +167,15 @@ __all__ = [
     "PasswordChange",
     "APIKeyResponse",
     "APIKeyStatus",
+    "ForgotPasswordRequest",
+    "ResetPasswordRequest",
+    "ResendVerificationRequest",
+    "VerifyEmailRequest",
+    "InviteCodeCreate",
+    "InviteCodeCreated",
+    "InviteCodeRead",
+    "UserAdminRead",
+    "UserActiveUpdate",
     # Dashboard schemas
     "DashboardSummary",
     "DashboardRecentTransaction",

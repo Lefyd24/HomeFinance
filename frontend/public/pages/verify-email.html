@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light-fin">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verify Email - Personal Finance</title>
+    <link rel="stylesheet" href="../assets/css/app.css">
+    <link rel="stylesheet" href="../assets/css/custom.css">
+    <link rel="icon" type="image/svg+xml" href="../assets/icons/favicon.svg">
+    <link rel="alternate icon" href="../assets/icons/favicon.ico">
+    <link rel="shortcut icon" href="../assets/icons/favicon.ico">
+</head>
+<body class="min-h-screen flex items-center justify-center bg-base-200 p-6">
+    <div class="card w-full max-w-sm bg-base-100 shadow-xl">
+        <div class="card-body items-center text-center">
+            <div id="statePending">
+                <span class="loading loading-spinner loading-lg text-primary"></span>
+                <h2 class="text-xl font-bold text-base-content mt-4">Verifying your email...</h2>
+            </div>
+
+            <div id="stateSuccess" class="hidden">
+                <div class="text-success mb-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                </div>
+                <h2 class="text-xl font-bold text-base-content">Email verified</h2>
+                <p class="text-sm text-base-content opacity-60 mt-1 mb-4">You can now sign in to your account.</p>
+                <a href="../index.html" class="btn btn-primary w-full">Go to sign in</a>
+            </div>
+
+            <div id="stateError" class="hidden">
+                <div class="text-error mb-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                </div>
+                <h2 class="text-xl font-bold text-base-content">Verification failed</h2>
+                <p id="errorText" class="text-sm text-base-content opacity-60 mt-1 mb-4">This link is invalid or has expired.</p>
+
+                <div class="flex flex-col gap-3 items-stretch">
+                    <div class="flex gap-2">
+                        <input type="email" id="resendEmail" placeholder="your@email.com" class="input input-bordered input-sm flex-1">
+                        <button id="resendBtn" class="btn btn-primary btn-sm">Resend</button>
+                    </div>
+                    <a href="../index.html" class="text-primary text-sm font-semibold">Back to sign in</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../js/utils.js"></script>
+    <script src="../js/runtime-config.js"></script>
+    <script src="../js/api.js"></script>
+    <script src="../js/pages/verify-email.js"></script>
+</body>
+</html>

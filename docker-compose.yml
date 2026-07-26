@@ -5,8 +5,16 @@ services:
       dockerfile: Dockerfile
     container_name: personalfinance-app
     ports:
-      - "${BACKEND_PORT:-8223}:${BACKEND_PORT:-8223}"
-      - "${FRONTEND_PORT:-3100}:${FRONTEND_PORT:-3100}"
+      # Frontend is served by the backend itself (same origin) — only one port
+      # to publish, which is also what Tailscale Funnel expects.
+      #
+      # Published on loopback only: `tailscale funnel`/`serve` runs on the host
+      # and reaches it over 127.0.0.1, while nothing off-box can hit the port
+      # directly. That is what makes TRUST_PROXY_HEADERS=true safe — otherwise
+      # anyone reaching the port could spoof X-Forwarded-For past the rate
+      # limiter. Set BIND_ADDRESS=0.0.0.0 to expose it on the LAN/tailnet
+      # directly, and then set TRUST_PROXY_HEADERS=false.
+      - "${BIND_ADDRESS:-127.0.0.1}:${BACKEND_PORT:-8223}:${BACKEND_PORT:-8223}"
     environment:
       - APP_NAME=${APP_NAME}
       - APP_VERSION=${APP_VERSION}

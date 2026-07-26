@@ -1,11 +1,11 @@
-from datetime import datetime, timedelta, timezone
-from typing import Optional, Union
-from jose import JWTError, jwt
-import bcrypt
 import secrets
 import uuid
-from fastapi import Depends, HTTPException, status, Security
-from fastapi.security import OAuth2PasswordBearer, APIKeyHeader
+from datetime import UTC, datetime, timedelta
+
+import bcrypt
+from fastapi import Depends, HTTPException, Security, status
+from fastapi.security import APIKeyHeader, OAuth2PasswordBearer
+from jose import JWTError, jwt
 from sqlalchemy.orm import Session
 
 from app.config import settings
@@ -43,7 +43,7 @@ def get_password_hash(password: str) -> str:
     return hashed.decode("utf-8")
 
 
-def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
+def create_access_token(data: dict, expires_delta: timedelta | None = None) -> str:
     """Create JWT access token."""
     to_encode = data.copy()
     if expires_delta:
@@ -53,7 +53,14 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
             minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES
         )
 
-    to_encode.update({"exp": expire, "iat": datetime.now(timezone.utc), "jti": str(uuid.uuid4()), "type": "access"})
+    to_encode.update(
+        {
+            "exp": expire,
+            "iat": datetime.now(UTC),
+            "jti": str(uuid.uuid4()),
+            "type": "access",
+        }
+    )
     encoded_jwt = jwt.encode(
         to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM
     )
@@ -66,14 +73,21 @@ def create_refresh_token(data: dict) -> str:
     expire = datetime.utcnow() + timedelta(
         minutes=settings.REFRESH_TOKEN_EXPIRE_MINUTES
     )
-    to_encode.update({"exp": expire, "iat": datetime.now(timezone.utc), "jti": str(uuid.uuid4()), "type": "refresh"})
+    to_encode.update(
+        {
+            "exp": expire,
+            "iat": datetime.now(UTC),
+            "jti": str(uuid.uuid4()),
+            "type": "refresh",
+        }
+    )
     encoded_jwt = jwt.encode(
         to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM
     )
     return encoded_jwt
 
 
-def decode_token(token: str) -> Optional[dict]:
+def decode_token(token: str) -> dict | None:
     """Decode and validate JWT token."""
     try:
         payload = jwt.decode(
@@ -84,8 +98,26 @@ def decode_token(token: str) -> Optional[dict]:
         return None
 
 
+def _token_issued_before_session_invalidation(payload: dict, user: User) -> bool:
+    """True if this token was issued before the user's last password reset/change.
+
+    `sessions_valid_from` is bumped to "now" on password reset and password
+    change, so any JWT with an earlier `iat` must be rejected — otherwise
+    resetting a password wouldn't actually invalidate tokens already handed
+    out (logout today is client-side only).
+    """
+    iat = payload.get("iat")
+    valid_from = getattr(user, "sessions_valid_from", None)
+    if iat is None or valid_from is None:
+        return False
+    issued_at = datetime.fromtimestamp(iat, tz=UTC)
+    if valid_from.tzinfo is None:
+        valid_from = valid_from.replace(tzinfo=UTC)
+    return issued_at < valid_from
+
+
 async def get_current_user(
-    token: Optional[str] = Depends(oauth2_scheme), db: Session = Depends(get_db)
+    token: str | None = Depends(oauth2_scheme), db: Session = Depends(get_db)
 ) -> User:
     """Get current authenticated user via JWT token."""
     credentials_exception = HTTPException(
@@ -109,6 +141,9 @@ async def get_current_user(
     if user is None or not user.is_active:
         raise credentials_exception
 
+    if _token_issued_before_session_invalidation(payload, user):
+        raise credentials_exception
+
     return user
 
 
@@ -127,8 +162,8 @@ def generate_api_key(length: int = 64) -> str:
 
 
 async def get_current_user_by_api_key(
-    api_key: Optional[str] = Security(api_key_header), db: Session = Depends(get_db)
-) -> Optional[User]:
+    api_key: str | None = Security(api_key_header), db: Session = Depends(get_db)
+) -> User | None:
     """Get current user by API key."""
     if not api_key:
         return None
@@ -140,8 +175,8 @@ async def get_current_user_by_api_key(
 
 
 async def get_current_user_authenticated(
-    token: Optional[str] = Depends(oauth2_scheme),
-    api_key: Optional[str] = Security(api_key_header),
+    token: str | None = Depends(oauth2_scheme),
+    api_key: str | None = Security(api_key_header),
     db: Session = Depends(get_db),
 ) -> User:
     """Get current user authenticated via JWT token or API key."""
@@ -173,4 +208,19 @@ async def get_current_user_authenticated(
     if user is None or not user.is_active:
         raise credentials_exception
 
+    if _token_issued_before_session_invalidation(payload, user):
+        raise credentials_exception
+
     return user
+
+
+async def require_admin(
+    current_user: User = Depends(get_current_user_authenticated),
+) -> User:
+    """Gate a route to admin users only (401/403 handled uniformly via 403)."""
+    if not current_user.is_admin:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Admin access required",
+        )
+    return current_user

@@ -17,10 +17,32 @@ self.addEventListener('activate', event => {
 });
 
 self.addEventListener('fetch', event => {
+  const req = event.request;
+
+  // Only handle same-origin GET requests ourselves. Letting the browser
+  // handle everything else natively (cross-origin CDN scripts/fonts,
+  // POST/PUT/DELETE API calls, the AI chat SSE stream, etc.) avoids turning
+  // requests the service worker can't safely re-fetch — like a streaming
+  // response body, or a cross-origin request blocked for reasons outside our
+  // control — into unhandled promise rejections logged as "Failed to fetch".
+  let url;
+  try {
+    url = new URL(req.url);
+  } catch {
+    return;
+  }
+  if (req.method !== 'GET' || url.origin !== self.location.origin) {
+    return;
+  }
+
   // Bypass the HTTP cache as well — default fetch() can still serve a
   // stale api.js / page after a Docker rebuild (Last-Modified heuristics),
-  // which left AI chat calling API.ai on an old client bundle.
-  event.respondWith(fetch(event.request, { cache: 'no-store' }));
+  // which left AI chat calling API.ai on an old client bundle. Fall back to
+  // a normal fetch if the no-store request itself fails (e.g. transient
+  // network hiccup) instead of failing the whole request.
+  event.respondWith(
+    fetch(req, { cache: 'no-store' }).catch(() => fetch(req))
+  );
 });
 
 self.addEventListener('push', (event) => {
