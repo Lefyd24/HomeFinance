@@ -29,7 +29,7 @@ else:
     print('existing')
 ")
 
-if [ "\$DB_STATE" = "new" ]; then
+if [ "$DB_STATE" = "new" ]; then
     echo "New database detected - creating all tables from models..."
     python -c "
 import sys

@@ -1,4 +1,6 @@
-from sqlalchemy import create_engine, event
+import logging
+
+from sqlalchemy import create_engine, event, inspect
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, Session
 from typing import Generator
@@ -50,5 +52,23 @@ def get_db() -> Generator[Session, None, None]:
 
 
 def init_db() -> None:
-    """Initialize database tables."""
+    """Create tables from the models — but only on a database Alembic isn't
+    already managing.
+
+    Once `alembic_version` exists, Alembic owns the schema, and `create_all`
+    becomes actively harmful: it happily creates the tables that a *pending*
+    migration is about to create itself, without advancing the revision. The
+    next `alembic upgrade head` then dies on "table ... already exists" while
+    still pointing at the old revision, and — with `restart: unless-stopped` —
+    the container wedges in a restart loop.
+
+    A fresh database has no `alembic_version`, so bare-metal dev still gets its
+    tables here; the Docker entrypoint stamps head after this runs.
+    """
+    if inspect(engine).has_table("alembic_version"):
+        logging.getLogger("app").debug(
+            "Alembic-managed database detected; skipping create_all "
+            "(schema changes belong in a migration)."
+        )
+        return
     Base.metadata.create_all(bind=engine)
