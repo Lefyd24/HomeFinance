@@ -49,7 +49,7 @@ self.addEventListener('push', (event) => {
   let data = {};
   try { data = event.data ? event.data.json() : {}; } catch (e) {}
   const title = data.title || 'Personal Finance';
-  const icon = new URL('/assets/icons/icon-192.svg', self.location.origin).href;
+  const icon = new URL('/assets/icons/icon-192.png', self.location.origin).href;
   const badge = new URL('/assets/icons/favicon.svg', self.location.origin).href;
   event.waitUntil(self.registration.showNotification(title, {
     body: data.body || '',

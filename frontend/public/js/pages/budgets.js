@@ -310,70 +310,73 @@ document.addEventListener('DOMContentLoaded', async () => {
             return;
         }
         
-        container.innerHTML = budgets.map(budget => `
-            <div class="card bg-base-100 shadow-xl hover:shadow-2xl transition-shadow">
-                <div class="card-body">
-                    <div class="flex justify-between items-start mb-2">
-                        <div>
-                            <h3 class="card-title">${budget.name}</h3>
-                            <p class="text-sm text-base-content/60">${budget.period.charAt(0).toUpperCase() + budget.period.slice(1)} Budget</p>
-                        </div>
-                        <div class="dropdown dropdown-end">
-                            <label tabindex="0" class="btn btn-ghost btn-sm btn-circle">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
-                                </svg>
-                            </label>
-                            <ul tabindex="0" class="dropdown-content menu p-2 shadow bg-base-100 rounded-box w-32 z-50">
-                                <li><a href="#" onclick="editBudget(${budget.id}); return false;">Edit</a></li>
-                                <li><a href="#" onclick="deleteBudget(${budget.id}); return false;" class="text-error">Delete</a></li>
-                            </ul>
-                        </div>
+        container.innerHTML = budgets.map(budget => {
+            const tint = budget.percentage > 100 ? 'oklch(62% 0.18 25)' : budget.percentage > 90 ? 'oklch(70% 0.15 70)' : 'var(--color-primary)';
+            const trackFillClass = budget.percentage > 100 ? 'fin-track-fill-over' : '';
+            const dateRange = budget.period_start || budget.period_end
+                ? `${Utils.formatDate(budget.period_start)} - ${Utils.formatDate(budget.period_end)}`
+                : `${Utils.formatDate(budget.start_date)} - ${Utils.formatDate(budget.end_date)}`;
+
+            return `
+            <div class="fin-card" style="--tint: ${tint};">
+                <div class="fin-card-band">
+                    <div class="min-w-0">
+                        <h3 class="font-semibold text-sm sm:text-base truncate">${budget.name}</h3>
+                        <p class="fin-hero-sub mt-0.5">${budget.period.charAt(0).toUpperCase() + budget.period.slice(1)} budget · ${dateRange}</p>
                     </div>
-                    
-                    <div class="text-xs text-base-content/50 mb-3">
-                        ${budget.period_start || budget.period_end 
-                            ? `${Utils.formatDate(budget.period_start)} - ${Utils.formatDate(budget.period_end)}`
-                            : `${Utils.formatDate(budget.start_date)} - ${Utils.formatDate(budget.end_date)}`}
+                    <div class="dropdown dropdown-end shrink-0">
+                        <button tabindex="0" class="btn btn-ghost btn-sm btn-circle" aria-label="Budget actions">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+                            </svg>
+                        </button>
+                        <ul tabindex="0" class="dropdown-content menu menu-sm p-2 shadow-xl bg-base-100 rounded-box w-36 z-50 border border-base-300">
+                            <li><a href="#" onclick="editBudget(${budget.id}); return false;">Edit</a></li>
+                            <li><a href="#" onclick="deleteBudget(${budget.id}); return false;" class="text-error">Delete</a></li>
+                        </ul>
                     </div>
-                    
-                    <div class="mb-4">
-                        <div class="flex justify-between mb-2">
-                            <span class="text-2xl font-bold">${Utils.formatCurrency(budget.spent)}</span>
-                            <span class="text-base-content/60">/ ${Utils.formatCurrency(budget.amount)}</span>
-                        </div>
-                        <progress class="progress ${getProgressColor(budget.percentage)} w-full" 
-                                  value="${budget.percentage}" max="100"></progress>
-                        <div class="flex justify-between mt-2 text-sm">
-                            <span class="${budget.percentage > 100 ? 'text-error' : ''}">${budget.percentage}% used</span>
-                            <span class="${budget.remaining < 0 ? 'text-error' : 'text-success'}">${budget.remaining >= 0 ? '' : '-'}${Utils.formatCurrency(Math.abs(budget.remaining))} ${budget.remaining >= 0 ? 'left' : 'over'}</span>
-                        </div>
+                </div>
+
+                <div class="fin-card-body">
+                    <div class="flex items-baseline justify-between gap-2">
+                        <span class="fin-hero-balance">${Utils.formatCurrency(budget.spent)}</span>
+                        <span class="fin-hero-sub shrink-0">/ ${Utils.formatCurrency(budget.amount)}</span>
                     </div>
-                    
+
+                    <div class="fin-track">
+                        <div class="fin-track-fill ${trackFillClass}" style="width: ${Math.min(budget.percentage, 100)}%"></div>
+                    </div>
+
+                    <div class="flex justify-between items-center text-sm">
+                        <span class="${budget.percentage > 100 ? 'text-error font-medium' : 'text-base-content/60'}">${budget.percentage}% used</span>
+                        <span class="font-medium ${budget.remaining < 0 ? 'text-error' : 'text-success'}">${budget.remaining >= 0 ? '' : '-'}${Utils.formatCurrency(Math.abs(budget.remaining))} ${budget.remaining >= 0 ? 'left' : 'over'}</span>
+                    </div>
+
                     ${budget.percentage > 100 ? `
-                        <div class="alert alert-error alert-sm">
+                        <div class="alert alert-error alert-sm py-2">
                             <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-4 w-4" fill="none" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
                             </svg>
                             <span class="text-xs">Budget exceeded!</span>
                         </div>
                     ` : (budget.percentage > 90 ? `
-                        <div class="alert alert-warning alert-sm">
+                        <div class="alert alert-warning alert-sm py-2">
                             <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-4 w-4" fill="none" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
                             </svg>
                             <span class="text-xs">Budget almost exceeded!</span>
                         </div>
                     ` : '')}
-                    
-                    <div class="card-actions justify-end mt-4">
-                        <a href="#" onclick="viewBudgetDetails(${budget.id}); return false;" class="btn btn-sm btn-ghost">
-                            View Details
-                        </a>
-                    </div>
+                </div>
+
+                <div class="fin-card-footer justify-end">
+                    <a href="#" onclick="viewBudgetDetails(${budget.id}); return false;" class="btn btn-sm btn-ghost">
+                        View Details
+                    </a>
                 </div>
             </div>
-        `).join('');
+        `;
+        }).join('');
     }
     
     function renderBudgetSummary() {

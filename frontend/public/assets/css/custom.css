@@ -82,6 +82,7 @@ progress {
     box-shadow: 0 0 0 2px var(--fallback-p, oklch(var(--p) / 0.2));
 }
 
+
 /* Stats cards */
 .stat {
     transition: transform 0.2s ease;
@@ -144,6 +145,14 @@ canvas {
     /* Compact forms */
     .input, .select {
         min-height: 2.75rem;
+    }
+
+    /* DaisyUI ships a 14px (input-sm/xs: 12px) default input font-size.
+       Below 16px, iOS Safari zooms the whole viewport in on focus, which
+       reads as the page glitching every time a field is tapped. Desktop
+       doesn't have this issue, so only force it here on mobile. */
+    .input, .select, .textarea {
+        font-size: 1rem;
     }
     
     /* Toast positioning */

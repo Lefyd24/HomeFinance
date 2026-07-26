@@ -106,8 +106,8 @@ const Layout = {
                             <!-- User dropdown -->
                             <div class="dropdown dropdown-end">
                                 <button tabindex="0" class="btn btn-ghost btn-circle avatar placeholder" title="User menu">
-                                    <div class="bg-primary text-primary-content w-8 lg:w-10 rounded-full flex items-center justify-center">
-                                        <span class="text-sm lg:text-lg font-bold">${user?.full_name?.[0]?.toUpperCase() || 'U'}</span>
+                                    <div class="bg-primary text-primary-content w-8 h-8 lg:w-10 lg:h-10 rounded-full flex items-center justify-center shrink-0">
+                                        <span class="text-sm lg:text-lg font-bold leading-none">${user?.full_name?.[0]?.toUpperCase() || 'U'}</span>
                                     </div>
                                 </button>
                                 <ul tabindex="0" class="dropdown-content menu menu-sm bg-base-100 rounded-box z-50 mt-3 w-56 p-2 shadow-xl border border-base-300">
@@ -312,8 +312,8 @@ const Layout = {
                     <form id="profileForm" class="space-y-4">
                         <div class="flex justify-center mb-4">
                             <div class="avatar placeholder">
-                                <div class="bg-primary text-primary-content w-20 rounded-full flex items-center justify-center shadow-lg">
-                                    <span class="text-3xl font-bold">${user?.full_name?.[0]?.toUpperCase() || 'U'}</span>
+                                <div class="bg-primary text-primary-content w-20 h-20 rounded-full flex items-center justify-center shadow-lg shrink-0">
+                                    <span class="text-3xl font-bold leading-none">${user?.full_name?.[0]?.toUpperCase() || 'U'}</span>
                                 </div>
                             </div>
                         </div>
