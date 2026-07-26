@@ -15,10 +15,15 @@
  *   backend's own port.
  */
 
-function resolveDefaultBackendPort() {
+function resolveConfiguredPort(key, fallback) {
     const cfg = window.__APP_CONFIG__;
-    const p = cfg && cfg.backendPort != null ? Number(cfg.backendPort) : NaN;
-    return Number.isFinite(p) && p > 0 ? p : 8223;
+    const p = cfg && cfg[key] != null ? Number(cfg[key]) : NaN;
+    return Number.isFinite(p) && p > 0 ? p : fallback;
+}
+
+function currentPagePort() {
+    if (window.location.port) return Number(window.location.port);
+    return window.location.protocol === 'https:' ? 443 : 80;
 }
 
 const API = {
@@ -35,21 +40,30 @@ const API = {
             return storedUrl;
         }
 
-        // 3. Same-origin default — works out of the box when FastAPI serves the
-        // frontend (production, Docker, Tailscale Funnel).
-        const samePort = window.location.port
-            ? Number(window.location.port)
-            : (window.location.protocol === 'https:' ? 443 : 80);
-        const backendPort = resolveDefaultBackendPort();
+        const backendPort = resolveConfiguredPort('backendPort', 8223);
 
-        // 4. Split-port local dev fallback: static file server (e.g. :3100)
-        // serving the frontend separately from `uv run python main.py` (:8223).
-        if (backendPort !== samePort) {
+        // 3. Page opened straight off disk — no origin to be relative to.
+        if (window.location.protocol === 'file:') {
+            return `http://localhost:${backendPort}/api`;
+        }
+
+        // 4. Split-port local dev: the page came from the standalone static
+        // server (`python -m http.server 3100`) rather than from the backend.
+        //
+        // This needs POSITIVE evidence — the page's port matching FRONTEND_PORT.
+        // Do NOT infer it from "page port !== BACKEND_PORT": behind Tailscale
+        // Serve/Funnel or any TLS proxy the page is on 443 while the backend
+        // listens on 8223, which is the normal production case, and treating
+        // that as dev builds an unreachable https://host:8223/api URL.
+        const frontendDevPort = resolveConfiguredPort('frontendPort', 3100);
+        if (currentPagePort() === frontendDevPort && backendPort !== frontendDevPort) {
             const protocol = window.location.protocol || 'http:';
             const host = window.location.hostname || 'localhost';
             return `${protocol}//${host}:${backendPort}/api`;
         }
 
+        // 5. Same origin — FastAPI serves this page and the API (production,
+        // Docker, Tailscale Serve/Funnel, and `uv run python main.py`).
         return '/api';
     })(),
     

@@ -61,15 +61,22 @@ def upgrade():
         "users",
         sa.Column("email_verified", sa.Boolean(), nullable=False, server_default="1"),
     )
-    # Default to "now" so nobody with an existing, already-issued JWT is
-    # logged out purely by this migration running.
+    # Backfill existing rows with the epoch, not now(): every already-issued
+    # JWT has an `iat` later than this, so nobody is logged out purely by the
+    # migration running. New users get `datetime.utcnow` from the model.
+    #
+    # The default MUST be a constant literal. Older SQLite (e.g. the 3.40 in
+    # Debian bookworm, which the python:3.11-slim image is built on) rejects
+    # CURRENT_TIMESTAMP or any expression as an ALTER TABLE ADD COLUMN default
+    # — newer SQLite accepts it, so this fails only on deployment, after the
+    # two columns above have already been added.
     op.add_column(
         "users",
         sa.Column(
             "sessions_valid_from",
             sa.DateTime(),
             nullable=False,
-            server_default=sa.func.now(),
+            server_default="1970-01-01 00:00:00",
         ),
     )
 
