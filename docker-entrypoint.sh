@@ -51,5 +51,11 @@ fi
 # for the split-port local dev workflow (frontend and backend on different
 # ports), which doesn't apply inside this container.
 
+case "${TRUST_PROXY_HEADERS:-false}" in
+  [Tt]rue|1|[Yy]es) export FORWARDED_ALLOW_IPS="*" ;;
+  *) export FORWARDED_ALLOW_IPS="127.0.0.1" ;;
+esac
+export BACKEND_PORT="${BACKEND_PORT:-8223}"
+
 echo "Starting application..."
 exec /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf
