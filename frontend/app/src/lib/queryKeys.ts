@@ -1,7 +1,13 @@
 export const queryKeys = {
   accounts: ['accounts'] as const,
   categories: ['categories'] as const,
-  transactions: (filters?: Record<string, unknown>) => ['transactions', filters] as const,
+  transactions: (filters?: object) => ['transactions', filters] as const,
   budgets: ['budgets'] as const,
-  spendingReport: (params?: Record<string, unknown>) => ['spendingReport', params] as const,
+  goals: ['goals'] as const,
+  debts: ['debts'] as const,
+  upcomingDebtPayments: ['upcomingDebtPayments'] as const,
+  upcomingRecurringPayments: ['upcomingRecurringPayments'] as const,
+  spendingReport: (params?: object) => ['spendingReport', params] as const,
+  cashflowReport: (params?: object) => ['cashflowReport', params] as const,
+  netWorthReport: (params?: object) => ['netWorthReport', params] as const,
 }

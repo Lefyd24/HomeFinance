@@ -1,92 +1,549 @@
-import { useState } from 'react'
-import { NavLink, Outlet } from 'react-router-dom'
-import { LogOut } from 'lucide-react'
+import { useMemo, useState } from 'react'
+import { NavLink, Outlet, useLocation } from 'react-router-dom'
+import { HugeiconsIcon } from '@hugeicons/react'
+import {
+  Logout01Icon,
+  Menu01Icon,
+  MoneyAdd01Icon,
+  MoneyBag01Icon,
+  SidebarLeftIcon,
+} from '@hugeicons/core-free-icons'
 import { useAuth } from '../auth/AuthContext'
-import { PRIMARY_NAV_ITEMS, MORE_NAV_ICON as MoreIcon } from './NavItems'
+import {
+  ALL_NAV_ITEMS,
+  MORE_NAV_ICON as MoreIcon,
+  NAV_GROUPS,
+  PRIMARY_NAV_ITEMS,
+  SECONDARY_NAV_ITEMS,
+  type NavItem,
+} from './NavItems'
+import { TransactionFormDialog } from '../transactions/TransactionFormDialog'
+import { ThemeToggle } from '@/components/ThemeToggle'
+import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import { ScrollArea } from '@/components/ui/scroll-area'
+import { Separator } from '@/components/ui/separator'
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from '@/components/ui/sheet'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip'
 import { cn } from '@/lib/utils'
 
-export function AppShell() {
-  const { logout } = useAuth()
-  const [moreOpen, setMoreOpen] = useState(false)
+function userInitials(name: string | null | undefined, email: string | undefined) {
+  const source = name?.trim() || email?.trim() || '?'
+  const parts = source.split(/\s+/).filter(Boolean)
+  if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase()
+  return source.slice(0, 2).toUpperCase()
+}
+
+function BrandMark({ compact = false }: { compact?: boolean }) {
+  return (
+    <div className={cn('flex items-center gap-2.5 min-w-0', compact && 'justify-center')}>
+      <div className="relative size-8 shrink-0 rounded-xl bg-primary text-primary-foreground shadow-sm flex items-center justify-center overflow-hidden">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,color-mix(in_oklch,var(--primary-foreground)_35%,transparent),transparent_55%)]" />
+        <HugeiconsIcon icon={MoneyBag01Icon} strokeWidth={2} className="relative size-4" />
+      </div>
+      {!compact && (
+        <div className="min-w-0 flex flex-col">
+          <span className="font-heading font-bold text-sm tracking-tight truncate">Home Finance</span>
+          <span className="text-[10px] uppercase tracking-[0.14em] text-muted-foreground">Personal</span>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function NavItemLink({
+  item,
+  collapsed = false,
+  onNavigate,
+  className,
+}: {
+  item: NavItem
+  collapsed?: boolean
+  onNavigate?: () => void
+  className?: string
+}) {
+  const link = (
+    <NavLink
+      to={item.to}
+      onClick={onNavigate}
+      title={collapsed ? item.label : undefined}
+      className={({ isActive }) =>
+        cn(
+          'group/nav relative flex items-center rounded-lg text-sm font-medium',
+          'border-0 outline-none ring-0 shadow-none',
+          'transition-[background-color,color,transform] duration-150 ease-out',
+          'focus-visible:outline-none focus-visible:ring-0',
+          collapsed
+            ? 'mx-auto size-9 justify-center px-0'
+            : 'gap-3 px-2.5 py-2',
+          isActive
+            ? cn(
+                'bg-sidebar-primary/12 text-sidebar-primary',
+                !collapsed && 'ps-3',
+              )
+            : cn(
+                'text-sidebar-foreground/75',
+                'hover:bg-sidebar-accent hover:text-sidebar-accent-foreground',
+                !collapsed && 'hover:translate-x-0.5',
+                collapsed && 'hover:bg-sidebar-accent/80',
+              ),
+          className,
+        )
+      }
+    >
+      {({ isActive }) => (
+        <>
+          {isActive && !collapsed && (
+            <span className="absolute inset-y-1.5 start-0 w-1 rounded-full bg-sidebar-primary" />
+          )}
+          <HugeiconsIcon
+            icon={item.icon}
+            strokeWidth={isActive ? 2.25 : 1.85}
+            className={cn(
+              'size-4 shrink-0 transition-colors duration-150',
+              isActive
+                ? 'text-sidebar-primary'
+                : 'text-muted-foreground group-hover/nav:text-sidebar-accent-foreground',
+            )}
+          />
+          {!collapsed && <span className="truncate">{item.label}</span>}
+        </>
+      )}
+    </NavLink>
+  )
+
+  if (!collapsed) return link
 
   return (
-    <div className="min-h-dvh flex flex-col lg:flex-row bg-background">
-      <aside className="hidden lg:flex lg:w-60 lg:flex-col border-r border-border p-4 gap-1">
-        <span className="font-bold text-lg mb-4 px-2">Home Finance</span>
-        {PRIMARY_NAV_ITEMS.map(({ label, to, icon: Icon }) => (
-          <NavLink
-            key={to}
-            to={to}
-            className={({ isActive }) =>
-              cn(
-                'flex items-center gap-3 px-3 py-2 rounded-lg',
-                isActive ? 'bg-primary text-primary-foreground' : 'hover:bg-muted',
-              )
-            }
-          >
-            <Icon size={18} />
-            <span>{label}</span>
-          </NavLink>
-        ))}
-        <button
-          onClick={() => void logout()}
-          className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-muted mt-auto"
-        >
-          <LogOut size={18} />
-          <span>Log out</span>
-        </button>
-      </aside>
+    <Tooltip>
+      <TooltipTrigger asChild>{link}</TooltipTrigger>
+      <TooltipContent side="right" align="center">
+        {item.label}
+      </TooltipContent>
+    </Tooltip>
+  )
+}
 
-      <main className="flex-1 min-w-0 overflow-y-auto pb-16 lg:pb-0">
-        <Outlet />
-      </main>
+function UserMenu({
+  align = 'end',
+  side = 'bottom',
+}: {
+  align?: 'start' | 'center' | 'end'
+  side?: 'top' | 'bottom' | 'left' | 'right'
+}) {
+  const { user, logout } = useAuth()
+  const initials = userInitials(user?.full_name, user?.email)
+  const displayName = user?.full_name?.trim() || user?.email || 'Account'
 
-      <nav className="lg:hidden fixed bottom-0 inset-x-0 h-16 bg-background border-t border-border flex items-stretch z-40">
-        {PRIMARY_NAV_ITEMS.map(({ label, to, icon: Icon }) => (
-          <NavLink
-            key={to}
-            to={to}
-            className={({ isActive }) =>
-              cn(
-                'flex-1 flex flex-col items-center justify-center gap-1 text-xs',
-                isActive ? 'text-primary' : 'text-muted-foreground',
-              )
-            }
-          >
-            <Icon size={20} />
-            {label}
-          </NavLink>
-        ))}
-        <button
-          onClick={() => setMoreOpen((open) => !open)}
-          className="flex-1 flex flex-col items-center justify-center gap-1 text-xs text-muted-foreground"
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          variant="ghost"
+          className="size-9 rounded-full p-0"
+          aria-label="Account menu"
         >
-          <MoreIcon size={20} />
-          More
-        </button>
-      </nav>
+          <Avatar size="sm">
+            <AvatarFallback className="bg-primary/15 text-primary font-semibold">
+              {initials}
+            </AvatarFallback>
+          </Avatar>
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent className="w-56" align={align} side={side} sideOffset={8}>
+        <DropdownMenuGroup>
+          <DropdownMenuLabel className="font-normal">
+            <div className="flex flex-col gap-0.5">
+              <span className="text-sm font-medium">{displayName}</span>
+              {user?.email && (
+                <span className="text-xs text-muted-foreground truncate">{user.email}</span>
+              )}
+            </div>
+          </DropdownMenuLabel>
+        </DropdownMenuGroup>
+        <DropdownMenuSeparator />
+        <DropdownMenuGroup>
+          <DropdownMenuItem asChild>
+            <NavLink to="/api-keys">API Keys</NavLink>
+          </DropdownMenuItem>
+          <DropdownMenuItem asChild>
+            <NavLink to="/notifications">Notifications</NavLink>
+          </DropdownMenuItem>
+          {user?.is_admin && (
+            <DropdownMenuItem asChild>
+              <NavLink to="/admin">Admin</NavLink>
+            </DropdownMenuItem>
+          )}
+        </DropdownMenuGroup>
+        <DropdownMenuSeparator />
+        <DropdownMenuGroup>
+          <DropdownMenuItem
+            variant="destructive"
+            onClick={() => void logout()}
+          >
+            <HugeiconsIcon icon={Logout01Icon} strokeWidth={2} />
+            Log out
+          </DropdownMenuItem>
+        </DropdownMenuGroup>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  )
+}
 
-      {moreOpen && (
-        <div
-          className="lg:hidden fixed inset-0 z-50 bg-black/40 flex items-end"
-          onClick={() => setMoreOpen(false)}
-        >
-          <div
-            className="bg-background w-full rounded-t-2xl p-4"
-            onClick={(e) => e.stopPropagation()}
+function DesktopSidebar({
+  collapsed,
+  onToggle,
+}: {
+  collapsed: boolean
+  onToggle: () => void
+}) {
+  return (
+    <aside
+      className={cn(
+        'hidden lg:flex lg:flex-col h-dvh sticky top-0 shrink-0 overflow-hidden',
+        'border-e border-sidebar-border text-sidebar-foreground',
+        'bg-sidebar bg-[linear-gradient(165deg,var(--sidebar)_0%,color-mix(in_oklch,var(--sidebar),var(--primary)_6%)_100%)]',
+        'transition-[width] duration-200 ease-out',
+        collapsed ? 'w-[4.25rem]' : 'w-64',
+      )}
+    >
+      <div
+        className={cn(
+          'flex h-14 shrink-0 items-center gap-2 border-b border-sidebar-border px-3',
+          collapsed && 'justify-center px-2',
+        )}
+      >
+        <BrandMark compact={collapsed} />
+        {!collapsed && (
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            className="ms-auto text-muted-foreground"
+            onClick={onToggle}
+            aria-label="Collapse sidebar"
           >
+            <HugeiconsIcon icon={SidebarLeftIcon} strokeWidth={2} />
+          </Button>
+        )}
+      </div>
+
+      <ScrollArea className="flex-1 min-h-0">
+        <nav
+          className={cn(
+            'flex flex-col gap-4 p-2',
+            collapsed && 'items-center px-1.5',
+          )}
+        >
+          {NAV_GROUPS.map((group) => (
+            <div
+              key={group.label}
+              className={cn(
+                'flex flex-col gap-1',
+                collapsed && 'w-full items-center',
+              )}
+            >
+              {!collapsed && (
+                <p className="px-2.5 pb-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                  {group.label}
+                </p>
+              )}
+              {collapsed && group.label !== 'Overview' && (
+                <Separator className="my-1 w-6 bg-sidebar-border" />
+              )}
+              {group.items.map((item) => (
+                <NavItemLink key={item.to} item={item} collapsed={collapsed} />
+              ))}
+            </div>
+          ))}
+        </nav>
+      </ScrollArea>
+
+      {collapsed && (
+        <div className="shrink-0 border-t border-sidebar-border p-2 flex justify-center">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                onClick={onToggle}
+                aria-label="Expand sidebar"
+              >
+                <HugeiconsIcon icon={SidebarLeftIcon} strokeWidth={2} className="rtl:rotate-180" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="right">Expand</TooltipContent>
+          </Tooltip>
+        </div>
+      )}
+    </aside>
+  )
+}
+
+function NavActions() {
+  return (
+    <div className="ms-auto flex items-center gap-1">
+      <ThemeToggle />
+      <UserMenu align="end" side="bottom" />
+    </div>
+  )
+}
+
+function QuickAddTransactionFab() {
+  const [open, setOpen] = useState(false)
+
+  return (
+    <>
+      <Button
+        size="icon-lg"
+        className={cn(
+          'fixed z-30 size-12 rounded-full shadow-lg',
+          'bottom-[calc(4.75rem+env(safe-area-inset-bottom))] end-3',
+          'lg:bottom-6 lg:end-6',
+        )}
+        onClick={() => setOpen(true)}
+        aria-label="Add transaction"
+      >
+        <HugeiconsIcon icon={MoneyAdd01Icon} strokeWidth={2} />
+      </Button>
+      <TransactionFormDialog open={open} onOpenChange={setOpen} />
+    </>
+  )
+}
+
+function MobileTopBar({ onOpenMenu }: { onOpenMenu: () => void }) {
+  return (
+    <header className="lg:hidden sticky top-0 z-30 flex h-14 shrink-0 items-center gap-2 border-b border-border bg-background/85 px-3 backdrop-blur-md supports-backdrop-filter:bg-background/70">
+      <Button
+        variant="ghost"
+        size="icon"
+        onClick={onOpenMenu}
+        aria-label="Open navigation"
+      >
+        <HugeiconsIcon icon={Menu01Icon} strokeWidth={2} />
+      </Button>
+      <BrandMark />
+      <NavActions />
+    </header>
+  )
+}
+
+function MobileNavSheet({
+  open,
+  onOpenChange,
+}: {
+  open: boolean
+  onOpenChange: (open: boolean) => void
+}) {
+  return (
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent side="left" className="w-[min(100%,20rem)] p-0 gap-0" showCloseButton>
+        <SheetHeader className="border-b border-border">
+          <SheetTitle className="sr-only">Navigation</SheetTitle>
+          <BrandMark />
+        </SheetHeader>
+        <ScrollArea className="flex-1 min-h-0 h-[calc(100dvh-5rem)]">
+          <nav className="flex flex-col gap-4 p-3">
+            {NAV_GROUPS.map((group) => (
+              <div key={group.label} className="flex flex-col gap-1">
+                <p className="px-2.5 pb-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                  {group.label}
+                </p>
+                {group.items.map((item) => (
+                  <NavItemLink
+                    key={item.to}
+                    item={item}
+                    onNavigate={() => onOpenChange(false)}
+                    className="py-2.5"
+                  />
+                ))}
+              </div>
+            ))}
+          </nav>
+        </ScrollArea>
+      </SheetContent>
+    </Sheet>
+  )
+}
+
+function MoreSheet({
+  open,
+  onOpenChange,
+}: {
+  open: boolean
+  onOpenChange: (open: boolean) => void
+}) {
+  const { logout } = useAuth()
+
+  return (
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent
+        side="bottom"
+        showCloseButton={false}
+        className="max-h-[78dvh] rounded-t-2xl gap-0 p-0"
+      >
+        <div className="flex flex-col">
+          <div className="mx-auto mt-3 mb-1 h-1 w-10 rounded-full bg-muted" />
+          <SheetHeader className="pb-2 pt-1">
+            <SheetTitle>More</SheetTitle>
+          </SheetHeader>
+          <ScrollArea className="max-h-[min(60dvh,28rem)]">
+            <nav className="flex flex-col gap-4 px-3 pb-3">
+              {NAV_GROUPS.slice(1).map((group) => (
+                <div key={group.label} className="flex flex-col gap-1">
+                  <p className="px-2.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                    {group.label}
+                  </p>
+                  {group.items.map((item) => (
+                    <NavItemLink
+                      key={item.to}
+                      item={item}
+                      onNavigate={() => onOpenChange(false)}
+                      className="py-2.5"
+                    />
+                  ))}
+                </div>
+              ))}
+            </nav>
+          </ScrollArea>
+          <div className="border-t border-border p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
             <Button
               variant="ghost"
-              onClick={() => void logout()}
-              className="flex items-center gap-3 px-3 py-3 w-full justify-start h-auto"
+              className="w-full justify-start gap-3 h-11 text-destructive hover:text-destructive"
+              onClick={() => {
+                onOpenChange(false)
+                void logout()
+              }}
             >
-              <LogOut size={18} />
-              <span>Log out</span>
+              <HugeiconsIcon icon={Logout01Icon} strokeWidth={2} data-icon="inline-start" />
+              Log out
             </Button>
           </div>
         </div>
-      )}
+      </SheetContent>
+    </Sheet>
+  )
+}
+
+function MobileBottomNav({
+  moreOpen,
+  onMoreToggle,
+}: {
+  moreOpen: boolean
+  onMoreToggle: () => void
+}) {
+  const location = useLocation()
+  const secondaryActive = useMemo(
+    () => SECONDARY_NAV_ITEMS.some((item) => location.pathname.startsWith(item.to)),
+    [location.pathname],
+  )
+
+  return (
+    <nav className="lg:hidden fixed bottom-0 inset-x-0 z-40 border-t border-border bg-background/90 backdrop-blur-md supports-backdrop-filter:bg-background/75 pb-[env(safe-area-inset-bottom)]">
+      <div className="flex h-16 items-stretch px-1">
+        {PRIMARY_NAV_ITEMS.map(({ label, to, icon }) => (
+          <NavLink
+            key={to}
+            to={to}
+            className={({ isActive }) =>
+              cn(
+                'flex-1 flex flex-col items-center justify-center gap-1 rounded-xl mx-0.5 my-1.5 text-[10px] font-medium transition-colors duration-150',
+                isActive
+                  ? 'bg-primary/10 text-primary shadow-[inset_0_0_0_1px] shadow-primary/20'
+                  : 'text-muted-foreground hover:bg-muted/70 hover:text-foreground',
+              )
+            }
+          >
+            {({ isActive }) => (
+              <>
+                <HugeiconsIcon
+                  icon={icon}
+                  strokeWidth={isActive ? 2.25 : 1.75}
+                  className="size-5"
+                />
+                <span className="truncate max-w-full px-0.5">{label === 'Transactions' ? 'Txns' : label}</span>
+              </>
+            )}
+          </NavLink>
+        ))}
+        <button
+          type="button"
+          onClick={onMoreToggle}
+          className={cn(
+            'flex-1 flex flex-col items-center justify-center gap-1 rounded-xl mx-0.5 my-1.5 text-[10px] font-medium transition-colors duration-150',
+            moreOpen || secondaryActive
+              ? 'bg-primary/10 text-primary shadow-[inset_0_0_0_1px] shadow-primary/20'
+              : 'text-muted-foreground hover:bg-muted/70 hover:text-foreground',
+          )}
+        >
+          <HugeiconsIcon icon={MoreIcon} strokeWidth={2} className="size-5" />
+          More
+        </button>
+      </div>
+    </nav>
+  )
+}
+
+function DesktopTopBar() {
+  const location = useLocation()
+  const current = ALL_NAV_ITEMS.find((item) => location.pathname.startsWith(item.to))
+
+  return (
+    <header className="hidden lg:flex sticky top-0 z-20 h-14 shrink-0 items-center gap-3 border-b border-border bg-background/80 px-4 backdrop-blur-md supports-backdrop-filter:bg-background/65">
+      <div className="min-w-0">
+        <p className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">Workspace</p>
+        <h1 className="font-heading text-sm font-semibold tracking-tight truncate">
+          {current?.label ?? 'Home Finance'}
+        </h1>
+      </div>
+      <NavActions />
+    </header>
+  )
+}
+
+export function AppShell() {
+  const [collapsed, setCollapsed] = useState(false)
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [moreOpen, setMoreOpen] = useState(false)
+
+  return (
+    <div className="h-dvh flex overflow-hidden bg-background">
+      <DesktopSidebar collapsed={collapsed} onToggle={() => setCollapsed((v) => !v)} />
+
+      <div className="flex-1 min-w-0 min-h-0 flex flex-col overflow-hidden">
+        <MobileTopBar onOpenMenu={() => setMobileMenuOpen(true)} />
+        <DesktopTopBar />
+
+        <main className="flex-1 min-h-0 overflow-y-auto pb-[calc(4rem+env(safe-area-inset-bottom))] lg:pb-0">
+          <Outlet />
+        </main>
+      </div>
+
+      <QuickAddTransactionFab />
+
+      <MobileBottomNav
+        moreOpen={moreOpen}
+        onMoreToggle={() => setMoreOpen((open) => !open)}
+      />
+      <MobileNavSheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen} />
+      <MoreSheet open={moreOpen} onOpenChange={setMoreOpen} />
     </div>
   )
 }

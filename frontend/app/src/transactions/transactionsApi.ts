@@ -16,6 +16,8 @@ export interface Transaction {
   is_imported: boolean
   import_batch_id: string | null
   source_file: string | null
+  debt_payment_id?: number | null
+  debt_name?: string | null
   created_at: string
   updated_at: string
   account_name?: string | null
@@ -50,7 +52,7 @@ export interface TransactionInput {
   type: TransactionType
   description: string
   date: string
-  notes?: string
+  notes?: string | null
 }
 
 function buildQueryString(filters: TransactionFilters): string {
@@ -68,9 +70,20 @@ export function listTransactions(filters: TransactionFilters = {}): Promise<Tran
   return apiFetch<TransactionList>(`/transactions/${buildQueryString(filters)}`)
 }
 
+export function getTransaction(id: number): Promise<Transaction> {
+  return apiFetch<Transaction>(`/transactions/${id}`)
+}
+
 export function createTransaction(input: TransactionInput): Promise<Transaction> {
   return apiFetch<Transaction>('/transactions/', {
     method: 'POST',
+    body: JSON.stringify(input),
+  })
+}
+
+export function updateTransaction(id: number, input: TransactionInput): Promise<Transaction> {
+  return apiFetch<Transaction>(`/transactions/${id}`, {
+    method: 'PUT',
     body: JSON.stringify(input),
   })
 }

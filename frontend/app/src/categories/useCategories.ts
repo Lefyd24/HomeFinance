@@ -14,3 +14,20 @@ export function useCreateCategory() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.categories }),
   })
 }
+
+export function useUpdateCategory() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, input }: { id: number; input: Partial<CategoryInput> }) =>
+      categoriesApi.updateCategory(id, input),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.categories }),
+  })
+}
+
+export function useDeleteCategory() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (id: number) => categoriesApi.deleteCategory(id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.categories }),
+  })
+}

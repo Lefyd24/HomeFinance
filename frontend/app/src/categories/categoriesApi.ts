@@ -18,8 +18,8 @@ export interface CategoryInput {
   name: string
   type: CategoryType
   color?: string
-  icon?: string
-  parent_id?: number
+  icon?: string | null
+  parent_id?: number | null
 }
 
 export function listCategories(): Promise<Category[]> {

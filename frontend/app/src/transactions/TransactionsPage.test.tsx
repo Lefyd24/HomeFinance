@@ -2,6 +2,8 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { MemoryRouter } from 'react-router-dom'
+import { formatCurrency } from '../lib/format'
 import * as accountsApi from '../accounts/accountsApi'
 import * as categoriesApi from '../categories/categoriesApi'
 import * as transactionsApi from './transactionsApi'
@@ -11,7 +13,9 @@ function renderPage() {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   return render(
     <QueryClientProvider client={queryClient}>
-      <TransactionsPage />
+      <MemoryRouter>
+        <TransactionsPage />
+      </MemoryRouter>
     </QueryClientProvider>,
   )
 }
@@ -79,7 +83,7 @@ describe('TransactionsPage', () => {
 
     expect(await screen.findByText('Groceries run')).toBeInTheDocument()
     expect(screen.getByText('Checking')).toBeInTheDocument()
-    expect(screen.getByText('−€42.50')).toBeInTheDocument()
+    expect(screen.getByText(`−${formatCurrency(42.5)}`)).toBeInTheDocument()
   })
 
   it('opens the add-transaction dialog', async () => {

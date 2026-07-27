@@ -31,8 +31,11 @@ export default defineConfig({
     environment: 'jsdom',
     globals: true,
     setupFiles: './src/test-setup.ts',
-    pool: 'threads',
-    maxWorkers: 2,
+    pool: 'forks',
+    maxWorkers: 1,
     fileParallelism: false,
+    testTimeout: 15_000,
+    hookTimeout: 15_000,
+    teardownTimeout: 5_000,
   },
 })

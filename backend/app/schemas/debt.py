@@ -31,6 +31,9 @@ class DebtBase(BaseModel):
 
     notify_enabled: bool = False
     notify_days_before: Optional[int] = None
+    priority: int = 0
+    is_paid_off: bool = False
+    paid_off_date: Optional[date] = None
 
 
 class DebtCreate(DebtBase):
@@ -45,9 +48,11 @@ class DebtUpdate(BaseModel):
         pattern="^(credit_card|student_loan|mortgage|car_loan|personal_loan|utilities|subscription|medical|tax|informal|legal|other|custom)$",
     )
     custom_type: Optional[str] = Field(None, max_length=200)
+    original_balance: Optional[float] = Field(None, gt=0)
     current_balance: Optional[float] = Field(None, ge=0)
     interest_rate: Optional[float] = Field(None, ge=0, le=1)
     minimum_payment: Optional[float] = Field(None, gt=0)
+    opened_date: Optional[date] = None
     maturity_date: Optional[date] = None
     priority: Optional[int] = None
     is_active: Optional[bool] = None
@@ -72,10 +77,7 @@ class DebtUpdate(BaseModel):
 class DebtResponse(DebtBase):
     id: int
     user_id: int
-    priority: int
     is_active: bool
-    is_paid_off: bool
-    paid_off_date: Optional[date]
     created_at: datetime
     updated_at: datetime
     

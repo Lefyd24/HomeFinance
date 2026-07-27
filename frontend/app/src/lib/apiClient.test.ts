@@ -25,6 +25,7 @@ describe('getApiBaseUrl', () => {
 describe('apiFetch', () => {
   afterEach(() => {
     vi.unstubAllGlobals()
+    window.localStorage.clear()
   })
 
   it('joins the base URL with the given path and parses JSON', async () => {
@@ -62,5 +63,27 @@ describe('apiFetch', () => {
     )
 
     await expect(apiFetch('/accounts/1')).resolves.toBeUndefined()
+  })
+
+  it('attaches Authorization Bearer when a token is present', async () => {
+    window.localStorage.setItem('token', 'test-token')
+    const mockFetch = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: () => Promise.resolve({ ok: true }),
+    })
+    vi.stubGlobal('fetch', mockFetch)
+
+    await apiFetch('/accounts/')
+
+    expect(mockFetch).toHaveBeenCalledWith(
+      '/api/accounts/',
+      expect.objectContaining({
+        headers: expect.objectContaining({
+          Authorization: 'Bearer test-token',
+          'Content-Type': 'application/json',
+        }),
+      }),
+    )
   })
 })

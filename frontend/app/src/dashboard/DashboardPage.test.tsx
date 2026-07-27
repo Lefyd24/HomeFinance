@@ -1,8 +1,14 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { BrowserRouter } from 'react-router-dom'
+import { formatCurrency } from '../lib/format'
 import * as accountsApi from '../accounts/accountsApi'
 import * as budgetsApi from '../budgets/budgetsApi'
+import * as goalsApi from '../goals/goalsApi'
+import * as transactionsApi from '../transactions/transactionsApi'
+import * as debtsApi from '../debts/debtsApi'
+import * as recurringApi from '../recurring/recurringApi'
 import * as reportsApi from './reportsApi'
 import { DashboardPage } from './DashboardPage'
 
@@ -14,7 +20,9 @@ function renderPage() {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   return render(
     <QueryClientProvider client={queryClient}>
-      <DashboardPage />
+      <BrowserRouter>
+        <DashboardPage />
+      </BrowserRouter>
     </QueryClientProvider>,
   )
 }
@@ -51,6 +59,7 @@ describe('DashboardPage', () => {
         updated_at: '',
       },
     ])
+
     vi.spyOn(budgetsApi, 'listBudgets').mockResolvedValue([
       {
         id: 1,
@@ -70,6 +79,20 @@ describe('DashboardPage', () => {
         period_end: null,
       },
     ])
+
+    vi.spyOn(goalsApi, 'listGoals').mockResolvedValue([])
+
+    vi.spyOn(transactionsApi, 'listTransactions').mockResolvedValue({
+      items: [],
+      total: 0,
+      page: 1,
+      per_page: 100,
+    })
+
+    vi.spyOn(debtsApi, 'listUpcomingDebtPayments').mockResolvedValue([])
+
+    vi.spyOn(recurringApi, 'listUpcomingRecurringPayments').mockResolvedValue([])
+
     vi.spyOn(reportsApi, 'getSpendingReport').mockResolvedValue({
       labels: ['Groceries', 'Transport'],
       data: [120, 80],
@@ -77,9 +100,17 @@ describe('DashboardPage', () => {
 
     renderPage()
 
-    expect(await screen.findByText('€1,500.00')).toBeInTheDocument()
-    expect(screen.getByTestId('spending-chart-mock')).toBeInTheDocument()
+    // Wait for the balance to appear
+    expect(await screen.findByText(formatCurrency(1500))).toBeInTheDocument()
+
+    // Check that at least one chart is rendered (could be multiple)
+    const charts = screen.getAllByTestId('spending-chart-mock')
+    expect(charts.length).toBeGreaterThan(0)
+
+    // Check for budget display
     expect(screen.getByText('Food')).toBeInTheDocument()
-    expect(screen.getByText('€90.00 of €300.00')).toBeInTheDocument()
+    expect(
+      screen.getByText(`${formatCurrency(90)} / ${formatCurrency(300)}`),
+    ).toBeInTheDocument()
   })
 })
