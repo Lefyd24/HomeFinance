@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import * as authApi from '../auth/authApi'
+import { Button } from '@/components/ui/button'
 
 export function VerifyEmailPage() {
   const [searchParams] = useSearchParams()
@@ -16,13 +17,15 @@ export function VerifyEmailPage() {
   }, [token])
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-6 bg-base-100 text-center">
+    <div className="min-h-screen flex items-center justify-center p-6 bg-background text-center">
       <div className="max-w-sm">
         {status === 'pending' && <p>Verifying your email…</p>}
         {status === 'success' && (
           <>
             <p className="mb-4">Your email has been verified.</p>
-            <Link to="/login" className="btn btn-primary">Sign in</Link>
+            <Button asChild>
+              <Link to="/login">Sign in</Link>
+            </Button>
           </>
         )}
         {status === 'error' && <p>This verification link is invalid or has expired.</p>}

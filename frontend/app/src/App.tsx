@@ -6,10 +6,11 @@ import { RegisterPage } from './routes/RegisterPage'
 import { ForgotPasswordPage } from './routes/ForgotPasswordPage'
 import { ResetPasswordPage } from './routes/ResetPasswordPage'
 import { VerifyEmailPage } from './routes/VerifyEmailPage'
-
-function DashboardPlaceholder() {
-  return <p className="p-6">Dashboard content</p>
-}
+import { DashboardPage } from './dashboard/DashboardPage'
+import { AccountsPage } from './accounts/AccountsPage'
+import { CategoriesPage } from './categories/CategoriesPage'
+import { TransactionsPage } from './transactions/TransactionsPage'
+import { BudgetsPage } from './budgets/BudgetsPage'
 
 function App() {
   return (
@@ -22,7 +23,11 @@ function App() {
 
       <Route element={<RequireAuth />}>
         <Route element={<AppShell />}>
-          <Route path="/dashboard" element={<DashboardPlaceholder />} />
+          <Route path="/dashboard" element={<DashboardPage />} />
+          <Route path="/accounts" element={<AccountsPage />} />
+          <Route path="/categories" element={<CategoriesPage />} />
+          <Route path="/transactions" element={<TransactionsPage />} />
+          <Route path="/budgets" element={<BudgetsPage />} />
         </Route>
       </Route>
 

@@ -5,6 +5,9 @@ import { z } from 'zod'
 import { Link, useNavigate } from 'react-router-dom'
 import { Mail, Lock } from 'lucide-react'
 import { useAuth } from '../auth/AuthContext'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 
 const loginSchema = z.object({
   email: z.string().min(1, 'Email is required').email('Enter a valid email'),
@@ -34,57 +37,56 @@ export function LoginPage() {
   })
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-6 bg-base-100">
+    <div className="min-h-screen flex items-center justify-center p-6 bg-background">
       <div className="w-full max-w-sm">
-        <h2 className="text-2xl font-bold text-base-content mb-6">Welcome back</h2>
+        <h2 className="text-2xl font-bold text-foreground mb-6">Welcome back</h2>
         <form onSubmit={onSubmit} className="flex flex-col gap-4" noValidate>
-          <div>
-            <label htmlFor="email" className="label">
-              <span className="label-text">Email address</span>
-            </label>
-            <label className="input input-bordered flex items-center gap-2">
-              <Mail size={16} className="opacity-40" />
-              <input
+          <div className="space-y-2">
+            <Label htmlFor="email">Email address</Label>
+            <div className="relative">
+              <Mail size={16} className="absolute start-2.5 top-1/2 -translate-y-1/2 opacity-40" />
+              <Input
                 id="email"
                 type="email"
-                className="grow"
+                className="ps-8"
                 placeholder="name@example.com"
                 {...register('email')}
               />
-            </label>
-            {errors.email && <p className="text-error text-sm mt-1">{errors.email.message}</p>}
+            </div>
+            {errors.email && <p className="text-destructive text-sm">{errors.email.message}</p>}
           </div>
 
-          <div>
-            <label htmlFor="password" className="label">
-              <span className="label-text">Password</span>
-            </label>
-            <label className="input input-bordered flex items-center gap-2">
-              <Lock size={16} className="opacity-40" />
-              <input
+          <div className="space-y-2">
+            <Label htmlFor="password">Password</Label>
+            <div className="relative">
+              <Lock size={16} className="absolute start-2.5 top-1/2 -translate-y-1/2 opacity-40" />
+              <Input
                 id="password"
                 type="password"
-                className="grow"
+                className="ps-8"
                 placeholder="Enter your password"
                 {...register('password')}
               />
-            </label>
-            {errors.password && <p className="text-error text-sm mt-1">{errors.password.message}</p>}
+            </div>
+            {errors.password && <p className="text-destructive text-sm">{errors.password.message}</p>}
           </div>
 
           {serverError && (
-            <div className="alert alert-error text-sm">
-              <span>{serverError}</span>
+            <div className="rounded-lg border border-destructive/30 bg-destructive/10 text-destructive text-sm p-3">
+              {serverError}
             </div>
           )}
 
-          <button type="submit" className="btn btn-primary w-full" disabled={isSubmitting}>
-            {isSubmitting ? <span className="loading loading-spinner loading-sm" /> : 'Sign in'}
-          </button>
+          <Button type="submit" className="w-full" disabled={isSubmitting}>
+            {isSubmitting ? 'Signing in…' : 'Sign in'}
+          </Button>
         </form>
 
-        <p className="text-sm text-center mt-6 opacity-60">
-          Don't have an account? <Link to="/register" className="text-primary font-semibold">Create one</Link>
+        <p className="text-sm text-center mt-6 text-muted-foreground">
+          Don't have an account?{' '}
+          <Link to="/register" className="text-primary font-semibold">
+            Create one
+          </Link>
         </p>
       </div>
     </div>
