@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { MemoryRouter } from 'react-router-dom'
@@ -82,8 +82,29 @@ describe('TransactionsPage', () => {
     renderPage()
 
     expect(await screen.findByText('Groceries run')).toBeInTheDocument()
-    expect(screen.getByText('Checking')).toBeInTheDocument()
-    expect(screen.getByText(`−${formatCurrency(42.5)}`)).toBeInTheDocument()
+    const table = within(screen.getByRole('table'))
+    expect(table.getByText('Checking')).toBeInTheDocument()
+    expect(table.getByText(`−${formatCurrency(42.5)}`)).toBeInTheDocument()
+  })
+
+  it('summarises what is on the current page', async () => {
+    vi.spyOn(accountsApi, 'listAccounts').mockResolvedValue([])
+    vi.spyOn(categoriesApi, 'listCategories').mockResolvedValue([])
+    vi.spyOn(transactionsApi, 'listTransactions').mockResolvedValue({
+      items: [
+        sampleTransaction,
+        { ...sampleTransaction, id: 2, type: 'income', amount: 100, description: 'Salary' },
+      ],
+      total: 2,
+      page: 1,
+      per_page: 50,
+    })
+
+    renderPage()
+
+    expect(await screen.findByText('On this page')).toBeInTheDocument()
+    // 100 in, 42.50 out — the net figure only appears in the summary strip.
+    expect(screen.getByText(`+${formatCurrency(57.5)}`)).toBeInTheDocument()
   })
 
   it('opens the add-transaction dialog', async () => {

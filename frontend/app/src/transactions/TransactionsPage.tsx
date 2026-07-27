@@ -1,5 +1,5 @@
-import { useMemo, useState, useEffect, type ReactNode } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { useMemo, useState, useEffect } from 'react'
+import { Link, useSearchParams } from 'react-router-dom'
 import {
   useReactTable,
   getCoreRowModel,
@@ -7,16 +7,9 @@ import {
   type SortingState,
 } from '@tanstack/react-table'
 import { HugeiconsIcon } from '@hugeicons/react'
-import {
-  Add01Icon,
-  Cancel01Icon,
-  Search01Icon,
-  FilterHorizontalIcon,
-} from '@hugeicons/core-free-icons'
+import { Add01Icon, FileImportIcon, Invoice01Icon } from '@hugeicons/core-free-icons'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
-import { Card } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
   Empty,
@@ -29,45 +22,47 @@ import {
 import { DataTable } from '@/components/data-table/data-table'
 import { DataTablePagination } from '@/components/data-table/data-table-pagination'
 import { DataTableViewOptions } from '@/components/data-table/data-table-view-options'
+import { PageContainer } from '../ui/PageContainer'
 import { PageHeader } from '../ui/PageHeader'
-import { Select } from '../ui/Select'
+import { Amount, flowOfType, flowRail } from '../ui/money'
+import { useConfirm } from '../ui/useConfirm'
 import { useAccounts } from '../accounts/useAccounts'
 import { useCategories } from '../categories/useCategories'
 import { useTransactions, useDeleteTransaction } from './useTransactions'
 import { createColumns } from './columns'
+import { TransactionFilterBar, type DatePreset } from './TransactionFilterBar'
 import { TransactionFormDialog } from './TransactionFormDialog'
 import { TransactionDetailDialog } from './TransactionDetailDialog'
 import { currentMonthRange } from '../lib/format'
-import { cn } from '@/lib/utils'
-import type { Transaction, TransactionFilters, TransactionType } from './transactionsApi'
+import type { Transaction, TransactionFilters } from './transactionsApi'
 
-function FilterField({
-  label,
-  className,
-  children,
-}: {
-  label: string
-  className?: string
-  children: ReactNode
-}) {
-  return (
-    <div
-      className={cn(
-        'flex min-w-0 flex-col gap-1 rounded-lg border border-border bg-muted/40 px-2.5 py-1.5',
-        className,
-      )}
-    >
-      <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-        {label}
-      </span>
-      {children}
-    </div>
-  )
+const iso = (date: Date) =>
+  `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(
+    date.getDate(),
+  ).padStart(2, '0')}`
+
+function buildDatePresets(now = new Date()): DatePreset[] {
+  const y = now.getFullYear()
+  const m = now.getMonth()
+  const lastMonthEnd = new Date(y, m, 0)
+  const ninetyDaysAgo = new Date(now)
+  ninetyDaysAgo.setDate(now.getDate() - 89)
+
+  return [
+    { label: 'This month', range: currentMonthRange(now) },
+    {
+      label: 'Last month',
+      range: { start_date: iso(new Date(y, m - 1, 1)), end_date: iso(lastMonthEnd) },
+    },
+    { label: 'Last 90 days', range: { start_date: iso(ninetyDaysAgo), end_date: iso(now) } },
+    { label: 'This year', range: { start_date: iso(new Date(y, 0, 1)), end_date: iso(now) } },
+  ]
 }
 
 export function TransactionsPage() {
   const [searchParams] = useSearchParams()
   const accountFromUrl = searchParams.get('account_id')
+  const datePresets = useMemo(() => buildDatePresets(), [])
 
   const [filters, setFilters] = useState<TransactionFilters>(() => ({
     ...currentMonthRange(),
@@ -97,6 +92,7 @@ export function TransactionsPage() {
   const { data: accounts = [] } = useAccounts()
   const { data: categories = [] } = useCategories()
   const deleteTransaction = useDeleteTransaction()
+  const { confirm, confirmDialog } = useConfirm()
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -116,12 +112,17 @@ export function TransactionsPage() {
   }
 
   const handleDelete = async (transaction: Transaction) => {
-    if (!confirm(`Delete transaction "${transaction.description}"?`)) return
+    const ok = await confirm({
+      title: 'Delete this transaction?',
+      description: `“${transaction.description}” will be removed from your ledger. Balances recalculate immediately and this cannot be undone.`,
+      confirmLabel: 'Delete transaction',
+    })
+    if (!ok) return
     try {
       await deleteTransaction.mutateAsync(transaction.id)
       toast.success('Transaction deleted')
     } catch {
-      toast.error('Failed to delete transaction')
+      toast.error('Could not delete the transaction. Try again.')
     }
   }
 
@@ -168,27 +169,16 @@ export function TransactionsPage() {
     },
   })
 
-  const accountOptions = [
-    { value: '', label: 'All Accounts' },
-    ...accounts.map((acc) => ({ value: String(acc.id), label: acc.name })),
-  ]
-
-  const categoryOptions = [
-    { value: '', label: 'All Categories' },
-    ...categories.map((cat) => ({ value: String(cat.id), label: cat.name })),
-  ]
-
-  const typeOptions = [
-    { value: '', label: 'All Types' },
-    { value: 'income', label: 'Income' },
-    { value: 'expense', label: 'Expense' },
-    { value: 'transfer', label: 'Transfer' },
-  ]
+  const accountOptions = accounts.map((acc) => ({ value: String(acc.id), label: acc.name }))
+  const categoryOptions = categories.map((cat) => ({
+    value: String(cat.id),
+    label: cat.name,
+    color: cat.color,
+  }))
 
   const handleClearFilters = () => {
-    const defaultRange = currentMonthRange()
     setFilters({
-      ...defaultRange,
+      ...currentMonthRange(),
       page: 1,
       per_page: 20,
       search: '',
@@ -203,128 +193,56 @@ export function TransactionsPage() {
     filters.account_id || filters.category_id || filters.type || searchInput,
   )
 
-  const filterControlClass =
-    'h-8 border-0 bg-transparent px-0 shadow-none focus-visible:ring-0 dark:bg-transparent'
+  // Totals for the rows actually on screen. Labelled as such — the server
+  // paginates, so this is deliberately not presented as a period total.
+  const pageTotals = useMemo(() => {
+    const items = transactionData?.items ?? []
+    return items.reduce(
+      (acc, t) => {
+        if (t.type === 'income') acc.in += t.amount
+        else if (t.type === 'expense') acc.out += t.amount
+        return acc
+      },
+      { in: 0, out: 0 },
+    )
+  }, [transactionData])
 
   return (
-    <div className="flex flex-col gap-6 p-6">
+    <PageContainer wide className="flex flex-col gap-4">
       <PageHeader
         title="Transactions"
-        description="Track your income, expenses, and transfers"
+        description="Every euro in, out, and moved between your accounts."
+        className="mb-2"
         action={
-          <Button onClick={() => setAddDialogOpen(true)}>
-            <HugeiconsIcon icon={Add01Icon} strokeWidth={2} data-icon="inline-start" />
-            Add Transaction
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" asChild>
+              <Link to="/import">
+                <HugeiconsIcon icon={FileImportIcon} strokeWidth={2} data-icon="inline-start" />
+                Import
+              </Link>
+            </Button>
+            <Button onClick={() => setAddDialogOpen(true)}>
+              <HugeiconsIcon icon={Add01Icon} strokeWidth={2} data-icon="inline-start" />
+              Add transaction
+            </Button>
+          </div>
         }
       />
 
-      <Card className="p-3">
-        <div className="flex flex-wrap items-end gap-2 lg:flex-nowrap">
-          <FilterField label="Search" className="min-w-[10rem] flex-1">
-            <div className="relative">
-              <HugeiconsIcon
-                icon={Search01Icon}
-                strokeWidth={2}
-                className="pointer-events-none absolute start-0 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground"
-              />
-              <Input
-                id="search"
-                placeholder="Description…"
-                value={searchInput}
-                onChange={(e) => setSearchInput(e.target.value)}
-                className={cn(filterControlClass, 'ps-5')}
-              />
-            </div>
-          </FilterField>
+      <TransactionFilterBar
+        filters={filters}
+        onFiltersChange={setFilters}
+        searchInput={searchInput}
+        onSearchInputChange={setSearchInput}
+        accounts={accountOptions}
+        categories={categoryOptions}
+        datePresets={datePresets}
+        onClearAll={handleClearFilters}
+        resultCount={transactionData?.total}
+        isLoading={isLoading}
+      />
 
-          <FilterField label="From" className="w-[9.5rem] shrink-0">
-            <Input
-              id="start_date"
-              type="date"
-              value={filters.start_date || ''}
-              onChange={(e) =>
-                setFilters((prev) => ({ ...prev, start_date: e.target.value, page: 1 }))
-              }
-              className={filterControlClass}
-            />
-          </FilterField>
-
-          <FilterField label="To" className="w-[9.5rem] shrink-0">
-            <Input
-              id="end_date"
-              type="date"
-              value={filters.end_date || ''}
-              onChange={(e) =>
-                setFilters((prev) => ({ ...prev, end_date: e.target.value, page: 1 }))
-              }
-              className={filterControlClass}
-            />
-          </FilterField>
-
-          <FilterField label="Account" className="min-w-[8.5rem] flex-1">
-            <Select
-              value={filters.account_id ? String(filters.account_id) : ''}
-              onValueChange={(value) =>
-                setFilters((prev) => ({
-                  ...prev,
-                  account_id: value ? Number(value) : undefined,
-                  page: 1,
-                }))
-              }
-              options={accountOptions}
-              placeholder="All Accounts"
-              triggerClassName="h-8 border-0 bg-transparent px-0 shadow-none focus-visible:ring-0 dark:bg-transparent"
-            />
-          </FilterField>
-
-          <FilterField label="Category" className="min-w-[8.5rem] flex-1">
-            <Select
-              value={filters.category_id ? String(filters.category_id) : ''}
-              onValueChange={(value) =>
-                setFilters((prev) => ({
-                  ...prev,
-                  category_id: value ? Number(value) : undefined,
-                  page: 1,
-                }))
-              }
-              options={categoryOptions}
-              placeholder="All Categories"
-              triggerClassName="h-8 border-0 bg-transparent px-0 shadow-none focus-visible:ring-0 dark:bg-transparent"
-            />
-          </FilterField>
-
-          <FilterField label="Type" className="min-w-[7.5rem] flex-1">
-            <Select
-              value={filters.type || ''}
-              onValueChange={(value) =>
-                setFilters((prev) => ({
-                  ...prev,
-                  type: (value as TransactionType) || undefined,
-                  page: 1,
-                }))
-              }
-              options={typeOptions}
-              placeholder="All Types"
-              triggerClassName="h-8 border-0 bg-transparent px-0 shadow-none focus-visible:ring-0 dark:bg-transparent"
-            />
-          </FilterField>
-
-          {hasActiveFilters && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleClearFilters}
-              className="h-[3.25rem] shrink-0"
-            >
-              <HugeiconsIcon icon={Cancel01Icon} strokeWidth={2} data-icon="inline-start" />
-              Clear
-            </Button>
-          )}
-        </div>
-      </Card>
-
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-3">
         <div className="text-sm text-muted-foreground">
           {isLoading ? (
             <Skeleton className="h-5 w-32" />
@@ -336,30 +254,36 @@ export function TransactionsPage() {
       </div>
 
       {isLoading ? (
-        <Card className="p-6">
-          <div className="flex flex-col gap-3">
-            <Skeleton className="h-10 w-full" />
-            <Skeleton className="h-12 w-full" />
-            <Skeleton className="h-12 w-full" />
-            <Skeleton className="h-12 w-full" />
-          </div>
-        </Card>
+        <div className="flex flex-col gap-3 rounded-xl border border-border bg-card p-6 shadow-sm">
+          <Skeleton className="h-10 w-full" />
+          <Skeleton className="h-12 w-full" />
+          <Skeleton className="h-12 w-full" />
+          <Skeleton className="h-12 w-full" />
+        </div>
       ) : transactionData && transactionData.total === 0 && !hasActiveFilters ? (
         <Empty className="border border-dashed">
           <EmptyHeader>
             <EmptyMedia variant="icon">
-              <HugeiconsIcon icon={FilterHorizontalIcon} strokeWidth={2} />
+              <HugeiconsIcon icon={Invoice01Icon} strokeWidth={2} />
             </EmptyMedia>
-            <EmptyTitle>No transactions yet</EmptyTitle>
+            <EmptyTitle>Nothing recorded yet</EmptyTitle>
             <EmptyDescription>
-              Start tracking your finances by adding your first transaction
+              Add a transaction by hand, or bring in a bank export from the Import page.
             </EmptyDescription>
           </EmptyHeader>
           <EmptyContent>
-            <Button onClick={() => setAddDialogOpen(true)}>
-              <HugeiconsIcon icon={Add01Icon} strokeWidth={2} data-icon="inline-start" />
-              Add Transaction
-            </Button>
+            <div className="flex flex-wrap items-center justify-center gap-2">
+              <Button onClick={() => setAddDialogOpen(true)}>
+                <HugeiconsIcon icon={Add01Icon} strokeWidth={2} data-icon="inline-start" />
+                Add transaction
+              </Button>
+              <Button variant="outline" asChild>
+                <Link to="/import">
+                  <HugeiconsIcon icon={FileImportIcon} strokeWidth={2} data-icon="inline-start" />
+                  Import a bank export
+                </Link>
+              </Button>
+            </div>
           </EmptyContent>
         </Empty>
       ) : (
@@ -368,17 +292,34 @@ export function TransactionsPage() {
             table={table}
             columns={columns}
             onRowClick={handleView}
-            getRowClassName={(row) => {
-              const type = row.original.type
-              if (type === 'income') return 'border-s-2 border-s-success'
-              if (type === 'expense') return 'border-s-2 border-s-destructive'
-              if (type === 'transfer') return 'border-s-2 border-s-primary'
-              return undefined
-            }}
+            striped={false}
+            stickyHeader
+            getRowClassName={(row) => flowRail[flowOfType(row.original.type)]}
             emptyMessage={
               hasActiveFilters
-                ? 'No transactions found matching your filters'
+                ? 'No transactions match these filters. Try widening the period or clearing a chip above.'
                 : 'No transactions yet'
+            }
+            footer={
+              <div className="flex flex-wrap items-center gap-x-6 gap-y-1 px-4 py-2.5 text-xs">
+                <span className="text-muted-foreground">On this page</span>
+                <span className="flex items-center gap-1.5">
+                  <span className="text-muted-foreground">In</span>
+                  <Amount value={pageTotals.in} flow="in" />
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <span className="text-muted-foreground">Out</span>
+                  <Amount value={pageTotals.out} flow="out" />
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <span className="text-muted-foreground">Net</span>
+                  <Amount
+                    value={Math.abs(pageTotals.in - pageTotals.out)}
+                    flow={pageTotals.in - pageTotals.out >= 0 ? 'in' : 'out'}
+                    className="font-semibold"
+                  />
+                </span>
+              </div>
             }
           />
           <DataTablePagination table={table} total={transactionData?.total} serverSide />
@@ -402,6 +343,7 @@ export function TransactionsPage() {
         onEdit={handleEdit}
         onDelete={handleDelete}
       />
-    </div>
+      {confirmDialog}
+    </PageContainer>
   )
 }

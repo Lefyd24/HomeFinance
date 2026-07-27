@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { render, screen, within } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { formatCurrency } from '../lib/format'
@@ -149,8 +149,6 @@ describe('BudgetsPage', () => {
     vi.spyOn(budgetsApi, 'listBudgets').mockResolvedValue([groceryBudget])
     vi.spyOn(categoriesApi, 'listCategories').mockResolvedValue([])
     const deleteSpy = vi.spyOn(budgetsApi, 'deleteBudget').mockResolvedValue({ message: 'ok' })
-    vi.spyOn(window, 'confirm').mockReturnValue(true)
-
     renderPage()
     await screen.findByText('Groceries')
 
@@ -158,6 +156,9 @@ describe('BudgetsPage', () => {
     const menu = await screen.findByRole('menu')
     await userEvent.click(within(menu).getByRole('menuitem', { name: /delete/i }))
 
-    expect(deleteSpy).toHaveBeenCalledWith(1)
+    const dialog = await screen.findByRole('alertdialog')
+    await userEvent.click(within(dialog).getByRole('button', { name: /delete budget/i }))
+
+    await waitFor(() => expect(deleteSpy).toHaveBeenCalledWith(1))
   })
 })

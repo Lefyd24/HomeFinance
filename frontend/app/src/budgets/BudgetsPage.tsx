@@ -33,6 +33,7 @@ import {
 } from '@/components/ui/empty'
 import { PageContainer } from '../ui/PageContainer'
 import { PageHeader } from '../ui/PageHeader'
+import { useConfirm } from '../ui/useConfirm'
 import { ProgressBar, progressVariantForPercent } from '../ui/ProgressBar'
 import { formatCurrency, formatDate } from '../lib/format'
 import { cn } from '@/lib/utils'
@@ -75,6 +76,7 @@ export function BudgetsPage() {
   const { data: budgets = [], isLoading } = useBudgets()
   const { data: categories = [] } = useCategories()
   const deleteBudget = useDeleteBudget()
+  const { confirm, confirmDialog } = useConfirm()
 
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editingBudget, setEditingBudget] = useState<Budget | null>(null)
@@ -127,7 +129,12 @@ export function BudgetsPage() {
   }
 
   const handleDelete = async (budget: Budget) => {
-    if (!confirm(`Are you sure you want to delete "${budget.name}"?`)) return
+    const ok = await confirm({
+      title: `Delete ${budget.name}?`,
+      description: 'Your spending stays; only the budget and its limit are removed.',
+      confirmLabel: 'Delete budget',
+    })
+    if (!ok) return
     try {
       await deleteBudget.mutateAsync(budget.id)
       toast.success('Budget deleted')
@@ -318,6 +325,7 @@ export function BudgetsPage() {
         open={detailsOpen}
         onOpenChange={setDetailsOpen}
       />
+      {confirmDialog}
     </PageContainer>
   )
 }

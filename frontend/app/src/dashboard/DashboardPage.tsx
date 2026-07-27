@@ -1,7 +1,21 @@
+import { useMemo, type ReactNode } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
+import { HugeiconsIcon } from '@hugeicons/react'
+import type { IconSvgElement } from '@hugeicons/react'
+import {
+  Add01Icon,
+  AlarmClockIcon,
+  BankIcon,
+  FileImportIcon,
+  PiggyBankIcon,
+  TagIcon,
+  TargetIcon,
+  WalletIcon,
+} from '@hugeicons/core-free-icons'
 import { useAccounts } from '../accounts/useAccounts'
 import { useBudgets } from '../budgets/useBudgets'
+import { useCategories } from '../categories/useCategories'
 import { useGoals } from '../goals/useGoals'
 import { useTransactions } from '../transactions/useTransactions'
 import { queryKeys } from '../lib/queryKeys'
@@ -9,26 +23,75 @@ import { formatCurrency, formatDate, currentMonthRange } from '../lib/format'
 import { PageContainer } from '../ui/PageContainer'
 import { PageHeader } from '../ui/PageHeader'
 import { ProgressBar, progressVariantForPercent } from '../ui/ProgressBar'
-import { StatCard, StatStrip } from '../ui/StatStrip'
+import { Amount, CategoryChip, flowOfType, flowRail } from '../ui/money'
 import { Button } from '@/components/ui/button'
-import {
-  Card,
-  CardAction,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Separator } from '@/components/ui/separator'
 import { getSpendingReport } from './reportsApi'
 import { listUpcomingDebtPayments, type UpcomingDebtPayment } from '../debts/debtsApi'
-import { listUpcomingRecurringPayments, type UpcomingRecurringPayment } from '../recurring/recurringApi'
+import {
+  listUpcomingRecurringPayments,
+  type UpcomingRecurringPayment,
+} from '../recurring/recurringApi'
 import { SpendingChart } from './SpendingChart'
 import type { Account } from '../accounts/accountsApi'
 import { AccountIcon, getAccountTypeMeta } from '../accounts/bankIcons'
 import { cn } from '@/lib/utils'
+
+/** Soft elevation for dashboard panels — reads on paper in light, lifted in dark. */
+const panelShadow =
+  'shadow-[0_1px_2px_rgba(15,23,42,0.05),0_6px_20px_rgba(15,23,42,0.07)] dark:shadow-[0_1px_2px_rgba(0,0,0,0.35),0_10px_28px_rgba(0,0,0,0.45)]'
+
+/** Consistent frame for every panel on the page: title, optional link, body. */
+function Panel({
+  title,
+  hint,
+  icon,
+  to,
+  linkLabel = 'View all',
+  children,
+  className,
+}: {
+  title: string
+  hint?: string
+  icon: IconSvgElement
+  to?: string
+  linkLabel?: string
+  children: ReactNode
+  className?: string
+}) {
+  return (
+    <section
+      className={cn(
+        'flex min-w-0 flex-col rounded-xl border border-border bg-card',
+        panelShadow,
+        className,
+      )}
+    >
+      <header className="flex items-center gap-2.5 border-b border-border px-4 py-3">
+        <HugeiconsIcon
+          icon={icon}
+          strokeWidth={2}
+          className="size-4 shrink-0 text-muted-foreground"
+        />
+        <div className="min-w-0 flex-1">
+          <h2 className="truncate text-sm font-semibold">{title}</h2>
+          {hint && <p className="truncate text-xs text-muted-foreground">{hint}</p>}
+        </div>
+        {to && (
+          <Button variant="ghost" size="sm" className="-me-1.5 shrink-0" asChild>
+            <Link to={to}>{linkLabel}</Link>
+          </Button>
+        )}
+      </header>
+      <div className="min-w-0 flex-1 p-4">{children}</div>
+    </section>
+  )
+}
+
+function EmptyLine({ children }: { children: ReactNode }) {
+  return <p className="py-6 text-center text-sm text-muted-foreground">{children}</p>
+}
 
 export function DashboardPage() {
   const monthRange = currentMonthRange()
@@ -36,6 +99,7 @@ export function DashboardPage() {
   const { data: accounts, isLoading: accountsLoading } = useAccounts()
   const { data: budgets, isLoading: budgetsLoading } = useBudgets()
   const { data: goals, isLoading: goalsLoading } = useGoals()
+  const { data: categories = [] } = useCategories()
 
   const { data: txnData, isLoading: txnLoading } = useTransactions({
     ...monthRange,
@@ -45,7 +109,7 @@ export function DashboardPage() {
 
   const { data: recentTxnData, isLoading: recentTxnLoading } = useTransactions({
     page: 1,
-    per_page: 5,
+    per_page: 6,
   })
 
   const { data: spendingReport, isLoading: reportLoading } = useQuery({
@@ -64,8 +128,12 @@ export function DashboardPage() {
   })
 
   const txns = txnData?.items ?? []
-  const totalIncome = txns.filter((t) => t.type === 'income').reduce((sum, t) => sum + t.amount, 0)
-  const totalExpenses = txns.filter((t) => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0)
+  const totalIncome = txns
+    .filter((t) => t.type === 'income')
+    .reduce((sum, t) => sum + t.amount, 0)
+  const totalExpenses = txns
+    .filter((t) => t.type === 'expense')
+    .reduce((sum, t) => sum + t.amount, 0)
   const netSaved = totalIncome - totalExpenses
 
   const totalBalance = accounts?.reduce((sum, acc) => sum + (acc.balance ?? 0), 0) ?? 0
@@ -78,376 +146,403 @@ export function DashboardPage() {
       : null
   const categoryCount = spendingReport?.labels.length ?? 0
 
+  const categoryColors = useMemo(() => {
+    const map: Record<string, string> = {}
+    for (const category of categories) {
+      if (category.color) map[category.name] = category.color
+    }
+    return map
+  }, [categories])
+
   const activeGoals =
     goals?.filter((g) => g.status !== 'completed' && g.status !== 'cancelled').slice(0, 4) ?? []
 
-  const upcomingPayments: Array<{
-    id: string
-    name: string
-    amount: number
-    dueDate: string
-    daysUntil: number
-    isOverdue: boolean
-    type: 'debt' | 'recurring'
-  }> = [
-    ...(upcomingDebts ?? []).map((d: UpcomingDebtPayment) => ({
-      id: `debt-${d.debt_id}`,
-      name: d.debt_name,
-      amount: d.amount,
-      dueDate: d.due_date,
-      daysUntil: d.days_until_due,
-      isOverdue: d.is_overdue,
-      type: 'debt' as const,
-    })),
-    ...(upcomingRecurring ?? []).map((r: UpcomingRecurringPayment) => ({
-      id: `recurring-${r.id}`,
-      name: r.name,
-      amount: r.amount,
-      dueDate: r.due_date,
-      daysUntil: r.days_until_due,
-      isOverdue: r.is_overdue,
-      type: 'recurring' as const,
-    })),
-  ].sort((a, b) => a.daysUntil - b.daysUntil)
+  const upcomingPayments = useMemo(
+    () =>
+      [
+        ...(upcomingDebts ?? []).map((d: UpcomingDebtPayment) => ({
+          id: `debt-${d.debt_id}`,
+          name: d.debt_name,
+          amount: d.amount,
+          dueDate: d.due_date,
+          daysUntil: d.days_until_due,
+          isOverdue: d.is_overdue,
+          type: 'debt' as const,
+        })),
+        ...(upcomingRecurring ?? []).map((r: UpcomingRecurringPayment) => ({
+          id: `recurring-${r.id}`,
+          name: r.name,
+          amount: r.amount,
+          dueDate: r.due_date,
+          daysUntil: r.days_until_due,
+          isOverdue: r.is_overdue,
+          type: 'recurring' as const,
+        })),
+      ].sort((a, b) => a.daysUntil - b.daysUntil),
+    [upcomingDebts, upcomingRecurring],
+  )
+
+  const upcomingTotal = upcomingPayments.reduce((sum, p) => sum + p.amount, 0)
+
+  // Share of the month's income that stayed put. Drives the in/out bar.
+  const inShare = totalIncome + totalExpenses > 0
+    ? (totalIncome / (totalIncome + totalExpenses)) * 100
+    : 0
 
   return (
-    <PageContainer wide className="flex flex-col gap-6">
-      <PageHeader title="Dashboard" description="A snapshot of your balances, spending, and budgets." />
-
-      <StatStrip>
-        <StatCard
-          label="Total Balance"
-          value={accountsLoading ? '…' : formatCurrency(totalBalance)}
-          hint={accountsLoading ? undefined : `${accountCount} account${accountCount === 1 ? '' : 's'}`}
-          tone="primary"
-        />
-        <StatCard
-          label="Income (this month)"
-          value={txnLoading ? '…' : formatCurrency(totalIncome)}
-          tone="success"
-        />
-        <StatCard
-          label="Expenses (this month)"
-          value={txnLoading ? '…' : formatCurrency(totalExpenses)}
-          tone="destructive"
-        />
-        <StatCard
-          label="Net Saved"
-          value={txnLoading ? '…' : formatCurrency(netSaved)}
-          tone={netSaved >= 0 ? 'success' : 'destructive'}
-        />
-      </StatStrip>
-
-      {/* Account balances */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Account Balances</CardTitle>
-          <CardDescription>Live balances across your linked accounts</CardDescription>
-          <CardAction>
-            <Link to="/accounts">
-              <Button variant="ghost" size="sm">
-                View all
-              </Button>
-            </Link>
-          </CardAction>
-        </CardHeader>
-        <CardContent>
-          {accountsLoading ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-              {[1, 2, 3, 4].map((i) => (
-                <Skeleton key={i} className="h-20 w-full rounded-xl" />
-              ))}
-            </div>
-          ) : (accounts?.length ?? 0) === 0 ? (
-            <p className="text-sm text-muted-foreground">No accounts yet. Add one on the Accounts page.</p>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-              {accounts?.map((acc) => (
-                <AccountBalanceCard key={acc.id} account={acc} />
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Upcoming payments + Budget overview (one row, above pie chart) */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card className="h-full">
-          <CardHeader>
-            <CardTitle>Upcoming Payments</CardTitle>
-            <CardDescription>Due in the next 30 days</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {debtsLoading || recurringLoading ? (
-              <div className="flex flex-col gap-3">
-                {[1, 2, 3].map((i) => (
-                  <Skeleton key={i} className="h-12 w-full" />
-                ))}
-              </div>
-            ) : upcomingPayments.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No upcoming payments in the next 30 days.</p>
-            ) : (
-              <ul className="flex flex-col gap-3">
-                {upcomingPayments.slice(0, 5).map((payment) => (
-                  <li key={payment.id} className="flex items-center justify-between gap-3">
-                    <div className="min-w-0">
-                      <p className="font-medium text-sm truncate">{payment.name}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {payment.isOverdue ? (
-                          <span className="text-destructive font-medium">Overdue</span>
-                        ) : (
-                          `Due ${formatDate(payment.dueDate)} (${payment.daysUntil} day${payment.daysUntil === 1 ? '' : 's'})`
-                        )}
-                      </p>
-                    </div>
-                    <div className="text-end shrink-0">
-                      <p className="font-semibold text-sm tabular-nums">{formatCurrency(payment.amount)}</p>
-                      <Badge variant={payment.type === 'debt' ? 'destructive' : 'secondary'} className="text-xs">
-                        {payment.type}
-                      </Badge>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card className="h-full">
-          <CardHeader>
-            <CardTitle>Budget Overview</CardTitle>
-            <CardDescription>How you are tracking this period</CardDescription>
-            <CardAction>
-              <Link to="/budgets">
-                <Button variant="ghost" size="sm">
-                  View all
-                </Button>
+    <PageContainer wide className="flex flex-col gap-5">
+      <PageHeader
+        title="Dashboard"
+        description="This month at a glance."
+        className="mb-0"
+        action={
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" asChild>
+              <Link to="/import">
+                <HugeiconsIcon icon={FileImportIcon} strokeWidth={2} data-icon="inline-start" />
+                Import
               </Link>
-            </CardAction>
-          </CardHeader>
-          <CardContent>
-            {budgetsLoading ? (
-              <div className="flex flex-col gap-4">
-                {[1, 2, 3].map((i) => (
-                  <Skeleton key={i} className="h-14 w-full" />
-                ))}
-              </div>
-            ) : (budgets?.length ?? 0) === 0 ? (
-              <p className="text-sm text-muted-foreground">No budgets yet. Create one on the Budgets page.</p>
-            ) : (
-              <ul className="flex flex-col gap-4">
-                {budgets?.slice(0, 4).map((budget) => (
-                  <li key={budget.id}>
-                    <div className="flex items-center justify-between gap-2 mb-2">
-                      <p className="font-medium text-sm truncate">{budget.name}</p>
-                      <p className="text-xs text-muted-foreground tabular-nums shrink-0">
-                        {formatCurrency(budget.spent)} / {formatCurrency(budget.amount)}
-                      </p>
-                    </div>
-                    <ProgressBar
-                      value={budget.percentage}
-                      variant={progressVariantForPercent(budget.percentage)}
-                    />
-                  </li>
-                ))}
-              </ul>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Spending pie chart */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Spending by Category</CardTitle>
-          <CardDescription>Current month expenses by category</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col gap-4">
-            <div className="grid grid-cols-3 gap-4">
-              <div>
-                <p className="text-sm text-muted-foreground">Total Spent</p>
-                <div className="text-lg font-semibold">
-                  {reportLoading ? <Skeleton className="h-6 w-24" /> : formatCurrency(totalSpent)}
-                </div>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Top Category</p>
-                <div className="text-lg font-semibold">
-                  {reportLoading ? (
-                    <Skeleton className="h-6 w-24" />
-                  ) : topCategory ? (
-                    `${topCategory.name} (${formatCurrency(topCategory.amount)})`
-                  ) : (
-                    '—'
-                  )}
-                </div>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Categories</p>
-                <div className="text-lg font-semibold">
-                  {reportLoading ? <Skeleton className="h-6 w-16" /> : categoryCount}
-                </div>
-              </div>
-            </div>
-            <Separator />
-            {reportLoading ? (
-              <Skeleton className="h-[280px] w-full" />
-            ) : (
-              <SpendingChart report={spendingReport} />
-            )}
+            </Button>
+            <Button size="sm" asChild>
+              <Link to="/transactions">
+                <HugeiconsIcon icon={Add01Icon} strokeWidth={2} data-icon="inline-start" />
+                Add transaction
+              </Link>
+            </Button>
           </div>
-        </CardContent>
-      </Card>
+        }
+      />
 
-      {/* Goals — full-width row above transactions */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Goals</CardTitle>
-          <CardDescription>Progress toward your savings targets</CardDescription>
-          <CardAction>
-            <Link to="/goals">
-              <Button variant="ghost" size="sm">
-                View all
-              </Button>
-            </Link>
-          </CardAction>
-        </CardHeader>
-        <CardContent>
-          {goalsLoading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-              {[1, 2, 3, 4].map((i) => (
-                <Skeleton key={i} className="h-20 w-full" />
-              ))}
-            </div>
-          ) : activeGoals.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No active goals. Create one on the Goals page.</p>
+      {/* The month in four figures and one bar. Everything below explains it. */}
+      <section
+        aria-label="This month"
+        className={cn('rounded-xl border border-border bg-card p-5', panelShadow)}
+      >
+        <div className="flex flex-wrap items-end justify-between gap-x-8 gap-y-5">
+          <div>
+            <p className="text-[0.65rem] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+              Total balance
+            </p>
+            <p className="mt-1 font-heading text-4xl font-bold tabular-nums tracking-tight">
+              {accountsLoading ? '…' : formatCurrency(totalBalance)}
+            </p>
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              across {accountCount} account{accountCount === 1 ? '' : 's'}
+            </p>
+          </div>
+          <dl className="flex flex-wrap gap-x-8 gap-y-4">
+            <Figure
+              label="In this month"
+              value={txnLoading ? '…' : formatCurrency(totalIncome)}
+              tone="in"
+            />
+            <Figure
+              label="Out this month"
+              value={txnLoading ? '…' : formatCurrency(totalExpenses)}
+              tone="out"
+            />
+            <Figure
+              label="Net saved"
+              value={txnLoading ? '…' : formatCurrency(netSaved)}
+              tone={netSaved >= 0 ? 'in' : 'out'}
+            />
+          </dl>
+        </div>
+
+        {!txnLoading && totalIncome + totalExpenses > 0 && (
+          <div className="mt-5 flex h-2 w-full overflow-hidden rounded-full bg-muted">
+            <div className="h-full bg-flow-in" style={{ width: `${inShare}%` }} />
+            <div className="h-full bg-flow-out" style={{ width: `${100 - inShare}%` }} />
+          </div>
+        )}
+      </section>
+
+      <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-3">
+        <Panel
+          title="Spending by category"
+          hint={
+            reportLoading
+              ? undefined
+              : `${formatCurrency(totalSpent)} across ${categoryCount} categor${categoryCount === 1 ? 'y' : 'ies'}${topCategory ? ` · most on ${topCategory.name}` : ''}`
+          }
+          icon={TagIcon}
+          to="/reports"
+          linkLabel="Reports"
+          className="lg:col-span-2"
+        >
+          {reportLoading ? (
+            <Skeleton className="h-[280px] w-full" />
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-              {activeGoals.map((goal) => (
-                <div
-                  key={goal.id}
-                  className="rounded-xl border border-border bg-muted/40 p-4 flex flex-col gap-2"
-                >
-                  <div className="flex items-start justify-between gap-2">
-                    <p className="font-medium text-sm truncate">{goal.name}</p>
-                    <Badge variant="outline" className="shrink-0 text-xs tabular-nums">
-                      {Math.round(goal.progress_percentage ?? 0)}%
-                    </Badge>
-                  </div>
-                  <p className="text-xs text-muted-foreground tabular-nums">
-                    {formatCurrency(goal.current_amount)} / {formatCurrency(goal.target_amount)}
-                  </p>
-                  <ProgressBar
-                    value={goal.progress_percentage ?? 0}
-                    variant={progressVariantForPercent(goal.progress_percentage ?? 0)}
-                  />
-                  {goal.target_date && (
-                    <p className="text-xs text-muted-foreground">Target: {formatDate(goal.target_date)}</p>
-                  )}
-                </div>
-              ))}
-            </div>
+            <SpendingChart report={spendingReport} colorByLabel={categoryColors} height={280} />
           )}
-        </CardContent>
-      </Card>
+        </Panel>
 
-      {/* Recent Transactions */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Recent Transactions</CardTitle>
-          <CardDescription>Your latest activity</CardDescription>
-          <CardAction>
-            <Link to="/transactions">
-              <Button variant="ghost" size="sm">
-                View all
-              </Button>
-            </Link>
-          </CardAction>
-        </CardHeader>
-        <CardContent>
-          {recentTxnLoading ? (
+        <Panel
+          title="Due in 30 days"
+          hint={
+            debtsLoading || recurringLoading
+              ? undefined
+              : upcomingPayments.length === 0
+                ? 'Nothing scheduled'
+                : `${formatCurrency(upcomingTotal)} across ${upcomingPayments.length}`
+          }
+          icon={AlarmClockIcon}
+          to="/recurring"
+        >
+          {debtsLoading || recurringLoading ? (
             <div className="flex flex-col gap-3">
-              {[1, 2, 3, 4, 5].map((i) => (
-                <Skeleton key={i} className="h-12 w-full" />
+              {[1, 2, 3, 4].map((i) => (
+                <Skeleton key={i} className="h-10 w-full" />
               ))}
             </div>
-          ) : (recentTxnData?.items.length ?? 0) === 0 ? (
-            <p className="text-sm text-muted-foreground">No transactions yet.</p>
+          ) : upcomingPayments.length === 0 ? (
+            <EmptyLine>Nothing due in the next 30 days.</EmptyLine>
           ) : (
-            <ul className="flex flex-col gap-1">
-              {recentTxnData?.items.map((txn) => (
+            <ul className="flex flex-col">
+              {upcomingPayments.slice(0, 5).map((payment) => (
                 <li
-                  key={txn.id}
-                  className="flex items-center justify-between gap-3 rounded-lg px-2 py-2.5 hover:bg-muted/50"
+                  key={payment.id}
+                  className={cn(
+                    'flex items-center justify-between gap-3 border-b border-border/60 py-2 ps-2.5 last:border-b-0',
+                    'border-s-2',
+                    payment.isOverdue ? 'border-s-destructive' : 'border-s-flow-out',
+                  )}
                 >
                   <div className="min-w-0">
-                    <p className="font-medium text-sm truncate">{txn.description}</p>
+                    <p className="truncate text-sm font-medium">{payment.name}</p>
                     <p className="text-xs text-muted-foreground">
-                      {formatDate(txn.date)} · {txn.category_name ?? 'Uncategorized'}
+                      {payment.isOverdue ? (
+                        <span className="font-medium text-destructive">Overdue</span>
+                      ) : payment.daysUntil === 0 ? (
+                        'Due today'
+                      ) : (
+                        `In ${payment.daysUntil} day${payment.daysUntil === 1 ? '' : 's'} · ${formatDate(payment.dueDate)}`
+                      )}
                     </p>
                   </div>
-                  <div className="text-end shrink-0">
-                    <p
-                      className={cn(
-                        'font-semibold text-sm tabular-nums',
-                        txn.type === 'income' && 'text-success',
-                        txn.type === 'expense' && 'text-destructive',
-                      )}
-                    >
-                      {txn.type === 'income' ? '+' : txn.type === 'expense' ? '−' : ''}
-                      {formatCurrency(txn.amount)}
+                  <div className="shrink-0 text-end">
+                    <Amount value={payment.amount} flow="out" signed={false} className="text-sm" />
+                    <p className="text-[0.65rem] uppercase tracking-wide text-muted-foreground">
+                      {payment.type}
                     </p>
-                    <Badge variant="outline" className="text-xs capitalize">
-                      {txn.type}
-                    </Badge>
                   </div>
                 </li>
               ))}
             </ul>
           )}
-        </CardContent>
-      </Card>
+        </Panel>
+      </div>
 
-      <section>
-        <h2 className="text-sm font-semibold text-muted-foreground mb-3">Quick Actions</h2>
-        <div className="flex flex-wrap gap-3">
-          <Link to="/transactions">
-            <Button>Add Transaction</Button>
-          </Link>
-          <Link to="/import">
-            <Button variant="outline">Import Data</Button>
-          </Link>
-          <Link to="/budgets">
-            <Button variant="outline">Manage Budgets</Button>
-          </Link>
-        </div>
-      </section>
+      <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-3">
+        <Panel
+          title="Accounts"
+          hint={accountsLoading ? undefined : 'Live balances'}
+          icon={WalletIcon}
+          to="/accounts"
+          className="lg:col-span-2"
+        >
+          {accountsLoading ? (
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+              {[1, 2, 3, 4].map((i) => (
+                <Skeleton key={i} className="h-12 w-full" />
+              ))}
+            </div>
+          ) : (accounts?.length ?? 0) === 0 ? (
+            <EmptyLine>No accounts yet. Add one on the Accounts page.</EmptyLine>
+          ) : (
+            <div className="grid grid-cols-1 gap-x-6 sm:grid-cols-2">
+              {accounts?.map((account) => (
+                <AccountRow key={account.id} account={account} />
+              ))}
+            </div>
+          )}
+        </Panel>
+
+        <Panel
+          title="Budgets"
+          hint={budgetsLoading ? undefined : 'How this period is tracking'}
+          icon={PiggyBankIcon}
+          to="/budgets"
+        >
+          {budgetsLoading ? (
+            <div className="flex flex-col gap-4">
+              {[1, 2, 3].map((i) => (
+                <Skeleton key={i} className="h-12 w-full" />
+              ))}
+            </div>
+          ) : (budgets?.length ?? 0) === 0 ? (
+            <EmptyLine>No budgets yet.</EmptyLine>
+          ) : (
+            <ul className="flex flex-col gap-3.5">
+              {budgets?.slice(0, 4).map((budget) => (
+                <li key={budget.id}>
+                  <div className="mb-1.5 flex items-baseline justify-between gap-2">
+                    <p className="truncate text-sm font-medium">{budget.name}</p>
+                    <p className="shrink-0 text-xs tabular-nums text-muted-foreground">
+                      {formatCurrency(budget.spent)} / {formatCurrency(budget.amount)}
+                    </p>
+                  </div>
+                  <ProgressBar
+                    value={budget.percentage}
+                    variant={progressVariantForPercent(budget.percentage)}
+                  />
+                </li>
+              ))}
+            </ul>
+          )}
+        </Panel>
+      </div>
+
+      <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-3">
+        <Panel
+          title="Recent activity"
+          hint="Your latest six entries"
+          icon={BankIcon}
+          to="/transactions"
+          className="lg:col-span-2"
+        >
+          {recentTxnLoading ? (
+            <div className="flex flex-col gap-3">
+              {[1, 2, 3, 4, 5].map((i) => (
+                <Skeleton key={i} className="h-10 w-full" />
+              ))}
+            </div>
+          ) : (recentTxnData?.items.length ?? 0) === 0 ? (
+            <EmptyLine>Nothing recorded yet.</EmptyLine>
+          ) : (
+            <ul className="flex flex-col">
+              {recentTxnData?.items.map((txn) => {
+                const flow = flowOfType(txn.type)
+                return (
+                  <li
+                    key={txn.id}
+                    className={cn(
+                      'flex items-center justify-between gap-3 border-b border-border/60 py-2 ps-2.5 last:border-b-0',
+                      flowRail[flow],
+                    )}
+                  >
+                    <div className="flex min-w-0 items-center gap-2.5">
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-medium">{txn.description}</p>
+                        <p className="text-xs text-muted-foreground">{formatDate(txn.date)}</p>
+                      </div>
+                    </div>
+                    <div className="flex shrink-0 items-center gap-3">
+                      {txn.type !== 'transfer' && (
+                        <CategoryChip
+                          name={txn.category_name}
+                          color={txn.category_color}
+                          className="hidden sm:inline-flex"
+                        />
+                      )}
+                      <Amount value={txn.amount} flow={flow} className="text-sm" />
+                    </div>
+                  </li>
+                )
+              })}
+            </ul>
+          )}
+        </Panel>
+
+        <Panel
+          title="Goals"
+          hint={goalsLoading ? undefined : 'Progress toward your targets'}
+          icon={TargetIcon}
+          to="/goals"
+        >
+          {goalsLoading ? (
+            <div className="flex flex-col gap-4">
+              {[1, 2, 3].map((i) => (
+                <Skeleton key={i} className="h-12 w-full" />
+              ))}
+            </div>
+          ) : activeGoals.length === 0 ? (
+            <EmptyLine>No active goals.</EmptyLine>
+          ) : (
+            <ul className="flex flex-col gap-3.5">
+              {activeGoals.map((goal) => (
+                <li key={goal.id}>
+                  <div className="mb-1.5 flex items-baseline justify-between gap-2">
+                    <p className="truncate text-sm font-medium">{goal.name}</p>
+                    <Badge variant="outline" className="shrink-0 text-xs tabular-nums">
+                      {Math.round(goal.progress_percentage ?? 0)}%
+                    </Badge>
+                  </div>
+                  <ProgressBar
+                    value={goal.progress_percentage ?? 0}
+                    variant={progressVariantForPercent(goal.progress_percentage ?? 0)}
+                  />
+                  <p className="mt-1 text-xs tabular-nums text-muted-foreground">
+                    {formatCurrency(goal.current_amount)} of{' '}
+                    {formatCurrency(goal.target_amount)}
+                    {goal.target_date ? ` · by ${formatDate(goal.target_date)}` : ''}
+                  </p>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Panel>
+      </div>
     </PageContainer>
   )
 }
 
-function AccountBalanceCard({ account }: { account: Account }) {
+function Figure({
+  label,
+  value,
+  tone = 'plain',
+}: {
+  label: string
+  value: string
+  tone?: 'plain' | 'in' | 'out'
+}) {
+  return (
+    <div>
+      <dt className="text-[0.65rem] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+        {label}
+      </dt>
+      <dd
+        className={cn(
+          'mt-1 font-heading text-2xl font-bold tabular-nums tracking-tight',
+          tone === 'in' && 'text-flow-in',
+          tone === 'out' && 'text-flow-out',
+        )}
+      >
+        {value}
+      </dd>
+    </div>
+  )
+}
+
+function AccountRow({ account }: { account: Account }) {
   const meta = getAccountTypeMeta(account.type)
   const balance = account.balance ?? 0
 
   return (
-    <div className="flex items-center gap-3 rounded-xl border border-border bg-muted/40 p-3">
-      <AccountIcon icon={account.icon} type={account.type} className="size-10 rounded-lg" imageClassName="size-7" />
+    <Link
+      to={`/transactions?account_id=${account.id}`}
+      className="flex items-center gap-2.5 border-b border-border/60 py-2 transition-colors hover:bg-muted/40"
+    >
+      <AccountIcon
+        icon={account.icon}
+        type={account.type}
+        className="size-8 rounded-lg"
+        imageClassName="size-6"
+      />
       <div className="min-w-0 flex-1">
-        <p className="font-medium text-sm truncate" title={account.name}>
+        <p className="truncate text-sm font-medium" title={account.name}>
           {account.name}
         </p>
-        <p className="text-xs text-muted-foreground capitalize">{meta.label}</p>
-        <p
-          className={cn(
-            'text-sm font-semibold tabular-nums mt-0.5',
-            balance >= 0 ? 'text-success' : 'text-destructive',
-          )}
-        >
-          {formatCurrency(balance, account.currency)}
-        </p>
+        <p className={cn('text-xs', meta.text)}>{meta.label}</p>
       </div>
-    </div>
+      <p
+        className={cn(
+          'shrink-0 text-sm font-semibold tabular-nums',
+          balance >= 0 ? 'text-foreground' : 'text-flow-out',
+        )}
+      >
+        {formatCurrency(balance, account.currency)}
+      </p>
+    </Link>
   )
 }

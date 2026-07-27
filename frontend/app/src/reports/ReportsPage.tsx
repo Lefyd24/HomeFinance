@@ -1,105 +1,84 @@
 import { useQuery } from '@tanstack/react-query'
-import ReactECharts from 'echarts-for-react'
-import { BarChart3 } from 'lucide-react'
-import { getSpendingReport } from '../dashboard/reportsApi'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { PageContainer } from '../ui/PageContainer'
 import { PageHeader } from '../ui/PageHeader'
-import { EmptyState } from '../ui/EmptyState'
-import { ListCard } from '../ui/ListCard'
-import { getCashflowReport, getNetWorthHistory } from './reportsPageApi'
+import { ReportFilterBar } from './ReportFilterBar'
+import { PeriodReadBand } from './PeriodReadBand'
+import { getCashflowReport } from './reportsPageApi'
+import { totalsFrom } from './periodRead'
+import { previousPeriod, useReportFilters } from './useReportFilters'
+import { OverviewTab } from './tabs/OverviewTab'
+import { CashflowTab } from './tabs/CashflowTab'
+import { SpendingTab } from './tabs/SpendingTab'
+import { BudgetsTab } from './tabs/BudgetsTab'
+import { DebtTab } from './tabs/DebtTab'
+
+const TABS = [
+  { key: 'overview', label: 'Overview' },
+  { key: 'cashflow', label: 'Cash flow' },
+  { key: 'spending', label: 'Spending' },
+  { key: 'budgets', label: 'Budgets' },
+  { key: 'debt', label: 'Debt' },
+] as const
 
 export function ReportsPage() {
-  const { data: spending, isLoading: spendingLoading } = useQuery({
-    queryKey: ['reports', 'spending'],
-    queryFn: () => getSpendingReport(),
-  })
+  const filters = useReportFilters()
+
   const { data: cashflow, isLoading: cashflowLoading } = useQuery({
-    queryKey: ['reports', 'cashflow'],
-    queryFn: getCashflowReport,
-  })
-  const { data: netWorth, isLoading: netWorthLoading } = useQuery({
-    queryKey: ['reports', 'net-worth'],
-    queryFn: getNetWorthHistory,
+    queryKey: ['reports', 'cashflow', filters.params],
+    queryFn: () => getCashflowReport(filters.params),
   })
 
-  const loading = spendingLoading || cashflowLoading || netWorthLoading
-  const hasAny =
-    (spending?.labels.length ?? 0) > 0 ||
-    (cashflow?.labels.length ?? 0) > 0 ||
-    (netWorth?.length ?? 0) > 0
+  // The same window, shifted back — every headline number is stated as a change.
+  const { data: priorCashflow } = useQuery({
+    queryKey: ['reports', 'cashflow', 'prior', filters.params],
+    queryFn: () => getCashflowReport(previousPeriod(filters.params)),
+  })
 
   return (
-    <PageContainer className="flex flex-col gap-6">
-      <PageHeader title="Reports" description="Headline charts for spending, cashflow, and net worth." />
+    <PageContainer wide className="pt-0">
+      <ReportFilterBar filters={filters} />
 
-      {loading && <p className="text-muted-foreground">Loading reports…</p>}
+      <PageHeader
+        title="Reports"
+        description="Pick a window, then read what happened in it."
+        className="mb-5"
+      />
 
-      {!loading && !hasAny && (
-        <EmptyState
-          icon={BarChart3}
-          title="No report data yet"
-          description="Add transactions and accounts to populate these charts."
+      <div className="flex flex-col gap-5">
+        <PeriodReadBand
+          current={cashflow ? totalsFrom(cashflow) : null}
+          previous={priorCashflow ? totalsFrom(priorCashflow) : null}
+          loading={cashflowLoading}
+          filters={filters}
         />
-      )}
 
-      {spending && spending.labels.length > 0 && (
-        <ListCard as="div">
-          <h2 className="text-sm font-semibold text-muted-foreground mb-2">Spending by category</h2>
-          <ReactECharts
-            option={{
-              tooltip: { trigger: 'item' },
-              series: [
-                {
-                  type: 'pie',
-                  radius: ['50%', '70%'],
-                  data: spending.labels.map((name, i) => ({
-                    name,
-                    value: spending.data[i] ?? 0,
-                  })),
-                },
-              ],
-            }}
-            style={{ height: 240 }}
-            opts={{ renderer: 'svg' }}
-          />
-        </ListCard>
-      )}
+        <Tabs value={filters.tab} onValueChange={filters.setTab}>
+          <TabsList className="mb-4 w-full justify-start overflow-x-auto">
+            {TABS.map((tab) => (
+              <TabsTrigger key={tab.key} value={tab.key}>
+                {tab.label}
+              </TabsTrigger>
+            ))}
+          </TabsList>
 
-      {cashflow && cashflow.labels.length > 0 && (
-        <ListCard as="div">
-          <h2 className="text-sm font-semibold text-muted-foreground mb-2">Cashflow</h2>
-          <ReactECharts
-            option={{
-              tooltip: { trigger: 'axis' },
-              legend: { data: ['Income', 'Expenses'] },
-              xAxis: { type: 'category', data: cashflow.labels },
-              yAxis: { type: 'value' },
-              series: [
-                { type: 'bar', name: 'Income', data: cashflow.income },
-                { type: 'bar', name: 'Expenses', data: cashflow.expenses },
-              ],
-            }}
-            style={{ height: 240 }}
-            opts={{ renderer: 'svg' }}
-          />
-        </ListCard>
-      )}
-
-      {netWorth && netWorth.length > 0 && (
-        <ListCard as="div">
-          <h2 className="text-sm font-semibold text-muted-foreground mb-2">Net worth</h2>
-          <ReactECharts
-            option={{
-              tooltip: { trigger: 'axis' },
-              xAxis: { type: 'category', data: netWorth.map((p) => p.date) },
-              yAxis: { type: 'value' },
-              series: [{ type: 'line', data: netWorth.map((p) => p.net_worth), smooth: true }],
-            }}
-            style={{ height: 240 }}
-            opts={{ renderer: 'svg' }}
-          />
-        </ListCard>
-      )}
+          <TabsContent value="overview">
+            <OverviewTab filters={filters} cashflow={cashflow} cashflowLoading={cashflowLoading} />
+          </TabsContent>
+          <TabsContent value="cashflow">
+            <CashflowTab filters={filters} cashflow={cashflow} cashflowLoading={cashflowLoading} />
+          </TabsContent>
+          <TabsContent value="spending">
+            <SpendingTab filters={filters} />
+          </TabsContent>
+          <TabsContent value="budgets">
+            <BudgetsTab />
+          </TabsContent>
+          <TabsContent value="debt">
+            <DebtTab />
+          </TabsContent>
+        </Tabs>
+      </div>
     </PageContainer>
   )
 }

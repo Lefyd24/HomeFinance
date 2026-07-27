@@ -2,18 +2,18 @@ import { useMemo } from 'react'
 import ReactECharts from 'echarts-for-react'
 import type { SpendingReport } from './reportsApi'
 import { formatCurrency } from '../lib/format'
+import { baseAxisStyle, seriesHoverSafe, tooltipStyle, useChartTheme } from '../reports/chartTheme'
 
 interface SpendingChartProps {
   report: SpendingReport | undefined
+  /** Category name → its own colour, so bars match the chips used elsewhere. */
+  colorByLabel?: Record<string, string>
+  height?: number
 }
 
-function readCssVar(name: string, fallback: string): string {
-  if (typeof window === 'undefined') return fallback
-  const value = getComputedStyle(document.documentElement).getPropertyValue(name).trim()
-  return value || fallback
-}
+export function SpendingChart({ report, colorByLabel, height = 340 }: SpendingChartProps) {
+  const theme = useChartTheme()
 
-export function SpendingChart({ report }: SpendingChartProps) {
   const option = useMemo(() => {
     if (!report || report.labels.length === 0) return null
 
@@ -24,16 +24,15 @@ export function SpendingChart({ report }: SpendingChartProps) {
 
     if (pairs.length === 0) return null
 
-    const primary = readCssVar('--primary', '#0e7490')
-    const muted = readCssVar('--muted-foreground', '#64748b')
-    const border = readCssVar('--border', 'rgba(148,163,184,0.35)')
-    const foreground = readCssVar('--foreground', '#0f172a')
     const max = Math.max(...pairs.map((p) => p.value))
+
+    const barColor = (name: string) => colorByLabel?.[name] || theme.neutral
 
     return {
       tooltip: {
         trigger: 'axis' as const,
         axisPointer: { type: 'shadow' as const },
+        ...tooltipStyle(theme),
         formatter: (params: Array<{ name: string; value: number }>) => {
           const item = params[0]
           if (!item) return ''
@@ -43,17 +42,17 @@ export function SpendingChart({ report }: SpendingChartProps) {
       grid: {
         left: 8,
         right: 12,
-        top: 36,
-        bottom: pairs.length > 6 ? 72 : 48,
+        top: 28,
+        bottom: 8,
         containLabel: true,
       },
       xAxis: {
         type: 'category' as const,
         data: pairs.map((p) => p.name),
-        axisTick: { show: false },
-        axisLine: { lineStyle: { color: border } },
+        ...baseAxisStyle(theme),
+        splitLine: { show: false },
         axisLabel: {
-          color: muted,
+          color: theme.muted,
           interval: 0,
           rotate: pairs.length > 4 ? 35 : 0,
           hideOverlap: false,
@@ -64,11 +63,10 @@ export function SpendingChart({ report }: SpendingChartProps) {
       },
       yAxis: {
         type: 'value' as const,
+        ...baseAxisStyle(theme),
         axisLine: { show: false },
-        axisTick: { show: false },
-        splitLine: { lineStyle: { color: border, type: 'dashed' as const } },
         axisLabel: {
-          color: muted,
+          color: theme.muted,
           formatter: (value: number) =>
             value >= 1000 ? `${(value / 1000).toFixed(value >= 10000 ? 0 : 1)}k` : `${value}`,
         },
@@ -76,26 +74,29 @@ export function SpendingChart({ report }: SpendingChartProps) {
       series: [
         {
           type: 'bar' as const,
-          data: pairs.map((p) => p.value),
+          ...seriesHoverSafe,
+          data: pairs.map((p) => ({
+            value: p.value,
+            itemStyle: { color: barColor(p.name), borderRadius: [6, 6, 0, 0] },
+          })),
           barMaxWidth: 44,
           itemStyle: {
-            color: primary,
-            borderRadius: [8, 8, 0, 0],
+            color: theme.neutral,
+            borderRadius: [6, 6, 0, 0],
           },
           emphasis: {
             itemStyle: {
               shadowBlur: 12,
-              shadowColor: 'rgba(0,0,0,0.18)',
+              shadowColor: theme.isDark ? 'rgba(0,0,0,0.45)' : 'rgba(0,0,0,0.18)',
             },
           },
           label: {
             show: true,
             position: 'top' as const,
-            color: foreground,
+            color: theme.ink,
             fontSize: 11,
             fontWeight: 600,
             formatter: (params: { value: number }) => {
-              // Hide labels on very short bars to reduce clutter; tooltip still has the value.
               if (params.value < max * 0.08 && pairs.length > 8) return ''
               return formatCurrency(params.value)
             },
@@ -103,7 +104,7 @@ export function SpendingChart({ report }: SpendingChartProps) {
         },
       ],
     }
-  }, [report])
+  }, [report, colorByLabel, theme])
 
   if (!option) {
     return <p className="text-muted-foreground text-sm">No spending data for this period.</p>
@@ -112,7 +113,7 @@ export function SpendingChart({ report }: SpendingChartProps) {
   return (
     <ReactECharts
       option={option}
-      style={{ height: 340, width: '100%' }}
+      style={{ height, width: '100%' }}
       opts={{ renderer: 'svg' }}
       notMerge
     />

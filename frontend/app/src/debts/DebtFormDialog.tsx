@@ -38,22 +38,22 @@ const debtSchema = z
       'custom',
     ]),
     custom_type: z.string().max(200).optional(),
-    original_balance: z.coerce.number().positive('Original balance must be greater than 0'),
-    current_balance: z.coerce.number().min(0, 'Current balance cannot be negative'),
-    interest_rate_pct: z.coerce.number().min(0).max(100).optional().or(z.literal('')),
-    minimum_payment: z.coerce.number().min(0).optional().or(z.literal('')),
-    priority: z.coerce.number().int().min(0).optional().or(z.literal('')),
+    original_balance: z.coerce.number<number>().positive('Original balance must be greater than 0'),
+    current_balance: z.coerce.number<number>().min(0, 'Current balance cannot be negative'),
+    interest_rate_pct: z.coerce.number<number>().min(0).max(100).optional().or(z.literal('')),
+    minimum_payment: z.coerce.number<number>().min(0).optional().or(z.literal('')),
+    priority: z.coerce.number<number>().int().min(0).optional().or(z.literal('')),
     opened_date: z.string().optional(),
     maturity_date: z.string().optional(),
     is_paid_off: z.boolean(),
     paid_off_date: z.string().optional(),
-    recurrence_interval: z.coerce.number().int().min(1).optional().or(z.literal('')),
+    recurrence_interval: z.coerce.number<number>().int().min(1).optional().or(z.literal('')),
     recurrence_unit: z.enum(['__none__', 'days', 'weeks', 'months']),
-    recurrence_day_of_month: z.coerce.number().int().min(1).max(31).optional().or(z.literal('')),
+    recurrence_day_of_month: z.coerce.number<number>().int().min(1).max(31).optional().or(z.literal('')),
     linked_account_id: z.string().optional(),
     next_payment_date: z.string().optional(),
     notify_enabled: z.boolean(),
-    notify_days_before: z.coerce.number().int().min(1).max(90).optional().or(z.literal('')),
+    notify_days_before: z.coerce.number<number>().int().min(1).max(90).optional().or(z.literal('')),
     notes: z.string().optional(),
   })
   .superRefine((data, ctx) => {
@@ -269,23 +269,41 @@ export function DebtFormDialog({
   return (
     <Dialog
       open={open}
-      title={isEdit ? 'Edit debt' : 'Add debt'}
+      title={isEdit ? 'Edit debt' : 'Add a debt'}
+      description="Give it an APR and a minimum payment and the app can project interest and a payoff date."
+      icon={BankIcon}
+      tone="primary"
       onOpenChange={onOpenChange}
       className="sm:max-w-xl"
+      footer={
+        <>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+            disabled={isPending}
+          >
+            Cancel
+          </Button>
+          <Button type="submit" form="debt-form" disabled={isPending}>
+            {isPending ? 'Saving…' : isEdit ? 'Save changes' : 'Add debt'}
+          </Button>
+        </>
+      }
     >
-      <form onSubmit={onSubmit} className="flex flex-col gap-4" noValidate>
-        <div className="rounded-xl bg-destructive text-destructive-foreground p-4">
+      <form id="debt-form" onSubmit={onSubmit} className="flex flex-col gap-4" noValidate>
+        <div className="rounded-xl border border-primary/20 bg-primary/6 p-4">
           <div className="flex items-center gap-3">
-            <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-white/15">
+            <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-primary/15 text-primary ring-1 ring-primary/25">
               <HugeiconsIcon icon={BankIcon} strokeWidth={2} />
             </div>
             <div className="min-w-0 flex-1">
-              <p className="font-semibold text-base truncate">
-                {preview.name.trim() || 'New Debt'}
+              <p className="truncate text-base font-semibold">
+                {preview.name.trim() || 'New debt'}
               </p>
-              <p className="text-xs opacity-80">{typeLabel}</p>
+              <p className="text-xs text-muted-foreground">{typeLabel}</p>
             </div>
-            <p className="text-xl font-bold font-heading tabular-nums shrink-0">
+            <p className="shrink-0 font-heading text-xl font-bold tabular-nums">
               {formatCurrency(Number(preview.current_balance) || 0)}
             </p>
           </div>
@@ -550,19 +568,6 @@ export function DebtFormDialog({
           />
         </div>
 
-        <div className="flex justify-end gap-2 pt-1">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => onOpenChange(false)}
-            disabled={isPending}
-          >
-            Cancel
-          </Button>
-          <Button type="submit" disabled={isPending}>
-            {isPending ? 'Saving…' : isEdit ? 'Save changes' : 'Save debt'}
-          </Button>
-        </div>
       </form>
     </Dialog>
   )

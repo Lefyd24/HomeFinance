@@ -28,19 +28,93 @@ export function bankIconSrc(icon: string | null | undefined): string | null {
   return `/assets/icons/banks/${file}`
 }
 
+/**
+ * Each account type owns a hue, used consistently in its icon tint, its card's
+ * top rule, and its slice of the allocation bar — so the same colour means the
+ * same kind of account everywhere on the page.
+ */
 const TYPE_META: Record<
   AccountType,
-  { label: string; icon: typeof BankIcon; tint: string }
+  {
+    label: string
+    icon: typeof BankIcon
+    tint: string
+    /** Solid fill for bars and rules. */
+    fill: string
+    /** Soft glow on glass account cards. */
+    ambient: string
+    text: string
+    /** Plural noun for section headings. */
+    plural: string
+  }
 > = {
-  checking: { label: 'Checking', icon: BankIcon, tint: 'bg-primary/15 text-primary' },
-  savings: { label: 'Savings', icon: SafeBoxIcon, tint: 'bg-success/15 text-success' },
-  credit: { label: 'Credit', icon: CreditCardIcon, tint: 'bg-destructive/15 text-destructive' },
-  cash: { label: 'Cash', icon: Money01Icon, tint: 'bg-chart-3/20 text-chart-3' },
-  investment: { label: 'Investment', icon: ChartIncreaseIcon, tint: 'bg-chart-2/20 text-chart-2' },
+  checking: {
+    label: 'Checking',
+    plural: 'Checking accounts',
+    icon: BankIcon,
+    tint: 'bg-primary/15 text-primary',
+    fill: 'bg-primary',
+    ambient: 'bg-primary/30',
+    text: 'text-primary',
+  },
+  savings: {
+    label: 'Savings',
+    plural: 'Savings',
+    icon: SafeBoxIcon,
+    tint: 'bg-success/15 text-success',
+    fill: 'bg-success',
+    ambient: 'bg-success/30',
+    text: 'text-success',
+  },
+  credit: {
+    label: 'Credit',
+    plural: 'Credit',
+    icon: CreditCardIcon,
+    tint: 'bg-flow-out/15 text-flow-out',
+    fill: 'bg-flow-out',
+    ambient: 'bg-flow-out/25',
+    text: 'text-flow-out',
+  },
+  cash: {
+    label: 'Cash',
+    plural: 'Cash',
+    icon: Money01Icon,
+    tint: 'bg-warning/20 text-warning',
+    fill: 'bg-warning',
+    ambient: 'bg-warning/25',
+    text: 'text-warning',
+  },
+  investment: {
+    label: 'Investment',
+    plural: 'Investments',
+    icon: ChartIncreaseIcon,
+    tint: 'bg-flow-move/15 text-flow-move',
+    fill: 'bg-flow-move',
+    ambient: 'bg-flow-move/25',
+    text: 'text-flow-move',
+  },
 }
 
+export const ACCOUNT_TYPE_ORDER: AccountType[] = [
+  'checking',
+  'savings',
+  'cash',
+  'investment',
+  'credit',
+]
+
 export function getAccountTypeMeta(type: AccountType) {
-  return TYPE_META[type] ?? { label: type, icon: Wallet01Icon, tint: 'bg-muted text-muted-foreground' }
+  return (
+    TYPE_META[type] ?? {
+      label: type,
+      plural: type,
+      icon: Wallet01Icon,
+      tint: 'bg-muted text-muted-foreground',
+      fill: 'bg-muted-foreground',
+      ambient: 'bg-muted-foreground/20',
+      text: 'text-muted-foreground',
+    }
+  )
 }
 
 export function AccountIcon({
@@ -61,7 +135,7 @@ export function AccountIcon({
     return (
       <div
         className={cn(
-          'flex size-12 items-center justify-center overflow-hidden rounded-xl bg-white ring-1 ring-border shrink-0',
+          'flex size-12 items-center justify-center overflow-hidden rounded-xl bg-white/80 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.9)] ring-1 ring-white/40 backdrop-blur-sm shrink-0 dark:bg-white/10 dark:ring-white/15',
           className,
         )}
       >
@@ -74,6 +148,7 @@ export function AccountIcon({
     <div
       className={cn(
         'flex size-12 items-center justify-center rounded-xl shrink-0',
+        'shadow-[inset_0_1px_0_0_rgba(255,255,255,0.5)] ring-1 ring-white/35 backdrop-blur-sm dark:ring-white/10',
         meta.tint,
         className,
       )}

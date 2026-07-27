@@ -3,10 +3,28 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { toast } from 'sonner'
+import { HugeiconsIcon } from '@hugeicons/react'
+import {
+  ArrowDownLeft01Icon,
+  ArrowUpRight01Icon,
+  Exchange01Icon,
+} from '@hugeicons/core-free-icons'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
+import {
+  Field,
+  FieldError,
+  FieldGroup,
+  FieldLabel,
+} from '@/components/ui/field'
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from '@/components/ui/input-group'
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
+import { Spinner } from '@/components/ui/spinner'
 import { Dialog } from '../ui/Dialog'
 import { Select } from '../ui/Select'
 import { useAccounts } from '../accounts/useAccounts'
@@ -17,7 +35,7 @@ import type { Transaction, TransactionType } from './transactionsApi'
 const transactionSchema = z
   .object({
     type: z.enum(['income', 'expense', 'transfer']),
-    amount: z.coerce.number().positive('Amount must be greater than 0'),
+    amount: z.coerce.number<number>().positive('Amount must be greater than 0'),
     account_id: z.string().min(1, 'Account is required'),
     destination_account_id: z.string().optional(),
     category_id: z.string().optional(),
@@ -179,102 +197,165 @@ export function TransactionFormDialog({
       label: cat.name,
     }))
 
-  const typeOptions = [
-    { value: 'income', label: 'Income' },
-    { value: 'expense', label: 'Expense' },
-    { value: 'transfer', label: 'Transfer' },
-  ]
+  const flow = selectedType === 'income' ? 'in' : selectedType === 'transfer' ? 'move' : 'out'
+  const formId = 'transaction-form'
 
   return (
     <Dialog
       open={open}
-      title={transaction ? 'Edit Transaction' : 'Add Transaction'}
+      title={transaction ? 'Edit transaction' : 'Add transaction'}
+      description={
+        isTransfer
+          ? 'Move money between two of your own accounts. It affects both balances and neither budget.'
+          : selectedType === 'income'
+            ? 'Record money arriving in an account.'
+            : 'Record money leaving an account, against a spending category.'
+      }
+      icon={
+        isTransfer ? Exchange01Icon : selectedType === 'income' ? ArrowDownLeft01Icon : ArrowUpRight01Icon
+      }
+      tone={flow}
       onOpenChange={onOpenChange}
+      footer={
+        <>
+          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+            Cancel
+          </Button>
+          <Button type="submit" form={formId} disabled={isSubmitting}>
+            {isSubmitting && <Spinner data-icon="inline-start" />}
+            {transaction ? 'Save changes' : 'Add transaction'}
+          </Button>
+        </>
+      }
     >
-      <form onSubmit={onSubmit} className="flex flex-col gap-4" noValidate>
-        <div className="flex flex-col gap-2">
-          <Label htmlFor="type">Type</Label>
-          <Select
-            value={watch('type')}
-            onValueChange={(value) => setValue('type', value as TransactionType)}
-            options={typeOptions}
-            placeholder="Select type"
-          />
-          {errors.type && <p className="text-destructive text-sm">{errors.type.message}</p>}
-        </div>
+      <form id={formId} onSubmit={onSubmit} noValidate>
+        <FieldGroup>
+          <Field>
+            <FieldLabel htmlFor="type">Direction</FieldLabel>
+            <ToggleGroup
+              type="single"
+              variant="outline"
+              spacing={0}
+              value={selectedType}
+              onValueChange={(value) => value && setValue('type', value as TransactionType)}
+              className="w-full [&>button]:flex-1"
+            >
+              <ToggleGroupItem
+                value="expense"
+                className="data-[state=on]:border-flow-out/40 data-[state=on]:bg-flow-out/10 data-[state=on]:text-flow-out"
+              >
+                <HugeiconsIcon icon={ArrowUpRight01Icon} strokeWidth={2} data-icon="inline-start" />
+                Expense
+              </ToggleGroupItem>
+              <ToggleGroupItem
+                value="income"
+                className="data-[state=on]:border-flow-in/40 data-[state=on]:bg-flow-in/10 data-[state=on]:text-flow-in"
+              >
+                <HugeiconsIcon
+                  icon={ArrowDownLeft01Icon}
+                  strokeWidth={2}
+                  data-icon="inline-start"
+                />
+                Income
+              </ToggleGroupItem>
+              <ToggleGroupItem
+                value="transfer"
+                className="data-[state=on]:border-flow-move/40 data-[state=on]:bg-flow-move/10 data-[state=on]:text-flow-move"
+              >
+                <HugeiconsIcon icon={Exchange01Icon} strokeWidth={2} data-icon="inline-start" />
+                Transfer
+              </ToggleGroupItem>
+            </ToggleGroup>
+            <FieldError errors={[errors.type]} />
+          </Field>
 
-        <div className="flex flex-col gap-2">
-          <Label htmlFor="amount">Amount</Label>
-          <Input id="amount" type="number" step="0.01" {...register('amount')} />
-          {errors.amount && <p className="text-destructive text-sm">{errors.amount.message}</p>}
-        </div>
+          <Field data-invalid={errors.amount ? true : undefined}>
+            <FieldLabel htmlFor="amount">Amount</FieldLabel>
+            <InputGroup className="h-11">
+              <InputGroupInput
+                id="amount"
+                type="number"
+                step="0.01"
+                inputMode="decimal"
+                placeholder="0,00"
+                aria-invalid={errors.amount ? true : undefined}
+                className="text-lg font-semibold tabular-nums"
+                {...register('amount')}
+              />
+              <InputGroupAddon align="inline-end">
+                <span className="text-sm text-muted-foreground">EUR</span>
+              </InputGroupAddon>
+            </InputGroup>
+            <FieldError errors={[errors.amount]} />
+          </Field>
 
-        <div className="flex flex-col gap-2">
-          <Label htmlFor="account_id">Account</Label>
-          <Select
-            value={watch('account_id')}
-            onValueChange={(value) => setValue('account_id', value)}
-            options={accountOptions}
-            placeholder="Select account"
-          />
-          {errors.account_id && (
-            <p className="text-destructive text-sm">{errors.account_id.message}</p>
-          )}
-        </div>
-
-        {isTransfer && (
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="destination_account_id">Destination Account</Label>
-            <Select
-              value={watch('destination_account_id') || ''}
-              onValueChange={(value) => setValue('destination_account_id', value)}
-              options={accountOptions}
-              placeholder="Select destination account"
+          <Field data-invalid={errors.description ? true : undefined}>
+            <FieldLabel htmlFor="description">Description</FieldLabel>
+            <Input
+              id="description"
+              placeholder="What was it for?"
+              aria-invalid={errors.description ? true : undefined}
+              {...register('description')}
             />
-            {errors.destination_account_id && (
-              <p className="text-destructive text-sm">{errors.destination_account_id.message}</p>
+            <FieldError errors={[errors.description]} />
+          </Field>
+
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <Field data-invalid={errors.account_id ? true : undefined}>
+              <FieldLabel htmlFor="account_id">
+                {isTransfer ? 'From account' : 'Account'}
+              </FieldLabel>
+              <Select
+                value={watch('account_id')}
+                onValueChange={(value) => setValue('account_id', value)}
+                options={accountOptions}
+                placeholder="Choose an account"
+              />
+              <FieldError errors={[errors.account_id]} />
+            </Field>
+
+            {isTransfer ? (
+              <Field data-invalid={errors.destination_account_id ? true : undefined}>
+                <FieldLabel htmlFor="destination_account_id">To account</FieldLabel>
+                <Select
+                  value={watch('destination_account_id') || ''}
+                  onValueChange={(value) => setValue('destination_account_id', value)}
+                  options={accountOptions}
+                  placeholder="Choose a destination"
+                />
+                <FieldError errors={[errors.destination_account_id]} />
+              </Field>
+            ) : (
+              <Field data-invalid={errors.category_id ? true : undefined}>
+                <FieldLabel htmlFor="category_id">Category</FieldLabel>
+                <Select
+                  value={watch('category_id') || ''}
+                  onValueChange={(value) => setValue('category_id', value)}
+                  options={categoryOptions}
+                  placeholder="Choose a category"
+                />
+                <FieldError errors={[errors.category_id]} />
+              </Field>
             )}
           </div>
-        )}
 
-        {!isTransfer && (
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="category_id">Category</Label>
-            <Select
-              value={watch('category_id') || ''}
-              onValueChange={(value) => setValue('category_id', value)}
-              options={categoryOptions}
-              placeholder="Select category"
+          <Field data-invalid={errors.date ? true : undefined}>
+            <FieldLabel htmlFor="date">Date</FieldLabel>
+            <Input id="date" type="date" {...register('date')} />
+            <FieldError errors={[errors.date]} />
+          </Field>
+
+          <Field>
+            <FieldLabel htmlFor="notes">Notes</FieldLabel>
+            <Textarea
+              id="notes"
+              rows={2}
+              placeholder="Anything worth remembering later"
+              {...register('notes')}
             />
-            {errors.category_id && (
-              <p className="text-destructive text-sm">{errors.category_id.message}</p>
-            )}
-          </div>
-        )}
-
-        <div className="flex flex-col gap-2">
-          <Label htmlFor="description">Description</Label>
-          <Input id="description" {...register('description')} />
-          {errors.description && (
-            <p className="text-destructive text-sm">{errors.description.message}</p>
-          )}
-        </div>
-
-        <div className="flex flex-col gap-2">
-          <Label htmlFor="date">Date</Label>
-          <Input id="date" type="date" {...register('date')} />
-          {errors.date && <p className="text-destructive text-sm">{errors.date.message}</p>}
-        </div>
-
-        <div className="flex flex-col gap-2">
-          <Label htmlFor="notes">Notes (optional)</Label>
-          <Textarea id="notes" {...register('notes')} rows={3} />
-          {errors.notes && <p className="text-destructive text-sm">{errors.notes.message}</p>}
-        </div>
-
-        <Button type="submit" className="w-full" disabled={isSubmitting}>
-          {transaction ? 'Update' : 'Save'}
-        </Button>
+            <FieldError errors={[errors.notes]} />
+          </Field>
+        </FieldGroup>
       </form>
     </Dialog>
   )

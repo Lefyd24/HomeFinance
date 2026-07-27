@@ -73,7 +73,7 @@ describe('DebtsPage', () => {
 
     renderPage()
 
-    expect(await screen.findByText('Interest & payoff calculator')).toBeInTheDocument()
+    expect(await screen.findByText('Interest & payoff')).toBeInTheDocument()
     expect(screen.getAllByText('Bank').length).toBeGreaterThanOrEqual(1)
     expect(screen.getByText('Visa card')).toBeInTheDocument()
     expect(screen.getByText('19.00%')).toBeInTheDocument()
@@ -102,7 +102,7 @@ describe('DebtsPage', () => {
     vi.spyOn(accountsApi, 'listAccounts').mockResolvedValue([])
 
     renderPage()
-    await screen.findByText('Interest & payoff calculator')
+    await screen.findByText('Interest & payoff')
 
     await user.click(screen.getByRole('button', { name: 'Edit properties' }))
 
@@ -147,7 +147,7 @@ describe('DebtsPage', () => {
     ])
 
     renderPage()
-    await screen.findByText('Interest & payoff calculator')
+    await screen.findByText('Interest & payoff')
 
     await user.click(screen.getByRole('button', { name: /View payments & linked txns/i }))
 

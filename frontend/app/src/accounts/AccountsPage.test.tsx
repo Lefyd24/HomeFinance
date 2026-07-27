@@ -44,7 +44,7 @@ describe('AccountsPage', () => {
     expect(screen.getAllByText(formatCurrency(250.5)).length).toBeGreaterThan(0)
 
     await userEvent.click(screen.getByRole('button', { name: /add account/i }))
-    expect(screen.getByRole('heading', { name: /add account/i })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /add an account/i })).toBeInTheDocument()
   })
 
   it('submits the new-account form', async () => {

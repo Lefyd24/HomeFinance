@@ -2,7 +2,6 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { formatCurrency } from '../lib/format'
-import { getByExactText } from '../test/dom'
 import * as advisorApi from './advisorApi'
 import { AdvisorPage } from './AdvisorPage'
 

@@ -1,80 +1,326 @@
-import { useState } from 'react'
-import { Send } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
+import { ArrowUp, Check, Copy, RotateCcw, Sparkles, Square } from 'lucide-react'
+import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
+import {
+  Message,
+  MessageAvatar,
+  MessageContent,
+  MessageFooter,
+} from '@/components/ui/message'
+import { Bubble, BubbleContent } from '@/components/ui/bubble'
+import { Marker, MarkerContent } from '@/components/ui/marker'
+import {
+  MessageScroller,
+  MessageScrollerButton,
+  MessageScrollerContent,
+  MessageScrollerItem,
+  MessageScrollerProvider,
+  MessageScrollerViewport,
+} from '@/components/ui/message-scroller'
+import { Textarea } from '@/components/ui/textarea'
 import { cn } from '@/lib/utils'
-import * as aiChatApi from './aiChatApi'
-import type { ChatMessage } from './aiChatApi'
+import { SUGGESTION_GROUPS } from './aiChatApi'
+import { Markdown } from './Markdown'
+import { ToolTrail } from './ToolTrail'
+import type { Turn } from './useAiChat'
 
-export function ChatWidget() {
-  const [messages, setMessages] = useState<ChatMessage[]>([])
-  const [input, setInput] = useState('')
-  const [sending, setSending] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+export function ChatWidget({
+  turns,
+  isStreaming,
+  onSend,
+  onStop,
+  onRetry,
+  disabled,
+  disabledReason,
+  initialPrompt,
+}: {
+  turns: Turn[]
+  isStreaming: boolean
+  onSend: (text: string) => void
+  onStop: () => void
+  onRetry: () => void
+  disabled?: boolean
+  disabledReason?: string
+  /** A question handed over from another page, asked once on arrival. */
+  initialPrompt?: string
+}) {
+  const composerRef = useRef<HTMLTextAreaElement>(null)
+  const sentInitial = useRef(false)
 
-  async function handleSend() {
-    const content = input.trim()
-    if (!content || sending) return
-    const nextMessages: ChatMessage[] = [...messages, { role: 'user', content }]
-    setMessages(nextMessages)
-    setInput('')
-    setSending(true)
-    setError(null)
-    try {
-      const reply = await aiChatApi.sendChatMessage(nextMessages)
-      setMessages((prev) => [...prev, { role: 'assistant', content: reply }])
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to send message')
-    } finally {
-      setSending(false)
-    }
+  useEffect(() => {
+    if (!initialPrompt || disabled || sentInitial.current) return
+    sentInitial.current = true
+    onSend(initialPrompt)
+  }, [initialPrompt, disabled, onSend])
+
+  const lastTurn = turns[turns.length - 1]
+
+  return (
+    <div className="flex h-full min-h-0 flex-col">
+      <MessageScrollerProvider autoScroll>
+        <MessageScroller className="flex-1">
+          <MessageScrollerViewport>
+            <MessageScrollerContent className="mx-auto w-full max-w-3xl px-4 py-6">
+              {turns.length === 0 ? (
+                <EmptyState
+                  disabled={disabled}
+                  disabledReason={disabledReason}
+                  onPick={(prompt) => onSend(prompt)}
+                />
+              ) : (
+                turns.map((turn) => (
+                  <MessageScrollerItem
+                    key={turn.id}
+                    messageId={turn.id}
+                    scrollAnchor={turn.role === 'user'}
+                  >
+                    {turn.role === 'user' ? (
+                      <UserTurn turn={turn} />
+                    ) : (
+                      <AssistantTurn
+                        turn={turn}
+                        isLast={turn.id === lastTurn?.id}
+                        onRetry={onRetry}
+                      />
+                    )}
+                  </MessageScrollerItem>
+                ))
+              )}
+            </MessageScrollerContent>
+          </MessageScrollerViewport>
+          <MessageScrollerButton />
+        </MessageScroller>
+      </MessageScrollerProvider>
+
+      <Composer
+        ref={composerRef}
+        isStreaming={isStreaming}
+        disabled={disabled}
+        onSend={onSend}
+        onStop={onStop}
+      />
+    </div>
+  )
+}
+
+function UserTurn({ turn }: { turn: Turn }) {
+  return (
+    <Message align="end">
+      <MessageContent>
+        <Bubble align="end" variant="default">
+          <BubbleContent className="whitespace-pre-wrap">{turn.content}</BubbleContent>
+        </Bubble>
+      </MessageContent>
+    </Message>
+  )
+}
+
+function AssistantTurn({
+  turn,
+  isLast,
+  onRetry,
+}: {
+  turn: Turn
+  isLast: boolean
+  onRetry: () => void
+}) {
+  const [copied, setCopied] = useState(false)
+  const hasAnswer = turn.content.trim().length > 0
+
+  async function handleCopy() {
+    await navigator.clipboard.writeText(turn.content)
+    setCopied(true)
+    window.setTimeout(() => setCopied(false), 1600)
   }
 
   return (
-    <div className="flex flex-col h-full min-h-0">
-      <div className="flex-1 overflow-y-auto flex flex-col gap-2 p-4">
-        {messages.length === 0 && (
-          <p className="text-sm text-muted-foreground text-center mt-8">
-            Ask about your spending, budgets, or savings.
-          </p>
+    <Message align="start">
+      <MessageAvatar className="size-8 bg-primary text-primary-foreground">
+        <Sparkles className="size-4" />
+      </MessageAvatar>
+
+      <MessageContent>
+        {turn.tools.length > 0 && (
+          <ToolTrail tools={turn.tools} className="px-3 pt-0.5" />
         )}
-        {messages.map((message, i) => (
-          <div
-            key={`${message.role}-${i}`}
-            className={cn(
-              'max-w-[85%] p-3 rounded-xl text-sm whitespace-pre-wrap',
-              message.role === 'user'
-                ? 'self-end bg-primary text-primary-foreground'
-                : 'self-start bg-muted text-foreground',
+
+        {hasAnswer ? (
+          // The answer runs wide: the advisor replies with tables and lists,
+          // and the default 80% bubble cap would squeeze them.
+          <Bubble variant="muted" className="max-w-full">
+            <BubbleContent className="px-3.5 py-2.5">
+              <Markdown content={turn.content} />
+            </BubbleContent>
+          </Bubble>
+        ) : turn.streaming && turn.tools.length === 0 ? (
+          <Bubble variant="muted">
+            <BubbleContent>
+              <span className="shimmer">Thinking</span>
+            </BubbleContent>
+          </Bubble>
+        ) : null}
+
+        {turn.error && (
+          <Alert variant="destructive" className="max-w-full">
+            <AlertDescription>{turn.error}</AlertDescription>
+          </Alert>
+        )}
+
+        {!turn.streaming && (hasAnswer || turn.error) && (
+          <MessageFooter className="gap-1 px-1">
+            {hasAnswer && (
+              <Button variant="ghost" size="sm" onClick={() => void handleCopy()}>
+                {copied ? <Check data-icon="inline-start" /> : <Copy data-icon="inline-start" />}
+                {copied ? 'Copied' : 'Copy'}
+              </Button>
             )}
-          >
-            {message.content}
+            {isLast && (
+              <Button variant="ghost" size="sm" onClick={onRetry}>
+                <RotateCcw data-icon="inline-start" />
+                Ask again
+              </Button>
+            )}
+          </MessageFooter>
+        )}
+      </MessageContent>
+    </Message>
+  )
+}
+
+function EmptyState({
+  disabled,
+  disabledReason,
+  onPick,
+}: {
+  disabled?: boolean
+  disabledReason?: string
+  onPick: (prompt: string) => void
+}) {
+  if (disabled) {
+    return (
+      <div className="flex flex-1 items-center justify-center">
+        <Alert className="max-w-md">
+          <AlertDescription>{disabledReason}</AlertDescription>
+        </Alert>
+      </div>
+    )
+  }
+
+  return (
+    <div className="flex flex-1 flex-col justify-center py-6">
+      <h2 className="font-heading text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+        Ask your money anything.
+      </h2>
+      <p className="mt-2 max-w-lg text-sm text-muted-foreground">
+        The advisor reads your real transactions, balances, budgets, recurring bills and debts as it
+        answers — and can email you a copy of anything it works out.
+      </p>
+
+      <div className="mt-8 flex flex-col gap-6">
+        {SUGGESTION_GROUPS.map((group) => (
+          <div key={group.title}>
+            {/* The groups name the job, so the openers read as directions to
+                take rather than an undifferentiated list of prompts. */}
+            <Marker variant="separator" className="mb-2">
+              <MarkerContent>{group.title}</MarkerContent>
+            </Marker>
+            <div className="flex flex-wrap gap-2">
+              {group.prompts.map((prompt) => (
+                <button
+                  key={prompt}
+                  type="button"
+                  onClick={() => onPick(prompt)}
+                  className="rounded-full border border-border bg-card px-3.5 py-2 text-start text-sm text-foreground transition-colors hover:border-primary/40 hover:bg-accent focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+                >
+                  {prompt}
+                </button>
+              ))}
+            </div>
           </div>
         ))}
-        {sending && (
-          <div className="self-start text-xs text-muted-foreground px-1">Thinking…</div>
-        )}
-        {error && <p className="text-destructive text-sm">{error}</p>}
       </div>
-      <div className="flex gap-2 p-4 border-t border-border bg-background">
-        <Input
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') void handleSend()
+    </div>
+  )
+}
+
+function Composer({
+  ref,
+  isStreaming,
+  disabled,
+  onSend,
+  onStop,
+}: {
+  ref: React.RefObject<HTMLTextAreaElement | null>
+  isStreaming: boolean
+  disabled?: boolean
+  onSend: (text: string) => void
+  onStop: () => void
+}) {
+  const [value, setValue] = useState('')
+
+  // Grow with the question, up to a point — past that the field scrolls
+  // rather than swallowing the conversation above it.
+  function resize(element: HTMLTextAreaElement | null) {
+    if (!element) return
+    element.style.height = 'auto'
+    element.style.height = `${Math.min(element.scrollHeight, 168)}px`
+  }
+
+  function submit() {
+    const text = value.trim()
+    if (!text || isStreaming || disabled) return
+    onSend(text)
+    setValue('')
+    resize(ref.current)
+  }
+
+  return (
+    <div className="border-t border-border bg-background/85 px-4 py-3 backdrop-blur-md">
+      <form
+        className="mx-auto flex w-full max-w-3xl items-end gap-2 rounded-2xl border border-border bg-card p-2 shadow-sm focus-within:border-primary/40 focus-within:ring-3 focus-within:ring-ring/25"
+        onSubmit={(event) => {
+          event.preventDefault()
+          submit()
+        }}
+      >
+        <Textarea
+          ref={ref}
+          rows={1}
+          value={value}
+          disabled={disabled}
+          placeholder={disabled ? 'The advisor is unavailable' : 'Ask about your finances…'}
+          aria-label="Ask about your finances"
+          onChange={(event) => {
+            setValue(event.target.value)
+            resize(event.currentTarget)
           }}
-          placeholder="Ask about your finances…"
-          disabled={sending}
+          onKeyDown={(event) => {
+            // Enter sends; Shift+Enter is how you write a second line.
+            if (event.key === 'Enter' && !event.shiftKey) {
+              event.preventDefault()
+              submit()
+            }
+          }}
+          className={cn(
+            'min-h-0 resize-none border-0 bg-transparent px-2 py-1.5 shadow-none',
+            'focus-visible:border-0 focus-visible:ring-0',
+          )}
         />
-        <Button
-          size="icon"
-          onClick={() => void handleSend()}
-          disabled={sending || !input.trim()}
-          aria-label="Send"
-        >
-          <Send size={18} />
-        </Button>
-      </div>
+
+        {isStreaming ? (
+          <Button type="button" size="icon" variant="secondary" onClick={onStop} aria-label="Stop">
+            <Square />
+          </Button>
+        ) : (
+          <Button type="submit" size="icon" disabled={disabled || !value.trim()} aria-label="Send">
+            <ArrowUp />
+          </Button>
+        )}
+      </form>
+      <p className="mx-auto mt-2 max-w-3xl text-center text-xs text-muted-foreground">
+        Enter to send, Shift + Enter for a new line.
+      </p>
     </div>
   )
 }

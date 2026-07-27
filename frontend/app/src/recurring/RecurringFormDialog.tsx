@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Checkbox } from '@/components/ui/checkbox'
+import { RepeatIcon } from '@hugeicons/core-free-icons'
 import { Dialog } from '../ui/Dialog'
 import { Select } from '../ui/Select'
 import { useAccounts } from '../accounts/useAccounts'
@@ -20,10 +21,10 @@ const NONE = '__none__'
 
 const recurringSchema = z.object({
   name: z.string().min(1, 'Name is required').max(200),
-  amount: z.coerce.number().positive('Amount must be greater than 0'),
+  amount: z.coerce.number<number>().positive('Amount must be greater than 0'),
   account_id: z.string(),
   category_id: z.string(),
-  recurrence_interval: z.coerce.number().int().min(1),
+  recurrence_interval: z.coerce.number<number>().int().min(1),
   recurrence_unit: z.enum(['days', 'weeks', 'months']),
   start_date: z.string().min(1, 'Start date is required'),
   next_due_date: z.string().min(1, 'Next due date is required'),
@@ -167,11 +168,29 @@ export function RecurringFormDialog({
   return (
     <Dialog
       open={open}
-      title={isEditing ? 'Edit recurring expense' : 'Add recurring expense'}
+      title={isEditing ? 'Edit recurring payment' : 'Add a recurring payment'}
+      description="Set the amount and how often it repeats. The agenda will surface it before each due date."
+      icon={RepeatIcon}
+      tone="primary"
       onOpenChange={onOpenChange}
       className="sm:max-w-xl"
+      footer={
+        <>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+            disabled={isPending}
+          >
+            Cancel
+          </Button>
+          <Button type="submit" form="recurring-form" disabled={isPending}>
+            {isPending ? 'Saving…' : isEditing ? 'Save changes' : 'Add it'}
+          </Button>
+        </>
+      }
     >
-      <form onSubmit={onSubmit} className="flex flex-col gap-4" noValidate>
+      <form id="recurring-form" onSubmit={onSubmit} className="flex flex-col gap-4" noValidate>
         <div className="flex flex-col gap-2">
           <Label htmlFor="recurring-name">Name</Label>
           <Input id="recurring-name" placeholder="e.g. Netflix, Rent" {...register('name')} />
@@ -307,9 +326,6 @@ export function RecurringFormDialog({
           <Textarea id="recurring-notes" rows={2} {...register('notes')} />
         </div>
 
-        <Button type="submit" className="w-full" disabled={isPending}>
-          Save
-        </Button>
       </form>
     </Dialog>
   )

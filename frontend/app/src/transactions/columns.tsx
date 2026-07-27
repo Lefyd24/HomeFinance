@@ -1,13 +1,15 @@
 import type { ColumnDef } from '@tanstack/react-table'
 import { HugeiconsIcon } from '@hugeicons/react'
 import {
-  MoreVerticalIcon,
+  ArrowDownLeft01Icon,
+  ArrowRight01Icon,
+  ArrowUpRight01Icon,
   Delete02Icon,
+  Exchange01Icon,
+  MoreVerticalIcon,
   PencilEdit02Icon,
   ViewIcon,
-  ArrowRight01Icon,
 } from '@hugeicons/core-free-icons'
-import { Badge } from '@/components/ui/badge'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -17,7 +19,8 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { Button } from '@/components/ui/button'
 import { DataTableColumnHeader } from '@/components/data-table/data-table-column-header'
-import { formatDate, formatSignedCurrency } from '../lib/format'
+import { Amount, CategoryChip, flowOfType, flowSurface } from '../ui/money'
+import { cn } from '@/lib/utils'
 import type { Transaction } from './transactionsApi'
 
 interface ColumnHandlers {
@@ -26,31 +29,72 @@ interface ColumnHandlers {
   onDelete: (transaction: Transaction) => void
 }
 
+const FLOW_ICON = {
+  in: ArrowDownLeft01Icon,
+  out: ArrowUpRight01Icon,
+  move: Exchange01Icon,
+} as const
+
+const FLOW_LABEL = { in: 'Income', out: 'Expense', move: 'Transfer' } as const
+
+function splitDate(iso: string) {
+  const date = new Date(iso)
+  if (Number.isNaN(date.getTime())) return { day: iso, weekday: '' }
+  return {
+    day: new Intl.DateTimeFormat('el-GR', { day: '2-digit', month: 'short' }).format(date),
+    weekday: new Intl.DateTimeFormat('en-GB', { weekday: 'short' }).format(date),
+  }
+}
+
 export function createColumns(handlers: ColumnHandlers): ColumnDef<Transaction>[] {
   return [
     {
       accessorKey: 'date',
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Date" />
-      ),
+      header: ({ column }) => <DataTableColumnHeader column={column} title="Date" />,
       cell: ({ row }) => {
-        const date = row.original.date
-        return <div className="text-sm">{formatDate(date)}</div>
+        const { day, weekday } = splitDate(row.original.date)
+        return (
+          <div className="flex flex-col leading-tight">
+            <span className="text-sm font-medium tabular-nums">{day}</span>
+            <span className="text-[0.7rem] text-muted-foreground">{weekday}</span>
+          </div>
+        )
       },
       enableSorting: true,
+      meta: { cellClassName: 'w-24 ps-4' },
     },
     {
       accessorKey: 'description',
       header: ({ column }) => <DataTableColumnHeader column={column} title="Description" />,
       cell: ({ row }) => {
-        const { description, notes } = row.original
+        const { description, notes, type, is_imported, debt_name } = row.original
+        const flow = flowOfType(type)
         return (
-          <div className="flex flex-col gap-0.5 min-w-0">
-            <div className="font-medium text-sm truncate">{description}</div>
-            {notes && <div className="text-xs text-muted-foreground truncate">{notes}</div>}
+          <div className="flex min-w-0 items-center gap-2.5">
+            <span
+              title={FLOW_LABEL[flow]}
+              aria-label={FLOW_LABEL[flow]}
+              className={cn(
+                'flex size-7 shrink-0 items-center justify-center rounded-md border',
+                flowSurface[flow],
+              )}
+            >
+              <HugeiconsIcon icon={FLOW_ICON[flow]} strokeWidth={2} className="size-3.5" />
+            </span>
+            <div className="flex min-w-0 flex-col gap-0.5">
+              <span className="truncate text-sm font-medium">{description}</span>
+              {(notes || debt_name || is_imported) && (
+                <span className="truncate text-xs text-muted-foreground">
+                  {[debt_name && `Debt · ${debt_name}`, notes, is_imported && 'Imported']
+                    .filter(Boolean)
+                    .join(' · ')}
+                </span>
+              )}
+            </div>
           </div>
         )
       },
+      meta: { cellClassName: 'max-w-[22rem]' },
     },
     {
       accessorKey: 'category_name',
@@ -58,20 +102,9 @@ export function createColumns(handlers: ColumnHandlers): ColumnDef<Transaction>[
       cell: ({ row }) => {
         const { category_name, category_color, type } = row.original
         if (type === 'transfer') {
-          return <Badge variant="outline">Transfer</Badge>
+          return <span className="text-xs text-muted-foreground">Between accounts</span>
         }
-        if (!category_name) return <span className="text-muted-foreground text-sm">—</span>
-        return (
-          <Badge variant="outline" className="gap-1.5">
-            {category_color && (
-              <span
-                className="size-2 rounded-full shrink-0"
-                style={{ backgroundColor: category_color }}
-              />
-            )}
-            <span>{category_name}</span>
-          </Badge>
-        )
+        return <CategoryChip name={category_name} color={category_color} />
       },
     },
     {
@@ -81,54 +114,39 @@ export function createColumns(handlers: ColumnHandlers): ColumnDef<Transaction>[
         const { account_name, destination_account_name, type } = row.original
         if (type === 'transfer' && destination_account_name) {
           return (
-            <div className="flex items-center gap-1.5 text-sm">
+            <div className="flex items-center gap-1 text-sm text-muted-foreground">
               <span className="truncate">{account_name}</span>
-              <HugeiconsIcon icon={ArrowRight01Icon} className="shrink-0 size-3" strokeWidth={2} />
-              <span className="truncate">{destination_account_name}</span>
+              <HugeiconsIcon
+                icon={ArrowRight01Icon}
+                strokeWidth={2}
+                className="size-3.5 shrink-0 text-flow-move"
+              />
+              <span className="truncate text-foreground">{destination_account_name}</span>
             </div>
           )
         }
-        return <div className="text-sm truncate">{account_name}</div>
+        return <span className="truncate text-sm text-muted-foreground">{account_name}</span>
       },
     },
     {
       accessorKey: 'amount',
-      header: ({ column }) => <DataTableColumnHeader column={column} title="Amount" />,
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Amount" className="justify-end" />
+      ),
       cell: ({ row }) => {
         const { amount, type } = row.original
-        const formatted = formatSignedCurrency(amount, type)
         return (
-          <div
-            className={`text-sm font-medium tabular-nums ${
-              type === 'income'
-                ? 'text-success'
-                : type === 'expense'
-                  ? 'text-destructive'
-                  : 'text-foreground'
-            }`}
-          >
-            {formatted}
+          <div className="text-end">
+            <Amount value={amount} flow={flowOfType(type)} className="text-sm font-semibold" />
           </div>
         )
       },
       enableSorting: true,
-    },
-    {
-      accessorKey: 'type',
-      header: ({ column }) => <DataTableColumnHeader column={column} title="Type" />,
-      cell: ({ row }) => {
-        const type = row.original.type
-        const variant =
-          type === 'income' ? 'default' : type === 'expense' ? 'destructive' : 'secondary'
-        return (
-          <Badge variant={variant} className="capitalize">
-            {type}
-          </Badge>
-        )
-      },
+      meta: { cellClassName: 'text-end', headerClassName: 'text-end' },
     },
     {
       id: 'actions',
+      header: () => <span className="sr-only">Actions</span>,
       cell: ({ row }) => {
         const transaction = row.original
         return (
@@ -137,18 +155,18 @@ export function createColumns(handlers: ColumnHandlers): ColumnDef<Transaction>[
               <Button
                 variant="ghost"
                 size="icon-sm"
-                className="size-8"
+                className="size-8 opacity-100 transition-opacity md:opacity-0 md:group-hover/row:opacity-100 md:focus-visible:opacity-100 md:aria-expanded:opacity-100"
                 onClick={(e) => e.stopPropagation()}
               >
                 <HugeiconsIcon icon={MoreVerticalIcon} strokeWidth={2} />
-                <span className="sr-only">Actions</span>
+                <span className="sr-only">Actions for {transaction.description}</span>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuGroup>
                 <DropdownMenuItem onClick={() => handlers.onView(transaction)}>
                   <HugeiconsIcon icon={ViewIcon} strokeWidth={2} />
-                  View
+                  View details
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => handlers.onEdit(transaction)}>
                   <HugeiconsIcon icon={PencilEdit02Icon} strokeWidth={2} />
@@ -166,6 +184,7 @@ export function createColumns(handlers: ColumnHandlers): ColumnDef<Transaction>[
           </DropdownMenu>
         )
       },
+      meta: { cellClassName: 'w-12 pe-3' },
     },
   ]
 }

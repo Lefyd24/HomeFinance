@@ -35,6 +35,7 @@ import {
 } from '@/components/ui/empty'
 import { PageContainer } from '../ui/PageContainer'
 import { PageHeader } from '../ui/PageHeader'
+import { useConfirm } from '../ui/useConfirm'
 import { formatCurrency, formatDate } from '../lib/format'
 import { cn } from '@/lib/utils'
 import { useDeleteGoal, useGoals, useUpdateGoal } from './useGoals'
@@ -56,6 +57,7 @@ type FilterTab = 'active' | 'completed' | 'all'
 export function GoalsPage() {
   const { data: goals = [], isLoading } = useGoals()
   const deleteGoal = useDeleteGoal()
+  const { confirm, confirmDialog } = useConfirm()
   const updateGoal = useUpdateGoal()
 
   const [filter, setFilter] = useState<FilterTab>('active')
@@ -110,7 +112,12 @@ export function GoalsPage() {
   }
 
   const handleDelete = async (goal: Goal) => {
-    if (!window.confirm(`Delete "${goal.name}"? This cannot be undone.`)) return
+    const ok = await confirm({
+      title: `Delete ${goal.name}?`,
+      description: 'The goal and its progress history are removed. This cannot be undone.',
+      confirmLabel: 'Delete goal',
+    })
+    if (!ok) return
     try {
       await deleteGoal.mutateAsync(goal.id)
       toast.success('Goal deleted')
@@ -243,6 +250,7 @@ export function GoalsPage() {
         onContribute={openContribute}
         onEdit={openEdit}
       />
+      {confirmDialog}
     </PageContainer>
   )
 }

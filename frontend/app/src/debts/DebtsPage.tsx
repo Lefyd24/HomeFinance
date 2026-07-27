@@ -29,7 +29,6 @@ import {
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Progress } from '@/components/ui/progress'
 import { Separator } from '@/components/ui/separator'
 import { Skeleton } from '@/components/ui/skeleton'
 import { ScrollArea } from '@/components/ui/scroll-area'
@@ -59,6 +58,7 @@ import {
 import { Dialog } from '../ui/Dialog'
 import { PageContainer } from '../ui/PageContainer'
 import { PageHeader } from '../ui/PageHeader'
+import { useConfirm } from '../ui/useConfirm'
 import { formatCurrency, formatDate } from '../lib/format'
 import { cn } from '@/lib/utils'
 import {
@@ -108,6 +108,81 @@ function aprPercent(rate: number | null | undefined): number | null {
   return rate <= 1 ? rate * 100 : rate
 }
 
+type DebtTone = 'success' | 'primary' | 'warning'
+
+/**
+ * Colour follows how the payoff is going, not the fact that it's a debt. A
+ * card that's 80% cleared shouldn't shout the same red as one just opened.
+ */
+function debtTone(debt: Debt): DebtTone {
+  if (debt.is_paid_off) return 'success'
+  const percent = payoffPercent(debt)
+  if (percent >= 60) return 'success'
+  if (percent >= 25) return 'primary'
+  return 'warning'
+}
+
+const TONE_WASH: Record<DebtTone, string> = {
+  success: 'from-success/12 via-success/5',
+  primary: 'from-primary/12 via-primary/5',
+  warning: 'from-warning/15 via-warning/6',
+}
+
+const TONE_MARK: Record<DebtTone, string> = {
+  success: 'bg-success/15 text-success ring-success/25',
+  primary: 'bg-primary/15 text-primary ring-primary/25',
+  warning: 'bg-warning/20 text-warning ring-warning/30',
+}
+
+/**
+ * One bar for the whole obligation: what's already gone to principal, what's
+ * still owed, and how much of the total is interest you haven't paid yet.
+ * Seeing the interest slice next to the principal is the point of the page.
+ */
+function PayoffBar({
+  paid,
+  remaining,
+  interest,
+}: {
+  paid: number
+  remaining: number
+  interest: number
+}) {
+  const total = Math.max(paid + remaining + interest, 0.01)
+  const segments = [
+    { key: 'paid', value: paid, className: 'bg-success', label: 'Paid off' },
+    { key: 'remaining', value: remaining, className: 'bg-primary', label: 'Still owed' },
+    { key: 'interest', value: interest, className: 'bg-warning', label: 'Interest ahead' },
+  ].filter((s) => s.value > 0)
+
+  return (
+    <div className="flex flex-col gap-2">
+      <div
+        className="flex h-2.5 w-full overflow-hidden rounded-full bg-muted"
+        role="img"
+        aria-label={`${formatCurrency(paid)} paid, ${formatCurrency(remaining)} still owed, ${formatCurrency(interest)} interest ahead`}
+      >
+        {segments.map((segment) => (
+          <div
+            key={segment.key}
+            className={cn('h-full transition-[width] duration-700', segment.className)}
+            style={{ width: `${(segment.value / total) * 100}%` }}
+          />
+        ))}
+      </div>
+      <div className="flex flex-wrap gap-x-4 gap-y-1">
+        {segments.map((segment) => (
+          <span key={segment.key} className="flex items-center gap-1.5 text-xs">
+            <span className={cn('size-2 rounded-full', segment.className)} aria-hidden />
+            <span className="text-muted-foreground">{segment.label}</span>
+            <span className="font-medium tabular-nums">{formatCurrency(segment.value)}</span>
+          </span>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 function ProgressDial({ percent, label }: { percent: number; label: string }) {
   const clamped = Math.max(0, Math.min(100, percent))
   const r = 28
@@ -155,6 +230,7 @@ export function DebtsPage() {
   const { data: debts = [], isLoading } = useDebts()
   const { data: summary } = useDebtSummary()
   const deleteDebt = useDeleteDebt()
+  const { confirm, confirmDialog } = useConfirm()
 
   const [selectedId, setSelectedId] = useState<number | null>(null)
   const [formOpen, setFormOpen] = useState(false)
@@ -205,13 +281,19 @@ export function DebtsPage() {
   }
 
   const handleDelete = async (debt: Debt) => {
-    if (!confirm(`Delete "${debt.name}"? This cannot be undone.`)) return
+    const ok = await confirm({
+      title: `Delete ${debt.creditor || debt.name}?`,
+      description:
+        'The debt and every payment recorded against it are removed. Linked transactions stay in your ledger.',
+      confirmLabel: 'Delete debt',
+    })
+    if (!ok) return
     try {
       await deleteDebt.mutateAsync(debt.id)
       toast.success('Debt deleted')
       if (selectedId === debt.id) setSelectedId(null)
     } catch {
-      toast.error('Failed to delete debt')
+      toast.error('Could not delete the debt. Try again.')
     }
   }
 
@@ -368,6 +450,7 @@ export function DebtsPage() {
         onOpenChange={setPaymentsSheetOpen}
       />
       <PayoffStrategiesDialog open={strategiesOpen} onOpenChange={setStrategiesOpen} />
+      {confirmDialog}
     </PageContainer>
   )
 }
@@ -383,48 +466,62 @@ function DebtListItem({
 }) {
   const meta = TYPE_META[debt.type] ?? TYPE_META.other
   const apr = aprPercent(debt.interest_rate)
+  const tone = debtTone(debt)
+  const percent = payoffPercent(debt)
 
   return (
     <button
       type="button"
       onClick={onSelect}
+      aria-current={selected}
       className={cn(
-        'w-full text-start rounded-lg px-3 py-2.5 transition-colors flex items-start gap-3',
-        selected
-          ? 'bg-primary/10 ring-1 ring-primary/30'
-          : 'hover:bg-muted/60',
+        'flex w-full flex-col gap-2 rounded-lg px-3 py-2.5 text-start transition-colors',
+        selected ? 'bg-primary/8 ring-1 ring-primary/25' : 'hover:bg-muted/60',
       )}
     >
-      <div
-        className={cn(
-          'flex size-9 shrink-0 items-center justify-center rounded-lg',
-          debt.is_paid_off ? 'bg-success/15 text-success' : 'bg-muted text-foreground',
-        )}
-      >
-        <HugeiconsIcon
-          icon={debt.is_paid_off ? CheckmarkCircle02Icon : meta.icon}
-          strokeWidth={2}
-        />
-      </div>
-      <div className="min-w-0 flex-1">
-        <p className="text-sm font-medium truncate">{debt.creditor || debt.name}</p>
-        <p className="text-xs text-muted-foreground truncate">
-          {debtTypeLabel(debt)}
-          {apr != null ? ` · ${apr.toFixed(2)}% APR` : ''}
+      <div className="flex w-full items-start gap-3">
+        <div
+          className={cn(
+            'flex size-9 shrink-0 items-center justify-center rounded-lg ring-1',
+            debt.is_paid_off ? 'bg-success/15 text-success ring-success/25' : TONE_MARK[tone],
+          )}
+        >
+          <HugeiconsIcon
+            icon={debt.is_paid_off ? CheckmarkCircle02Icon : meta.icon}
+            strokeWidth={2}
+          />
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm font-medium">{debt.creditor || debt.name}</p>
+          <p className="truncate text-xs text-muted-foreground">
+            {debtTypeLabel(debt)}
+            {apr != null ? ` · ${apr.toFixed(2)}% APR` : ''}
+          </p>
+        </div>
+        <p
+          className={cn(
+            'shrink-0 text-sm font-semibold tabular-nums',
+            debt.is_paid_off ? 'text-success' : 'text-foreground',
+          )}
+        >
+          {formatCurrency(
+            apr != null && debt.total_amount_due != null
+              ? debt.total_amount_due
+              : debt.current_balance,
+          )}
         </p>
       </div>
-      <p
-        className={cn(
-          'text-sm font-semibold tabular-nums shrink-0',
-          debt.is_paid_off ? 'text-success' : 'text-foreground',
-        )}
-      >
-        {formatCurrency(
-          apr != null && debt.total_amount_due != null
-            ? debt.total_amount_due
-            : debt.current_balance,
-        )}
-      </p>
+      {!debt.is_paid_off && (
+        <div className="h-1 w-full overflow-hidden rounded-full bg-muted">
+          <div
+            className={cn(
+              'h-full rounded-full',
+              tone === 'success' ? 'bg-success' : tone === 'primary' ? 'bg-primary' : 'bg-warning',
+            )}
+            style={{ width: `${Math.max(2, percent)}%` }}
+          />
+        </div>
+      )}
     </button>
   )
 }
@@ -450,44 +547,49 @@ function DebtDetailPanel({
     apr != null && debt.total_amount_due != null ? debt.total_amount_due : debt.current_balance
   const projectedInterest = debt.total_interest ?? 0
 
+  const tone = debtTone(debt)
+
   return (
-    <section className="rounded-xl border border-border bg-card overflow-hidden min-w-0">
-      <div className="bg-destructive text-destructive-foreground px-5 py-5 sm:px-6">
+    <section className="min-w-0 overflow-hidden rounded-xl border border-border bg-card">
+      <div
+        className={cn(
+          'bg-gradient-to-br to-transparent px-5 py-5 sm:px-6',
+          'border-b border-border',
+          TONE_WASH[tone],
+        )}
+      >
         <div className="flex items-start justify-between gap-4">
-          <div className="min-w-0 flex items-start gap-3">
-            <div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-white/15">
+          <div className="flex min-w-0 items-start gap-3">
+            <div
+              className={cn(
+                'flex size-11 shrink-0 items-center justify-center rounded-xl ring-1',
+                TONE_MARK[tone],
+              )}
+            >
               <HugeiconsIcon icon={meta.icon} strokeWidth={2} />
             </div>
             <div className="min-w-0">
-              <p className="text-xs uppercase tracking-wider opacity-80">{debtTypeLabel(debt)}</p>
-              <h2 className="text-xl font-heading font-bold truncate">
+              <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                {debtTypeLabel(debt)}
+              </p>
+              <h2 className="truncate font-heading text-xl font-bold">
                 {debt.creditor || debt.name}
               </h2>
               {debt.creditor && (
-                <p className="text-sm opacity-90 truncate">{debt.name}</p>
+                <p className="truncate text-sm text-muted-foreground">{debt.name}</p>
               )}
             </div>
           </div>
-          <div className="flex items-center gap-1 shrink-0">
+          <div className="flex shrink-0 items-center gap-1">
             {!debt.is_paid_off && (
-              <Button
-                size="sm"
-                variant="secondary"
-                className="bg-white/15 text-destructive-foreground hover:bg-white/25 border-0"
-                onClick={onPayment}
-              >
+              <Button size="sm" onClick={onPayment}>
                 <HugeiconsIcon icon={Wallet01Icon} strokeWidth={2} data-icon="inline-start" />
                 Add payment
               </Button>
             )}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button
-                  size="icon-sm"
-                  variant="ghost"
-                  className="text-destructive-foreground hover:bg-white/15"
-                  aria-label="More actions"
-                >
+                <Button size="icon-sm" variant="ghost" aria-label="More actions">
                   <HugeiconsIcon icon={MoreVerticalIcon} strokeWidth={2} />
                 </Button>
               </DropdownMenuTrigger>
@@ -518,65 +620,63 @@ function DebtDetailPanel({
           </div>
         </div>
 
-        <div className="mt-5 grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div>
-            <p className="text-[0.65rem] font-semibold uppercase tracking-wider opacity-75">
-              {apr != null ? 'Amount due (w/ interest)' : 'Current balance'}
-            </p>
-            <p className="mt-1 text-3xl font-heading font-bold tabular-nums tracking-tight">
-              {formatCurrency(displayDue)}
-            </p>
-            {apr != null && projectedInterest > 0 && (
-              <p className="mt-1 text-xs opacity-80">
-                includes {formatCurrency(projectedInterest)} projected interest
+        <div className="mt-5 flex flex-col gap-4">
+          <div className="flex flex-wrap items-end justify-between gap-4">
+            <div>
+              <p className="text-[0.65rem] font-semibold uppercase tracking-wider text-muted-foreground">
+                {apr != null ? 'Amount due, interest included' : 'Current balance'}
               </p>
-            )}
-          </div>
-          <div>
-            <p className="text-[0.65rem] font-semibold uppercase tracking-wider opacity-75">
-              Principal remaining
-            </p>
-            <p className="mt-1 text-2xl font-heading font-bold tabular-nums">
-              {formatCurrency(debt.current_balance)}
-            </p>
-            <p className="mt-1 text-xs opacity-80">
-              of {formatCurrency(debt.original_balance)} original
-            </p>
-          </div>
-          <div>
-            <p className="text-[0.65rem] font-semibold uppercase tracking-wider opacity-75">
-              Paid toward principal
-            </p>
-            <p className="mt-1 text-2xl font-heading font-bold tabular-nums">
-              {formatCurrency(paidAmount)}
-            </p>
-            {!debt.is_paid_off && (
-              <div className="mt-2">
-                <Progress value={percentage} className="h-1.5 bg-white/20" />
-                <p className="mt-1 text-xs opacity-80 tabular-nums">
+              <p className="mt-1 font-heading text-4xl font-bold tabular-nums tracking-tight">
+                {formatCurrency(displayDue)}
+              </p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                of {formatCurrency(debt.original_balance)} original
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              {debt.is_paid_off ? (
+                <Badge className="bg-success/15 text-success ring-1 ring-success/25">
+                  <HugeiconsIcon
+                    icon={CheckmarkCircle02Icon}
+                    strokeWidth={2}
+                    data-icon="inline-start"
+                  />
+                  Cleared
+                </Badge>
+              ) : (
+                <Badge variant="secondary" className="tabular-nums">
                   {Math.round(percentage)}% paid off
-                </p>
-              </div>
-            )}
+                </Badge>
+              )}
+              {debt.priority > 0 && <Badge variant="outline">Priority P{debt.priority}</Badge>}
+            </div>
           </div>
+
+          {!debt.is_paid_off && (
+            <PayoffBar
+              paid={paidAmount}
+              remaining={debt.current_balance}
+              interest={projectedInterest}
+            />
+          )}
         </div>
       </div>
 
       <div className="p-5 sm:p-6 flex flex-col gap-6">
         <div>
-          <div className="flex items-center justify-between gap-2 mb-3">
-            <h3 className="text-sm font-semibold">Interest & payoff calculator</h3>
-            {debt.priority > 0 && (
-              <Badge variant="secondary">Priority · P{debt.priority}</Badge>
-            )}
-            {debt.is_paid_off && <Badge variant="secondary">Paid off</Badge>}
+          <div className="mb-3">
+            <h3 className="text-sm font-semibold">Interest & payoff</h3>
+            <p className="text-xs text-muted-foreground">
+              Projected from the APR and minimum payment, assuming you pay the minimum only.
+            </p>
           </div>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
             <CalcCell
               label="APR"
               value={apr != null ? `${apr.toFixed(2)}%` : '—'}
               icon={PercentCircleIcon}
-              hint="Monthly compounding"
+              hint="Compounded monthly"
+              tone="primary"
             />
             <CalcCell
               label="Min. payment"
@@ -586,7 +686,14 @@ function DebtDetailPanel({
                   : '—'
               }
               icon={Wallet01Icon}
-              hint={debt.recurrence_unit ? `Every ${debt.recurrence_interval ?? 1} ${debt.recurrence_unit}` : 'Set for projections'}
+              hint={
+                debt.recurrence_unit
+                  ? (debt.recurrence_interval ?? 1) === 1
+                    ? `Every ${debt.recurrence_unit.replace(/s$/, '')}`
+                    : `Every ${debt.recurrence_interval} ${debt.recurrence_unit}`
+                  : 'Set one to unlock projections'
+              }
+              tone="primary"
             />
             <CalcCell
               label="Months to payoff"
@@ -595,8 +702,9 @@ function DebtDetailPanel({
               hint={
                 debt.payoff_date
                   ? `Est. ${formatDate(debt.payoff_date)}`
-                  : 'Needs APR + min. payment'
+                  : 'Needs an APR and a minimum payment'
               }
+              tone="success"
             />
             <CalcCell
               label="Total interest"
@@ -604,8 +712,8 @@ function DebtDetailPanel({
                 debt.total_interest != null ? formatCurrency(debt.total_interest) : '—'
               }
               icon={AnalyticsUpIcon}
-              hint="If paying minimum only"
-              tone="destructive"
+              hint="What the minimum-only path costs you"
+              tone="warning"
             />
           </div>
         </div>
@@ -662,33 +770,43 @@ function DebtDetailPanel({
   )
 }
 
+const CALC_TONE = {
+  default: { icon: 'text-muted-foreground', value: 'text-foreground', surface: 'bg-muted/30' },
+  primary: { icon: 'text-primary', value: 'text-foreground', surface: 'bg-primary/6' },
+  success: { icon: 'text-success', value: 'text-success', surface: 'bg-success/8' },
+  warning: { icon: 'text-warning', value: 'text-warning', surface: 'bg-warning/10' },
+} as const
+
 function CalcCell({
   label,
   value,
   hint,
   icon,
-  tone,
+  tone = 'default',
 }: {
   label: string
   value: string
   hint: string
   icon: typeof PercentCircleIcon
-  tone?: 'destructive'
+  tone?: keyof typeof CALC_TONE
 }) {
+  const empty = value === '—'
+  const palette = CALC_TONE[empty ? 'default' : tone]
+
   return (
-    <div className="rounded-lg border border-border bg-muted/30 p-3 flex flex-col gap-1.5">
-      <div className="flex items-center gap-1.5 text-muted-foreground">
-        <HugeiconsIcon icon={icon} strokeWidth={2} />
-        <span className="text-[0.65rem] font-semibold uppercase tracking-wider">{label}</span>
+    <div
+      className={cn(
+        'flex flex-col gap-1.5 rounded-lg border border-border p-3',
+        palette.surface,
+      )}
+    >
+      <div className="flex items-center gap-1.5">
+        <HugeiconsIcon icon={icon} strokeWidth={2} className={palette.icon} />
+        <span className="text-[0.65rem] font-semibold uppercase tracking-wider text-muted-foreground">
+          {label}
+        </span>
       </div>
-      <p
-        className={cn(
-          'text-lg font-heading font-bold tabular-nums',
-          tone === 'destructive' && value !== '—' ? 'text-destructive' : 'text-foreground',
-        )}
-      >
-        {value}
-      </p>
+      <p className={cn('font-heading text-lg font-bold tabular-nums', palette.value)}>{value}</p>
       <p className="text-xs text-muted-foreground">{hint}</p>
     </div>
   )

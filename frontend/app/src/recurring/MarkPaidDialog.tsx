@@ -7,6 +7,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { CheckmarkCircle02Icon } from '@hugeicons/core-free-icons'
 import { Dialog } from '../ui/Dialog'
 import { Select } from '../ui/Select'
 import { formatCurrency, formatDate } from '../lib/format'
@@ -18,7 +19,7 @@ const NONE = '__none__'
 const today = () => new Date().toISOString().slice(0, 10)
 
 const paySchema = z.object({
-  amount: z.coerce.number().positive('Amount must be greater than 0'),
+  amount: z.coerce.number<number>().positive('Amount must be greater than 0'),
   payment_date: z.string().min(1, 'Payment date is required'),
   transaction_id: z.string(),
   notes: z.string().optional(),
@@ -103,13 +104,35 @@ export function MarkPaidDialog({
   const isPending = isSubmitting || recordPayment.isPending
 
   return (
-    <Dialog open={open} title="Mark as paid" onOpenChange={onOpenChange} className="sm:max-w-md">
-      {expense && (
-        <p className="text-sm text-muted-foreground -mt-2 mb-2">
-          Recording payment for &ldquo;{expense.name}&rdquo; — {formatCurrency(expense.amount)}
-        </p>
-      )}
-      <form onSubmit={onSubmit} className="flex flex-col gap-4" noValidate>
+    <Dialog
+      open={open}
+      title="Mark as paid"
+      description={
+        expense
+          ? `Records a payment for ${expense.name} and rolls its next due date forward.`
+          : 'Records a payment and rolls the next due date forward.'
+      }
+      icon={CheckmarkCircle02Icon}
+      tone="in"
+      onOpenChange={onOpenChange}
+      className="sm:max-w-md"
+      footer={
+        <>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+            disabled={isPending}
+          >
+            Cancel
+          </Button>
+          <Button type="submit" form="mark-paid-form" disabled={isPending || !expense}>
+            {isPending ? 'Saving…' : 'Mark as paid'}
+          </Button>
+        </>
+      }
+    >
+      <form id="mark-paid-form" onSubmit={onSubmit} className="flex flex-col gap-4" noValidate>
         <div className="flex flex-col gap-2">
           <Label htmlFor="pay-amount">Amount paid (€)</Label>
           <Input id="pay-amount" type="number" step="0.01" min="0.01" {...register('amount')} />
@@ -145,9 +168,6 @@ export function MarkPaidDialog({
           <Input id="pay-notes" placeholder="Optional" {...register('notes')} />
         </div>
 
-        <Button type="submit" className="w-full" disabled={isPending || !expense}>
-          Mark as paid
-        </Button>
       </form>
     </Dialog>
   )

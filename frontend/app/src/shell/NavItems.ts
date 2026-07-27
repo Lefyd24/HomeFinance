@@ -9,13 +9,10 @@ import {
   TargetIcon,
   RepeatIcon,
   Analytics01Icon,
-  FileImportIcon,
   File01Icon,
   SparklesIcon,
   ChartLineData01Icon,
-  Notification03Icon,
-  Key01Icon,
-  Shield01Icon,
+  Idea01Icon,
 } from '@hugeicons/core-free-icons'
 
 export type HugeIcon = typeof DashboardSquare01Icon
@@ -24,6 +21,8 @@ export interface NavItem {
   label: string
   to: string
   icon: HugeIcon
+  /** Renders as a collapsible parent. The parent's own `to` is used for matching only. */
+  children?: NavItem[]
 }
 
 export interface NavGroup {
@@ -39,6 +38,11 @@ export const PRIMARY_NAV_ITEMS: NavItem[] = [
   { label: 'Budgets', to: '/budgets', icon: PiggyBankIcon },
 ]
 
+/**
+ * Kept deliberately short. Anything reachable from the page it belongs to
+ * (Import lives on Transactions) or from the account menu (API keys, admin,
+ * notifications) is not repeated here.
+ */
 export const NAV_GROUPS: NavGroup[] = [
   {
     label: 'Overview',
@@ -57,34 +61,33 @@ export const NAV_GROUPS: NavGroup[] = [
     label: 'Insights',
     items: [
       { label: 'Reports', to: '/reports', icon: Analytics01Icon },
-      { label: 'Advisor', to: '/advisor', icon: ChartLineData01Icon },
-      { label: 'AI Advisor', to: '/ai-advisor', icon: SparklesIcon },
-    ],
-  },
-  {
-    label: 'Tools',
-    items: [
-      { label: 'Import', to: '/import', icon: FileImportIcon },
+      {
+        label: 'Advice',
+        to: '/advisor',
+        icon: Idea01Icon,
+        children: [
+          { label: 'Analysis', to: '/advisor', icon: ChartLineData01Icon },
+          { label: 'Ask AI', to: '/ai-advisor', icon: SparklesIcon },
+        ],
+      },
       { label: 'Documents', to: '/documents', icon: File01Icon },
-      { label: 'Notifications', to: '/notifications', icon: Notification03Icon },
-    ],
-  },
-  {
-    label: 'Account',
-    items: [
-      { label: 'API Keys', to: '/api-keys', icon: Key01Icon },
-      { label: 'Admin', to: '/admin', icon: Shield01Icon },
     ],
   },
 ]
 
-export const SECONDARY_NAV_ITEMS: NavItem[] = NAV_GROUPS.slice(1).flatMap(
-  (group) => group.items,
+function flatten(items: NavItem[]): NavItem[] {
+  return items.flatMap((item) => (item.children ? item.children : [item]))
+}
+
+export const SECONDARY_NAV_ITEMS: NavItem[] = NAV_GROUPS.slice(1).flatMap((group) =>
+  flatten(group.items),
 )
 
 export const MORE_NAV_ICON = MoreHorizontalCircleIcon
 
+/** Every routable destination, including ones no longer shown in the sidebar. */
 export const ALL_NAV_ITEMS: NavItem[] = [
   ...PRIMARY_NAV_ITEMS,
   ...SECONDARY_NAV_ITEMS,
+  { label: 'Import', to: '/import', icon: ArrowDataTransferHorizontalIcon },
 ]

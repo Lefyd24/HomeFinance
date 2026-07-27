@@ -94,11 +94,24 @@ describe('RecurringPage', () => {
     renderPage()
 
     expect(await screen.findByText('Netflix')).toBeInTheDocument()
-    expect(screen.getByText('Monthly')).toBeInTheDocument()
-    expect(screen.getByText(formatCurrency(15.99))).toBeInTheDocument()
-    expect(screen.getByRole('region', { name: 'Upcoming due dates' })).toBeInTheDocument()
-    expect(screen.getByRole('region', { name: 'Due date agenda' })).toBeInTheDocument()
+    expect(screen.getByText(/^Monthly · Checking$/)).toBeInTheDocument()
+    expect(screen.getAllByText(formatCurrency(15.99)).length).toBeGreaterThan(0)
+    expect(screen.getByRole('region', { name: 'Recurring totals' })).toBeInTheDocument()
+    expect(screen.getByRole('region', { name: 'Recurring schedule' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /Mark paid/i })).toBeInTheDocument()
+  })
+
+  it('normalises every cadence into a monthly commitment figure', async () => {
+    mockLookups()
+    vi.spyOn(recurringApi, 'listRecurringExpenses').mockResolvedValue([
+      // 10 a week is roughly 43.48 a month.
+      expense({ id: 1, name: 'Cleaner', amount: 10, recurrence_unit: 'weeks' }),
+    ])
+
+    renderPage()
+
+    expect(await screen.findByText('Monthly commitment')).toBeInTheDocument()
+    expect(screen.getByText(formatCurrency(43.48))).toBeInTheDocument()
   })
 
   it('opens linked transactions sheet from Transactions action', async () => {
@@ -168,7 +181,7 @@ describe('RecurringPage', () => {
     expect(screen.getByRole('menuitem', { name: /Delete/i })).toBeInTheDocument()
   })
 
-  it('shows disabled items in a disclosure', async () => {
+  it('keeps paused items out of the agenda until their tab is chosen', async () => {
     mockLookups()
     const user = userEvent.setup()
     vi.spyOn(recurringApi, 'listRecurringExpenses').mockResolvedValue([
@@ -187,10 +200,12 @@ describe('RecurringPage', () => {
     expect(await screen.findByText('Active Sub')).toBeInTheDocument()
     expect(screen.queryByText('Old Magazine')).not.toBeInTheDocument()
 
-    await user.click(
-      screen.getByRole('button', { name: /Disabled recurring expenses \(1\)/i }),
-    )
+    await user.click(screen.getByRole('tab', { name: /Paused \(1\)/i }))
     expect(await screen.findByText('Old Magazine')).toBeInTheDocument()
-    expect(within(screen.getByText('Old Magazine').closest('li')!).getByRole('button', { name: /Enable/i })).toBeInTheDocument()
+    expect(
+      within(screen.getByText('Old Magazine').closest('li')!).getByRole('button', {
+        name: /Resume/i,
+      }),
+    ).toBeInTheDocument()
   })
 })

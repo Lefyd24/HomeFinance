@@ -16,7 +16,7 @@ import type { Budget } from './budgetsApi'
 
 const budgetSchema = z.object({
   name: z.string().min(1, 'Budget name is required').max(100),
-  amount: z.coerce.number().positive('Amount must be greater than zero'),
+  amount: z.coerce.number<number>().positive('Amount must be greater than zero'),
   period: z.enum(['monthly', 'yearly', 'custom']),
   start_date: z.string().optional(),
   end_date: z.string().optional(),

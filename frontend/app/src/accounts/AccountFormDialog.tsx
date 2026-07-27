@@ -3,6 +3,7 @@ import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { toast } from 'sonner'
+import { Wallet01Icon } from '@hugeicons/core-free-icons'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -11,7 +12,7 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { Dialog } from '../ui/Dialog'
 import { Select } from '../ui/Select'
 import { useCreateAccount, useUpdateAccount } from './useAccounts'
-import { AccountIcon, BANK_ICONS } from './bankIcons'
+import { AccountIcon, BANK_ICONS, getAccountTypeMeta } from './bankIcons'
 import { cn } from '@/lib/utils'
 import { formatCurrency } from '../lib/format'
 import type { Account } from './accountsApi'
@@ -20,7 +21,7 @@ const accountSchema = z.object({
   name: z.string().min(1, 'Account name is required').max(100),
   type: z.enum(['checking', 'savings', 'credit', 'cash', 'investment']),
   currency: z.enum(['EUR', 'USD', 'GBP']),
-  balance: z.coerce.number(),
+  balance: z.coerce.number<number>(),
   description: z.string().max(500).optional(),
   icon: z.string().optional(),
 })
@@ -123,32 +124,53 @@ export function AccountFormDialog({ open, onOpenChange, account }: AccountFormDi
   })
 
   const isPending = isSubmitting || createAccount.isPending || updateAccount.isPending
+  const typeMeta = getAccountTypeMeta(preview.type)
 
   return (
     <Dialog
       open={open}
-      title={isEdit ? 'Edit account' : 'Add account'}
+      title={isEdit ? 'Edit account' : 'Add an account'}
+      description="The card below is exactly how it will look on the Accounts page."
+      icon={Wallet01Icon}
+      tone="primary"
       onOpenChange={onOpenChange}
       className="sm:max-w-xl"
+      footer={
+        <>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+            disabled={isPending}
+          >
+            Cancel
+          </Button>
+          <Button type="submit" form="account-form" disabled={isPending}>
+            {isPending ? 'Saving…' : isEdit ? 'Save changes' : 'Create account'}
+          </Button>
+        </>
+      }
     >
-      <form onSubmit={onSubmit} className="flex flex-col gap-4" noValidate>
-        <div className="rounded-xl border border-border bg-primary text-primary-foreground p-4">
-          <div className="flex items-center gap-3">
+      <form id="account-form" onSubmit={onSubmit} className="flex flex-col gap-4" noValidate>
+        {/* Live preview, carrying the same type rule the real card uses. */}
+        <div className="overflow-hidden rounded-xl border border-border bg-card">
+          <div className={cn('h-1 w-full', typeMeta.fill)} aria-hidden />
+          <div className="flex items-center gap-3 p-4">
             <AccountIcon
               icon={preview.icon || null}
               type={preview.type}
-              className="size-14 bg-white/15 text-primary-foreground ring-white/20"
-              imageClassName="size-10"
+              className="size-12"
+              imageClassName="size-9"
             />
             <div className="min-w-0 flex-1">
-              <p className="font-semibold text-base truncate">
-                {preview.name.trim() || 'New Account'}
+              <p className="truncate text-base font-semibold">
+                {preview.name.trim() || 'New account'}
               </p>
-              <p className="text-xs opacity-80 capitalize">
-                {preview.type} · {preview.currency}
+              <p className="text-xs text-muted-foreground">
+                {typeMeta.label} · {preview.currency}
               </p>
             </div>
-            <p className="text-xl font-bold font-heading tabular-nums shrink-0">
+            <p className="shrink-0 font-heading text-xl font-bold tabular-nums">
               {formatCurrency(Number(preview.balance) || 0, preview.currency)}
             </p>
           </div>
@@ -263,14 +285,6 @@ export function AccountFormDialog({ open, onOpenChange, account }: AccountFormDi
           />
         </div>
 
-        <div className="flex justify-end gap-2 pt-1">
-          <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isPending}>
-            Cancel
-          </Button>
-          <Button type="submit" disabled={isPending}>
-            {isPending ? 'Saving…' : isEdit ? 'Save changes' : 'Create account'}
-          </Button>
-        </div>
       </form>
     </Dialog>
   )

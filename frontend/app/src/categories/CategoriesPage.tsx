@@ -31,6 +31,7 @@ import {
 } from '@/components/ui/empty'
 import { PageContainer } from '@/ui/PageContainer'
 import { PageHeader } from '@/ui/PageHeader'
+import { useConfirm } from '@/ui/useConfirm'
 import { StatStrip, StatCard } from '@/ui/StatStrip'
 import { useCategories, useDeleteCategory } from './useCategories'
 import { CategoryFormDialog } from './CategoryFormDialog'
@@ -65,6 +66,7 @@ const TYPE_META: Record<
 export function CategoriesPage() {
   const { data: categories = [], isLoading } = useCategories()
   const deleteMutation = useDeleteCategory()
+  const { confirm, confirmDialog } = useConfirm()
 
   const [formOpen, setFormOpen] = useState(false)
   const [editingCategory, setEditingCategory] = useState<Category | null>(null)
@@ -96,9 +98,12 @@ export function CategoriesPage() {
       return
     }
 
-    const confirmed = window.confirm(
-      `Delete "${category.name}"?\n\nAny transactions using this category will need to be reassigned.`,
-    )
+    const confirmed = await confirm({
+      title: `Delete ${category.name}?`,
+      description:
+        'Transactions filed under it become uncategorised and will need reassigning.',
+      confirmLabel: 'Delete category',
+    })
 
     if (!confirmed) return
 
@@ -215,6 +220,7 @@ export function CategoriesPage() {
       )}
 
       <CategoryFormDialog open={formOpen} onOpenChange={setFormOpen} category={editingCategory} />
+      {confirmDialog}
     </PageContainer>
   )
 }

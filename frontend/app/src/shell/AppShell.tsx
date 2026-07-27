@@ -1,13 +1,17 @@
-import { useMemo, useState } from 'react'
+import { Fragment, useMemo, useState } from 'react'
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
+import { useQuery } from '@tanstack/react-query'
 import { HugeiconsIcon } from '@hugeicons/react'
 import {
+  ArrowDown01Icon,
   Logout01Icon,
   Menu01Icon,
   MoneyAdd01Icon,
   MoneyBag01Icon,
+  Notification03Icon,
   SidebarLeftIcon,
 } from '@hugeicons/core-free-icons'
+import { getNotificationLog } from '../notifications/notificationsApi'
 import { useAuth } from '../auth/AuthContext'
 import {
   ALL_NAV_ITEMS,
@@ -30,7 +34,23 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible'
+import {
+  Item,
+  ItemContent,
+  ItemDescription,
+  ItemGroup,
+  ItemMedia,
+  ItemSeparator,
+  ItemTitle,
+} from '@/components/ui/item'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { ScrollArea } from '@/components/ui/scroll-area'
+import { Skeleton } from '@/components/ui/skeleton'
 import { Separator } from '@/components/ui/separator'
 import {
   Sheet,
@@ -142,6 +162,201 @@ function NavItemLink({
   )
 }
 
+/**
+ * A parent that owns a couple of closely-related destinations. It opens itself
+ * when one of its children is the current page, so the sidebar never hides
+ * where you are.
+ */
+function NavItemGroup({
+  item,
+  collapsed = false,
+  onNavigate,
+}: {
+  item: NavItem
+  collapsed?: boolean
+  onNavigate?: () => void
+}) {
+  const location = useLocation()
+  const children = item.children ?? []
+  const childActive = children.some((child) => location.pathname.startsWith(child.to))
+  const [open, setOpen] = useState(childActive)
+
+  // Collapsed rail has no room for a disclosure — show the children as peers.
+  if (collapsed) {
+    return (
+      <>
+        {children.map((child) => (
+          <NavItemLink key={child.to} item={child} collapsed onNavigate={onNavigate} />
+        ))}
+      </>
+    )
+  }
+
+  return (
+    <Collapsible open={open || childActive} onOpenChange={setOpen}>
+      <CollapsibleTrigger asChild>
+        <button
+          type="button"
+          className={cn(
+            'group/nav flex w-full items-center gap-3 rounded-lg px-2.5 py-2 text-sm font-medium',
+            'transition-colors duration-150 ease-out',
+            childActive
+              ? 'text-sidebar-primary'
+              : 'text-sidebar-foreground/75 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground',
+          )}
+        >
+          <HugeiconsIcon
+            icon={item.icon}
+            strokeWidth={childActive ? 2.25 : 1.85}
+            className={cn(
+              'size-4 shrink-0',
+              childActive ? 'text-sidebar-primary' : 'text-muted-foreground',
+            )}
+          />
+          <span className="truncate">{item.label}</span>
+          <HugeiconsIcon
+            icon={ArrowDown01Icon}
+            strokeWidth={2}
+            className={cn(
+              'ms-auto size-3.5 shrink-0 text-muted-foreground transition-transform duration-150',
+              (open || childActive) && 'rotate-180',
+            )}
+          />
+        </button>
+      </CollapsibleTrigger>
+      <CollapsibleContent>
+        <div className="ms-4 mt-1 flex flex-col gap-1 border-s border-sidebar-border ps-2">
+          {children.map((child) => (
+            <NavItemLink key={child.to} item={child} onNavigate={onNavigate} />
+          ))}
+        </div>
+      </CollapsibleContent>
+    </Collapsible>
+  )
+}
+
+function NavEntry({
+  item,
+  collapsed = false,
+  onNavigate,
+  className,
+}: {
+  item: NavItem
+  collapsed?: boolean
+  onNavigate?: () => void
+  className?: string
+}) {
+  if (item.children?.length) {
+    return <NavItemGroup item={item} collapsed={collapsed} onNavigate={onNavigate} />
+  }
+  return (
+    <NavItemLink
+      item={item}
+      collapsed={collapsed}
+      onNavigate={onNavigate}
+      className={className}
+    />
+  )
+}
+
+function relativeTime(iso: string): string {
+  const then = new Date(iso).getTime()
+  if (Number.isNaN(then)) return ''
+  const minutes = Math.round((Date.now() - then) / 60_000)
+  if (minutes < 1) return 'Just now'
+  if (minutes < 60) return `${minutes}m ago`
+  const hours = Math.round(minutes / 60)
+  if (hours < 24) return `${hours}h ago`
+  const days = Math.round(hours / 24)
+  if (days < 7) return `${days}d ago`
+  return new Date(iso).toLocaleDateString()
+}
+
+/**
+ * Alerts live in the top bar, not on a page of their own — they are a glance,
+ * not a destination. The badge counts what landed in the last day.
+ */
+function NotificationsMenu() {
+  const { data, isLoading } = useQuery({
+    queryKey: ['notifications', 'log'],
+    queryFn: getNotificationLog,
+    staleTime: 60_000,
+    retry: false,
+  })
+
+  const entries = data ?? []
+  const recent = useMemo(() => {
+    const cutoff = Date.now() - 24 * 60 * 60 * 1000
+    return entries.filter((entry) => new Date(entry.created_at).getTime() >= cutoff).length
+  }, [entries])
+
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          className="relative size-9"
+          aria-label={recent > 0 ? `Notifications, ${recent} in the last day` : 'Notifications'}
+        >
+          <HugeiconsIcon icon={Notification03Icon} strokeWidth={2} />
+          {recent > 0 && (
+            <span className="absolute end-1 top-1 flex size-4 items-center justify-center rounded-full bg-primary text-[9px] font-bold tabular-nums text-primary-foreground">
+              {recent > 9 ? '9+' : recent}
+            </span>
+          )}
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent align="end" sideOffset={8} className="w-[22rem] overflow-hidden p-0">
+        <div className="flex items-center justify-between gap-2 border-b border-border px-3 py-2.5">
+          <p className="text-sm font-semibold">Notifications</p>
+          <span className="text-xs text-muted-foreground">
+            {recent > 0 ? `${recent} in the last day` : 'Nothing new'}
+          </span>
+        </div>
+
+        {isLoading ? (
+          <div className="flex flex-col gap-2 p-3">
+            <Skeleton className="h-12 w-full" />
+            <Skeleton className="h-12 w-full" />
+          </div>
+        ) : entries.length === 0 ? (
+          <div className="px-3 py-8 text-center">
+            <p className="text-sm text-muted-foreground">No alerts yet.</p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Budget and bill rules post here when they fire.
+            </p>
+          </div>
+        ) : (
+          <div className="max-h-[22rem] overflow-y-auto overscroll-contain">
+            <ItemGroup className="p-1.5">
+              {entries.slice(0, 20).map((entry, index) => (
+                <Fragment key={entry.id}>
+                  {index > 0 && <ItemSeparator />}
+                  <Item size="sm" className="items-start">
+                    <ItemMedia variant="icon">
+                      <HugeiconsIcon icon={Notification03Icon} strokeWidth={2} />
+                    </ItemMedia>
+                    <ItemContent>
+                      <ItemTitle className="text-sm">{entry.title}</ItemTitle>
+                      {entry.body && (
+                        <ItemDescription className="line-clamp-2">{entry.body}</ItemDescription>
+                      )}
+                      <p className="mt-0.5 text-[0.7rem] text-muted-foreground">
+                        {relativeTime(entry.created_at)}
+                      </p>
+                    </ItemContent>
+                  </Item>
+                </Fragment>
+              ))}
+            </ItemGroup>
+          </div>
+        )}
+      </PopoverContent>
+    </Popover>
+  )
+}
+
 function UserMenu({
   align = 'end',
   side = 'bottom',
@@ -184,9 +399,6 @@ function UserMenu({
           <DropdownMenuItem asChild>
             <NavLink to="/api-keys">API Keys</NavLink>
           </DropdownMenuItem>
-          <DropdownMenuItem asChild>
-            <NavLink to="/notifications">Notifications</NavLink>
-          </DropdownMenuItem>
           {user?.is_admin && (
             <DropdownMenuItem asChild>
               <NavLink to="/admin">Admin</NavLink>
@@ -220,7 +432,7 @@ function DesktopSidebar({
       className={cn(
         'hidden lg:flex lg:flex-col h-dvh sticky top-0 shrink-0 overflow-hidden',
         'border-e border-sidebar-border text-sidebar-foreground',
-        'bg-sidebar bg-[linear-gradient(165deg,var(--sidebar)_0%,color-mix(in_oklch,var(--sidebar),var(--primary)_6%)_100%)]',
+        'bg-sidebar bg-[linear-gradient(165deg,var(--sidebar)_0%,color-mix(in_oklch,var(--sidebar),var(--primary)_3%)_100%)]',
         'transition-[width] duration-200 ease-out',
         collapsed ? 'w-[4.25rem]' : 'w-64',
       )}
@@ -269,7 +481,7 @@ function DesktopSidebar({
                 <Separator className="my-1 w-6 bg-sidebar-border" />
               )}
               {group.items.map((item) => (
-                <NavItemLink key={item.to} item={item} collapsed={collapsed} />
+                <NavEntry key={item.to} item={item} collapsed={collapsed} />
               ))}
             </div>
           ))}
@@ -300,6 +512,7 @@ function DesktopSidebar({
 function NavActions() {
   return (
     <div className="ms-auto flex items-center gap-1">
+      <NotificationsMenu />
       <ThemeToggle />
       <UserMenu align="end" side="bottom" />
     </div>
@@ -367,7 +580,7 @@ function MobileNavSheet({
                   {group.label}
                 </p>
                 {group.items.map((item) => (
-                  <NavItemLink
+                  <NavEntry
                     key={item.to}
                     item={item}
                     onNavigate={() => onOpenChange(false)}
@@ -412,7 +625,7 @@ function MoreSheet({
                     {group.label}
                   </p>
                   {group.items.map((item) => (
-                    <NavItemLink
+                    <NavEntry
                       key={item.to}
                       item={item}
                       onNavigate={() => onOpenChange(false)}

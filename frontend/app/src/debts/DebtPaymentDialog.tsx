@@ -3,6 +3,7 @@ import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { toast } from 'sonner'
+import { Wallet01Icon } from '@hugeicons/core-free-icons'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -16,9 +17,9 @@ import type { Debt } from './debtsApi'
 const NONE = '__none__'
 
 const paymentSchema = z.object({
-  amount: z.coerce.number().positive('Payment amount is required'),
-  principal_amount: z.coerce.number().min(0).optional().or(z.literal('')),
-  interest_amount: z.coerce.number().min(0).optional().or(z.literal('')),
+  amount: z.coerce.number<number>().positive('Payment amount is required'),
+  principal_amount: z.coerce.number<number>().min(0).optional().or(z.literal('')),
+  interest_amount: z.coerce.number<number>().min(0).optional().or(z.literal('')),
   payment_date: z.string().min(1, 'Payment date is required'),
   account_id: z.string().optional(),
   create_transaction: z.boolean(),
@@ -109,11 +110,33 @@ export function DebtPaymentDialog({
   return (
     <Dialog
       open={open}
-      title={debt ? `Add payment · ${debt.name}` : 'Add payment'}
+      title="Record a payment"
+      description={
+        debt
+          ? `Reduces the balance on ${debt.creditor || debt.name}. Split principal and interest if your statement shows them separately.`
+          : 'Reduces the balance on this debt.'
+      }
+      icon={Wallet01Icon}
+      tone="in"
       onOpenChange={onOpenChange}
       className="sm:max-w-lg"
+      footer={
+        <>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+            disabled={isPending}
+          >
+            Cancel
+          </Button>
+          <Button type="submit" form="debt-payment-form" disabled={isPending || !debt}>
+            {isPending ? 'Saving…' : 'Record payment'}
+          </Button>
+        </>
+      }
     >
-      <form onSubmit={onSubmit} className="flex flex-col gap-4" noValidate>
+      <form id="debt-payment-form" onSubmit={onSubmit} className="flex flex-col gap-4" noValidate>
         <div className="flex flex-col gap-2">
           <Label htmlFor="payment-amount">Payment amount</Label>
           <Input
@@ -207,19 +230,6 @@ export function DebtPaymentDialog({
           />
         </div>
 
-        <div className="flex justify-end gap-2 pt-1">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => onOpenChange(false)}
-            disabled={isPending}
-          >
-            Cancel
-          </Button>
-          <Button type="submit" disabled={isPending || !debt}>
-            {isPending ? 'Saving…' : 'Add payment'}
-          </Button>
-        </div>
       </form>
     </Dialog>
   )

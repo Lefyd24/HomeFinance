@@ -221,11 +221,12 @@ describe('GoalsPage', () => {
     const deleteSpy = vi.spyOn(goalsApi, 'deleteGoal').mockResolvedValue({
       message: 'Goal deleted successfully',
     })
-    vi.spyOn(window, 'confirm').mockReturnValue(true)
-
     renderPage()
     await userEvent.click(await screen.findByRole('button', { name: /emergency fund actions/i }))
     await userEvent.click(screen.getByRole('menuitem', { name: /^delete$/i }))
+
+    const dialog = await screen.findByRole('alertdialog')
+    await userEvent.click(within(dialog).getByRole('button', { name: /delete goal/i }))
 
     await waitFor(() => expect(deleteSpy).toHaveBeenCalledWith(1))
   })
