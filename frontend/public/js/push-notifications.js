@@ -72,11 +72,20 @@ const PushNotifications = {
         }
 
         let sub = await reg.pushManager.getSubscription();
-        if (sub && (forceRefresh || !this._keysMatch(sub, key))) {
+        const needsNewSub = !sub || forceRefresh || !this._keysMatch(sub, key);
+        if (sub && needsNewSub) {
             try {
                 await sub.unsubscribe();
             } catch (e) {
-                console.warn('Could not unsubscribe stale push subscription', e);
+                console.warn('Could not unsubscribe push subscription', e);
+            }
+            sub = await reg.pushManager.getSubscription();
+            if (sub) {
+                try {
+                    await sub.unsubscribe();
+                } catch (e) {
+                    console.warn('Could not clear remaining push subscription', e);
+                }
             }
             sub = null;
         }

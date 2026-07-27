@@ -6,3 +6,4 @@ def test_send_push_mocked(monkeypatch):
     class App: VAPID_PRIVATE_KEY="k"; VAPID_PUBLIC_KEY="pub"; VAPID_SUBJECT="mailto:a@b"
     ok = p.send_push(Sub(), {"title": "Hi"}, App())
     assert ok and "subscription_info" in calls
+    assert calls.get("ttl") == p.PUSH_TTL_SECONDS

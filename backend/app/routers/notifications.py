@@ -344,6 +344,19 @@ def send_test_notification(
             else:
                 push_ok = ns._send_push(db, current_user, notif, settings)
                 if not push_ok:
-                    push_detail = "Push delivery failed — try Disable then Enable desktop notifications"
+                    remaining = (
+                        db.query(PushSubscription)
+                        .filter(PushSubscription.user_id == current_user.id)
+                        .count()
+                    )
+                    if remaining == 0 and sub_count > 0:
+                        push_detail = (
+                            "Browser subscription was reset (often after VAPID key changes) — "
+                            "click Enable desktop notifications again"
+                        )
+                    else:
+                        push_detail = (
+                            "Push delivery failed — try Disable then Enable desktop notifications"
+                        )
 
     return TestNotificationResponse(email=email_ok, push=push_ok, push_detail=push_detail, email_detail=email_detail)
