@@ -40,7 +40,7 @@ export function ImportWizardPage() {
       <div className="mb-6">
         <Label
           htmlFor="import-file"
-          className="flex flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-border bg-card px-6 py-10 cursor-pointer hover:bg-muted/40 transition-colors"
+          className="glass-panel flex flex-col items-center justify-center gap-2 rounded-xl border border-dashed px-6 py-10 cursor-pointer"
         >
           <Upload className="text-primary" size={22} />
           <span className="font-medium text-foreground">

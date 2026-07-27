@@ -52,7 +52,7 @@ export function DataTable<TData, TValue>({
   return (
     <div
       className={cn(
-        'overflow-hidden rounded-xl border border-border bg-card shadow-sm',
+        'glass-panel overflow-hidden rounded-xl border',
         className,
       )}
     >

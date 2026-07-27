@@ -38,10 +38,6 @@ import type { Account } from '../accounts/accountsApi'
 import { AccountIcon, getAccountTypeMeta } from '../accounts/bankIcons'
 import { cn } from '@/lib/utils'
 
-/** Soft elevation for dashboard panels — reads on paper in light, lifted in dark. */
-const panelShadow =
-  'shadow-[0_1px_2px_rgba(15,23,42,0.05),0_6px_20px_rgba(15,23,42,0.07)] dark:shadow-[0_1px_2px_rgba(0,0,0,0.35),0_10px_28px_rgba(0,0,0,0.45)]'
-
 /** Consistent frame for every panel on the page: title, optional link, body. */
 function Panel({
   title,
@@ -63,8 +59,7 @@ function Panel({
   return (
     <section
       className={cn(
-        'flex min-w-0 flex-col rounded-xl border border-border bg-card',
-        panelShadow,
+        'glass-panel flex min-w-0 flex-col rounded-xl border',
         className,
       )}
     >
@@ -216,7 +211,7 @@ export function DashboardPage() {
       {/* The month in four figures and one bar. Everything below explains it. */}
       <section
         aria-label="This month"
-        className={cn('rounded-xl border border-border bg-card p-5', panelShadow)}
+        className="glass-panel rounded-xl border p-5"
       >
         <div className="flex flex-wrap items-end justify-between gap-x-8 gap-y-5">
           <div>

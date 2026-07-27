@@ -254,7 +254,7 @@ export function TransactionsPage() {
       </div>
 
       {isLoading ? (
-        <div className="flex flex-col gap-3 rounded-xl border border-border bg-card p-6 shadow-sm">
+        <div className="glass-panel flex flex-col gap-3 rounded-xl border p-6">
           <Skeleton className="h-10 w-full" />
           <Skeleton className="h-12 w-full" />
           <Skeleton className="h-12 w-full" />

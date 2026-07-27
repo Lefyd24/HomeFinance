@@ -7,24 +7,17 @@
 @custom-variant dark (&:is(.dark *));
 
 /*
- * Palette
- * -------
- * Cerulean (hue ~217–227) is the primary voice: navigation, actions, links.
- * Alice-blue (hue ~240–253) is the second cool hue, used where something must
- * read as distinct from primary without competing — transfers, one chart band.
- * Burgundy / rich-mahogany (hue ~13–23) carries loss and destruction.
- * The page ground is a faded beige so the cool surfaces above it feel placed
- * on paper rather than floating on more blue.
+ * Crystalline finance palette
+ * ---------------------------
+ * Cerulean remains the product voice. The canvas is now a cool atmospheric
+ * field so translucent surfaces have real colour and depth to refract.
  */
 :root {
-  /* A faint warm paper ground — enough to sit cards on, not enough to read as
-     a colour. Surfaces above it stay neutral; the cerulean is spent on
-     primary, focus rings and charts, never on large fills. */
-  --background: oklch(98.3% 0.004 85);
+  --background: oklch(95.4% 0.018 228);
   --foreground: oklch(22% 0.016 224);
-  --card: oklch(100% 0 0);
+  --card: oklch(100% 0.004 228 / 0.86);
   --card-foreground: oklch(22% 0.016 224);
-  --popover: oklch(100% 0 0);
+  --popover: oklch(99% 0.006 228 / 0.86);
   --popover-foreground: oklch(22% 0.016 224);
   --primary: oklch(53.31% 0.101 225.53);
   --primary-foreground: oklch(96.92% 0.022 217.63);
@@ -44,7 +37,7 @@
   --chart-4: oklch(64.06% 0.197 252.97);
   --chart-5: oklch(44.32% 0.132 251.82);
   --radius: 0.625rem;
-  --sidebar: oklch(96.4% 0.005 85);
+  --sidebar: oklch(99% 0.007 228 / 0.84);
   --sidebar-foreground: oklch(22% 0.016 224);
   --sidebar-primary: oklch(53.31% 0.101 225.53);
   --sidebar-primary-foreground: oklch(96.92% 0.022 217.63);
@@ -65,6 +58,16 @@
   --flow-in: oklch(55% 0.13 160);
   --flow-out: oklch(63.09% 0.163 18.03);
   --flow-move: oklch(54.42% 0.165 252.54);
+
+  --glass-surface: oklch(100% 0.006 228 / 0.78);
+  --glass-surface-strong: oklch(100% 0.004 228 / 0.88);
+  --glass-border: oklch(63% 0.035 226 / 0.22);
+  --glass-shadow: oklch(31% 0.035 226 / 0.16);
+  --glass-shadow-depth: oklch(31% 0.04 226 / 0.22);
+  --glass-highlight: oklch(100% 0 0 / 0.88);
+  --canvas-glow-primary: oklch(75% 0.11 225 / 0.22);
+  --canvas-glow-secondary: oklch(83% 0.10 178 / 0.16);
+  --canvas-glow-accent: oklch(81% 0.10 282 / 0.14);
 }
 
 /* Dark keeps the cerulean family but at low chroma — a quiet slate-blue room,
@@ -108,6 +111,16 @@
   --flow-in: oklch(76% 0.110 160);
   --flow-out: oklch(70% 0.100 16);
   --flow-move: oklch(74% 0.090 246);
+
+  --glass-surface: oklch(24% 0.022 224 / 0.56);
+  --glass-surface-strong: oklch(25% 0.022 224 / 0.78);
+  --glass-border: oklch(100% 0 0 / 0.13);
+  --glass-shadow: oklch(0% 0 0 / 0.38);
+  --glass-shadow-depth: oklch(0% 0 0 / 0.48);
+  --glass-highlight: oklch(100% 0 0 / 0.11);
+  --canvas-glow-primary: oklch(54% 0.12 230 / 0.2);
+  --canvas-glow-secondary: oklch(52% 0.09 174 / 0.12);
+  --canvas-glow-accent: oklch(50% 0.11 283 / 0.12);
 }
 
 @theme inline {
@@ -166,6 +179,7 @@
   }
   body {
     @apply bg-background text-foreground;
+    min-height: 100dvh;
   }
   button:not(:disabled), [role="button"]:not(:disabled) {
     cursor: pointer;
@@ -175,148 +189,116 @@
   }
 }
 
-/* Frosted metal — account cards only */
 @layer components {
-  .account-metal-card {
+  .app-canvas {
     position: relative;
+    isolation: isolate;
+    background-color: var(--background);
+  }
+
+  /* ffflux mesh — light uses near-white stop; dark swaps asset (see ffflux-dark.svg). */
+  .app-canvas::before {
+    content: '';
+    position: fixed;
+    z-index: -2;
+    inset: 0;
+    pointer-events: none;
+    background-color: var(--background);
+    background-image: url('/assets/images/ffflux.svg');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+  }
+
+  .dark .app-canvas::before {
+    background-image: url('/assets/images/ffflux-dark.svg');
+  }
+
+  .app-canvas::after {
+    content: '';
+    position: fixed;
+    z-index: -1;
+    inset: 0;
+    pointer-events: none;
+    background: color-mix(in oklch, var(--background) 22%, transparent);
+  }
+
+  .glass-panel,
+  .glass-bar {
+    isolation: isolate;
+    background: var(--glass-surface);
+    -webkit-backdrop-filter: blur(14px) saturate(145%);
+    backdrop-filter: blur(14px) saturate(145%);
+  }
+
+  .glass-panel {
     overflow: hidden;
-    border-radius: var(--radius-xl);
-    background:
-      linear-gradient(
-        152deg,
-        oklch(100% 0 0 / 0.62) 0%,
-        oklch(100% 0 0 / 0.38) 52%,
-        oklch(100% 0 0 / 0.28) 100%
-      );
+    border-color: color-mix(in oklch, var(--glass-border) 72%, var(--border));
     box-shadow:
-      inset 0 1px 0 0 oklch(100% 0 0 / 0.88),
-      0 10px 28px -14px oklch(22% 0.02 224 / 0.1);
-    -webkit-backdrop-filter: blur(22px) saturate(165%);
-    backdrop-filter: blur(22px) saturate(165%);
-    transition:
-      transform 0.25s cubic-bezier(0.22, 1, 0.36, 1),
-      box-shadow 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+      inset 0 1px 0 color-mix(in oklch, white 58%, transparent),
+      inset 0 -1px 0 color-mix(in oklch, var(--glass-border) 24%, transparent),
+      0 0 16px -7px var(--glass-shadow),
+      0 4px 12px -9px var(--glass-shadow),
+      0 14px 34px -18px var(--glass-shadow-depth);
+  }
+
+  .glass-bar {
+    background: var(--glass-surface-strong);
+    border-color: color-mix(in oklch, var(--glass-border) 62%, var(--border));
+    box-shadow:
+      inset 0 1px 0 color-mix(in oklch, white 44%, transparent),
+      inset 0 -1px 0 color-mix(in oklch, var(--glass-border) 20%, transparent),
+      0 0 14px -8px var(--glass-shadow),
+      0 8px 24px -18px var(--glass-shadow-depth);
+    -webkit-backdrop-filter: blur(16px) saturate(145%);
+    backdrop-filter: blur(16px) saturate(145%);
+  }
+
+  .glass-popover {
+    background: var(--glass-surface-strong);
+    isolation: isolate;
+    border-color: var(--glass-border);
+    box-shadow:
+      inset 0 1px 1px color-mix(in oklch, white 54%, transparent),
+      0 8px 24px color-mix(in oklch, var(--glass-shadow) 84%, transparent);
+    -webkit-backdrop-filter: blur(18px) saturate(175%) brightness(1.03);
+    backdrop-filter: blur(18px) saturate(175%) brightness(1.03);
   }
 
   @supports not ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
-    .account-metal-card {
+    .glass-panel,
+    .glass-bar,
+    .glass-popover {
       background: var(--card);
-      border: 1px solid var(--border);
     }
   }
 
-  .account-metal-card::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    border-radius: inherit;
-    padding: 1px;
-    background: linear-gradient(
-      148deg,
-      color-mix(in oklch, white 90%, transparent) 0%,
-      color-mix(in oklch, white 20%, transparent) 40%,
-      color-mix(in oklch, white 35%, transparent) 100%
-    );
-    -webkit-mask:
-      linear-gradient(#fff 0 0) content-box,
-      linear-gradient(#fff 0 0);
-    mask:
-      linear-gradient(#fff 0 0) content-box,
-      linear-gradient(#fff 0 0);
-    -webkit-mask-composite: xor;
-    mask-composite: exclude;
-    pointer-events: none;
-    z-index: 4;
+  @media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
+    .app-canvas::before {
+      background-image: none;
+    }
+
+    .app-canvas::after {
+      background: var(--background);
+    }
+
+    .glass-panel,
+    .glass-bar,
+    .glass-popover {
+      background: var(--card);
+      -webkit-backdrop-filter: none;
+      backdrop-filter: none;
+    }
   }
 
-  .account-metal-card__noise {
-    position: absolute;
-    inset: 0;
-    z-index: 2;
-    opacity: 0.18;
-    mix-blend-mode: soft-light;
-    pointer-events: none;
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-    background-size: 96px 96px;
+  @media (max-width: 48rem) {
+    .glass-panel,
+    .glass-bar,
+    .glass-popover {
+      -webkit-backdrop-filter: blur(10px) saturate(145%);
+      backdrop-filter: blur(10px) saturate(145%);
+    }
   }
 
-  .account-metal-card__specular {
-    position: absolute;
-    inset: 0;
-    z-index: 1;
-    pointer-events: none;
-    background: radial-gradient(
-      ellipse 80% 55% at 10% -12%,
-      color-mix(in oklch, white 38%, transparent),
-      transparent 65%
-    );
-  }
-
-  .account-metal-card__caustic {
-    position: absolute;
-    inset: 0;
-    z-index: 1;
-    pointer-events: none;
-    opacity: 0.12;
-    background: linear-gradient(
-      118deg,
-      transparent 38%,
-      color-mix(in oklch, white 6%, transparent) 50%,
-      transparent 62%
-    );
-  }
-
-  .account-metal-card__glow {
-    position: absolute;
-    width: 5.5rem;
-    height: 5.5rem;
-    right: -1.25rem;
-    top: -1.25rem;
-    border-radius: 9999px;
-    filter: blur(26px);
-    opacity: 0.45;
-    pointer-events: none;
-    z-index: 0;
-  }
-
-  .dark .account-metal-card {
-    background:
-      linear-gradient(
-        152deg,
-        oklch(24% 0.018 224 / 0.68) 0%,
-        oklch(24% 0.018 224 / 0.4) 52%,
-        oklch(16% 0.014 224 / 0.5) 100%
-      );
-    box-shadow:
-      inset 0 1px 0 0 oklch(100% 0 0 / 0.12),
-      0 12px 32px -14px oklch(0% 0 0 / 0.5);
-    -webkit-backdrop-filter: blur(28px) saturate(160%) brightness(0.95);
-    backdrop-filter: blur(28px) saturate(160%) brightness(0.95);
-  }
-
-  .dark .account-metal-card::before {
-    background: linear-gradient(
-      148deg,
-      color-mix(in oklch, white 28%, transparent) 0%,
-      color-mix(in oklch, white 6%, transparent) 40%,
-      color-mix(in oklch, white 12%, transparent) 100%
-    );
-  }
-
-  .dark .account-metal-card__noise {
-    opacity: 0.14;
-    mix-blend-mode: overlay;
-  }
-
-  .dark .account-metal-card__specular {
-    background: radial-gradient(
-      ellipse 70% 45% at 10% -10%,
-      color-mix(in oklch, white 10%, transparent),
-      transparent 58%
-    );
-  }
-
-  .dark .account-metal-card__caustic {
-    display: none;
-  }
 }

@@ -195,7 +195,7 @@ export function BudgetsPage() {
       ) : (
         <div className="flex flex-col gap-4">
           {/* Portfolio utilization narrative — not a StatStrip */}
-          <section className="rounded-2xl border border-border bg-card p-4 sm:p-5">
+          <section className="glass-panel rounded-xl border p-4 sm:p-5">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div className="min-w-0">
                 <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
@@ -245,7 +245,7 @@ export function BudgetsPage() {
 
           {/* List + detail composition */}
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,20rem)_minmax(0,1fr)] lg:items-start">
-            <aside className="rounded-2xl border border-border bg-card">
+            <aside className="glass-panel rounded-xl border">
               <div className="flex items-center justify-between gap-2 border-b border-border px-4 py-3">
                 <h2 className="text-sm font-semibold">Active budgets</h2>
                 <Badge variant="secondary">{summary.count}</Badge>
@@ -349,7 +349,7 @@ function BudgetFocusPanel({
   const leftoverShare = Math.max(0, 100 - spentShare)
 
   return (
-    <section className="rounded-2xl border border-border bg-card">
+    <section className="glass-panel rounded-xl border">
       <div className="flex items-start justify-between gap-3 border-b border-border px-4 py-4 sm:px-5">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">

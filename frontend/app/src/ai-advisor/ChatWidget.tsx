@@ -231,7 +231,7 @@ function EmptyState({
                   key={prompt}
                   type="button"
                   onClick={() => onPick(prompt)}
-                  className="rounded-full border border-border bg-card px-3.5 py-2 text-start text-sm text-foreground transition-colors hover:border-primary/40 hover:bg-accent focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+                  className="rounded-full border border-border bg-card px-3.5 py-2 text-start text-sm text-foreground focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
                 >
                   {prompt}
                 </button>
@@ -278,7 +278,7 @@ function Composer({
   return (
     <div className="border-t border-border bg-background/85 px-4 py-3 backdrop-blur-md">
       <form
-        className="mx-auto flex w-full max-w-3xl items-end gap-2 rounded-2xl border border-border bg-card p-2 shadow-sm focus-within:border-primary/40 focus-within:ring-3 focus-within:ring-ring/25"
+        className="glass-panel mx-auto flex w-full max-w-3xl items-end gap-2 rounded-xl border p-2 focus-within:border-primary/40 focus-within:ring-3 focus-within:ring-ring/25"
         onSubmit={(event) => {
           event.preventDefault()
           submit()

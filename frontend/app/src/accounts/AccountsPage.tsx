@@ -318,18 +318,8 @@ function AccountCard({
   const sharePct = Math.round(share * 100)
 
   return (
-    <article
-      className={cn(
-        'account-metal-card group/card flex h-full flex-col',
-        'hover:-translate-y-px',
-      )}
-    >
-      <div className="account-metal-card__noise" aria-hidden />
-      <div className="account-metal-card__specular" aria-hidden />
-      <div className="account-metal-card__caustic" aria-hidden />
-      <div className={cn('account-metal-card__glow', meta.ambient)} aria-hidden />
-
-      <div className="relative z-[3] flex flex-1 flex-col gap-2 p-3.5">
+    <article className="glass-panel flex h-full flex-col rounded-xl border">
+      <div className="flex flex-1 flex-col gap-2 p-3.5">
         <div className="flex items-center gap-2.5">
           <AccountIcon
             icon={account.icon}
@@ -360,7 +350,7 @@ function AccountCard({
               <Button
                 variant="ghost"
                 size="icon-sm"
-                className="-mr-1 size-7 shrink-0 opacity-50 transition-opacity group-hover/card:opacity-100"
+                className="-mr-1 size-7 shrink-0 opacity-70"
                 aria-label="Account actions"
               >
                 <HugeiconsIcon icon={MoreVerticalIcon} strokeWidth={2} className="size-4" />

@@ -37,7 +37,7 @@ export function PeriodReadBand({
 
   if (loading || !current) {
     return (
-      <section className="rounded-2xl border border-border bg-card p-5 shadow-sm sm:p-6">
+      <section className="glass-panel rounded-xl border p-5 sm:p-6">
         <Skeleton className="h-8 w-3/4 max-w-xl" />
         <Skeleton className="mt-3 h-4 w-1/2 max-w-md" />
         <div className="mt-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
@@ -57,7 +57,7 @@ export function PeriodReadBand({
   return (
     <section
       className={cn(
-        'relative overflow-hidden rounded-2xl border bg-card p-5 shadow-sm sm:p-6',
+        'glass-panel relative overflow-hidden rounded-xl border p-5 sm:p-6',
         read.tone === 'positive' && 'border-success/35',
         read.tone === 'negative' && 'border-destructive/35',
         read.tone === 'neutral' && 'border-border',

@@ -29,10 +29,10 @@ export function StatCard({
         ? 'bg-success/15 text-foreground border-success/30'
         : tone === 'destructive'
           ? 'bg-destructive/15 text-foreground border-destructive/30'
-          : 'bg-card text-foreground border-border'
+          : 'glass-panel text-foreground'
 
   return (
-    <div className={cn('rounded-xl border p-4 shadow-sm', surface, className)}>
+    <div className={cn('rounded-xl border p-4', surface, className)}>
       <p className={cn('text-sm', tone === 'primary' ? 'opacity-80' : 'text-muted-foreground')}>{label}</p>
       <div className="text-2xl font-bold font-heading tracking-tight mt-1">{value}</div>
       {hint && (

@@ -75,7 +75,7 @@ function userInitials(name: string | null | undefined, email: string | undefined
 function BrandMark({ compact = false }: { compact?: boolean }) {
   return (
     <div className={cn('flex items-center gap-2.5 min-w-0', compact && 'justify-center')}>
-      <div className="relative size-8 shrink-0 rounded-xl bg-primary text-primary-foreground shadow-sm flex items-center justify-center overflow-hidden">
+      <div className="relative size-8 shrink-0 rounded-xl bg-primary text-primary-foreground flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,color-mix(in_oklch,var(--primary-foreground)_35%,transparent),transparent_55%)]" />
         <HugeiconsIcon icon={MoneyBag01Icon} strokeWidth={2} className="relative size-4" />
       </div>
@@ -116,7 +116,7 @@ function NavItemLink({
             : 'gap-3 px-2.5 py-2',
           isActive
             ? cn(
-                'bg-sidebar-primary/12 text-sidebar-primary',
+                'bg-sidebar-primary/12 text-sidebar-primary shadow-[inset_0_1px_0_rgba(255,255,255,0.55)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]',
                 !collapsed && 'ps-3',
               )
             : cn(
@@ -431,8 +431,7 @@ function DesktopSidebar({
     <aside
       className={cn(
         'hidden lg:flex lg:flex-col h-dvh sticky top-0 shrink-0 overflow-hidden',
-        'border-e border-sidebar-border text-sidebar-foreground',
-        'bg-sidebar bg-[linear-gradient(165deg,var(--sidebar)_0%,color-mix(in_oklch,var(--sidebar),var(--primary)_3%)_100%)]',
+        'glass-bar border-e border-sidebar-border text-sidebar-foreground',
         'transition-[width] duration-200 ease-out',
         collapsed ? 'w-[4.25rem]' : 'w-64',
       )}
@@ -543,7 +542,7 @@ function QuickAddTransactionFab() {
 
 function MobileTopBar({ onOpenMenu }: { onOpenMenu: () => void }) {
   return (
-    <header className="lg:hidden sticky top-0 z-30 flex h-14 shrink-0 items-center gap-2 border-b border-border bg-background/85 px-3 backdrop-blur-md supports-backdrop-filter:bg-background/70">
+    <header className="glass-bar lg:hidden sticky top-0 z-30 flex h-14 shrink-0 items-center gap-2 border-b border-border px-3">
       <Button
         variant="ghost"
         size="icon"
@@ -669,7 +668,7 @@ function MobileBottomNav({
   )
 
   return (
-    <nav className="lg:hidden fixed bottom-0 inset-x-0 z-40 border-t border-border bg-background/90 backdrop-blur-md supports-backdrop-filter:bg-background/75 pb-[env(safe-area-inset-bottom)]">
+    <nav className="glass-bar lg:hidden fixed bottom-0 inset-x-0 z-40 border-t border-border pb-[env(safe-area-inset-bottom)]">
       <div className="flex h-16 items-stretch px-1">
         {PRIMARY_NAV_ITEMS.map(({ label, to, icon }) => (
           <NavLink
@@ -719,7 +718,7 @@ function DesktopTopBar() {
   const current = ALL_NAV_ITEMS.find((item) => location.pathname.startsWith(item.to))
 
   return (
-    <header className="hidden lg:flex sticky top-0 z-20 h-14 shrink-0 items-center gap-3 border-b border-border bg-background/80 px-4 backdrop-blur-md supports-backdrop-filter:bg-background/65">
+    <header className="glass-bar hidden lg:flex sticky top-0 z-20 h-14 shrink-0 items-center gap-3 border-b border-border px-4">
       <div className="min-w-0">
         <p className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">Workspace</p>
         <h1 className="font-heading text-sm font-semibold tracking-tight truncate">
@@ -737,7 +736,7 @@ export function AppShell() {
   const [moreOpen, setMoreOpen] = useState(false)
 
   return (
-    <div className="h-dvh flex overflow-hidden bg-background">
+    <div className="app-canvas h-dvh flex overflow-hidden">
       <DesktopSidebar collapsed={collapsed} onToggle={() => setCollapsed((v) => !v)} />
 
       <div className="flex-1 min-w-0 min-h-0 flex flex-col overflow-hidden">

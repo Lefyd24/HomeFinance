@@ -346,7 +346,7 @@ export function DebtsPage() {
         </Empty>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-[minmax(16rem,20rem)_1fr] gap-4 items-start">
-          <aside className="rounded-xl border border-border bg-card overflow-hidden">
+          <aside className="glass-panel rounded-xl border overflow-hidden">
             <div className="border-b border-border px-4 py-3 flex items-center justify-between gap-2">
               <div>
                 <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
@@ -550,7 +550,7 @@ function DebtDetailPanel({
   const tone = debtTone(debt)
 
   return (
-    <section className="min-w-0 overflow-hidden rounded-xl border border-border bg-card">
+    <section className="glass-panel min-w-0 overflow-hidden rounded-xl border">
       <div
         className={cn(
           'bg-gradient-to-br to-transparent px-5 py-5 sm:px-6',

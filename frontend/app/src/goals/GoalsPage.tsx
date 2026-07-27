@@ -323,8 +323,8 @@ function PrimaryGoalHero({
     <section
       aria-label={`Primary goal: ${goal.name}`}
       className={cn(
-        'relative overflow-hidden rounded-2xl border',
-        complete ? 'border-success/40 bg-success/5' : 'border-primary/25 bg-card',
+        'glass-panel relative overflow-hidden rounded-xl border',
+        complete ? 'border-success/40 bg-success/5' : 'border-primary/25',
       )}
     >
       <div
@@ -475,7 +475,7 @@ function GoalListRow({
   return (
     <li
       className={cn(
-        'group flex flex-col gap-3 rounded-xl border bg-card p-4 transition-colors hover:bg-muted/20 sm:flex-row sm:items-center',
+        'glass-panel group flex flex-col gap-3 rounded-xl border p-4 sm:flex-row sm:items-center',
         complete && 'border-success/30',
       )}
     >

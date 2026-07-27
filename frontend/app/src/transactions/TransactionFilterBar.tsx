@@ -397,7 +397,7 @@ export function TransactionFilterBar({
   }
 
   return (
-    <div className="flex flex-col gap-3 rounded-xl border border-border bg-card p-3 shadow-sm">
+    <div className="glass-panel flex flex-col gap-3 rounded-xl border p-3">
       <div className="flex flex-col gap-2 lg:flex-row lg:items-center">
         <InputGroup className="h-9 lg:max-w-xs">
           <InputGroupAddon>

@@ -13,7 +13,7 @@ export function ListCard({
   return (
     <Comp
       className={cn(
-        'rounded-xl border border-border bg-card p-4 shadow-sm transition-colors',
+        'glass-panel rounded-xl border p-4 transition-colors',
         className,
       )}
     >
