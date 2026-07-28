@@ -13,8 +13,8 @@
  * field so translucent surfaces have real colour and depth to refract.
  */
 :root {
-  --background: oklch(97.415% 0.00354 220.942);
-  --foreground: oklch(22% 0.016 224);
+  --background: oklch(94.504% 0.01299 221.795 / 0.89);
+  --foreground: oklch(18.591% 0.01009 220.193);
   --card: oklch(100% 0.004 228 / 0.86);
   --card-foreground: oklch(22% 0.016 224);
   --popover: oklch(99% 0.006 228 / 0.86);
@@ -72,16 +72,23 @@
   /* Desktop shell scoop where sidebar meets the content well. */
   --shell-scoop-radius: 1.25rem;
   --shell-chrome: var(--glass-surface-strong);
+
+  /* Tab strips sit on the mesh canvas — need a solid lift off --background. */
+  --tabs-list-bg: oklch(100% 0.004 228 / 0.96);
+  --tabs-list-border: color-mix(in oklch, var(--glass-border) 48%, var(--border));
+  --tabs-active-bg: oklch(100% 0 0);
+  --tabs-active-border: color-mix(in oklch, var(--primary) 22%, var(--border));
+  --tabs-inactive-foreground: oklch(40% 0.02 224);
 }
 
 /* Dark keeps the cerulean family but at low chroma — a quiet slate-blue room,
    not a glowing console. Saturated cyan appears only on focus rings and charts. */
 .dark {
-  --background: oklch(16.5% 0.014 224);
+  --background: oklch(15.227% 0.01252 216.022);
   --foreground: oklch(93% 0.011 220);
   --card: oklch(24% 0.018 224);
   --card-foreground: oklch(93% 0.011 220);
-  --popover: oklch(26% 0.019 224);
+  --popover: oklch(22.806% 0.01517 226.968);
   --popover-foreground: oklch(93% 0.011 220);
   --primary: oklch(72% 0.082 228);
   --primary-foreground: oklch(18% 0.020 222);
@@ -104,7 +111,7 @@
   --sidebar-foreground: oklch(93% 0.011 220);
   --sidebar-primary: oklch(74% 0.085 226);
   --sidebar-primary-foreground: oklch(18% 0.020 222);
-  --sidebar-accent: oklch(30% 0.017 224);
+  --sidebar-accent: oklch(26.538% 0.01387 220.166);
   --sidebar-accent-foreground: oklch(93% 0.011 220);
   --sidebar-border: oklch(1 0 0 / 14%);
   --sidebar-ring: oklch(72% 0.082 228);
@@ -116,7 +123,7 @@
   --flow-out: oklch(70% 0.100 16);
   --flow-move: oklch(74% 0.090 246);
 
-  --glass-surface: oklch(24% 0.022 224 / 0.56);
+  --glass-surface: oklch(22.417% 0.02085 217.816 / 0.56);
   --glass-surface-strong: oklch(25% 0.022 224 / 0.78);
   --glass-border: oklch(100% 0 0 / 0.13);
   --glass-shadow: oklch(0% 0 0 / 0.38);
@@ -126,6 +133,12 @@
   --canvas-glow-secondary: oklch(52% 0.09 174 / 0.12);
   --canvas-glow-accent: oklch(50% 0.11 283 / 0.12);
   --shell-chrome: var(--glass-surface-strong);
+
+  --tabs-list-bg: oklch(27% 0.022 224 / 0.92);
+  --tabs-list-border: color-mix(in oklch, var(--glass-border) 55%, var(--border));
+  --tabs-active-bg: oklch(34% 0.024 224);
+  --tabs-active-border: color-mix(in oklch, var(--primary) 35%, var(--border));
+  --tabs-inactive-foreground: oklch(74% 0.018 222);
 }
 
 @theme inline {
@@ -271,6 +284,61 @@
     backdrop-filter: blur(18px) saturate(175%) brightness(1.03);
   }
 
+  [data-slot="tabs-list"][data-variant="default"],
+  [data-slot="tabs-list"][data-variant="line"] {
+    background: var(--tabs-list-bg);
+    border: 1px solid var(--tabs-list-border);
+    box-shadow:
+      inset 0 1px 0 color-mix(in oklch, white 52%, transparent),
+      0 1px 3px color-mix(in oklch, var(--glass-shadow) 35%, transparent);
+  }
+
+  [data-slot="tabs-list"][data-variant="line"] {
+    border-radius: var(--radius-lg);
+  }
+
+  [data-slot="tabs-list"][data-variant="default"] [data-slot="tabs-trigger"] {
+    color: var(--tabs-inactive-foreground);
+  }
+
+  [data-slot="tabs-list"][data-variant="default"] [data-slot="tabs-trigger"][data-state="active"],
+  [data-slot="tabs-list"][data-variant="default"] [data-slot="tabs-trigger"][data-active],
+  [data-slot="tabs-list"][data-variant="line"] [data-slot="tabs-trigger"][data-state="active"],
+  [data-slot="tabs-list"][data-variant="line"] [data-slot="tabs-trigger"][data-active] {
+    background: var(--primary);
+    border-color: transparent;
+    color: var(--primary-foreground);
+    box-shadow: none;
+  }
+
+  [data-slot="tabs-list"][data-variant="line"] [data-slot="tabs-trigger"] {
+    color: var(--tabs-inactive-foreground);
+  }
+
+  .report-filter-group {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.125rem;
+    padding: 0.125rem;
+    border-radius: var(--radius-lg);
+    background: color-mix(in oklch, var(--primary) 11%, var(--tabs-list-bg));
+    border: 1px solid color-mix(in oklch, var(--primary) 22%, var(--tabs-list-border));
+    box-shadow: inset 0 1px 0 color-mix(in oklch, white 40%, transparent);
+  }
+
+  .report-filter-group [data-slot="button"] {
+    border-color: transparent;
+    background: transparent;
+    color: var(--primary);
+  }
+
+  .report-filter-group [data-slot="button"]:hover,
+  .report-filter-group [data-slot="button"][data-state="open"] {
+    background: color-mix(in oklch, var(--primary) 14%, transparent);
+    color: var(--foreground);
+  }
+
   @supports not ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
     .glass-panel,
     .glass-bar,
@@ -294,6 +362,20 @@
       background: var(--card);
       -webkit-backdrop-filter: none;
       backdrop-filter: none;
+    }
+
+    [data-slot="tabs-list"] {
+      background: var(--card);
+      border-color: var(--border);
+      box-shadow: none;
+    }
+
+    [data-slot="tabs-list"] [data-slot="tabs-trigger"][data-state="active"],
+    [data-slot="tabs-list"] [data-slot="tabs-trigger"][data-active] {
+      background: var(--primary);
+      border-color: transparent;
+      color: var(--primary-foreground);
+      box-shadow: none;
     }
   }
 

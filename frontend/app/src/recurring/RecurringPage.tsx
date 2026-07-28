@@ -238,12 +238,12 @@ export function RecurringPage() {
       />
 
       {isLoading ? (
-        <div className="flex flex-col gap-4">
-          <Skeleton className="h-14 w-full rounded-lg" />
-          <Skeleton className="h-64 w-full rounded-lg" />
+        <div className="glass-panel flex flex-col gap-3 rounded-xl border p-4">
+          <Skeleton className="h-14 w-full rounded-lg bg-muted/50" />
+          <Skeleton className="h-64 w-full rounded-lg bg-muted/50" />
         </div>
       ) : expenses.length === 0 ? (
-        <Empty className="border border-dashed py-14">
+        <Empty className="glass-panel border border-dashed py-14">
           <EmptyHeader>
             <EmptyMedia variant="icon">
               <HugeiconsIcon icon={RepeatIcon} strokeWidth={2} />
@@ -263,11 +263,11 @@ export function RecurringPage() {
         </Empty>
       ) : (
         <div className="flex flex-col gap-6">
-          {/* Three figures on one hairline. No cards — the numbers are the design. */}
           <section
             aria-label="Recurring totals"
-            className="grid grid-cols-1 divide-y divide-border border-y border-border sm:grid-cols-3 sm:divide-x sm:divide-y-0"
+            className="glass-panel overflow-hidden rounded-xl border"
           >
+            <div className="grid grid-cols-1 divide-y divide-border/70 sm:grid-cols-3 sm:divide-x sm:divide-y-0">
             <Figure
               label="Due in 30 days"
               value={formatCurrency(totals.due30)}
@@ -284,6 +284,7 @@ export function RecurringPage() {
               hint={totals.overdueTotal > 0 ? 'Needs attention' : 'All clear'}
               tone={totals.overdueTotal > 0 ? 'urgent' : 'calm'}
             />
+            </div>
           </section>
 
           <Tabs value={view} onValueChange={(v) => setView(v as View)}>
@@ -295,15 +296,15 @@ export function RecurringPage() {
             </TabsList>
           </Tabs>
 
-          <section aria-label="Recurring schedule" className="flex flex-col gap-7">
+          <section aria-label="Recurring schedule" className="flex flex-col gap-5">
             {sections.length === 0 ? (
-              <p className="py-10 text-center text-sm text-muted-foreground">
-                Nothing here in this view.
-              </p>
+              <div className="glass-panel rounded-xl border px-4 py-10 text-center">
+                <p className="text-sm text-muted-foreground">Nothing here in this view.</p>
+              </div>
             ) : (
               sections.map((section) => (
-                <div key={section.key} className="flex flex-col">
-                  <div className="flex items-baseline gap-3 pb-2">
+                <div key={section.key} className="glass-panel overflow-hidden rounded-xl border">
+                  <div className="glass-inset-header flex items-baseline gap-3 border-b px-4 py-2.5">
                     <h2
                       className={cn(
                         'text-xs font-semibold uppercase tracking-[0.14em]',
@@ -315,13 +316,13 @@ export function RecurringPage() {
                     <span className="text-xs tabular-nums text-muted-foreground">
                       {section.items.length}
                     </span>
-                    <span className="h-px flex-1 bg-border" />
-                    <span className="text-xs tabular-nums text-muted-foreground">
+                    <span className="h-px flex-1 bg-border/70" />
+                    <span className="text-xs font-semibold tabular-nums text-foreground">
                       {formatCurrency(section.items.reduce((sum, e) => sum + e.amount, 0))}
                     </span>
                   </div>
 
-                  <ul className="flex flex-col">
+                  <ul className="divide-y divide-border/60">
                     {section.items.map((expense) => (
                       <RecurringRow
                         key={expense.id}
@@ -371,7 +372,7 @@ export function RecurringPage() {
               </p>
             ) : (
               <>
-                <div className="grid grid-cols-3 gap-3 border-b px-4 py-4">
+                <div className="glass-panel mx-4 mt-4 grid grid-cols-3 gap-3 rounded-xl border px-4 py-4">
                   <div>
                     <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
                       Total paid
@@ -512,7 +513,7 @@ function Figure({
   tone?: 'calm' | 'urgent'
 }) {
   return (
-    <div className="px-1 py-4 sm:px-5 sm:first:ps-0">
+    <div className="px-4 py-4 sm:px-5 sm:first:ps-5">
       <p className="text-[0.65rem] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
         {label}
       </p>
@@ -556,10 +557,10 @@ function RecurringRow({
   return (
     <li
       className={cn(
-        'group/row flex items-center gap-3 border-b border-border/60 py-2.5 ps-3 transition-colors',
-        'border-s-2 hover:bg-muted/40',
+        'glass-row group/row flex items-center gap-3 py-2.5 ps-3 pe-2 sm:pe-3',
+        'border-s-[3px]',
         paused
-          ? 'border-s-border'
+          ? 'border-s-border/80'
           : overdue
             ? 'border-s-destructive'
             : flow === 'income'

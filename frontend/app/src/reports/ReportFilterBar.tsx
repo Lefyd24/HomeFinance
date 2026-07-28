@@ -35,11 +35,12 @@ export function ReportFilterBar({ filters }: { filters: ReportFilters }) {
   }
 
   return (
-    <div className="sticky top-0 z-20 -mx-3 mb-6 border-b border-border bg-background/85 px-3 py-3 backdrop-blur-md sm:-mx-4 sm:px-4 lg:-mx-6 lg:px-6">
+    <div className="sticky top-0 z-20 -mx-3 mb-6 px-3 py-3 sm:-mx-4 sm:px-4 lg:-mx-6 lg:px-6">
       <div className="flex flex-wrap items-center gap-2">
+        <div className="report-filter-group">
         <Popover>
           <PopoverTrigger asChild>
-            <Button variant="outline" size="sm">
+            <Button variant="ghost" size="sm">
               <CalendarRange data-icon="inline-start" />
               {RANGE_PRESETS.find((preset) => preset.key === filters.range)?.label}
               <ChevronDown data-icon="inline-end" />
@@ -105,6 +106,7 @@ export function ReportFilterBar({ filters }: { filters: ReportFilters }) {
           onClear={filters.clearCategories}
           emptyLabel="No categories yet"
         />
+        </div>
 
         {filters.hasDimensionFilters && (
           <Button variant="ghost" size="sm" onClick={filters.reset}>
@@ -119,7 +121,7 @@ export function ReportFilterBar({ filters }: { filters: ReportFilters }) {
           {formatDate(filters.startDate)} — {formatDate(filters.endDate)}
         </p>
 
-        <Button variant="outline" size="sm" onClick={() => void handleExport()}>
+        <Button variant="success" size="sm" onClick={() => void handleExport()}>
           <Download data-icon="inline-start" />
           Export CSV
         </Button>
@@ -148,7 +150,7 @@ function MultiSelect({
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Button variant="outline" size="sm">
+        <Button variant="ghost" size="sm">
           <Icon data-icon="inline-start" />
           {label}
           {selected.length > 0 && (

@@ -280,18 +280,21 @@ function relativeTime(iso: string): string {
  * not a destination. The badge counts what landed in the last day.
  */
 function NotificationsMenu() {
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, dataUpdatedAt } = useQuery({
     queryKey: ['notifications', 'log'],
     queryFn: getNotificationLog,
     staleTime: 60_000,
     retry: false,
   })
 
-  const entries = data ?? []
   const recent = useMemo(() => {
-    const cutoff = Date.now() - 24 * 60 * 60 * 1000
+    const entries = data ?? []
+    if (entries.length === 0 || dataUpdatedAt === 0) return 0
+    const cutoff = dataUpdatedAt - 24 * 60 * 60 * 1000
     return entries.filter((entry) => new Date(entry.created_at).getTime() >= cutoff).length
-  }, [entries])
+  }, [data, dataUpdatedAt])
+
+  const entries = data ?? []
 
   return (
     <Popover>

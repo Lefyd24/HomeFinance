@@ -53,10 +53,10 @@ export function ReportsPage() {
           filters={filters}
         />
 
-        <Tabs value={filters.tab} onValueChange={filters.setTab}>
-          <TabsList className="mb-4 w-full justify-start overflow-x-auto">
+        <Tabs value={filters.tab} onValueChange={filters.setTab} className="w-full">
+          <TabsList fullWidth className="mb-4">
             {TABS.map((tab) => (
-              <TabsTrigger key={tab.key} value={tab.key}>
+              <TabsTrigger key={tab.key} value={tab.key} className="min-w-0 flex-1">
                 {tab.label}
               </TabsTrigger>
             ))}

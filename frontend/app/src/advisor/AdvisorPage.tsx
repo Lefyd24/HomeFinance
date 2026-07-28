@@ -35,13 +35,9 @@ export function AdvisorPage() {
       />
 
       <Tabs value={tool} onValueChange={(v) => setTool(v as ToolId)}>
-        <TabsList className="h-auto w-full flex-wrap justify-start gap-1 bg-transparent p-0 sm:w-fit sm:bg-muted sm:p-[3px]">
+        <TabsList className="h-auto w-full flex-wrap justify-start gap-1 sm:w-fit">
           {TOOLS.map((t) => (
-            <TabsTrigger
-              key={t.id}
-              value={t.id}
-              className="rounded-lg border border-border px-3.5 py-1.5 data-active:border-transparent sm:border-0"
-            >
+            <TabsTrigger key={t.id} value={t.id} className="px-3.5 py-1.5">
               {t.label}
             </TabsTrigger>
           ))}
