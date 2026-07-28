@@ -3,13 +3,9 @@ import { toast } from 'sonner'
 import { HugeiconsIcon } from '@hugeicons/react'
 import {
   Add01Icon,
-  Alert02Icon,
-  Calendar03Icon,
   Delete02Icon,
   MoreVerticalIcon,
-  PencilEdit02Icon,
   PiggyBankIcon,
-  ChartHistogramIcon,
 } from '@hugeicons/core-free-icons'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -70,11 +66,11 @@ const TONE_BAR: Record<Tone, string> = {
   unused: 'bg-border',
 }
 
-const TONE_BADGE: Record<Tone, { label: string; variant: 'destructive' | 'secondary' | 'outline' }> = {
-  over: { label: 'Over', variant: 'destructive' },
-  watch: { label: 'Almost', variant: 'secondary' },
-  unused: { label: 'Unused', variant: 'outline' },
-  good: { label: 'On track', variant: 'outline' },
+const TONE_STATUS: Record<Tone, string> = {
+  over: 'Over',
+  watch: 'Almost',
+  unused: 'Unused',
+  good: 'On track',
 }
 
 export function BudgetsPage() {
@@ -157,11 +153,11 @@ export function BudgetsPage() {
 
       {isLoading ? (
         <div className="flex flex-col gap-4">
-          <Skeleton className="h-24 w-full rounded-2xl" />
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
-            <Skeleton className="h-64 w-full rounded-2xl" />
-            <Skeleton className="h-64 w-full rounded-2xl" />
-            <Skeleton className="h-64 w-full rounded-2xl" />
+          <Skeleton className="h-20 w-full rounded-xl" />
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+            <Skeleton className="h-44 w-full rounded-xl" />
+            <Skeleton className="h-44 w-full rounded-xl" />
+            <Skeleton className="h-44 w-full rounded-xl" />
           </div>
         </div>
       ) : budgets.length === 0 ? (
@@ -183,16 +179,15 @@ export function BudgetsPage() {
           </EmptyContent>
         </Empty>
       ) : (
-        <div className="flex flex-col gap-5">
-          {/* Ledger tape — the whole envelope portfolio, one line */}
+        <div className="flex flex-col gap-4">
           <section className="glass-panel overflow-hidden rounded-xl border">
-            <div className="flex flex-wrap items-center justify-between gap-4 px-4 py-4 sm:px-5">
-              <div className="flex items-baseline gap-2.5">
-                <span className="font-heading text-2xl font-bold tabular-nums tracking-tight sm:text-3xl">
+            <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3.5">
+              <div className="flex items-baseline gap-2">
+                <span className="font-heading text-xl font-bold tabular-nums tracking-tight sm:text-2xl">
                   {formatCurrency(summary.totalSpent)}
                 </span>
-                <span className="text-sm text-muted-foreground sm:text-base">
-                  spent of {formatCurrency(summary.totalBudgeted)}
+                <span className="text-sm text-muted-foreground">
+                  of {formatCurrency(summary.totalBudgeted)}
                 </span>
               </div>
               <div className="flex flex-wrap items-center gap-2">
@@ -211,10 +206,12 @@ export function BudgetsPage() {
                 </span>
               </div>
             </div>
-            {/* receipt-tape meter: one tick per budget, proportional to its own limit */}
-            <div className="flex h-2 w-full gap-px bg-border/60 px-px">
+            <div className="flex h-1.5 w-full gap-px bg-border/60 px-px">
               {sortedBudgets.map((budget) => {
-                const share = summary.totalBudgeted > 0 ? (budget.amount / summary.totalBudgeted) * 100 : 100 / sortedBudgets.length
+                const share =
+                  summary.totalBudgeted > 0
+                    ? (budget.amount / summary.totalBudgeted) * 100
+                    : 100 / sortedBudgets.length
                 const tone = budgetTone(budget.percentage)
                 return (
                   <div key={budget.id} className="h-full min-w-[3px]" style={{ width: `${share}%` }}>
@@ -225,8 +222,7 @@ export function BudgetsPage() {
             </div>
           </section>
 
-          {/* Envelope grid */}
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
             {sortedBudgets.map((budget) => (
               <BudgetCard
                 key={budget.id}
@@ -272,133 +268,97 @@ function BudgetCard({
   onViewDetails: () => void
 }) {
   const tone = budgetTone(budget.percentage)
-  const status = TONE_BADGE[tone]
   const range = budgetDateRange(budget)
-  const visibleCategories = categoryNames.slice(0, 3)
-  const extraCategories = categoryNames.length - visibleCategories.length
+  const meta = [
+    periodLabel(budget.period),
+    TONE_STATUS[tone],
+    range,
+    categoryNames.length > 0 ? categoryNames.slice(0, 2).join(', ') : 'All categories',
+    categoryNames.length > 2 ? `+${categoryNames.length - 2}` : null,
+  ]
+    .filter(Boolean)
+    .join(' · ')
 
   return (
     <section className="glass-panel flex flex-col overflow-hidden rounded-xl border">
-      <div className={cn('h-1 w-full', TONE_BAR[tone])} />
+      <div className={cn('h-0.5 w-full', TONE_BAR[tone])} />
 
-      <div className="flex items-start justify-between gap-2 px-4 pt-3.5 sm:px-5">
-        <div className="min-w-0">
-          <h2 className="truncate font-heading text-base font-semibold sm:text-lg">{budget.name}</h2>
-          <div className="mt-1 flex flex-wrap items-center gap-1.5">
-            <Badge variant="outline" className="text-[10px] capitalize">
-              {periodLabel(budget.period)}
-            </Badge>
-            <Badge variant={status.variant} className="text-[10px]">
-              {status.label}
-            </Badge>
+      <div className="flex flex-col gap-3 p-3.5">
+        <div className="flex items-start justify-between gap-2">
+          <div className="min-w-0">
+            <h2 className="truncate font-heading text-sm font-semibold tracking-tight">
+              {budget.name}
+            </h2>
+            <p className="mt-0.5 truncate text-[11px] text-muted-foreground">{meta}</p>
           </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                aria-label={`${budget.name} actions`}
+                className="shrink-0"
+              >
+                <HugeiconsIcon icon={MoreVerticalIcon} strokeWidth={2} />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-40">
+              <DropdownMenuGroup>
+                <DropdownMenuItem onClick={onEdit}>Edit</DropdownMenuItem>
+                <DropdownMenuItem onClick={onViewDetails}>Period details</DropdownMenuItem>
+              </DropdownMenuGroup>
+              <DropdownMenuSeparator />
+              <DropdownMenuGroup>
+                <DropdownMenuItem variant="destructive" onClick={onDelete}>
+                  <HugeiconsIcon icon={Delete02Icon} strokeWidth={2} data-icon="inline-start" />
+                  Delete
+                </DropdownMenuItem>
+              </DropdownMenuGroup>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon-sm" aria-label={`${budget.name} actions`} className="shrink-0">
-              <HugeiconsIcon icon={MoreVerticalIcon} strokeWidth={2} />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-44">
-            <DropdownMenuGroup>
-              <DropdownMenuItem onClick={onEdit}>
-                <HugeiconsIcon icon={PencilEdit02Icon} strokeWidth={2} data-icon="inline-start" />
-                Edit
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={onViewDetails}>
-                <HugeiconsIcon icon={ChartHistogramIcon} strokeWidth={2} data-icon="inline-start" />
-                View details
-              </DropdownMenuItem>
-            </DropdownMenuGroup>
-            <DropdownMenuSeparator />
-            <DropdownMenuGroup>
-              <DropdownMenuItem variant="destructive" onClick={onDelete}>
-                <HugeiconsIcon icon={Delete02Icon} strokeWidth={2} data-icon="inline-start" />
-                Delete
-              </DropdownMenuItem>
-            </DropdownMenuGroup>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
 
-      {range && (
-        <p className="mt-2 flex items-center gap-1.5 px-4 text-xs text-muted-foreground sm:px-5">
-          <HugeiconsIcon icon={Calendar03Icon} strokeWidth={2} />
-          <span>{range}</span>
-        </p>
-      )}
-
-      <div className="mt-3 flex items-end justify-between gap-2 px-4 sm:px-5">
-        <div>
+        <div className="flex items-end justify-between gap-3">
+          <div className="min-w-0">
+            <p
+              className={cn(
+                'font-heading text-xl font-bold tabular-nums tracking-tight',
+                budget.percentage > 100 ? 'text-destructive' : 'text-foreground',
+              )}
+            >
+              {formatCurrency(budget.spent)}
+            </p>
+            <p className="text-[11px] text-muted-foreground">
+              of {formatCurrency(budget.amount)} limit
+            </p>
+          </div>
           <p
             className={cn(
-              'font-heading text-2xl font-bold tabular-nums tracking-tight',
-              budget.percentage > 100 ? 'text-destructive' : 'text-foreground',
+              'shrink-0 text-end text-sm font-semibold tabular-nums',
+              budget.remaining < 0 ? 'text-destructive' : 'text-success',
             )}
           >
-            {formatCurrency(budget.spent)}
+            {budget.remaining < 0 ? '−' : ''}
+            {formatCurrency(Math.abs(budget.remaining))}
+            <span className="block text-[10px] font-normal text-muted-foreground">
+              {budget.remaining < 0 ? 'over' : 'remaining'}
+            </span>
           </p>
-          <p className="text-xs text-muted-foreground">of {formatCurrency(budget.amount)} limit</p>
         </div>
-        <p
-          className={cn(
-            'shrink-0 text-end text-sm font-semibold tabular-nums',
-            budget.remaining < 0 ? 'text-destructive' : 'text-success',
-          )}
-        >
-          {budget.remaining < 0 ? '−' : ''}
-          {formatCurrency(Math.abs(budget.remaining))}
-          <span className="block text-[10px] font-normal text-muted-foreground">
-            {budget.remaining < 0 ? 'over' : 'remaining'}
-          </span>
-        </p>
+
+        <ProgressBar
+          value={budget.percentage}
+          variant={progressVariantForPercent(budget.percentage)}
+          className="h-1"
+        />
       </div>
 
-      <div className="mt-2.5 px-4 sm:px-5">
-        <ProgressBar value={budget.percentage} variant={progressVariantForPercent(budget.percentage)} className="h-1.5" />
-      </div>
-
-      {tone === 'over' || tone === 'watch' ? (
-        <div className="mx-4 mt-3 flex items-center gap-1.5 rounded-lg border border-destructive/25 bg-destructive/8 px-2.5 py-1.5 text-xs text-destructive sm:mx-5">
-          <HugeiconsIcon icon={Alert02Icon} strokeWidth={2} />
-          <span>{tone === 'over' ? 'Budget exceeded' : 'Almost at the limit'}</span>
-        </div>
-      ) : null}
-
-      {/* perforated stub — separates the numbers from the footer, like a receipt tear line */}
-      <div
-        className="mx-4 mt-4 h-px sm:mx-5"
-        style={{
-          backgroundImage: 'repeating-linear-gradient(to right, var(--border) 0 6px, transparent 6px 11px)',
-        }}
-      />
-
-      <div className="flex min-h-8 flex-wrap items-center gap-1.5 px-4 py-3 sm:px-5">
-        {visibleCategories.length > 0 ? (
-          <>
-            {visibleCategories.map((name) => (
-              <Badge key={name} variant="outline" className="text-[10px]">
-                {name}
-              </Badge>
-            ))}
-            {extraCategories > 0 && (
-              <Badge variant="outline" className="text-[10px]">
-                +{extraCategories}
-              </Badge>
-            )}
-          </>
-        ) : (
-          <span className="text-xs text-muted-foreground">All categories</span>
-        )}
-      </div>
-
-      <div className="mt-auto flex gap-2 border-t border-border px-4 py-3 sm:px-5">
+      <div className="mt-auto flex gap-2 border-t border-border/70 px-3.5 py-2.5">
         <Button size="sm" variant="outline" className="flex-1" onClick={onViewDetails}>
-          <HugeiconsIcon icon={ChartHistogramIcon} strokeWidth={2} data-icon="inline-start" />
           Period details
         </Button>
-        <Button size="sm" variant="ghost" onClick={onEdit} aria-label={`Edit ${budget.name}`}>
-          <HugeiconsIcon icon={PencilEdit02Icon} strokeWidth={2} />
+        <Button size="sm" variant="ghost" onClick={onEdit}>
+          Edit
         </Button>
       </div>
     </section>

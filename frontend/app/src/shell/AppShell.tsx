@@ -14,6 +14,7 @@ import { useAuth } from '../auth/AuthContext'
 import {
   ALL_NAV_ITEMS,
   MORE_NAV_ICON as MoreIcon,
+  MORE_NAV_GROUPS,
   NAV_GROUPS,
   PRIMARY_NAV_ITEMS,
   SECONDARY_NAV_ITEMS,
@@ -648,7 +649,7 @@ function MoreSheet({
           </SheetHeader>
           <ScrollArea className="max-h-[min(60dvh,28rem)]">
             <nav className="flex flex-col gap-4 px-3 pb-3">
-              {NAV_GROUPS.slice(1).map((group) => (
+              {MORE_NAV_GROUPS.map((group) => (
                 <div key={group.label} className="flex flex-col gap-1">
                   <p className="px-2.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
                     {group.label}

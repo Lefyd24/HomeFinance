@@ -44,12 +44,18 @@ export const PRIMARY_NAV_ITEMS: NavItem[] = [
  * (Import lives on Transactions) or from the account menu (API keys, admin)
  * is not repeated here.
  */
+export const NOTIFICATIONS_NAV_ITEM: NavItem = {
+  label: 'Notifications',
+  to: '/notifications',
+  icon: Notification03Icon,
+}
+
 export const NAV_GROUPS: NavGroup[] = [
   {
     label: 'Overview',
     items: [
       ...PRIMARY_NAV_ITEMS,
-      { label: 'Notifications', to: '/notifications', icon: Notification03Icon },
+      NOTIFICATIONS_NAV_ITEM,
     ],
   },
   {
@@ -83,16 +89,23 @@ function flatten(items: NavItem[]): NavItem[] {
   return items.flatMap((item) => (item.children ? item.children : [item]))
 }
 
-export const SECONDARY_NAV_ITEMS: NavItem[] = NAV_GROUPS.slice(1).flatMap((group) =>
-  flatten(group.items),
-)
+/** Destinations only available from the mobile More sheet (not the primary dock). */
+export const MORE_NAV_GROUPS: NavGroup[] = [
+  { label: 'Overview', items: [NOTIFICATIONS_NAV_ITEM] },
+  ...NAV_GROUPS.slice(1),
+]
+
+export const SECONDARY_NAV_ITEMS: NavItem[] = [
+  NOTIFICATIONS_NAV_ITEM,
+  ...NAV_GROUPS.slice(1).flatMap((group) => flatten(group.items)),
+]
 
 export const MORE_NAV_ICON = MoreHorizontalCircleIcon
 
 /** Every routable destination, including ones no longer shown in the sidebar. */
 export const ALL_NAV_ITEMS: NavItem[] = [
   ...PRIMARY_NAV_ITEMS,
-  { label: 'Notifications', to: '/notifications', icon: Notification03Icon },
-  ...SECONDARY_NAV_ITEMS,
+  NOTIFICATIONS_NAV_ITEM,
+  ...NAV_GROUPS.slice(1).flatMap((group) => flatten(group.items)),
   { label: 'Import', to: '/import', icon: ArrowDataTransferHorizontalIcon },
 ]
