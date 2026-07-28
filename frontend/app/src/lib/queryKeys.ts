@@ -1,0 +1,13 @@
+export const queryKeys = {
+  accounts: ['accounts'] as const,
+  categories: ['categories'] as const,
+  transactions: (filters?: object) => ['transactions', filters] as const,
+  budgets: ['budgets'] as const,
+  goals: ['goals'] as const,
+  debts: ['debts'] as const,
+  upcomingDebtPayments: ['upcomingDebtPayments'] as const,
+  upcomingRecurringPayments: ['upcomingRecurringPayments'] as const,
+  spendingReport: (params?: object) => ['spendingReport', params] as const,
+  cashflowReport: (params?: object) => ['cashflowReport', params] as const,
+  netWorthReport: (params?: object) => ['netWorthReport', params] as const,
+}

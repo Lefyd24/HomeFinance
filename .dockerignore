@@ -23,6 +23,7 @@ yarn-error.log*
 
 # Build outputs (we build in container)
 frontend/public/assets/css/app.css
+frontend/app/dist
 
 # IDE
 .vscode/
@@ -54,3 +55,10 @@ htmlcov/
 Dockerfile
 docker-compose.yml
 .dockerignore
+
+# Env files. Never bake these into the image — compose reads .env on the HOST
+# and passes it in as real environment variables. A copy inside the image is
+# both a secret leak and a config trap: a stale backend/.env used to override
+# the real settings at runtime.
+.env
+**/.env

@@ -1,0 +1,509 @@
+@import 'tailwindcss';
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+@import "@fontsource-variable/inter";
+@import "@fontsource-variable/montserrat";
+
+@custom-variant dark (&:is(.dark *));
+
+/*
+ * Crystalline finance palette
+ * ---------------------------
+ * Cerulean remains the product voice. The canvas is now a cool atmospheric
+ * field so translucent surfaces have real colour and depth to refract.
+ */
+:root {
+  --background: oklch(94.504% 0.01299 221.795 / 0.89);
+  --foreground: oklch(18.591% 0.01009 220.193);
+  --card: oklch(100% 0.004 228 / 0.86);
+  --card-foreground: oklch(22% 0.016 224);
+  --popover: oklch(99% 0.006 228 / 0.86);
+  --popover-foreground: oklch(22% 0.016 224);
+  --primary: oklch(53.31% 0.101 225.53);
+  --primary-foreground: oklch(96.92% 0.022 217.63);
+  --secondary: oklch(95.2% 0.004 85);
+  --secondary-foreground: oklch(28% 0.025 222);
+  --muted: oklch(95.4% 0.004 85);
+  --muted-foreground: oklch(50% 0.014 224);
+  --accent: oklch(94.8% 0.012 220);
+  --accent-foreground: oklch(28% 0.03 222);
+  --destructive: oklch(56.52% 0.198 22.59);
+  --border: oklch(90% 0.005 85);
+  --input: oklch(90% 0.005 85);
+  --ring: oklch(65.75% 0.126 226.19);
+  --chart-1: oklch(84.43% 0.116 218.71);
+  --chart-2: oklch(77.62% 0.149 226.59);
+  --chart-3: oklch(65.75% 0.126 226.19);
+  --chart-4: oklch(64.06% 0.197 252.97);
+  --chart-5: oklch(44.32% 0.132 251.82);
+  --radius: 0.625rem;
+  --sidebar: oklch(99% 0.007 228 / 0.84);
+  --sidebar-foreground: oklch(22% 0.016 224);
+  --sidebar-primary: oklch(53.31% 0.101 225.53);
+  --sidebar-primary-foreground: oklch(96.92% 0.022 217.63);
+  --sidebar-accent: oklch(93% 0.011 220);
+  --sidebar-accent-foreground: oklch(28% 0.03 222);
+  --sidebar-border: oklch(89.5% 0.006 85);
+  --sidebar-ring: oklch(65.75% 0.126 226.19);
+  --success: oklch(55% 0.13 160);
+  --success-foreground: oklch(97% 0.02 160);
+  /* The third state between success and destructive: "close to the limit",
+     "due soon". Distinct from both, and never used as a chart series colour. */
+  --warning: oklch(62% 0.14 72);
+  --warning-foreground: oklch(99% 0.01 72);
+
+  /* Flow colours — the direction money moved, not whether something is wrong.
+     Kept separate from --destructive so an ordinary expense never reads as an
+     alarm, and so a row rail, an amount, and a chip can share one hue. */
+  --flow-in: oklch(55% 0.13 160);
+  --flow-out: oklch(63.09% 0.163 18.03);
+  --flow-move: oklch(54.42% 0.165 252.54);
+
+  --glass-surface: oklch(100% 0.006 228 / 0.78);
+  --glass-surface-strong: oklch(100% 0.004 228 / 0.88);
+  --glass-border: oklch(63% 0.035 226 / 0.22);
+  --glass-shadow: oklch(31% 0.035 226 / 0.16);
+  --glass-shadow-depth: oklch(31% 0.04 226 / 0.22);
+  --glass-highlight: oklch(100% 0 0 / 0.88);
+  --canvas-glow-primary: oklch(75% 0.11 225 / 0.22);
+  --canvas-glow-secondary: oklch(83% 0.10 178 / 0.16);
+  --canvas-glow-accent: oklch(81% 0.10 282 / 0.14);
+
+  /* Desktop shell scoop where sidebar meets the content well. */
+  --shell-scoop-radius: 1.25rem;
+  --shell-chrome: var(--glass-surface-strong);
+
+  /* Tab strips sit on the mesh canvas — need a solid lift off --background. */
+  --tabs-list-bg: oklch(100% 0.004 228 / 0.96);
+  --tabs-list-border: color-mix(in oklch, var(--glass-border) 48%, var(--border));
+  --tabs-active-bg: oklch(100% 0 0);
+  --tabs-active-border: color-mix(in oklch, var(--primary) 22%, var(--border));
+  --tabs-inactive-foreground: oklch(40% 0.02 224);
+}
+
+/* Dark keeps the cerulean family but at low chroma — a quiet slate-blue room,
+   not a glowing console. Saturated cyan appears only on focus rings and charts. */
+.dark {
+  --background: oklch(15.227% 0.01252 216.022);
+  --foreground: oklch(93% 0.011 220);
+  --card: oklch(24% 0.018 224);
+  --card-foreground: oklch(93% 0.011 220);
+  --popover: oklch(22.806% 0.01517 226.968);
+  --popover-foreground: oklch(93% 0.011 220);
+  --primary: oklch(72% 0.082 228);
+  --primary-foreground: oklch(18% 0.020 222);
+  --secondary: oklch(31% 0.018 224);
+  --secondary-foreground: oklch(93% 0.011 220);
+  --muted: oklch(30% 0.017 224);
+  --muted-foreground: oklch(78% 0.016 222);
+  --accent: oklch(32% 0.023 224);
+  --accent-foreground: oklch(93% 0.011 220);
+  --destructive: oklch(63% 0.130 19);
+  --border: oklch(1 0 0 / 14%);
+  --input: oklch(1 0 0 / 18%);
+  --ring: oklch(72% 0.082 228);
+  --chart-1: oklch(85% 0.060 218);
+  --chart-2: oklch(78% 0.088 222);
+  --chart-3: oklch(71% 0.104 227);
+  --chart-4: oklch(68% 0.115 248);
+  --chart-5: oklch(56% 0.105 252);
+  --sidebar: oklch(19.5% 0.016 224);
+  --sidebar-foreground: oklch(93% 0.011 220);
+  --sidebar-primary: oklch(74% 0.085 226);
+  --sidebar-primary-foreground: oklch(18% 0.020 222);
+  --sidebar-accent: oklch(26.538% 0.01387 220.166);
+  --sidebar-accent-foreground: oklch(93% 0.011 220);
+  --sidebar-border: oklch(1 0 0 / 14%);
+  --sidebar-ring: oklch(72% 0.082 228);
+  --success: oklch(76% 0.110 160);
+  --success-foreground: oklch(20% 0.035 160);
+  --warning: oklch(78% 0.100 76);
+  --warning-foreground: oklch(22% 0.040 76);
+  --flow-in: oklch(76% 0.110 160);
+  --flow-out: oklch(70% 0.100 16);
+  --flow-move: oklch(74% 0.090 246);
+
+  --glass-surface: oklch(22.417% 0.02085 217.816 / 0.56);
+  --glass-surface-strong: oklch(25% 0.022 224 / 0.78);
+  --glass-border: oklch(100% 0 0 / 0.13);
+  --glass-shadow: oklch(0% 0 0 / 0.38);
+  --glass-shadow-depth: oklch(0% 0 0 / 0.48);
+  --glass-highlight: oklch(100% 0 0 / 0.11);
+  --canvas-glow-primary: oklch(54% 0.12 230 / 0.2);
+  --canvas-glow-secondary: oklch(52% 0.09 174 / 0.12);
+  --canvas-glow-accent: oklch(50% 0.11 283 / 0.12);
+  --shell-chrome: var(--glass-surface-strong);
+
+  --tabs-list-bg: oklch(27% 0.022 224 / 0.92);
+  --tabs-list-border: color-mix(in oklch, var(--glass-border) 55%, var(--border));
+  --tabs-active-bg: oklch(34% 0.024 224);
+  --tabs-active-border: color-mix(in oklch, var(--primary) 35%, var(--border));
+  --tabs-inactive-foreground: oklch(74% 0.018 222);
+}
+
+@theme inline {
+  --font-sans: 'Inter Variable', sans-serif;
+  --font-heading: 'Montserrat Variable', sans-serif;
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-flow-in: var(--flow-in);
+  --color-flow-out: var(--flow-out);
+  --color-flow-move: var(--flow-move);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --color-foreground: var(--foreground);
+  --color-background: var(--background);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+    min-height: 100dvh;
+  }
+  button:not(:disabled), [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+  html {
+    @apply font-sans;
+  }
+}
+
+@layer components {
+  .app-canvas {
+    position: relative;
+    isolation: isolate;
+    background-color: var(--background);
+  }
+
+  /* ffflux mesh — light uses near-white stop; dark swaps asset (see ffflux-dark.svg). */
+  .app-canvas::before {
+    content: '';
+    position: fixed;
+    z-index: -2;
+    inset: 0;
+    pointer-events: none;
+    background-color: var(--background);
+    background-image: url('/assets/images/ffflux.svg');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+  }
+
+  .dark .app-canvas::before {
+    background-image: url('/assets/images/ffflux-dark.svg');
+  }
+
+  .app-canvas::after {
+    content: '';
+    position: fixed;
+    z-index: -1;
+    inset: 0;
+    pointer-events: none;
+    background: color-mix(in oklch, var(--background) 22%, transparent);
+  }
+
+  .glass-panel,
+  .glass-bar {
+    isolation: isolate;
+    background: var(--glass-surface);
+    -webkit-backdrop-filter: blur(14px) saturate(145%);
+    backdrop-filter: blur(14px) saturate(145%);
+  }
+
+  .glass-panel {
+    overflow: hidden;
+    border-color: color-mix(in oklch, var(--glass-border) 72%, var(--border));
+    box-shadow:
+      inset 0 1px 0 color-mix(in oklch, white 58%, transparent),
+      inset 0 -1px 0 color-mix(in oklch, var(--glass-border) 24%, transparent),
+      0 0 16px -7px var(--glass-shadow),
+      0 4px 12px -9px var(--glass-shadow),
+      0 14px 34px -18px var(--glass-shadow-depth);
+  }
+
+  .glass-bar {
+    background: var(--glass-surface-strong);
+    border-color: color-mix(in oklch, var(--glass-border) 62%, var(--border));
+    box-shadow:
+      inset 0 1px 0 color-mix(in oklch, white 44%, transparent),
+      inset 0 -1px 0 color-mix(in oklch, var(--glass-border) 20%, transparent),
+      0 0 14px -8px var(--glass-shadow),
+      0 8px 24px -18px var(--glass-shadow-depth);
+    -webkit-backdrop-filter: blur(16px) saturate(145%);
+    backdrop-filter: blur(16px) saturate(145%);
+  }
+
+  .glass-popover {
+    background: var(--glass-surface-strong);
+    isolation: isolate;
+    border-color: var(--glass-border);
+    box-shadow:
+      inset 0 1px 1px color-mix(in oklch, white 54%, transparent),
+      0 8px 24px color-mix(in oklch, var(--glass-shadow) 84%, transparent);
+    -webkit-backdrop-filter: blur(18px) saturate(175%) brightness(1.03);
+    backdrop-filter: blur(18px) saturate(175%) brightness(1.03);
+  }
+
+  [data-slot="tabs-list"][data-variant="default"],
+  [data-slot="tabs-list"][data-variant="line"] {
+    background: var(--tabs-list-bg);
+    border: 1px solid var(--tabs-list-border);
+    box-shadow:
+      inset 0 1px 0 color-mix(in oklch, white 52%, transparent),
+      0 1px 3px color-mix(in oklch, var(--glass-shadow) 35%, transparent);
+  }
+
+  [data-slot="tabs-list"][data-variant="line"] {
+    border-radius: var(--radius-lg);
+  }
+
+  [data-slot="tabs-list"][data-variant="default"] [data-slot="tabs-trigger"] {
+    color: var(--tabs-inactive-foreground);
+  }
+
+  [data-slot="tabs-list"][data-variant="default"] [data-slot="tabs-trigger"][data-state="active"],
+  [data-slot="tabs-list"][data-variant="default"] [data-slot="tabs-trigger"][data-active],
+  [data-slot="tabs-list"][data-variant="line"] [data-slot="tabs-trigger"][data-state="active"],
+  [data-slot="tabs-list"][data-variant="line"] [data-slot="tabs-trigger"][data-active] {
+    background: var(--primary);
+    border-color: transparent;
+    color: var(--primary-foreground);
+    box-shadow: none;
+  }
+
+  [data-slot="tabs-list"][data-variant="line"] [data-slot="tabs-trigger"] {
+    color: var(--tabs-inactive-foreground);
+  }
+
+  .report-filter-group {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.125rem;
+    padding: 0.125rem;
+    border-radius: var(--radius-lg);
+    background: color-mix(in oklch, var(--primary) 11%, var(--tabs-list-bg));
+    border: 1px solid color-mix(in oklch, var(--primary) 22%, var(--tabs-list-border));
+    box-shadow: inset 0 1px 0 color-mix(in oklch, white 40%, transparent);
+  }
+
+  .report-filter-group [data-slot="button"] {
+    border-color: transparent;
+    background: transparent;
+    color: var(--primary);
+  }
+
+  .report-filter-group [data-slot="button"]:hover,
+  .report-filter-group [data-slot="button"][data-state="open"] {
+    background: color-mix(in oklch, var(--primary) 14%, transparent);
+    color: var(--foreground);
+  }
+
+  @supports not ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
+    .glass-panel,
+    .glass-bar,
+    .glass-popover {
+      background: var(--card);
+    }
+  }
+
+  @media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
+    .app-canvas::before {
+      background-image: none;
+    }
+
+    .app-canvas::after {
+      background: var(--background);
+    }
+
+    .glass-panel,
+    .glass-bar,
+    .glass-popover {
+      background: var(--card);
+      -webkit-backdrop-filter: none;
+      backdrop-filter: none;
+    }
+
+    [data-slot="tabs-list"] {
+      background: var(--card);
+      border-color: var(--border);
+      box-shadow: none;
+    }
+
+    [data-slot="tabs-list"] [data-slot="tabs-trigger"][data-state="active"],
+    [data-slot="tabs-list"] [data-slot="tabs-trigger"][data-active] {
+      background: var(--primary);
+      border-color: transparent;
+      color: var(--primary-foreground);
+      box-shadow: none;
+    }
+  }
+
+  @media (max-width: 48rem) {
+    .glass-panel,
+    .glass-bar,
+    .glass-popover {
+      -webkit-backdrop-filter: blur(10px) saturate(145%);
+      backdrop-filter: blur(10px) saturate(145%);
+    }
+  }
+
+  /*
+   * Inverse-rounded shell junction (Resend-style)
+   * ---------------------------------------------
+   * No overlay pseudos on the topbar/footer. Chrome fills the content column;
+   * the main well's start-edge radii leave concave scoops of that chrome.
+   */
+  .shell-sidebar.glass-bar {
+    box-shadow:
+      inset 0 1px 0 color-mix(in oklch, white 44%, transparent),
+      inset 0 -1px 0 color-mix(in oklch, var(--glass-border) 20%, transparent);
+  }
+
+  .shell-content-column {
+    background: var(--shell-chrome);
+    -webkit-backdrop-filter: blur(16px) saturate(145%);
+    backdrop-filter: blur(16px) saturate(145%);
+  }
+
+  .shell-topbar {
+    border-bottom: none;
+    box-shadow: inset 0 1px 0 color-mix(in oklch, white 44%, transparent);
+  }
+
+  .shell-footer {
+    border-top: none;
+    box-shadow: inset 0 -1px 0 color-mix(in oklch, var(--glass-border) 20%, transparent);
+  }
+
+  .shell-main {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    border-start-start-radius: var(--shell-scoop-radius);
+    border-end-start-radius: var(--shell-scoop-radius);
+    /* Transparent so scoop corners reveal chrome; mesh lives on .shell-main-bg. */
+    background-color: transparent;
+  }
+
+  /*
+   * Static canvas fill for the content well. Sits on the non-scrolling shell
+   * frame so page content can scroll over it without moving the mesh.
+   */
+  .shell-main-bg {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    border-start-start-radius: inherit;
+    border-end-start-radius: inherit;
+    background-color: var(--background);
+    background-image:
+      linear-gradient(
+        color-mix(in oklch, var(--background) 22%, transparent),
+        color-mix(in oklch, var(--background) 22%, transparent)
+      ),
+      url('/assets/images/ffflux.svg');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+  }
+
+  .dark .shell-main-bg {
+    background-image:
+      linear-gradient(
+        color-mix(in oklch, var(--background) 22%, transparent),
+        color-mix(in oklch, var(--background) 22%, transparent)
+      ),
+      url('/assets/images/ffflux-dark.svg');
+  }
+
+  .shell-main-scroll {
+    position: relative;
+    z-index: 1;
+    height: 100%;
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
+
+  @supports not ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
+    .shell-content-column {
+      background: var(--card);
+      -webkit-backdrop-filter: none;
+      backdrop-filter: none;
+    }
+  }
+
+  @media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
+    .shell-main-bg {
+      background-image: none;
+      background-color: var(--background);
+    }
+
+    .shell-content-column {
+      background: var(--card);
+      -webkit-backdrop-filter: none;
+      backdrop-filter: none;
+    }
+  }
+
+  /* Scoop chrome is desktop-only; mobile keeps scrolling over app-canvas. */
+  @media (max-width: 63.999rem) {
+    .shell-content-column {
+      background: transparent;
+      -webkit-backdrop-filter: none;
+      backdrop-filter: none;
+    }
+
+    .shell-main {
+      border-start-start-radius: 0;
+      border-end-start-radius: 0;
+      background-color: transparent;
+    }
+
+    .shell-main-bg {
+      display: none;
+    }
+  }
+
+}

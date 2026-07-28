@@ -9,9 +9,13 @@ node_modules/
 # Virtual environments
 .venv
 .env
+skills-lock.json
 
 # Claude
 .claude/
+.agents/
+.cursor/
+.lunaos/
 CLAUDE.md
 
 # Database files
