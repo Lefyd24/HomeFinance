@@ -230,12 +230,14 @@ def _send_email_detailed(user, notif, settings_row, app_settings):
     return mail_service.send_email_detailed(user.email, notif.title, html_body, cfg, text=text_body)
 
 
+# React Router paths (frontend/app/src/App.tsx) — note "/recurring", which is
+# not a straight rename of the old recurring-expenses.html page.
 _NOTIF_URLS = {
-    "recurring_due": "/pages/recurring-expenses.html",
-    "debt_due": "/pages/debts.html",
-    "balance_below": "/pages/accounts.html",
-    "budget_percent": "/pages/budgets.html",
-    "scheduled_report": "/pages/reports.html",
+    "recurring_due": "/recurring",
+    "debt_due": "/debts",
+    "balance_below": "/accounts",
+    "budget_percent": "/budgets",
+    "scheduled_report": "/reports",
 }
 
 
@@ -246,7 +248,7 @@ def _send_push(db, user, notif, app_settings):
         "title": notif.title,
         "body": notif.body,
         "tag": notif.dedupe_key,
-        "url": _NOTIF_URLS.get(notif.type, "/pages/dashboard.html"),
+        "url": _NOTIF_URLS.get(notif.type, "/dashboard"),
     }
     for sub in subs:
         try:

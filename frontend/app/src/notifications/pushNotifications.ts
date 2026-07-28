@@ -29,7 +29,7 @@ function keysMatch(subscription: PushSubscription, serverKeyB64: string): boolea
   return expected.every((byte, i) => existingBytes[i] === byte)
 }
 
-async function ensureServiceWorker(): Promise<ServiceWorkerRegistration> {
+export async function ensureServiceWorker(): Promise<ServiceWorkerRegistration> {
   if (!('serviceWorker' in navigator)) {
     throw new Error('Service workers are not supported in this browser')
   }

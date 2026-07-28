@@ -154,7 +154,6 @@ export function AdminPage() {
   }
 
   const handleToggleUserActive = async (id: number, currentlyActive: boolean) => {
-    const action = currentlyActive ? 'deactivate' : 'activate'
     const ok = await confirm({
       title: currentlyActive ? 'Deactivate this user?' : 'Activate this user?',
       description: currentlyActive

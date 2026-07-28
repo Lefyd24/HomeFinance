@@ -7,6 +7,11 @@ import tailwindcss from '@tailwindcss/vite'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
+// Dev-only: where `vite dev` forwards /api and /health. 8223 is the backend's
+// default everywhere else (Dockerfile, docker-compose, .env.example); override
+// with BACKEND_PORT if your local .env uses a different one.
+const backendTarget = `http://localhost:${process.env.BACKEND_PORT ?? '8223'}`
+
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react(), tailwindcss()],
@@ -18,11 +23,11 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'http://localhost:8224',
+        target: backendTarget,
         changeOrigin: true,
       },
       '/health': {
-        target: 'http://localhost:8224',
+        target: backendTarget,
         changeOrigin: true,
       },
     },

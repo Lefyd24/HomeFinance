@@ -31,7 +31,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy import text
+from starlette.exceptions import HTTPException as StarletteHTTPException
+from starlette.responses import Response
 from starlette.routing import Match, Mount
+from starlette.types import Scope
 
 
 def _bootstrap_admins(logger: logging.Logger) -> None:
@@ -189,6 +192,49 @@ app.include_router(notifications.router, prefix="/api")
 app.include_router(ai_chat.router, prefix="/api")
 
 
+class _SpaStaticFiles(StaticFiles):
+    """StaticFiles with a single-page-app fallback and sane cache headers.
+
+    StaticFiles(html=True) only serves index.html for *directory* requests, so
+    every React Router path ("/dashboard", "/transactions", ...) 404s on a hard
+    refresh or a direct link. Fall back to index.html for anything that looks
+    like a route rather than a file.
+
+    The extension check matters: a missing hashed bundle
+    ("/assets/index-abc123.js" after a redeploy) must stay a 404. Serving
+    index.html in its place returns HTML with a JavaScript content type, which
+    the browser rejects on a MIME mismatch — a confusing failure to debug.
+    """
+
+    async def get_response(self, path: str, scope: Scope) -> Response:
+        try:
+            response = await super().get_response(path, scope)
+        except StarletteHTTPException as exc:
+            if exc.status_code != 404 or Path(path).suffix:
+                raise
+            response = await super().get_response("index.html", scope)
+
+        # index.html must never be cached: it names the content-hashed bundles,
+        # and a stale copy points at files the latest build already deleted —
+        # the classic white screen after a redeploy. Everything under assets/ is
+        # content-hashed by Vite, so it is safe to cache forever.
+        # StaticFiles normalises `path` with os.sep, so it arrives as
+        # "assets\index-abc.js" on Windows — compare on parts, not a "assets/"
+        # string prefix, or this silently never matches off Linux.
+        parts = Path(path).parts
+        content_type = response.headers.get("content-type", "")
+        # sw.js and manifest.json keep their names across builds, so they are
+        # never cache-busted by a hash — they must revalidate or users stay on
+        # a service worker pointing at the previous UI's routes.
+        if parts and parts[-1] in ("sw.js", "manifest.json"):
+            response.headers["Cache-Control"] = "no-cache"
+        elif content_type.startswith("text/html"):
+            response.headers["Cache-Control"] = "no-cache"
+        elif parts and parts[0] == "assets" and response.status_code == 200:
+            response.headers["Cache-Control"] = "public, max-age=31536000, immutable"
+        return response
+
+
 class _FrontendMount(Mount):
     """A Mount("/") that never claims /api/* paths.
 
@@ -222,7 +268,7 @@ if _frontend_dir.is_dir():
     app.router.routes.append(
         _FrontendMount(
             "/",
-            app=StaticFiles(directory=str(_frontend_dir), html=True),
+            app=_SpaStaticFiles(directory=str(_frontend_dir), html=True),
             name="frontend",
         )
     )

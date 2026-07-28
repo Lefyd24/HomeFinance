@@ -46,7 +46,7 @@ def _send_verification_email(db: Session, user: User, request: Request) -> None:
     plaintext = auth_tokens.create_user_token(
         db, user.id, "email_verify", auth_tokens.EMAIL_VERIFY_EXPIRE_MINUTES
     )
-    verify_url = f"{public_base_url(request)}/pages/verify-email.html?token={plaintext}"
+    verify_url = f"{public_base_url(request)}/verify-email?token={plaintext}"
     html, text = email_templates.verify_email(verify_url)
     mail_service.send_transactional_email(
         user.email,
@@ -282,9 +282,7 @@ def forgot_password(
         plaintext = auth_tokens.create_user_token(
             db, user.id, "password_reset", auth_tokens.PASSWORD_RESET_EXPIRE_MINUTES
         )
-        reset_url = (
-            f"{public_base_url(request)}/pages/reset-password.html?token={plaintext}"
-        )
+        reset_url = f"{public_base_url(request)}/reset-password?token={plaintext}"
         html, text = email_templates.password_reset(
             reset_url, auth_tokens.PASSWORD_RESET_EXPIRE_MINUTES
         )

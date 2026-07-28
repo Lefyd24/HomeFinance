@@ -9,6 +9,7 @@ node_modules/
 # Virtual environments
 .venv
 .env
+skills-lock.json
 
 # Claude
 .claude/

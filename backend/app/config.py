@@ -62,11 +62,12 @@ def _default_frontend_dir() -> str:
 class Settings(BaseSettings):
     """Application settings loaded from environment variables."""
 
+    # Exactly one .env, at the repo root — the same file docker compose forwards
+    # into the container. There used to be a second entry for backend/.env, and
+    # because later files win in pydantic-settings, a stale backend/.env silently
+    # overrode the real config (emptying SECRET_KEY, forcing DEBUG=true).
     model_config = SettingsConfigDict(
-        env_file=(
-            str(_repo_root / ".env"),
-            str(_backend_dir / ".env"),
-        ),
+        env_file=str(_repo_root / ".env"),
         env_file_encoding="utf-8",
         extra="ignore",
         case_sensitive=True,

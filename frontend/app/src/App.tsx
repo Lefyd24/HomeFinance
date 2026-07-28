@@ -26,6 +26,11 @@ import { AdminPage } from './admin/AdminPage'
 function App() {
   return (
     <Routes>
+      {/* The PWA manifest's start_url and the deployed root are both "/".
+          RequireAuth on /dashboard sends unauthenticated visitors to /login,
+          so this lands both cases correctly. */}
+      <Route path="/" element={<Navigate to="/dashboard" replace />} />
+
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />

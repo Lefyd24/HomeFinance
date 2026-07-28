@@ -33,7 +33,7 @@ export function AuthLayout({
       </div>
 
       <div className="flex flex-1 flex-col items-center justify-center overflow-y-auto p-6 sm:p-8 lg:p-12">
-        <div className="flex w-full max-w-sm flex-col py-6">
+        <div className={cn('flex w-full max-w-sm flex-col py-6', className)}>
           <MobileBrandMark />
           {children}
         </div>
