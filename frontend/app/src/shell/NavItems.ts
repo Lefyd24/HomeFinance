@@ -13,6 +13,7 @@ import {
   SparklesIcon,
   ChartLineData01Icon,
   Idea01Icon,
+  Notification03Icon,
 } from '@hugeicons/core-free-icons'
 
 export type HugeIcon = typeof DashboardSquare01Icon
@@ -40,13 +41,16 @@ export const PRIMARY_NAV_ITEMS: NavItem[] = [
 
 /**
  * Kept deliberately short. Anything reachable from the page it belongs to
- * (Import lives on Transactions) or from the account menu (API keys, admin,
- * notifications) is not repeated here.
+ * (Import lives on Transactions) or from the account menu (API keys, admin)
+ * is not repeated here.
  */
 export const NAV_GROUPS: NavGroup[] = [
   {
     label: 'Overview',
-    items: PRIMARY_NAV_ITEMS,
+    items: [
+      ...PRIMARY_NAV_ITEMS,
+      { label: 'Notifications', to: '/notifications', icon: Notification03Icon },
+    ],
   },
   {
     label: 'Planning',
@@ -88,6 +92,7 @@ export const MORE_NAV_ICON = MoreHorizontalCircleIcon
 /** Every routable destination, including ones no longer shown in the sidebar. */
 export const ALL_NAV_ITEMS: NavItem[] = [
   ...PRIMARY_NAV_ITEMS,
+  { label: 'Notifications', to: '/notifications', icon: Notification03Icon },
   ...SECONDARY_NAV_ITEMS,
   { label: 'Import', to: '/import', icon: ArrowDataTransferHorizontalIcon },
 ]

@@ -33,9 +33,9 @@ describe('AppShell', () => {
     expect(screen.getAllByText('Dashboard').length).toBeGreaterThan(0)
     expect(screen.getAllByText('Transactions').length).toBeGreaterThan(0)
     expect(screen.getAllByText('Overview').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Notifications').length).toBeGreaterThan(0)
     expect(screen.getAllByLabelText('Change theme').length).toBeGreaterThan(0)
     expect(screen.getAllByLabelText('Account menu').length).toBeGreaterThan(0)
-    // Notifications moved out of the sidebar and into the top bar.
     expect(screen.getAllByLabelText('Notifications').length).toBeGreaterThan(0)
     expect(screen.queryByText('Import')).not.toBeInTheDocument()
   })

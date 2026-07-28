@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { ArrowUp, Check, Copy, RotateCcw, Sparkles, Square } from 'lucide-react'
+import { ArrowUp, Check, Copy, PenLine, RotateCcw, Sparkles, Square } from 'lucide-react'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import {
@@ -31,6 +31,7 @@ export function ChatWidget({
   onSend,
   onStop,
   onRetry,
+  onClear,
   disabled,
   disabledReason,
   initialPrompt,
@@ -40,6 +41,8 @@ export function ChatWidget({
   onSend: (text: string) => void
   onStop: () => void
   onRetry: () => void
+  /** Present (and the control shown) only once there's a transcript to clear. */
+  onClear?: () => void
   disabled?: boolean
   disabledReason?: string
   /** A question handed over from another page, asked once on arrival. */
@@ -57,11 +60,28 @@ export function ChatWidget({
   const lastTurn = turns[turns.length - 1]
 
   return (
-    <div className="flex h-full min-h-0 flex-col">
+    <div className="relative flex h-full min-h-0 flex-col">
+      {onClear && (
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={onClear}
+          className="glass-panel absolute end-4 top-3 z-10 shadow-sm"
+        >
+          <PenLine data-icon="inline-start" />
+          New chat
+        </Button>
+      )}
+
       <MessageScrollerProvider autoScroll>
         <MessageScroller className="flex-1">
           <MessageScrollerViewport>
-            <MessageScrollerContent className="mx-auto w-full max-w-3xl px-4 py-6">
+            <MessageScrollerContent
+              className={cn(
+                'mx-auto w-full max-w-3xl px-4 py-6',
+                turns.length === 0 && 'flex h-full min-h-[26rem] flex-col',
+              )}
+            >
               {turns.length === 0 ? (
                 <EmptyState
                   disabled={disabled}
@@ -208,30 +228,30 @@ function EmptyState({
   }
 
   return (
-    <div className="flex flex-1 flex-col justify-center py-6">
+    <div className="flex flex-1 flex-col items-center justify-center text-center">
       <h2 className="font-heading text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
         Ask your money anything.
       </h2>
-      <p className="mt-2 max-w-lg text-sm text-muted-foreground">
+      <p className="mx-auto mt-2 max-w-lg text-sm text-muted-foreground">
         The advisor reads your real transactions, balances, budgets, recurring bills and debts as it
         answers — and can email you a copy of anything it works out.
       </p>
 
-      <div className="mt-8 flex flex-col gap-6">
+      <div className="mt-8 flex w-full max-w-xl flex-col gap-6">
         {SUGGESTION_GROUPS.map((group) => (
           <div key={group.title}>
             {/* The groups name the job, so the openers read as directions to
                 take rather than an undifferentiated list of prompts. */}
-            <Marker variant="separator" className="mb-2">
+            <Marker variant="separator" className="mb-2 justify-center">
               <MarkerContent>{group.title}</MarkerContent>
             </Marker>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap justify-center gap-2">
               {group.prompts.map((prompt) => (
                 <button
                   key={prompt}
                   type="button"
                   onClick={() => onPick(prompt)}
-                  className="rounded-full border border-border bg-card px-3.5 py-2 text-start text-sm text-foreground focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+                  className="rounded-full border border-border bg-card px-3.5 py-2 text-start text-sm text-foreground transition-colors hover:border-primary/40 hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
                 >
                   {prompt}
                 </button>
@@ -276,9 +296,9 @@ function Composer({
   }
 
   return (
-    <div className="border-t border-border bg-background/85 px-4 py-3 backdrop-blur-md">
+    <div className="shrink-0 px-4 pb-4 pt-2 sm:px-6">
       <form
-        className="glass-panel mx-auto flex w-full max-w-3xl items-end gap-2 rounded-xl border p-2 focus-within:border-primary/40 focus-within:ring-3 focus-within:ring-ring/25"
+        className="glass-popover mx-auto flex w-full max-w-3xl items-end gap-1.5 rounded-[1.75rem] border p-2 focus-within:border-primary/40 focus-within:ring-3 focus-within:ring-ring/25"
         onSubmit={(event) => {
           event.preventDefault()
           submit()
@@ -303,17 +323,30 @@ function Composer({
             }
           }}
           className={cn(
-            'min-h-0 resize-none border-0 bg-transparent px-2 py-1.5 shadow-none',
+            'min-h-0 resize-none border-0 bg-transparent px-3 py-2 shadow-none',
             'focus-visible:border-0 focus-visible:ring-0',
           )}
         />
 
         {isStreaming ? (
-          <Button type="button" size="icon" variant="secondary" onClick={onStop} aria-label="Stop">
+          <Button
+            type="button"
+            size="icon"
+            variant="secondary"
+            onClick={onStop}
+            aria-label="Stop"
+            className="rounded-full"
+          >
             <Square />
           </Button>
         ) : (
-          <Button type="submit" size="icon" disabled={disabled || !value.trim()} aria-label="Send">
+          <Button
+            type="submit"
+            size="icon"
+            disabled={disabled || !value.trim()}
+            aria-label="Send"
+            className="rounded-full"
+          >
             <ArrowUp />
           </Button>
         )}

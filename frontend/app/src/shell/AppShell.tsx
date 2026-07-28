@@ -7,7 +7,6 @@ import {
   Logout01Icon,
   Menu01Icon,
   MoneyAdd01Icon,
-  MoneyBag01Icon,
   Notification03Icon,
   SidebarLeftIcon,
 } from '@hugeicons/core-free-icons'
@@ -75,10 +74,14 @@ function userInitials(name: string | null | undefined, email: string | undefined
 function BrandMark({ compact = false }: { compact?: boolean }) {
   return (
     <div className={cn('flex items-center gap-2.5 min-w-0', compact && 'justify-center')}>
-      <div className="relative size-8 shrink-0 rounded-xl bg-primary text-primary-foreground flex items-center justify-center overflow-hidden">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,color-mix(in_oklch,var(--primary-foreground)_35%,transparent),transparent_55%)]" />
-        <HugeiconsIcon icon={MoneyBag01Icon} strokeWidth={2} className="relative size-4" />
-      </div>
+      <img
+        src="/assets/icons/favicon.svg"
+        alt=""
+        width={32}
+        height={32}
+        className="size-8 shrink-0 object-contain"
+        decoding="async"
+      />
       {!compact && (
         <div className="min-w-0 flex flex-col">
           <span className="font-heading font-bold text-sm tracking-tight truncate">Home Finance</span>
@@ -397,6 +400,9 @@ function UserMenu({
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
           <DropdownMenuItem asChild>
+            <NavLink to="/notifications">Notifications</NavLink>
+          </DropdownMenuItem>
+          <DropdownMenuItem asChild>
             <NavLink to="/api-keys">API Keys</NavLink>
           </DropdownMenuItem>
           {user?.is_admin && (
@@ -430,15 +436,15 @@ function DesktopSidebar({
   return (
     <aside
       className={cn(
-        'hidden lg:flex lg:flex-col h-dvh sticky top-0 shrink-0 overflow-hidden',
-        'glass-bar border-e border-sidebar-border text-sidebar-foreground',
+        'shell-sidebar hidden lg:flex lg:flex-col h-dvh sticky top-0 shrink-0 overflow-hidden',
+        'glass-bar text-sidebar-foreground',
         'transition-[width] duration-200 ease-out',
         collapsed ? 'w-[4.25rem]' : 'w-64',
       )}
     >
       <div
         className={cn(
-          'flex h-14 shrink-0 items-center gap-2 border-b border-sidebar-border px-3',
+          'shell-sidebar-header flex h-14 shrink-0 items-center gap-2 px-3',
           collapsed && 'justify-center px-2',
         )}
       >
@@ -528,7 +534,7 @@ function QuickAddTransactionFab() {
         className={cn(
           'fixed z-30 size-12 rounded-full shadow-lg',
           'bottom-[calc(4.75rem+env(safe-area-inset-bottom))] end-3',
-          'lg:bottom-6 lg:end-6',
+          'lg:bottom-12 lg:end-6',
         )}
         onClick={() => setOpen(true)}
         aria-label="Add transaction"
@@ -718,7 +724,7 @@ function DesktopTopBar() {
   const current = ALL_NAV_ITEMS.find((item) => location.pathname.startsWith(item.to))
 
   return (
-    <header className="glass-bar hidden lg:flex sticky top-0 z-20 h-14 shrink-0 items-center gap-3 border-b border-border px-4">
+    <header className="shell-topbar glass-bar hidden lg:flex sticky top-0 z-20 h-14 shrink-0 items-center gap-3 px-4">
       <div className="min-w-0">
         <p className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">Workspace</p>
         <h1 className="font-heading text-sm font-semibold tracking-tight truncate">
@@ -727,6 +733,15 @@ function DesktopTopBar() {
       </div>
       <NavActions />
     </header>
+  )
+}
+
+function DesktopFooter() {
+  return (
+    <footer className="shell-footer glass-bar hidden lg:flex h-10 shrink-0 items-center justify-between gap-3 px-4 text-[11px] text-muted-foreground">
+      <span className="truncate">Home Finance</span>
+      <span className="tabular-nums shrink-0">© {new Date().getFullYear()}</span>
+    </footer>
   )
 }
 
@@ -739,13 +754,18 @@ export function AppShell() {
     <div className="app-canvas h-dvh flex overflow-hidden">
       <DesktopSidebar collapsed={collapsed} onToggle={() => setCollapsed((v) => !v)} />
 
-      <div className="flex-1 min-w-0 min-h-0 flex flex-col overflow-hidden">
+      <div className="shell-content-column flex-1 min-w-0 min-h-0 flex flex-col overflow-hidden">
         <MobileTopBar onOpenMenu={() => setMobileMenuOpen(true)} />
         <DesktopTopBar />
 
-        <main className="flex-1 min-h-0 overflow-y-auto pb-[calc(4rem+env(safe-area-inset-bottom))] lg:pb-0">
-          <Outlet />
+        <main className="shell-main flex-1 min-h-0">
+          <div className="shell-main-bg" aria-hidden="true" />
+          <div className="shell-main-scroll pb-[calc(4rem+env(safe-area-inset-bottom))] lg:pb-0">
+            <Outlet />
+          </div>
         </main>
+
+        <DesktopFooter />
       </div>
 
       <QuickAddTransactionFab />

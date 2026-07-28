@@ -19,6 +19,7 @@ import { ImportWizardPage } from './import/ImportWizardPage'
 import { DocumentsPage } from './documents/DocumentsPage'
 import { AdvisorPage } from './advisor/AdvisorPage'
 import { AiAdvisorPage } from './ai-advisor/AiAdvisorPage'
+import { NotificationsPage } from './notifications/NotificationsPage'
 import { ApiKeysPage } from './account-settings/ApiKeysPage'
 import { AdminPage } from './admin/AdminPage'
 
@@ -46,6 +47,7 @@ function App() {
           <Route path="/documents" element={<DocumentsPage />} />
           <Route path="/advisor" element={<AdvisorPage />} />
           <Route path="/ai-advisor" element={<AiAdvisorPage />} />
+          <Route path="/notifications" element={<NotificationsPage />} />
           <Route path="/api-keys" element={<ApiKeysPage />} />
           <Route path="/admin" element={<AdminPage />} />
         </Route>

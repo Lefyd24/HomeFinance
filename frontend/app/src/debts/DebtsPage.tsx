@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { HugeiconsIcon } from '@hugeicons/react'
 import {
   Add01Icon,
   AnalyticsUpIcon,
+  ArrowDown01Icon,
   BankIcon,
   Calendar03Icon,
   Car01Icon,
@@ -17,7 +18,6 @@ import {
   Invoice01Icon,
   JusticeScale01Icon,
   Money01Icon,
-  MoreVerticalIcon,
   PercentCircleIcon,
   RepeatIcon,
   StudentCardIcon,
@@ -32,6 +32,7 @@ import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { Skeleton } from '@/components/ui/skeleton'
 import { ScrollArea } from '@/components/ui/scroll-area'
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import {
   Sheet,
   SheetContent,
@@ -47,14 +48,6 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from '@/components/ui/empty'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
 import { Dialog } from '../ui/Dialog'
 import { PageContainer } from '../ui/PageContainer'
 import { PageHeader } from '../ui/PageHeader'
@@ -122,16 +115,22 @@ function debtTone(debt: Debt): DebtTone {
   return 'warning'
 }
 
-const TONE_WASH: Record<DebtTone, string> = {
-  success: 'from-success/12 via-success/5',
-  primary: 'from-primary/12 via-primary/5',
-  warning: 'from-warning/15 via-warning/6',
+const TONE_BAR: Record<DebtTone, string> = {
+  success: 'bg-success',
+  primary: 'bg-primary',
+  warning: 'bg-warning',
 }
 
 const TONE_MARK: Record<DebtTone, string> = {
   success: 'bg-success/15 text-success ring-success/25',
   primary: 'bg-primary/15 text-primary ring-primary/25',
   warning: 'bg-warning/20 text-warning ring-warning/30',
+}
+
+const TONE_DIALOG: Record<DebtTone, 'primary' | 'warning'> = {
+  success: 'primary',
+  primary: 'primary',
+  warning: 'warning',
 }
 
 /**
@@ -191,15 +190,8 @@ function ProgressDial({ percent, label }: { percent: number; label: string }) {
 
   return (
     <div className="flex items-center gap-3">
-      <svg width="64" height="64" viewBox="0 0 64 64" className="shrink-0" aria-hidden>
-        <circle
-          cx="32"
-          cy="32"
-          r={r}
-          fill="none"
-          className="stroke-muted"
-          strokeWidth="6"
-        />
+      <svg width="56" height="56" viewBox="0 0 64 64" className="shrink-0" aria-hidden>
+        <circle cx="32" cy="32" r={r} fill="none" className="stroke-muted" strokeWidth="6" />
         <circle
           cx="32"
           cy="32"
@@ -216,7 +208,7 @@ function ProgressDial({ percent, label }: { percent: number; label: string }) {
           x="32"
           y="36"
           textAnchor="middle"
-          className="fill-foreground text-[14px] font-semibold tabular-nums"
+          className="fill-foreground text-[13px] font-semibold tabular-nums"
         >
           {Math.round(clamped)}%
         </text>
@@ -232,12 +224,14 @@ export function DebtsPage() {
   const deleteDebt = useDeleteDebt()
   const { confirm, confirmDialog } = useConfirm()
 
-  const [selectedId, setSelectedId] = useState<number | null>(null)
   const [formOpen, setFormOpen] = useState(false)
   const [editingDebt, setEditingDebt] = useState<Debt | null>(null)
+  const [activeDebt, setActiveDebt] = useState<Debt | null>(null)
+  const [detailOpen, setDetailOpen] = useState(false)
   const [paymentOpen, setPaymentOpen] = useState(false)
   const [paymentsSheetOpen, setPaymentsSheetOpen] = useState(false)
   const [strategiesOpen, setStrategiesOpen] = useState(false)
+  const [paidOffExpanded, setPaidOffExpanded] = useState(false)
 
   const active = useMemo(
     () =>
@@ -258,26 +252,32 @@ export function DebtsPage() {
     [debts],
   )
 
-  const selected =
-    debts.find((d) => d.id === selectedId) ?? active[0] ?? paid[0] ?? null
-
-  useEffect(() => {
-    if (!debts.length) {
-      setSelectedId(null)
-      return
-    }
-    if (selectedId != null && debts.some((d) => d.id === selectedId)) return
-    setSelectedId((active[0] ?? paid[0])?.id ?? null)
-  }, [debts, selectedId, active, paid])
-
   const openCreate = () => {
     setEditingDebt(null)
     setFormOpen(true)
   }
 
   const openEdit = (debt: Debt) => {
+    setDetailOpen(false)
     setEditingDebt(debt)
     setFormOpen(true)
+  }
+
+  const openDetail = (debt: Debt) => {
+    setActiveDebt(debt)
+    setDetailOpen(true)
+  }
+
+  const openPayment = (debt: Debt) => {
+    setDetailOpen(false)
+    setActiveDebt(debt)
+    setPaymentOpen(true)
+  }
+
+  const openPaymentsSheet = (debt: Debt) => {
+    setDetailOpen(false)
+    setActiveDebt(debt)
+    setPaymentsSheetOpen(true)
   }
 
   const handleDelete = async (debt: Debt) => {
@@ -291,7 +291,7 @@ export function DebtsPage() {
     try {
       await deleteDebt.mutateAsync(debt.id)
       toast.success('Debt deleted')
-      if (selectedId === debt.id) setSelectedId(null)
+      setDetailOpen(false)
     } catch {
       toast.error('Could not delete the debt. Try again.')
     }
@@ -301,7 +301,7 @@ export function DebtsPage() {
     <PageContainer wide>
       <PageHeader
         title="Debts"
-        description="Interest calculator, payment schedule, and linked transactions — one debt at a time."
+        description="Tap a debt to see the interest math, payment schedule, and linked transactions."
         action={
           <div className="flex items-center gap-2">
             <Button
@@ -322,9 +322,13 @@ export function DebtsPage() {
       />
 
       {isLoading ? (
-        <div className="grid grid-cols-1 lg:grid-cols-[minmax(16rem,20rem)_1fr] gap-4 min-h-[28rem]">
-          <Skeleton className="h-[28rem] w-full rounded-xl" />
-          <Skeleton className="h-[28rem] w-full rounded-xl" />
+        <div className="flex flex-col gap-4">
+          <Skeleton className="h-24 w-full rounded-xl" />
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            <Skeleton className="h-40 w-full rounded-xl" />
+            <Skeleton className="h-40 w-full rounded-xl" />
+            <Skeleton className="h-40 w-full rounded-xl" />
+          </div>
         </div>
       ) : debts.length === 0 ? (
         <Empty className="border border-dashed py-14">
@@ -345,14 +349,15 @@ export function DebtsPage() {
           </EmptyContent>
         </Empty>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-[minmax(16rem,20rem)_1fr] gap-4 items-start">
-          <aside className="glass-panel rounded-xl border overflow-hidden">
-            <div className="border-b border-border px-4 py-3 flex items-center justify-between gap-2">
+        <div className="flex flex-col gap-4">
+          {/* Statement head — the whole obligation, one line */}
+          <section className="glass-panel rounded-xl border px-4 py-4 sm:px-6">
+            <div className="flex flex-wrap items-center justify-between gap-6">
               <div>
                 <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                  Portfolio
+                  Total owed
                 </p>
-                <p className="text-sm font-semibold tabular-nums">
+                <p className="mt-1 font-heading text-2xl font-bold tabular-nums tracking-tight sm:text-3xl">
                   {formatCurrency(
                     summary?.total_amount_due ??
                       summary?.total_current_balance ??
@@ -360,110 +365,96 @@ export function DebtsPage() {
                   )}
                 </p>
               </div>
-              <ProgressDial
-                percent={summary?.overall_progress_percentage ?? 0}
-                label="overall payoff"
-              />
-            </div>
-            <ScrollArea className="h-[min(70vh,36rem)]">
-              <div className="flex flex-col p-2 gap-1">
-                {active.length > 0 && (
-                  <p className="px-2 pt-2 pb-1 text-[0.65rem] font-semibold uppercase tracking-wider text-muted-foreground">
-                    Active · {active.length}
+              <ProgressDial percent={summary?.overall_progress_percentage ?? 0} label="overall payoff" />
+              <div className="flex flex-wrap gap-x-8 gap-y-2 sm:ms-auto">
+                <div>
+                  <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                    Min. monthly
                   </p>
-                )}
-                {active.map((debt) => (
-                  <DebtListItem
-                    key={debt.id}
-                    debt={debt}
-                    selected={selected?.id === debt.id}
-                    onSelect={() => setSelectedId(debt.id)}
-                  />
-                ))}
-                {paid.length > 0 && (
-                  <p className="px-2 pt-3 pb-1 text-[0.65rem] font-semibold uppercase tracking-wider text-muted-foreground">
-                    Paid off · {paid.length}
+                  <p className="mt-1 text-lg font-semibold tabular-nums">
+                    {formatCurrency(summary?.total_minimum_payments ?? 0)}
                   </p>
-                )}
-                {paid.map((debt) => (
-                  <DebtListItem
-                    key={debt.id}
-                    debt={debt}
-                    selected={selected?.id === debt.id}
-                    onSelect={() => setSelectedId(debt.id)}
-                  />
-                ))}
-              </div>
-            </ScrollArea>
-            <div className="border-t border-border px-4 py-3 grid grid-cols-2 gap-3 text-xs">
-              <div>
-                <p className="text-muted-foreground uppercase tracking-wide text-[0.65rem]">
-                  Min. monthly
-                </p>
-                <p className="font-semibold tabular-nums">
-                  {formatCurrency(summary?.total_minimum_payments ?? 0)}
-                </p>
-              </div>
-              <div className="text-end">
-                <p className="text-muted-foreground uppercase tracking-wide text-[0.65rem]">
-                  Proj. interest
-                </p>
-                <p className="font-semibold tabular-nums text-destructive">
-                  {formatCurrency(summary?.total_projected_interest ?? 0)}
-                </p>
+                </div>
+                <div>
+                  <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                    Proj. interest
+                  </p>
+                  <p className="mt-1 text-lg font-semibold tabular-nums text-destructive">
+                    {formatCurrency(summary?.total_projected_interest ?? 0)}
+                  </p>
+                </div>
               </div>
             </div>
-          </aside>
+          </section>
 
-          {selected ? (
-            <DebtDetailPanel
-              debt={selected}
-              onEdit={() => openEdit(selected)}
-              onDelete={() => handleDelete(selected)}
-              onPayment={() => setPaymentOpen(true)}
-              onOpenPayments={() => setPaymentsSheetOpen(true)}
-            />
+          {/* Active debt tiles */}
+          {active.length === 0 ? (
+            <p className="rounded-xl border border-dashed border-border py-10 text-center text-sm text-muted-foreground">
+              Every tracked debt is paid off.
+            </p>
           ) : (
-            <Empty className="border border-dashed py-14">
-              <EmptyHeader>
-                <EmptyTitle>Select a debt</EmptyTitle>
-                <EmptyDescription>Choose a debt from the list to inspect payoff math.</EmptyDescription>
-              </EmptyHeader>
-            </Empty>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+              {active.map((debt) => (
+                <DebtTile key={debt.id} debt={debt} onOpen={() => openDetail(debt)} />
+              ))}
+            </div>
+          )}
+
+          {/* Paid off — collapsed by default, out of the way once cleared */}
+          {paid.length > 0 && (
+            <Collapsible open={paidOffExpanded} onOpenChange={setPaidOffExpanded}>
+              <CollapsibleTrigger asChild>
+                <button
+                  type="button"
+                  className="flex w-full items-center justify-between gap-2 rounded-xl border border-dashed border-border px-4 py-3 text-sm text-muted-foreground transition-colors hover:bg-muted/40"
+                >
+                  <span className="flex items-center gap-2 font-medium">
+                    <HugeiconsIcon icon={CheckmarkCircle02Icon} strokeWidth={2} className="text-success" />
+                    Paid off · {paid.length}
+                  </span>
+                  <HugeiconsIcon
+                    icon={ArrowDown01Icon}
+                    strokeWidth={2}
+                    className={cn('transition-transform', paidOffExpanded && 'rotate-180')}
+                  />
+                </button>
+              </CollapsibleTrigger>
+              <CollapsibleContent className="data-open:animate-accordion-down data-closed:animate-accordion-up overflow-hidden">
+                <div className="grid grid-cols-1 gap-4 pt-4 sm:grid-cols-2 xl:grid-cols-3">
+                  {paid.map((debt) => (
+                    <DebtTile key={debt.id} debt={debt} onOpen={() => openDetail(debt)} />
+                  ))}
+                </div>
+              </CollapsibleContent>
+            </Collapsible>
           )}
         </div>
       )}
 
-      <DebtFormDialog
-        open={formOpen}
-        onOpenChange={setFormOpen}
-        debt={editingDebt}
+      <DebtDetailDialog
+        debt={activeDebt}
+        open={detailOpen}
+        onOpenChange={setDetailOpen}
+        onEdit={() => activeDebt && openEdit(activeDebt)}
+        onDelete={() => activeDebt && handleDelete(activeDebt)}
+        onPayment={() => activeDebt && openPayment(activeDebt)}
+        onOpenPayments={() => activeDebt && openPaymentsSheet(activeDebt)}
       />
-      <DebtPaymentDialog
-        open={paymentOpen}
-        onOpenChange={setPaymentOpen}
-        debt={selected}
-      />
-      <DebtPaymentsSheet
-        debt={selected}
-        open={paymentsSheetOpen}
-        onOpenChange={setPaymentsSheetOpen}
-      />
+      <DebtFormDialog open={formOpen} onOpenChange={setFormOpen} debt={editingDebt} />
+      <DebtPaymentDialog open={paymentOpen} onOpenChange={setPaymentOpen} debt={activeDebt} />
+      <DebtPaymentsSheet debt={activeDebt} open={paymentsSheetOpen} onOpenChange={setPaymentsSheetOpen} />
       <PayoffStrategiesDialog open={strategiesOpen} onOpenChange={setStrategiesOpen} />
       {confirmDialog}
     </PageContainer>
   )
 }
 
-function DebtListItem({
-  debt,
-  selected,
-  onSelect,
-}: {
-  debt: Debt
-  selected: boolean
-  onSelect: () => void
-}) {
+/**
+ * The main clickable surface. Shows exactly what someone needs before they
+ * decide whether to dig in: current balance against the original, and what's
+ * due each period — nothing else competes for attention here.
+ */
+function DebtTile({ debt, onOpen }: { debt: Debt; onOpen: () => void }) {
   const meta = TYPE_META[debt.type] ?? TYPE_META.other
   const apr = aprPercent(debt.interest_rate)
   const tone = debtTone(debt)
@@ -472,73 +463,94 @@ function DebtListItem({
   return (
     <button
       type="button"
-      onClick={onSelect}
-      aria-current={selected}
-      className={cn(
-        'flex w-full flex-col gap-2 rounded-lg px-3 py-2.5 text-start transition-colors',
-        selected ? 'bg-primary/8 ring-1 ring-primary/25' : 'hover:bg-muted/60',
-      )}
+      onClick={onOpen}
+      className="glass-panel flex w-full flex-col overflow-hidden rounded-xl border text-start transition-shadow hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
     >
-      <div className="flex w-full items-start gap-3">
+      <div className={cn('h-1 w-full', debt.is_paid_off ? 'bg-success' : TONE_BAR[tone])} />
+
+      <div className="flex items-start gap-3 px-4 pt-3.5 sm:px-5">
         <div
           className={cn(
             'flex size-9 shrink-0 items-center justify-center rounded-lg ring-1',
             debt.is_paid_off ? 'bg-success/15 text-success ring-success/25' : TONE_MARK[tone],
           )}
         >
-          <HugeiconsIcon
-            icon={debt.is_paid_off ? CheckmarkCircle02Icon : meta.icon}
-            strokeWidth={2}
-          />
+          <HugeiconsIcon icon={debt.is_paid_off ? CheckmarkCircle02Icon : meta.icon} strokeWidth={2} />
         </div>
         <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-medium">{debt.creditor || debt.name}</p>
+          <p className="truncate text-sm font-semibold sm:text-base">{debt.creditor || debt.name}</p>
           <p className="truncate text-xs text-muted-foreground">
             {debtTypeLabel(debt)}
             {apr != null ? ` · ${apr.toFixed(2)}% APR` : ''}
           </p>
         </div>
+        {debt.is_paid_off && (
+          <Badge className="shrink-0 bg-success/15 text-[10px] text-success ring-1 ring-success/25">
+            Cleared
+          </Badge>
+        )}
+      </div>
+
+      <div className="mt-3 px-4 sm:px-5">
         <p
           className={cn(
-            'shrink-0 text-sm font-semibold tabular-nums',
+            'font-heading text-2xl font-bold tabular-nums tracking-tight',
             debt.is_paid_off ? 'text-success' : 'text-foreground',
           )}
         >
-          {formatCurrency(
-            apr != null && debt.total_amount_due != null
-              ? debt.total_amount_due
-              : debt.current_balance,
-          )}
+          {formatCurrency(debt.current_balance)}
         </p>
+        <p className="text-xs text-muted-foreground">of {formatCurrency(debt.original_balance)} original</p>
       </div>
-      {!debt.is_paid_off && (
-        <div className="h-1 w-full overflow-hidden rounded-full bg-muted">
+
+      <div className="mt-2.5 px-4 sm:px-5">
+        <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
           <div
-            className={cn(
-              'h-full rounded-full',
-              tone === 'success' ? 'bg-success' : tone === 'primary' ? 'bg-primary' : 'bg-warning',
-            )}
+            className={cn('h-full rounded-full', debt.is_paid_off ? 'bg-success' : TONE_BAR[tone])}
             style={{ width: `${Math.max(2, percent)}%` }}
           />
         </div>
-      )}
+      </div>
+
+      <div className="mt-3 flex items-center justify-between gap-2 border-t border-border px-4 py-3 sm:px-5">
+        <span className="text-xs text-muted-foreground">
+          {debt.is_paid_off ? 'Paid off' : 'Min. payment'}
+        </span>
+        <span className="text-sm font-semibold tabular-nums">
+          {debt.is_paid_off
+            ? debt.paid_off_date
+              ? formatDate(debt.paid_off_date)
+              : '—'
+            : debt.minimum_payment != null && debt.minimum_payment > 0
+              ? formatCurrency(debt.minimum_payment)
+              : '—'}
+        </span>
+      </div>
     </button>
   )
 }
 
-function DebtDetailPanel({
+function DebtDetailDialog({
   debt,
+  open,
+  onOpenChange,
   onEdit,
   onDelete,
   onPayment,
   onOpenPayments,
 }: {
-  debt: Debt
+  debt: Debt | null
+  open: boolean
+  onOpenChange: (open: boolean) => void
   onEdit: () => void
   onDelete: () => void
   onPayment: () => void
   onOpenPayments: () => void
 }) {
+  if (!debt) {
+    return <Dialog open={false} title="" onOpenChange={onOpenChange}>{null}</Dialog>
+  }
+
   const meta = TYPE_META[debt.type] ?? TYPE_META.other
   const percentage = payoffPercent(debt)
   const paidAmount = Math.max(0, debt.original_balance - debt.current_balance)
@@ -546,123 +558,79 @@ function DebtDetailPanel({
   const displayDue =
     apr != null && debt.total_amount_due != null ? debt.total_amount_due : debt.current_balance
   const projectedInterest = debt.total_interest ?? 0
-
   const tone = debtTone(debt)
 
   return (
-    <section className="glass-panel min-w-0 overflow-hidden rounded-xl border">
-      <div
-        className={cn(
-          'bg-gradient-to-br to-transparent px-5 py-5 sm:px-6',
-          'border-b border-border',
-          TONE_WASH[tone],
-        )}
-      >
-        <div className="flex items-start justify-between gap-4">
-          <div className="flex min-w-0 items-start gap-3">
-            <div
-              className={cn(
-                'flex size-11 shrink-0 items-center justify-center rounded-xl ring-1',
-                TONE_MARK[tone],
-              )}
-            >
-              <HugeiconsIcon icon={meta.icon} strokeWidth={2} />
-            </div>
-            <div className="min-w-0">
-              <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                {debtTypeLabel(debt)}
-              </p>
-              <h2 className="truncate font-heading text-xl font-bold">
-                {debt.creditor || debt.name}
-              </h2>
-              {debt.creditor && (
-                <p className="truncate text-sm text-muted-foreground">{debt.name}</p>
-              )}
-            </div>
-          </div>
-          <div className="flex shrink-0 items-center gap-1">
-            {!debt.is_paid_off && (
-              <Button size="sm" onClick={onPayment}>
-                <HugeiconsIcon icon={Wallet01Icon} strokeWidth={2} data-icon="inline-start" />
-                Add payment
-              </Button>
-            )}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button size="icon-sm" variant="ghost" aria-label="More actions">
-                  <HugeiconsIcon icon={MoreVerticalIcon} strokeWidth={2} />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuGroup>
-                  <DropdownMenuItem onClick={onEdit}>
-                    <HugeiconsIcon icon={Edit02Icon} strokeWidth={2} data-icon="inline-start" />
-                    Edit debt
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={onOpenPayments}>
-                    <HugeiconsIcon
-                      icon={TransactionIcon}
-                      strokeWidth={2}
-                      data-icon="inline-start"
-                    />
-                    Payments & transactions
-                  </DropdownMenuItem>
-                </DropdownMenuGroup>
-                <DropdownMenuSeparator />
-                <DropdownMenuGroup>
-                  <DropdownMenuItem variant="destructive" onClick={onDelete}>
-                    <HugeiconsIcon icon={Delete02Icon} strokeWidth={2} data-icon="inline-start" />
-                    Delete
-                  </DropdownMenuItem>
-                </DropdownMenuGroup>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        </div>
-
-        <div className="mt-5 flex flex-col gap-4">
-          <div className="flex flex-wrap items-end justify-between gap-4">
-            <div>
-              <p className="text-[0.65rem] font-semibold uppercase tracking-wider text-muted-foreground">
-                {apr != null ? 'Amount due, interest included' : 'Current balance'}
-              </p>
-              <p className="mt-1 font-heading text-4xl font-bold tabular-nums tracking-tight">
-                {formatCurrency(displayDue)}
-              </p>
-              <p className="mt-1 text-xs text-muted-foreground">
-                of {formatCurrency(debt.original_balance)} original
-              </p>
-            </div>
-            <div className="flex items-center gap-2">
-              {debt.is_paid_off ? (
-                <Badge className="bg-success/15 text-success ring-1 ring-success/25">
-                  <HugeiconsIcon
-                    icon={CheckmarkCircle02Icon}
-                    strokeWidth={2}
-                    data-icon="inline-start"
-                  />
-                  Cleared
-                </Badge>
-              ) : (
-                <Badge variant="secondary" className="tabular-nums">
-                  {Math.round(percentage)}% paid off
-                </Badge>
-              )}
-              {debt.priority > 0 && <Badge variant="outline">Priority P{debt.priority}</Badge>}
-            </div>
-          </div>
-
+    <Dialog
+      open={open}
+      onOpenChange={onOpenChange}
+      title={debt.creditor || debt.name}
+      description={`${debtTypeLabel(debt)}${debt.creditor ? ` · ${debt.name}` : ''}`}
+      icon={meta.icon}
+      tone={debt.is_paid_off ? 'primary' : TONE_DIALOG[tone]}
+      className="sm:max-w-lg"
+      footer={
+        <div className="flex w-full flex-wrap items-center gap-2">
           {!debt.is_paid_off && (
-            <PayoffBar
-              paid={paidAmount}
-              remaining={debt.current_balance}
-              interest={projectedInterest}
-            />
+            <Button size="sm" onClick={onPayment}>
+              <HugeiconsIcon icon={Wallet01Icon} strokeWidth={2} data-icon="inline-start" />
+              Add payment
+            </Button>
           )}
+          <Button size="sm" variant="outline" onClick={onOpenPayments}>
+            <HugeiconsIcon icon={TransactionIcon} strokeWidth={2} data-icon="inline-start" />
+            Payments
+          </Button>
+          <Button size="sm" variant="outline" onClick={onEdit}>
+            <HugeiconsIcon icon={Edit02Icon} strokeWidth={2} data-icon="inline-start" />
+            Edit
+          </Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            className="text-destructive hover:text-destructive ms-auto"
+            onClick={onDelete}
+          >
+            <HugeiconsIcon icon={Delete02Icon} strokeWidth={2} data-icon="inline-start" />
+            Delete
+          </Button>
         </div>
-      </div>
+      }
+    >
+      <div className="flex flex-col gap-5">
+        <div className="flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <p className="text-[0.65rem] font-semibold uppercase tracking-wider text-muted-foreground">
+              {apr != null ? 'Amount due, interest included' : 'Current balance'}
+            </p>
+            <p className="mt-1 font-heading text-3xl font-bold tabular-nums tracking-tight">
+              {formatCurrency(displayDue)}
+            </p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              of {formatCurrency(debt.original_balance)} original
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            {debt.is_paid_off ? (
+              <Badge className="bg-success/15 text-success ring-1 ring-success/25">
+                <HugeiconsIcon icon={CheckmarkCircle02Icon} strokeWidth={2} data-icon="inline-start" />
+                Cleared
+              </Badge>
+            ) : (
+              <Badge variant="secondary" className="tabular-nums">
+                {Math.round(percentage)}% paid off
+              </Badge>
+            )}
+            {debt.priority > 0 && <Badge variant="outline">Priority P{debt.priority}</Badge>}
+          </div>
+        </div>
 
-      <div className="p-5 sm:p-6 flex flex-col gap-6">
+        {!debt.is_paid_off && (
+          <PayoffBar paid={paidAmount} remaining={debt.current_balance} interest={projectedInterest} />
+        )}
+
+        <Separator />
+
         <div>
           <div className="mb-3">
             <h3 className="text-sm font-semibold">Interest & payoff</h3>
@@ -670,7 +638,7 @@ function DebtDetailPanel({
               Projected from the APR and minimum payment, assuming you pay the minimum only.
             </p>
           </div>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 gap-3">
             <CalcCell
               label="APR"
               value={apr != null ? `${apr.toFixed(2)}%` : '—'}
@@ -708,9 +676,7 @@ function DebtDetailPanel({
             />
             <CalcCell
               label="Total interest"
-              value={
-                debt.total_interest != null ? formatCurrency(debt.total_interest) : '—'
-              }
+              value={debt.total_interest != null ? formatCurrency(debt.total_interest) : '—'}
               icon={AnalyticsUpIcon}
               hint="What the minimum-only path costs you"
               tone="warning"
@@ -720,23 +686,16 @@ function DebtDetailPanel({
 
         <Separator />
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+        <div className="grid grid-cols-1 gap-3 text-sm sm:grid-cols-2">
           <DetailRow label="Opened" value={debt.opened_date ? formatDate(debt.opened_date) : '—'} />
-          <DetailRow
-            label="Maturity"
-            value={debt.maturity_date ? formatDate(debt.maturity_date) : '—'}
-          />
+          <DetailRow label="Maturity" value={debt.maturity_date ? formatDate(debt.maturity_date) : '—'} />
           <DetailRow
             label="Next payment"
             value={debt.next_payment_date ? formatDate(debt.next_payment_date) : '—'}
           />
           <DetailRow
             label="Schedule day"
-            value={
-              debt.recurrence_day_of_month != null
-                ? `Day ${debt.recurrence_day_of_month}`
-                : '—'
-            }
+            value={debt.recurrence_day_of_month != null ? `Day ${debt.recurrence_day_of_month}` : '—'}
           />
           {debt.is_paid_off && debt.paid_off_date && (
             <DetailRow label="Cleared on" value={formatDate(debt.paid_off_date)} />
@@ -747,26 +706,15 @@ function DebtDetailPanel({
           <>
             <Separator />
             <div>
-              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground mb-1">
+              <p className="mb-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
                 Notes
               </p>
-              <p className="text-sm text-foreground whitespace-pre-wrap">{debt.notes}</p>
+              <p className="whitespace-pre-wrap text-sm text-foreground">{debt.notes}</p>
             </div>
           </>
         )}
-
-        <div className="flex flex-wrap gap-2">
-          <Button size="sm" variant="outline" onClick={onOpenPayments}>
-            <HugeiconsIcon icon={TransactionIcon} strokeWidth={2} data-icon="inline-start" />
-            View payments & linked txns
-          </Button>
-          <Button size="sm" variant="outline" onClick={onEdit}>
-            <HugeiconsIcon icon={Edit02Icon} strokeWidth={2} data-icon="inline-start" />
-            Edit properties
-          </Button>
-        </div>
       </div>
-    </section>
+    </Dialog>
   )
 }
 
@@ -794,12 +742,7 @@ function CalcCell({
   const palette = CALC_TONE[empty ? 'default' : tone]
 
   return (
-    <div
-      className={cn(
-        'flex flex-col gap-1.5 rounded-lg border border-border p-3',
-        palette.surface,
-      )}
-    >
+    <div className={cn('flex flex-col gap-1.5 rounded-lg border border-border p-3', palette.surface)}>
       <div className="flex items-center gap-1.5">
         <HugeiconsIcon icon={icon} strokeWidth={2} className={palette.icon} />
         <span className="text-[0.65rem] font-semibold uppercase tracking-wider text-muted-foreground">

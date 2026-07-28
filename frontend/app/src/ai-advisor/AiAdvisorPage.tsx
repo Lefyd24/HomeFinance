@@ -1,8 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useSearchParams } from 'react-router-dom'
-import { PenLine } from 'lucide-react'
-import { Button } from '@/components/ui/button'
 import { getChatStatus } from './aiChatApi'
 import { ChatWidget } from './ChatWidget'
 import { useAiChat } from './useAiChat'
@@ -37,41 +35,20 @@ export function AiAdvisorPage() {
   const unavailable = status?.configured === false
 
   return (
-    // The composer stays on screen while the transcript scrolls behind it, so
-    // the page owns the viewport height rather than growing past it.
-    <div className="flex h-[calc(100dvh-8rem)] flex-col lg:h-[calc(100dvh-3.5rem)]">
-      <header className="flex items-center justify-between gap-4 border-b border-border px-4 py-3 sm:px-6">
-        <div className="min-w-0">
-          <h1 className="font-heading text-lg font-bold tracking-tight text-foreground">
-            AI Advisor
-          </h1>
-          <p className="truncate text-xs text-muted-foreground">
-            {unavailable
-              ? 'Unavailable until an API key is configured'
-              : 'Answers built from your own transactions, live'}
-          </p>
-        </div>
-
-        {turns.length > 0 && (
-          <Button variant="ghost" size="sm" onClick={clear}>
-            <PenLine data-icon="inline-start" />
-            New chat
-          </Button>
-        )}
-      </header>
-
-      <div className="min-h-0 flex-1">
-        <ChatWidget
-          turns={turns}
-          isStreaming={isStreaming}
-          onSend={send}
-          onStop={stop}
-          onRetry={retry}
-          disabled={statusLoading || unavailable}
-          disabledReason="AI chat is not configured on this server. Set DEEPSEEK_API_KEY on the backend to turn it on."
-          initialPrompt={initialPrompt}
-        />
-      </div>
+    // This page owns the full height main hands it (no header eating into
+    // it) — the transcript scrolls inside; the composer never moves.
+    <div className="flex h-full min-h-0 flex-col">
+      <ChatWidget
+        turns={turns}
+        isStreaming={isStreaming}
+        onSend={send}
+        onStop={stop}
+        onRetry={retry}
+        onClear={turns.length > 0 ? clear : undefined}
+        disabled={statusLoading || unavailable}
+        disabledReason="AI chat is not configured on this server. Set DEEPSEEK_API_KEY on the backend to turn it on."
+        initialPrompt={initialPrompt}
+      />
     </div>
   )
 }
