@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { ViewSelect } from '../ui/ViewSelect'
 import { PageContainer } from '../ui/PageContainer'
 import { PageHeader } from '../ui/PageHeader'
 import { ReportFilterBar } from './ReportFilterBar'
@@ -54,9 +55,23 @@ export function ReportsPage() {
         />
 
         <Tabs value={filters.tab} onValueChange={filters.setTab} className="w-full">
-          <TabsList fullWidth className="mb-4">
+          {/* Phones get a dropdown instead of a strip. Five report names cannot
+              share a phone-width row without either scrolling out of sight or
+              shrinking past legibility — a Select shows the current one in full
+              and puts the rest one tap away. */}
+          <ViewSelect
+            label="Report"
+            value={filters.tab}
+            onValueChange={filters.setTab}
+            options={TABS.map((tab) => ({ value: tab.key, label: tab.label }))}
+            className="mb-4 sm:hidden"
+          />
+
+          {/* No min-w-0 on the triggers: it let the flex line shrink them past
+              their label width, which is what made these collide. */}
+          <TabsList fullWidth className="mb-4 max-sm:hidden">
             {TABS.map((tab) => (
-              <TabsTrigger key={tab.key} value={tab.key} className="min-w-0 flex-1">
+              <TabsTrigger key={tab.key} value={tab.key} className="flex-1">
                 {tab.label}
               </TabsTrigger>
             ))}

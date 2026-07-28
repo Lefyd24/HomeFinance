@@ -30,7 +30,8 @@ import {
   EmptyTitle,
 } from '@/components/ui/empty'
 import { PageContainer } from '@/ui/PageContainer'
-import { PageHeader } from '@/ui/PageHeader'
+import { PageHeader, PageHeaderActionLabel } from '@/ui/PageHeader'
+import { ViewSelect } from '@/ui/ViewSelect'
 import { useConfirm } from '@/ui/useConfirm'
 import { StatStrip, StatCard } from '@/ui/StatStrip'
 import { useCategories, useDeleteCategory } from './useCategories'
@@ -123,7 +124,7 @@ export function CategoriesPage() {
         action={
           <Button onClick={handleAdd} size="sm">
             <HugeiconsIcon icon={Add01Icon} strokeWidth={2} data-icon="inline-start" />
-            Add
+            <PageHeaderActionLabel>Add</PageHeaderActionLabel>
           </Button>
         }
       />
@@ -156,7 +157,23 @@ export function CategoriesPage() {
             onValueChange={(value) => setActiveTab(value as 'all' | CategoryType)}
             className="flex flex-col gap-4"
           >
-            <TabsList variant="line" className="w-full justify-start">
+            {/* Phones get a dropdown; four labelled, counted tabs will not share
+                a phone-width row without overflowing. Counts come along in the
+                dropdown, where there is room for them. */}
+            <ViewSelect
+              label="Category type"
+              value={activeTab}
+              onValueChange={(value) => setActiveTab(value as 'all' | CategoryType)}
+              options={[
+                { value: 'all', label: `All (${categories.length})` },
+                { value: 'income', label: `Income (${incomeCategories.length})` },
+                { value: 'expense', label: `Expense (${expenseCategories.length})` },
+                { value: 'transfer', label: `Transfer (${transferCategories.length})` },
+              ]}
+              className="sm:hidden"
+            />
+
+            <TabsList variant="line" fullWidth className="max-sm:hidden">
               <TabsTrigger value="all">All ({categories.length})</TabsTrigger>
               <TabsTrigger value="income">Income ({incomeCategories.length})</TabsTrigger>
               <TabsTrigger value="expense">Expense ({expenseCategories.length})</TabsTrigger>
@@ -243,7 +260,50 @@ function CategoryTile({ category, onEdit, onDelete }: CategoryTileProps) {
         style={{ backgroundColor: category.color }}
         aria-hidden
       />
-      <CardContent className="flex flex-col items-center gap-3 pt-4 text-center">
+      {/*
+       * The whole tile is the tap target. The kebab menu below is revealed on
+       * hover, which a touch device never fires — so on a phone there was no way
+       * at all to open a category. A sibling overlay rather than a wrapping
+       * button: a menu trigger cannot legally nest inside a button, and it would
+       * swallow the tap. CardContent is pointer-events-none so clicks fall
+       * through to this; the kebab opts back in.
+       */}
+      <button
+        type="button"
+        onClick={() => onEdit(category)}
+        aria-label={`${category.is_system ? 'View' : 'Edit'} ${category.name}`}
+        className="absolute inset-0 rounded-[inherit] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+      />
+      {/* Sibling of the overlay, not a child of CardContent: it stays anchored to
+          the card's own corner, and always visible on touch where there is no
+          hover to reveal it. */}
+      {!category.is_system && (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="absolute end-1.5 top-2.5 z-10 transition-opacity sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100"
+              aria-label={`Actions for ${category.name}`}
+            >
+              <HugeiconsIcon icon={MoreVerticalIcon} strokeWidth={2} />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuGroup>
+              <DropdownMenuItem onClick={() => onEdit(category)}>
+                <HugeiconsIcon icon={PencilEdit02Icon} strokeWidth={2} />
+                Edit
+              </DropdownMenuItem>
+              <DropdownMenuItem variant="destructive" onClick={() => onDelete(category)}>
+                <HugeiconsIcon icon={Delete02Icon} strokeWidth={2} />
+                Delete
+              </DropdownMenuItem>
+            </DropdownMenuGroup>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      )}
+      <CardContent className="pointer-events-none flex flex-col items-center gap-3 pt-4 text-center">
         <CategoryIcon icon={category.icon} color={category.color} className="size-12" size={24} />
         <div className="min-w-0 w-full">
           <p className="font-medium text-sm truncate" title={category.name}>
@@ -260,42 +320,6 @@ function CategoryTile({ category, onEdit, onDelete }: CategoryTileProps) {
             )}
           </div>
         </div>
-        {!category.is_system && (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon-xs"
-                className="absolute end-2 top-3 opacity-0 group-hover:opacity-100 transition-opacity"
-                aria-label="Actions"
-              >
-                <HugeiconsIcon icon={MoreVerticalIcon} strokeWidth={2} />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuGroup>
-                <DropdownMenuItem onClick={() => onEdit(category)}>
-                  <HugeiconsIcon icon={PencilEdit02Icon} strokeWidth={2} />
-                  Edit
-                </DropdownMenuItem>
-                <DropdownMenuItem variant="destructive" onClick={() => onDelete(category)}>
-                  <HugeiconsIcon icon={Delete02Icon} strokeWidth={2} />
-                  Delete
-                </DropdownMenuItem>
-              </DropdownMenuGroup>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        )}
-        {category.is_system && (
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-7 text-xs"
-            onClick={() => onEdit(category)}
-          >
-            View
-          </Button>
-        )}
       </CardContent>
     </Card>
   )

@@ -23,7 +23,7 @@ import { DataTable } from '@/components/data-table/data-table'
 import { DataTablePagination } from '@/components/data-table/data-table-pagination'
 import { DataTableViewOptions } from '@/components/data-table/data-table-view-options'
 import { PageContainer } from '../ui/PageContainer'
-import { PageHeader } from '../ui/PageHeader'
+import { PageHeader, PageHeaderActionLabel } from '../ui/PageHeader'
 import { Amount, flowOfType, flowRail } from '../ui/money'
 import { useConfirm } from '../ui/useConfirm'
 import { useAccounts } from '../accounts/useAccounts'
@@ -214,18 +214,18 @@ export function TransactionsPage() {
         description="Every euro in, out, and moved between your accounts."
         className="mb-2"
         action={
-          <div className="flex items-center gap-2">
+          <>
             <Button variant="outline" asChild>
               <Link to="/import">
                 <HugeiconsIcon icon={FileImportIcon} strokeWidth={2} data-icon="inline-start" />
-                Import
+                <PageHeaderActionLabel>Import</PageHeaderActionLabel>
               </Link>
             </Button>
             <Button onClick={() => setAddDialogOpen(true)}>
               <HugeiconsIcon icon={Add01Icon} strokeWidth={2} data-icon="inline-start" />
-              Add transaction
+              <PageHeaderActionLabel>Add transaction</PageHeaderActionLabel>
             </Button>
-          </div>
+          </>
         }
       />
 

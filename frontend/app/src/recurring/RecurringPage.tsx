@@ -47,7 +47,7 @@ import {
   EmptyTitle,
 } from '@/components/ui/empty'
 import { PageContainer } from '../ui/PageContainer'
-import { PageHeader } from '../ui/PageHeader'
+import { PageHeader, PageHeaderActionLabel } from '../ui/PageHeader'
 import { useConfirm } from '../ui/useConfirm'
 import { Amount, CategoryChip } from '../ui/money'
 import { formatCurrency, formatDate } from '../lib/format'
@@ -232,7 +232,7 @@ export function RecurringPage() {
         action={
           <Button size="sm" onClick={openCreate}>
             <HugeiconsIcon icon={Add01Icon} strokeWidth={2} data-icon="inline-start" />
-            Add
+            <PageHeaderActionLabel>Add</PageHeaderActionLabel>
           </Button>
         }
       />

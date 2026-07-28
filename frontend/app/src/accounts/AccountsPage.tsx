@@ -29,7 +29,7 @@ import {
   EmptyTitle,
 } from '@/components/ui/empty'
 import { PageContainer } from '../ui/PageContainer'
-import { PageHeader } from '../ui/PageHeader'
+import { PageHeader, PageHeaderActionLabel } from '../ui/PageHeader'
 import { useConfirm } from '../ui/useConfirm'
 import { formatCurrency } from '../lib/format'
 import { cn } from '@/lib/utils'
@@ -115,7 +115,7 @@ export function AccountsPage() {
         action={
           <Button size="sm" onClick={handleAdd}>
             <HugeiconsIcon icon={Add01Icon} strokeWidth={2} data-icon="inline-start" />
-            Add account
+            <PageHeaderActionLabel>Add account</PageHeaderActionLabel>
           </Button>
         }
       />

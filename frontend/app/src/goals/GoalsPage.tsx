@@ -26,7 +26,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { PageContainer } from '../ui/PageContainer'
-import { PageHeader } from '../ui/PageHeader'
+import { PageHeader, PageHeaderActionLabel } from '../ui/PageHeader'
 import { useConfirm } from '../ui/useConfirm'
 import { formatCurrency, formatDate } from '../lib/format'
 import { cn } from '@/lib/utils'
@@ -137,7 +137,7 @@ export function GoalsPage() {
         action={
           <Button size="sm" onClick={openCreate}>
             <HugeiconsIcon icon={Add01Icon} strokeWidth={2} data-icon="inline-start" />
-            Add goal
+            <PageHeaderActionLabel>Add goal</PageHeaderActionLabel>
           </Button>
         }
       />

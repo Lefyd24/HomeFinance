@@ -63,8 +63,13 @@ function SheetContent({
         className={cn(
           'glass-popover fixed z-50 flex flex-col gap-4 bg-clip-padding text-sm text-popover-foreground transition duration-200 ease-in-out',
           'data-[side=bottom]:inset-x-0 data-[side=bottom]:bottom-0 data-[side=bottom]:h-auto data-[side=bottom]:border-t',
-          'data-[side=left]:inset-y-0 data-[side=left]:left-0 data-[side=left]:h-full data-[side=left]:w-3/4 data-[side=left]:border-r',
-          'data-[side=right]:inset-y-0 data-[side=right]:right-0 data-[side=right]:h-full data-[side=right]:w-3/4 data-[side=right]:border-l',
+          // Full width on phones. The 3/4 default left a strip of dead page at
+          // the edge and squeezed the panel's own content — tables inside a
+          // details sheet ended up clipped. Callers pass `w-full sm:max-w-*`,
+          // which never won here: an unprefixed w-full loses the specificity
+          // tie against a data-[side=*] variant, so it has to be fixed at source.
+          'data-[side=left]:inset-y-0 data-[side=left]:left-0 data-[side=left]:h-full data-[side=left]:w-full data-[side=left]:sm:w-3/4 data-[side=left]:border-r',
+          'data-[side=right]:inset-y-0 data-[side=right]:right-0 data-[side=right]:h-full data-[side=right]:w-full data-[side=right]:sm:w-3/4 data-[side=right]:border-l',
           'data-[side=top]:inset-x-0 data-[side=top]:top-0 data-[side=top]:h-auto data-[side=top]:border-b',
           'data-[side=left]:sm:max-w-sm data-[side=right]:sm:max-w-sm',
           'data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0',
@@ -106,7 +111,12 @@ function SheetFooter({ className, ...props }: React.ComponentProps<'div'>) {
   return (
     <div
       data-slot="sheet-footer"
-      className={cn('mt-auto flex flex-col gap-2 p-4', className)}
+      // A footer in a full-height side sheet sits on the screen's bottom edge,
+      // so it has to clear the home indicator. Resolves to 0 in a browser tab.
+      className={cn(
+        'mt-auto flex flex-col gap-2 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:pb-4',
+        className,
+      )}
       {...props}
     />
   )

@@ -3,7 +3,10 @@ import { cn } from '@/lib/utils'
 
 export function StatStrip({ children, className }: { children: ReactNode; className?: string }) {
   return (
-    <div className={cn('grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3', className)}>
+    // Two columns on phones, not one: a single column pushed four cards' worth
+    // of chrome above the page content, so you scrolled past the whole strip
+    // before reaching anything you came for.
+    <div className={cn('grid grid-cols-2 xl:grid-cols-4 gap-3', className)}>
       {children}
     </div>
   )
@@ -32,9 +35,14 @@ export function StatCard({
           : 'glass-panel text-foreground'
 
   return (
-    <div className={cn('rounded-xl border p-4', surface, className)}>
+    <div className={cn('rounded-xl border p-3 sm:p-4', surface, className)}>
       <p className={cn('text-sm', tone === 'primary' ? 'opacity-80' : 'text-muted-foreground')}>{label}</p>
-      <div className="text-2xl font-bold font-heading tracking-tight mt-1">{value}</div>
+      {/* Currency values are the widest thing in here; step the size down and
+          allow a break so a long total wraps inside the card instead of
+          escaping it in a two-column phone layout. */}
+      <div className="text-xl sm:text-2xl font-bold font-heading tracking-tight tabular-nums break-words mt-1">
+        {value}
+      </div>
       {hint && (
         <p className={cn('text-xs mt-1', tone === 'primary' ? 'opacity-70' : 'text-muted-foreground')}>{hint}</p>
       )}

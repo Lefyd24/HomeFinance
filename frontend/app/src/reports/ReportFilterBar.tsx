@@ -1,5 +1,4 @@
-import { CalendarRange, Check, ChevronDown, Download, Tags, Wallet, X } from 'lucide-react'
-import { toast } from 'sonner'
+import { CalendarRange, Check, ChevronDown, Tags, Wallet, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -11,39 +10,33 @@ import { useAccounts } from '../accounts/useAccounts'
 import { useCategories } from '../categories/useCategories'
 import { formatDate } from '../lib/format'
 import { RANGE_PRESETS, type ReportFilters } from './useReportFilters'
-import { downloadReportCsv } from './reportsPageApi'
 
-/** Which CSV the Export button pulls, per tab. */
-const EXPORT_FOR_TAB: Record<string, string> = {
-  overview: 'spending',
-  cashflow: 'cashflow',
-  spending: 'spending',
-  budgets: 'spending',
-  debt: 'spending',
-}
+// The Export CSV button used to live at the end of this bar. It was removed on
+// request; `downloadReportCsv` is still exported from ./reportsPageApi if it
+// needs to come back somewhere else.
 
 export function ReportFilterBar({ filters }: { filters: ReportFilters }) {
   const { data: accounts } = useAccounts()
   const { data: categories } = useCategories()
 
-  async function handleExport() {
-    try {
-      await downloadReportCsv(EXPORT_FOR_TAB[filters.tab] ?? 'spending', filters.params)
-    } catch {
-      toast.error('Export failed. Try again in a moment.')
-    }
-  }
-
   return (
-    <div className="sticky top-0 z-20 -mx-3 mb-6 px-3 py-3 sm:-mx-4 sm:px-4 lg:-mx-6 lg:px-6">
-      <div className="flex flex-wrap items-center gap-2">
+    // Pinned to the top of the page scroller with its own opaque chrome. It was
+    // already sticky, but fully transparent, so page content slid visibly through
+    // it and it read as scrolling along with everything else.
+    <div className="glass-bar sticky top-0 z-20 -mx-3 mb-6 border-b px-3 py-2.5 sm:-mx-4 sm:px-4 lg:-mx-6 lg:px-6">
+      {/* One row at every width. It used to wrap, which stacked the three filters
+          into a block on a phone. Nothing is collapsed or hidden — all three keep
+          their labels — and the group scrolls if a long custom range needs it. */}
+      <div className="flex items-center gap-2">
         <div className="report-filter-group">
         <Popover>
           <PopoverTrigger asChild>
+            {/* Icon and chevron are decoration; dropping them on a phone is what
+                buys all three filters a single row with their labels intact. */}
             <Button variant="ghost" size="sm">
-              <CalendarRange data-icon="inline-start" />
+              <CalendarRange data-icon="inline-start" className="max-sm:hidden" />
               {RANGE_PRESETS.find((preset) => preset.key === filters.range)?.label}
-              <ChevronDown data-icon="inline-end" />
+              <ChevronDown data-icon="inline-end" className="max-sm:hidden" />
             </Button>
           </PopoverTrigger>
           <PopoverContent align="start" className="w-64 p-1">
@@ -109,22 +102,17 @@ export function ReportFilterBar({ filters }: { filters: ReportFilters }) {
         </div>
 
         {filters.hasDimensionFilters && (
-          <Button variant="ghost" size="sm" onClick={filters.reset}>
+          <Button variant="ghost" size="sm" className="shrink-0" onClick={filters.reset}>
             <X data-icon="inline-start" />
-            Clear filters
+            <span className="sr-only sm:not-sr-only">Clear filters</span>
           </Button>
         )}
 
-        <div className="flex-1" />
+        <div className="hidden flex-1 lg:block" />
 
         <p className="hidden text-xs text-muted-foreground tabular-nums lg:block">
           {formatDate(filters.startDate)} — {formatDate(filters.endDate)}
         </p>
-
-        <Button variant="success" size="sm" onClick={() => void handleExport()}>
-          <Download data-icon="inline-start" />
-          Export CSV
-        </Button>
       </div>
     </div>
   )
@@ -151,14 +139,14 @@ function MultiSelect({
     <Popover>
       <PopoverTrigger asChild>
         <Button variant="ghost" size="sm">
-          <Icon data-icon="inline-start" />
+          <Icon data-icon="inline-start" className="max-sm:hidden" />
           {label}
           {selected.length > 0 && (
             <Badge variant="secondary" className="ms-1 tabular-nums">
               {selected.length}
             </Badge>
           )}
-          <ChevronDown data-icon="inline-end" />
+          <ChevronDown data-icon="inline-end" className="max-sm:hidden" />
         </Button>
       </PopoverTrigger>
       <PopoverContent align="start" className="w-64 p-0">
