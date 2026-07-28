@@ -23,7 +23,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput } from '@/components/ui/input-group'
 import { PageContainer } from '../ui/PageContainer'
-import { PageHeader } from '../ui/PageHeader'
+import { PageHeader, PageHeaderActionLabel } from '../ui/PageHeader'
 import { EmptyState } from '../ui/EmptyState'
 import { useConfirm } from '../ui/useConfirm'
 import { cn } from '@/lib/utils'
@@ -136,7 +136,7 @@ export function DocumentsPage() {
         title="Documents"
         description="Store and organize financial documents such as bank agreements, insurance policies, bills, and receipts."
         action={
-          <div className="flex items-center gap-2">
+          <>
             <Button
               variant="outline"
               size="sm"
@@ -146,13 +146,13 @@ export function DocumentsPage() {
               }}
             >
               <FolderPlus data-icon="inline-start" />
-              New folder
+              <PageHeaderActionLabel>New folder</PageHeaderActionLabel>
             </Button>
             <Button size="sm" onClick={() => setUploadOpen(true)}>
               <FileText data-icon="inline-start" />
-              Upload
+              <PageHeaderActionLabel>Upload</PageHeaderActionLabel>
             </Button>
-          </div>
+          </>
         }
       />
 

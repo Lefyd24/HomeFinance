@@ -4,10 +4,8 @@ import { Link } from 'react-router-dom'
 import { HugeiconsIcon } from '@hugeicons/react'
 import type { IconSvgElement } from '@hugeicons/react'
 import {
-  Add01Icon,
   AlarmClockIcon,
   BankIcon,
-  FileImportIcon,
   PiggyBankIcon,
   TagIcon,
   TargetIcon,
@@ -190,22 +188,6 @@ export function DashboardPage() {
         title="Dashboard"
         description="This month at a glance."
         className="mb-0"
-        action={
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" asChild>
-              <Link to="/import">
-                <HugeiconsIcon icon={FileImportIcon} strokeWidth={2} data-icon="inline-start" />
-                Import
-              </Link>
-            </Button>
-            <Button size="sm" asChild>
-              <Link to="/transactions">
-                <HugeiconsIcon icon={Add01Icon} strokeWidth={2} data-icon="inline-start" />
-                Add transaction
-              </Link>
-            </Button>
-          </div>
-        }
       />
 
       {/* The month in four figures and one bar. Everything below explains it. */}

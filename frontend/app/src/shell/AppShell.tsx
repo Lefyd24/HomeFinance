@@ -314,7 +314,13 @@ function NotificationsMenu() {
           )}
         </Button>
       </PopoverTrigger>
-      <PopoverContent align="end" sideOffset={8} className="w-[22rem] overflow-hidden p-0">
+      {/* 22rem is wider than a small phone's viewport, so cap it against the
+          screen — Radix would otherwise place a panel that runs off the edge. */}
+      <PopoverContent
+        align="end"
+        sideOffset={8}
+        className="w-[min(22rem,calc(100vw-1.5rem))] overflow-hidden p-0"
+      >
         <div className="flex items-center justify-between gap-2 border-b border-border px-3 py-2.5">
           <p className="text-sm font-semibold">Notifications</p>
           <span className="text-xs text-muted-foreground">
@@ -560,14 +566,19 @@ function MobileTopBar() {
   const current = ALL_NAV_ITEMS.find((item) => location.pathname.startsWith(item.to))
 
   return (
-    <header className="glass-bar lg:hidden sticky top-0 z-30 flex h-14 shrink-0 items-center gap-3 border-b border-border px-3">
-      <div className="min-w-0 flex-1">
-        <p className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">Home Finance</p>
-        <h1 className="font-heading text-sm font-semibold tracking-tight truncate">
-          {current?.label ?? 'Workspace'}
-        </h1>
+    // The padding — not a taller box — is what keeps the bar clear of the
+    // status bar / notch in an installed PWA. index.html sets viewport-fit=cover,
+    // so env(safe-area-inset-top) is a real value there and 0 in a browser tab.
+    <header className="glass-bar lg:hidden sticky top-0 z-30 shrink-0 border-b border-border pt-[env(safe-area-inset-top)]">
+      <div className="flex h-14 items-center gap-3 px-3">
+        <div className="min-w-0 flex-1">
+          <p className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">Home Finance</p>
+          <h1 className="font-heading text-sm font-semibold tracking-tight truncate">
+            {current?.label ?? 'Workspace'}
+          </h1>
+        </div>
+        <NavActions />
       </div>
-      <NavActions />
     </header>
   )
 }
@@ -634,51 +645,56 @@ function MoreSheet({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
+      {/*
+       * Three bands in one clamped column: handle+header, a scrolling nav, and a
+       * pinned Log out. The nav is the only thing allowed to grow, so expanding a
+       * disclosure group (Advice) scrolls it instead of pushing Log out out of the
+       * sheet and over the dock — which is exactly what a plain content-height
+       * column used to do. min-h-0 is what lets the ScrollArea actually shrink.
+       */}
       <SheetContent
         side="bottom"
         showCloseButton={false}
-        className="max-h-[78dvh] gap-0 rounded-t-3xl border-border/80 p-0"
+        className="flex max-h-[78dvh] flex-col gap-0 overflow-hidden rounded-t-3xl border-border/80 p-0"
       >
-        <div className="flex flex-col">
-          <div className="mx-auto mt-3 mb-1 h-1 w-10 rounded-full bg-muted-foreground/25" />
-          <SheetHeader className="gap-1 pb-2 pt-1">
-            <SheetTitle className="tracking-tight">More</SheetTitle>
-            <SheetDescription className="text-xs">
-              Planning, insights, and account tools
-            </SheetDescription>
-          </SheetHeader>
-          <ScrollArea className="max-h-[min(60dvh,28rem)]">
-            <nav className="flex flex-col gap-4 px-3 pb-3">
-              {MORE_NAV_GROUPS.map((group) => (
-                <div key={group.label} className="flex flex-col gap-1">
-                  <p className="px-2.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                    {group.label}
-                  </p>
-                  {group.items.map((item) => (
-                    <NavEntry
-                      key={item.to}
-                      item={item}
-                      onNavigate={() => onOpenChange(false)}
-                      className="py-2.5"
-                    />
-                  ))}
-                </div>
-              ))}
-            </nav>
-          </ScrollArea>
-          <div className="border-t border-border p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
-            <Button
-              variant="ghost"
-              className="h-11 w-full justify-start text-destructive hover:text-destructive"
-              onClick={() => {
-                onOpenChange(false)
-                void logout()
-              }}
-            >
-              <HugeiconsIcon icon={Logout01Icon} strokeWidth={2} data-icon="inline-start" />
-              Log out
-            </Button>
-          </div>
+        <div className="mx-auto mt-3 mb-1 h-1 w-10 shrink-0 rounded-full bg-muted-foreground/25" />
+        <SheetHeader className="shrink-0 gap-1 pb-2 pt-1">
+          <SheetTitle className="tracking-tight">More</SheetTitle>
+          <SheetDescription className="text-xs">
+            Planning, insights, and account tools
+          </SheetDescription>
+        </SheetHeader>
+        <ScrollArea className="min-h-0 flex-1">
+          <nav className="flex flex-col gap-4 px-3 pb-3">
+            {MORE_NAV_GROUPS.map((group) => (
+              <div key={group.label} className="flex flex-col gap-1">
+                <p className="px-2.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                  {group.label}
+                </p>
+                {group.items.map((item) => (
+                  <NavEntry
+                    key={item.to}
+                    item={item}
+                    onNavigate={() => onOpenChange(false)}
+                    className="py-2.5"
+                  />
+                ))}
+              </div>
+            ))}
+          </nav>
+        </ScrollArea>
+        <div className="shrink-0 border-t border-border p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+          <Button
+            variant="ghost"
+            className="h-11 w-full justify-start text-destructive hover:text-destructive"
+            onClick={() => {
+              onOpenChange(false)
+              void logout()
+            }}
+          >
+            <HugeiconsIcon icon={Logout01Icon} strokeWidth={2} data-icon="inline-start" />
+            Log out
+          </Button>
         </div>
       </SheetContent>
     </Sheet>

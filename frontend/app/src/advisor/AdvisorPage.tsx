@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { PageContainer } from '../ui/PageContainer'
 import { PageHeader } from '../ui/PageHeader'
+import { ViewSelect } from '../ui/ViewSelect'
 import { InvestmentTool } from './InvestmentTool'
 import { LoanTool } from './LoanTool'
 import { EmergencyFundTool } from './EmergencyFundTool'
@@ -34,10 +35,22 @@ export function AdvisorPage() {
         description="Run financial calculations for investments, loans, emergency funds, and net worth."
       />
 
-      <Tabs value={tool} onValueChange={(v) => setTool(v as ToolId)}>
-        <TabsList className="h-auto w-full flex-wrap justify-start gap-1 sm:w-fit">
+      {/* Which tool you are in. On a phone that is a dropdown — "Emergency fund"
+          and "Net worth" alone will not share a row with the other two. The
+          strips *inside* each tool stay tabs: they switch a view within one
+          calculator and are short enough to fit. */}
+      <ViewSelect
+        label="Tool"
+        value={tool}
+        onValueChange={(v) => setTool(v as ToolId)}
+        options={TOOLS.map((t) => ({ value: t.id, label: t.label }))}
+        className="sm:hidden"
+      />
+
+      <Tabs value={tool} onValueChange={(v) => setTool(v as ToolId)} className="max-sm:hidden">
+        <TabsList className="w-full justify-start gap-1 sm:w-fit">
           {TOOLS.map((t) => (
-            <TabsTrigger key={t.id} value={t.id} className="px-3.5 py-1.5">
+            <TabsTrigger key={t.id} value={t.id} className="px-3.5">
               {t.label}
             </TabsTrigger>
           ))}

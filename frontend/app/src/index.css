@@ -19,18 +19,18 @@
   --card-foreground: oklch(22% 0.016 224);
   --popover: oklch(99% 0.006 228 / 0.86);
   --popover-foreground: oklch(22% 0.016 224);
-  --primary: oklch(53.31% 0.101 225.53);
+  --primary: oklch(51.5% 0.126 227);
   --primary-foreground: oklch(96.92% 0.022 217.63);
   --secondary: oklch(95.2% 0.004 85);
   --secondary-foreground: oklch(28% 0.025 222);
   --muted: oklch(95.4% 0.004 85);
-  --muted-foreground: oklch(50% 0.014 224);
+  --muted-foreground: oklch(45% 0.016 224);
   --accent: oklch(94.8% 0.012 220);
   --accent-foreground: oklch(28% 0.03 222);
-  --destructive: oklch(56.52% 0.198 22.59);
+  --destructive: oklch(54% 0.215 25);
   --border: oklch(90% 0.005 85);
   --input: oklch(90% 0.005 85);
-  --ring: oklch(65.75% 0.126 226.19);
+  --ring: oklch(62% 0.14 226);
   --chart-1: oklch(84.43% 0.116 218.71);
   --chart-2: oklch(77.62% 0.149 226.59);
   --chart-3: oklch(65.75% 0.126 226.19);
@@ -39,25 +39,25 @@
   --radius: 0.625rem;
   --sidebar: oklch(99% 0.007 228 / 0.84);
   --sidebar-foreground: oklch(22% 0.016 224);
-  --sidebar-primary: oklch(53.31% 0.101 225.53);
+  --sidebar-primary: oklch(51.5% 0.126 227);
   --sidebar-primary-foreground: oklch(96.92% 0.022 217.63);
   --sidebar-accent: oklch(93% 0.011 220);
   --sidebar-accent-foreground: oklch(28% 0.03 222);
   --sidebar-border: oklch(89.5% 0.006 85);
-  --sidebar-ring: oklch(65.75% 0.126 226.19);
-  --success: oklch(55% 0.13 160);
+  --sidebar-ring: oklch(62% 0.14 226);
+  --success: oklch(52% 0.155 158);
   --success-foreground: oklch(97% 0.02 160);
   /* The third state between success and destructive: "close to the limit",
      "due soon". Distinct from both, and never used as a chart series colour. */
-  --warning: oklch(62% 0.14 72);
+  --warning: oklch(59% 0.16 70);
   --warning-foreground: oklch(99% 0.01 72);
 
   /* Flow colours — the direction money moved, not whether something is wrong.
      Kept separate from --destructive so an ordinary expense never reads as an
      alarm, and so a row rail, an amount, and a chip can share one hue. */
-  --flow-in: oklch(55% 0.13 160);
-  --flow-out: oklch(63.09% 0.163 18.03);
-  --flow-move: oklch(54.42% 0.165 252.54);
+  --flow-in: oklch(52% 0.155 158);
+  --flow-out: oklch(56% 0.203 22);
+  --flow-move: oklch(52% 0.19 254);
 
   --glass-surface: oklch(100% 0.006 228 / 0.78);
   --glass-surface-strong: oklch(100% 0.004 228 / 0.88);
@@ -78,50 +78,50 @@
   --tabs-list-border: color-mix(in oklch, var(--glass-border) 48%, var(--border));
   --tabs-active-bg: oklch(100% 0 0);
   --tabs-active-border: color-mix(in oklch, var(--primary) 22%, var(--border));
-  --tabs-inactive-foreground: oklch(40% 0.02 224);
+  --tabs-inactive-foreground: oklch(34% 0.022 224);
 }
 
 /* Dark keeps the cerulean family but at low chroma — a quiet slate-blue room,
    not a glowing console. Saturated cyan appears only on focus rings and charts. */
 .dark {
   --background: oklch(15.227% 0.01252 216.022);
-  --foreground: oklch(93% 0.011 220);
+  --foreground: oklch(97% 0.007 220);
   --card: oklch(24% 0.018 224);
-  --card-foreground: oklch(93% 0.011 220);
+  --card-foreground: oklch(97% 0.007 220);
   --popover: oklch(22.806% 0.01517 226.968);
-  --popover-foreground: oklch(93% 0.011 220);
-  --primary: oklch(72% 0.082 228);
+  --popover-foreground: oklch(97% 0.007 220);
+  --primary: oklch(78% 0.115 228);
   --primary-foreground: oklch(18% 0.020 222);
   --secondary: oklch(31% 0.018 224);
-  --secondary-foreground: oklch(93% 0.011 220);
+  --secondary-foreground: oklch(97% 0.007 220);
   --muted: oklch(30% 0.017 224);
-  --muted-foreground: oklch(78% 0.016 222);
+  --muted-foreground: oklch(82% 0.014 222);
   --accent: oklch(32% 0.023 224);
-  --accent-foreground: oklch(93% 0.011 220);
-  --destructive: oklch(63% 0.130 19);
-  --border: oklch(1 0 0 / 14%);
-  --input: oklch(1 0 0 / 18%);
-  --ring: oklch(72% 0.082 228);
+  --accent-foreground: oklch(97% 0.007 220);
+  --destructive: oklch(72% 0.175 21);
+  --border: oklch(1 0 0 / 16%);
+  --input: oklch(1 0 0 / 20%);
+  --ring: oklch(78% 0.115 228);
   --chart-1: oklch(85% 0.060 218);
   --chart-2: oklch(78% 0.088 222);
   --chart-3: oklch(71% 0.104 227);
   --chart-4: oklch(68% 0.115 248);
   --chart-5: oklch(56% 0.105 252);
   --sidebar: oklch(19.5% 0.016 224);
-  --sidebar-foreground: oklch(93% 0.011 220);
-  --sidebar-primary: oklch(74% 0.085 226);
+  --sidebar-foreground: oklch(97% 0.007 220);
+  --sidebar-primary: oklch(79% 0.115 227);
   --sidebar-primary-foreground: oklch(18% 0.020 222);
   --sidebar-accent: oklch(26.538% 0.01387 220.166);
-  --sidebar-accent-foreground: oklch(93% 0.011 220);
-  --sidebar-border: oklch(1 0 0 / 14%);
-  --sidebar-ring: oklch(72% 0.082 228);
-  --success: oklch(76% 0.110 160);
+  --sidebar-accent-foreground: oklch(97% 0.007 220);
+  --sidebar-border: oklch(1 0 0 / 16%);
+  --sidebar-ring: oklch(78% 0.115 228);
+  --success: oklch(83% 0.155 160);
   --success-foreground: oklch(20% 0.035 160);
-  --warning: oklch(78% 0.100 76);
+  --warning: oklch(85% 0.145 80);
   --warning-foreground: oklch(22% 0.040 76);
-  --flow-in: oklch(76% 0.110 160);
-  --flow-out: oklch(70% 0.100 16);
-  --flow-move: oklch(74% 0.090 246);
+  --flow-in: oklch(83% 0.155 160);
+  --flow-out: oklch(76% 0.165 20);
+  --flow-move: oklch(80% 0.125 248);
 
   --glass-surface: oklch(22.417% 0.02085 217.816 / 0.56);
   --glass-surface-strong: oklch(25% 0.022 224 / 0.78);
@@ -138,7 +138,7 @@
   --tabs-list-border: color-mix(in oklch, var(--glass-border) 55%, var(--border));
   --tabs-active-bg: oklch(34% 0.024 224);
   --tabs-active-border: color-mix(in oklch, var(--primary) 35%, var(--border));
-  --tabs-inactive-foreground: oklch(74% 0.018 222);
+  --tabs-inactive-foreground: oklch(84% 0.014 222);
 }
 
 @theme inline {
@@ -189,6 +189,43 @@
   --radius-2xl: calc(var(--radius) * 1.8);
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+/*
+ * Radix's ScrollArea viewport wraps its children in an inline-styled
+ * `display: table; min-width: 100%` div. `display: table` is shrink-to-fit, so
+ * ONE wide child (a transaction table in a details sheet) stretches that wrapper
+ * to its max-content width — and every sibling in the panel, progress bars and
+ * accordion rows included, gets dragged wider than the sheet and clipped.
+ *
+ * Forcing `block` keeps the viewport at the panel's width and lets wide children
+ * scroll inside their own container instead. `!important` because the rule it
+ * overrides is an inline style; nothing in the app scrolls a ScrollArea
+ * horizontally, so no usage depends on the shrink-to-fit behaviour.
+ */
+[data-slot='scroll-area-viewport'] > div {
+  display: block !important;
+}
+
+/*
+ * Page-header actions collapse to icon buttons below `sm` (see PageHeader.tsx).
+ * PageHeaderActionLabel takes the label out of the visual flow; these rules
+ * square the button off around the icon that is left, so the title and its
+ * description keep the width instead of being crushed by two word-buttons.
+ *
+ * Deliberately unlayered. Tailwind's utilities layer holds the button's own
+ * `has-data-[icon=inline-start]:ps-2` padding at equal specificity and would
+ * win the tie, nudging the icon off centre. Unlayered rules beat every layered
+ * rule regardless of specificity, which is the only stable way to override a
+ * cva variant from the outside.
+ */
+@media (width < 40rem) {
+  .page-header-actions [data-slot='button'] {
+    inline-size: 2.5rem;
+    block-size: 2.5rem;
+    padding-inline: 0;
+    gap: 0;
+  }
 }
 
 @layer base {
@@ -315,11 +352,19 @@
     color: var(--tabs-inactive-foreground);
   }
 
+  /* One row, always. It used to wrap, which on a phone stacked the three
+     filters into a block and pushed Export CSV off the bar entirely. Now the
+     group scrolls sideways within whatever width is left over. */
   .report-filter-group {
-    display: inline-flex;
-    flex-wrap: wrap;
+    display: flex;
+    flex-wrap: nowrap;
     align-items: center;
     gap: 0.125rem;
+    min-width: 0;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
     padding: 0.125rem;
     border-radius: var(--radius-lg);
     background: color-mix(in oklch, var(--primary) 11%, var(--tabs-list-bg));
@@ -327,7 +372,13 @@
     box-shadow: inset 0 1px 0 color-mix(in oklch, white 40%, transparent);
   }
 
+  .report-filter-group::-webkit-scrollbar {
+    display: none;
+  }
+
   .report-filter-group [data-slot="button"] {
+    /* Keep each trigger at its label width; the group scrolls instead. */
+    flex: none;
     border-color: transparent;
     background: transparent;
     color: var(--primary);

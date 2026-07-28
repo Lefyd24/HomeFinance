@@ -50,7 +50,7 @@ import {
 } from '@/components/ui/empty'
 import { Dialog } from '../ui/Dialog'
 import { PageContainer } from '../ui/PageContainer'
-import { PageHeader } from '../ui/PageHeader'
+import { PageHeader, PageHeaderActionLabel } from '../ui/PageHeader'
 import { useConfirm } from '../ui/useConfirm'
 import { formatCurrency, formatDate } from '../lib/format'
 import { cn } from '@/lib/utils'
@@ -303,7 +303,7 @@ export function DebtsPage() {
         title="Debts"
         description="Tap a debt to see the interest math, payment schedule, and linked transactions."
         action={
-          <div className="flex items-center gap-2">
+          <>
             <Button
               size="sm"
               variant="outline"
@@ -311,13 +311,13 @@ export function DebtsPage() {
               disabled={active.length === 0}
             >
               <HugeiconsIcon icon={AnalyticsUpIcon} strokeWidth={2} data-icon="inline-start" />
-              Payoff strategies
+              <PageHeaderActionLabel>Payoff strategies</PageHeaderActionLabel>
             </Button>
             <Button size="sm" onClick={openCreate}>
               <HugeiconsIcon icon={Add01Icon} strokeWidth={2} data-icon="inline-start" />
-              Add debt
+              <PageHeaderActionLabel>Add debt</PageHeaderActionLabel>
             </Button>
-          </div>
+          </>
         }
       />
 

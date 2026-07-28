@@ -106,10 +106,20 @@ export function Dialog({
           </div>
         </DialogHeader>
 
-        <div className="min-h-0 flex-1 overflow-y-auto p-4">{children}</div>
+        {/* As a mobile bottom sheet this sits flush against the screen edge, so
+            whichever band is last has to clear the home indicator. Both get the
+            inset; it resolves to 0 in a browser tab and on desktop. */}
+        <div
+          className={cn(
+            'min-h-0 flex-1 overflow-y-auto p-4',
+            !footer && 'pb-[max(1rem,env(safe-area-inset-bottom))] sm:pb-4',
+          )}
+        >
+          {children}
+        </div>
 
         {footer && (
-          <DialogFooter className="mx-0 mb-0 shrink-0 rounded-none border-t bg-muted/40 px-4 py-3">
+          <DialogFooter className="mx-0 mb-0 shrink-0 rounded-none border-t bg-muted/40 px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:pb-3">
             {footer}
           </DialogFooter>
         )}
