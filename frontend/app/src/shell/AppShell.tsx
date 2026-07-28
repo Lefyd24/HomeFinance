@@ -1,12 +1,11 @@
-import { Fragment, useMemo, useState } from 'react'
+import { Fragment, useMemo, useState, type ComponentProps, type ReactNode } from 'react'
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { HugeiconsIcon } from '@hugeicons/react'
 import {
   ArrowDown01Icon,
   Logout01Icon,
-  Menu01Icon,
-  MoneyAdd01Icon,
+  DashboardCircleAddIcon,
   Notification03Icon,
   SidebarLeftIcon,
 } from '@hugeicons/core-free-icons'
@@ -54,6 +53,7 @@ import { Separator } from '@/components/ui/separator'
 import {
   Sheet,
   SheetContent,
+  SheetDescription,
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet'
@@ -532,75 +532,93 @@ function QuickAddTransactionFab() {
 
   return (
     <>
-      <Button
-        size="icon-lg"
-        className={cn(
-          'fixed z-30 size-12 rounded-full shadow-lg',
-          'bottom-[calc(4.75rem+env(safe-area-inset-bottom))] end-3',
-          'lg:bottom-12 lg:end-6',
-        )}
-        onClick={() => setOpen(true)}
-        aria-label="Add transaction"
-      >
-        <HugeiconsIcon icon={MoneyAdd01Icon} strokeWidth={2} />
-      </Button>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            size="icon-xl"
+            className={cn(
+              'fixed z-30 size-12 rounded-full shadow-lg',
+              'bottom-[calc(5.75rem+env(safe-area-inset-bottom))] end-3',
+              'lg:bottom-12 lg:end-6',
+            )}
+            onClick={() => setOpen(true)}
+            aria-label="Add transaction"
+          >
+            <HugeiconsIcon icon={DashboardCircleAddIcon} strokeWidth={2} />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent side="left">Add transaction</TooltipContent>
+      </Tooltip>
       <TransactionFormDialog open={open} onOpenChange={setOpen} />
     </>
   )
 }
 
-function MobileTopBar({ onOpenMenu }: { onOpenMenu: () => void }) {
+function MobileTopBar() {
+  const location = useLocation()
+  const current = ALL_NAV_ITEMS.find((item) => location.pathname.startsWith(item.to))
+
   return (
-    <header className="glass-bar lg:hidden sticky top-0 z-30 flex h-14 shrink-0 items-center gap-2 border-b border-border px-3">
-      <Button
-        variant="ghost"
-        size="icon"
-        onClick={onOpenMenu}
-        aria-label="Open navigation"
-      >
-        <HugeiconsIcon icon={Menu01Icon} strokeWidth={2} />
-      </Button>
-      <BrandMark />
+    <header className="glass-bar lg:hidden sticky top-0 z-30 flex h-14 shrink-0 items-center gap-3 border-b border-border px-3">
+      <div className="min-w-0 flex-1">
+        <p className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">Home Finance</p>
+        <h1 className="font-heading text-sm font-semibold tracking-tight truncate">
+          {current?.label ?? 'Workspace'}
+        </h1>
+      </div>
       <NavActions />
     </header>
   )
 }
 
-function MobileNavSheet({
-  open,
-  onOpenChange,
+function dockLabel(label: string) {
+  if (label === 'Transactions') return 'Txns'
+  if (label === 'Dashboard') return 'Home'
+  return label
+}
+
+function DockItemShell({
+  active,
+  children,
+  className,
+  ...props
+}: ComponentProps<'button'> & { active?: boolean }) {
+  return (
+    <button
+      type="button"
+      className={cn(
+        'group/dock flex min-h-11 flex-1 flex-col items-center justify-center gap-0.5 rounded-xl px-1',
+        'transition-[color,transform,background-color] duration-150 ease-out',
+        'motion-safe:active:scale-[0.96]',
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50',
+        active ? 'text-primary' : 'text-muted-foreground hover:text-foreground',
+        className,
+      )}
+      {...props}
+    >
+      {children}
+    </button>
+  )
+}
+
+function DockIconWell({
+  active,
+  children,
 }: {
-  open: boolean
-  onOpenChange: (open: boolean) => void
+  active: boolean
+  children: ReactNode
 }) {
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="left" className="w-[min(100%,20rem)] p-0 gap-0" showCloseButton>
-        <SheetHeader className="border-b border-border">
-          <SheetTitle className="sr-only">Navigation</SheetTitle>
-          <BrandMark />
-        </SheetHeader>
-        <ScrollArea className="flex-1 min-h-0 h-[calc(100dvh-5rem)]">
-          <nav className="flex flex-col gap-4 p-3">
-            {NAV_GROUPS.map((group) => (
-              <div key={group.label} className="flex flex-col gap-1">
-                <p className="px-2.5 pb-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                  {group.label}
-                </p>
-                {group.items.map((item) => (
-                  <NavEntry
-                    key={item.to}
-                    item={item}
-                    onNavigate={() => onOpenChange(false)}
-                    className="py-2.5"
-                  />
-                ))}
-              </div>
-            ))}
-          </nav>
-        </ScrollArea>
-      </SheetContent>
-    </Sheet>
+    <span
+      className={cn(
+        'flex size-9 items-center justify-center rounded-xl transition-colors duration-150',
+        active
+          ? 'bg-primary/12 text-primary shadow-[inset_0_1px_0_color-mix(in_oklch,white_55%,transparent)]'
+          : 'text-muted-foreground group-hover/dock:bg-muted/70 group-hover/dock:text-foreground',
+      )}
+    >
+      {children}
+    </span>
   )
 }
 
@@ -618,12 +636,15 @@ function MoreSheet({
       <SheetContent
         side="bottom"
         showCloseButton={false}
-        className="max-h-[78dvh] rounded-t-2xl gap-0 p-0"
+        className="max-h-[78dvh] gap-0 rounded-t-3xl border-border/80 p-0"
       >
         <div className="flex flex-col">
-          <div className="mx-auto mt-3 mb-1 h-1 w-10 rounded-full bg-muted" />
-          <SheetHeader className="pb-2 pt-1">
-            <SheetTitle>More</SheetTitle>
+          <div className="mx-auto mt-3 mb-1 h-1 w-10 rounded-full bg-muted-foreground/25" />
+          <SheetHeader className="gap-1 pb-2 pt-1">
+            <SheetTitle className="tracking-tight">More</SheetTitle>
+            <SheetDescription className="text-xs">
+              Planning, insights, and account tools
+            </SheetDescription>
           </SheetHeader>
           <ScrollArea className="max-h-[min(60dvh,28rem)]">
             <nav className="flex flex-col gap-4 px-3 pb-3">
@@ -647,7 +668,7 @@ function MoreSheet({
           <div className="border-t border-border p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
             <Button
               variant="ghost"
-              className="w-full justify-start gap-3 h-11 text-destructive hover:text-destructive"
+              className="h-11 w-full justify-start text-destructive hover:text-destructive"
               onClick={() => {
                 onOpenChange(false)
                 void logout()
@@ -675,48 +696,78 @@ function MobileBottomNav({
     () => SECONDARY_NAV_ITEMS.some((item) => location.pathname.startsWith(item.to)),
     [location.pathname],
   )
+  const moreActive = moreOpen || secondaryActive
 
   return (
-    <nav className="glass-bar lg:hidden fixed bottom-0 inset-x-0 z-40 border-t border-border pb-[env(safe-area-inset-bottom)]">
-      <div className="flex h-16 items-stretch px-1">
+    <nav
+      aria-label="Primary"
+      className="pointer-events-none fixed inset-x-0 bottom-0 z-40 px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] lg:hidden"
+    >
+      <div
+        className={cn(
+          'pointer-events-auto mx-auto flex max-w-lg items-stretch gap-0.5 border p-1.5',
+          'glass-panel rounded-2xl',
+        )}
+      >
         {PRIMARY_NAV_ITEMS.map(({ label, to, icon }) => (
           <NavLink
             key={to}
             to={to}
-            className={({ isActive }) =>
-              cn(
-                'flex-1 flex flex-col items-center justify-center gap-1 rounded-xl mx-0.5 my-1.5 text-[10px] font-medium transition-colors duration-150',
-                isActive
-                  ? 'bg-primary/10 text-primary shadow-[inset_0_0_0_1px] shadow-primary/20'
-                  : 'text-muted-foreground hover:bg-muted/70 hover:text-foreground',
-              )
-            }
+            aria-label={label}
+            className={cn(
+              'group/dock flex min-h-11 flex-1 flex-col items-center justify-center gap-0.5 rounded-xl px-1',
+              'transition-[color,transform] duration-150 ease-out',
+              'motion-safe:active:scale-[0.96]',
+              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50',
+            )}
           >
             {({ isActive }) => (
               <>
-                <HugeiconsIcon
-                  icon={icon}
-                  strokeWidth={isActive ? 2.25 : 1.75}
-                  className="size-5"
-                />
-                <span className="truncate max-w-full px-0.5">{label === 'Transactions' ? 'Txns' : label}</span>
+                <DockIconWell active={isActive}>
+                  <HugeiconsIcon
+                    icon={icon}
+                    strokeWidth={isActive ? 2.25 : 1.75}
+                    className="size-5"
+                  />
+                </DockIconWell>
+                <span
+                  className={cn(
+                    'max-w-full truncate px-0.5 text-[10px] font-medium tracking-wide',
+                    isActive ? 'text-primary' : 'text-muted-foreground group-hover/dock:text-foreground',
+                  )}
+                >
+                  {dockLabel(label)}
+                </span>
               </>
             )}
           </NavLink>
         ))}
-        <button
-          type="button"
+
+        <Separator orientation="vertical" className="my-2 bg-border/70" />
+
+        <DockItemShell
+          active={moreActive}
           onClick={onMoreToggle}
-          className={cn(
-            'flex-1 flex flex-col items-center justify-center gap-1 rounded-xl mx-0.5 my-1.5 text-[10px] font-medium transition-colors duration-150',
-            moreOpen || secondaryActive
-              ? 'bg-primary/10 text-primary shadow-[inset_0_0_0_1px] shadow-primary/20'
-              : 'text-muted-foreground hover:bg-muted/70 hover:text-foreground',
-          )}
+          aria-label="More navigation"
+          aria-expanded={moreOpen}
+          aria-haspopup="dialog"
         >
-          <HugeiconsIcon icon={MoreIcon} strokeWidth={2} className="size-5" />
-          More
-        </button>
+          <DockIconWell active={moreActive}>
+            <HugeiconsIcon
+              icon={MoreIcon}
+              strokeWidth={moreActive ? 2.25 : 1.75}
+              className="size-5"
+            />
+          </DockIconWell>
+          <span
+            className={cn(
+              'max-w-full truncate px-0.5 text-[10px] font-medium tracking-wide',
+              moreActive ? 'text-primary' : 'text-muted-foreground group-hover/dock:text-foreground',
+            )}
+          >
+            More
+          </span>
+        </DockItemShell>
       </div>
     </nav>
   )
@@ -750,7 +801,6 @@ function DesktopFooter() {
 
 export function AppShell() {
   const [collapsed, setCollapsed] = useState(false)
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [moreOpen, setMoreOpen] = useState(false)
 
   return (
@@ -758,12 +808,12 @@ export function AppShell() {
       <DesktopSidebar collapsed={collapsed} onToggle={() => setCollapsed((v) => !v)} />
 
       <div className="shell-content-column flex-1 min-w-0 min-h-0 flex flex-col overflow-hidden">
-        <MobileTopBar onOpenMenu={() => setMobileMenuOpen(true)} />
+        <MobileTopBar />
         <DesktopTopBar />
 
         <main className="shell-main flex-1 min-h-0">
           <div className="shell-main-bg" aria-hidden="true" />
-          <div className="shell-main-scroll pb-[calc(4rem+env(safe-area-inset-bottom))] lg:pb-0">
+          <div className="shell-main-scroll pb-[calc(5.75rem+env(safe-area-inset-bottom))] lg:pb-0">
             <Outlet />
           </div>
         </main>
@@ -777,7 +827,6 @@ export function AppShell() {
         moreOpen={moreOpen}
         onMoreToggle={() => setMoreOpen((open) => !open)}
       />
-      <MobileNavSheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen} />
       <MoreSheet open={moreOpen} onOpenChange={setMoreOpen} />
     </div>
   )

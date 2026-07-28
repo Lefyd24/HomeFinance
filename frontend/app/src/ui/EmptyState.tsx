@@ -1,15 +1,26 @@
 import type { LucideIcon } from 'lucide-react'
-import type { ReactNode } from 'react'
+import { isValidElement, type ReactNode } from 'react'
 import { cn } from '@/lib/utils'
 
+function EmptyStateIcon({ icon }: { icon: LucideIcon | ReactNode }) {
+  return (
+    <div className="flex size-12 items-center justify-center rounded-full bg-muted text-muted-foreground [&_svg:not([class*='size-'])]:size-[22px]">
+      {isValidElement(icon) ? icon : (() => {
+        const Icon = icon as LucideIcon
+        return <Icon size={22} />
+      })()}
+    </div>
+  )
+}
+
 export function EmptyState({
-  icon: Icon,
+  icon,
   title,
   description,
   action,
   className,
 }: {
-  icon?: LucideIcon
+  icon?: LucideIcon | ReactNode
   title: string
   description?: string
   action?: ReactNode
@@ -22,11 +33,7 @@ export function EmptyState({
         className,
       )}
     >
-      {Icon && (
-        <div className="flex size-12 items-center justify-center rounded-full bg-muted text-muted-foreground">
-          <Icon size={22} />
-        </div>
-      )}
+      {icon != null && <EmptyStateIcon icon={icon} />}
       <div className="space-y-1">
         <p className="font-semibold text-foreground">{title}</p>
         {description && <p className="text-sm text-muted-foreground max-w-sm">{description}</p>}

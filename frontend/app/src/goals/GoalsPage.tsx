@@ -25,14 +25,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import {
-  Empty,
-  EmptyContent,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from '@/components/ui/empty'
 import { PageContainer } from '../ui/PageContainer'
 import { PageHeader } from '../ui/PageHeader'
 import { useConfirm } from '../ui/useConfirm'
@@ -51,6 +43,7 @@ import {
   remainingAmount,
 } from './goalMeta'
 import type { Goal } from './goalsApi'
+import { EmptyState } from '@/ui/EmptyState'
 
 type FilterTab = 'active' | 'completed' | 'all'
 
@@ -152,23 +145,17 @@ export function GoalsPage() {
       {isLoading ? (
         <GoalsSkeleton />
       ) : goals.length === 0 ? (
-        <Empty className="border border-dashed py-14">
-          <EmptyHeader>
-            <EmptyMedia variant="icon">
-              <HugeiconsIcon icon={TargetIcon} strokeWidth={2} />
-            </EmptyMedia>
-            <EmptyTitle>No goals yet</EmptyTitle>
-            <EmptyDescription>
-              Create your first financial goal to start tracking progress toward a target.
-            </EmptyDescription>
-          </EmptyHeader>
-          <EmptyContent>
+        <EmptyState
+          icon={<HugeiconsIcon icon={TargetIcon} strokeWidth={2} />}
+          title="No goals yet"
+          description="Create your first financial goal to start tracking progress toward a target."
+          action={
             <Button size="sm" onClick={openCreate}>
               <HugeiconsIcon icon={Add01Icon} strokeWidth={2} data-icon="inline-start" />
               Create first goal
             </Button>
-          </EmptyContent>
-        </Empty>
+          }
+        />
       ) : (
         <div className="flex flex-col gap-8">
           <JourneyStrip journey={journey} />

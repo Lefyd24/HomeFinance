@@ -96,11 +96,23 @@ export function SpendingChart({ report, colorByLabel, height = 340 }: SpendingCh
             color: theme.ink,
             fontSize: 11,
             fontWeight: 600,
+            distance: 4,
             formatter: (params: { value: number }) => {
-              if (params.value < max * 0.08 && pairs.length > 8) return ''
+              if (params.value < max * 0.05) return ''
+              // Dense charts get the same compact k-notation as the axis so
+              // labels stay narrow enough for hideOverlap to keep more of them.
+              if (pairs.length > 8) {
+                return params.value >= 1000
+                  ? `${(params.value / 1000).toFixed(params.value >= 10000 ? 0 : 1)}k`
+                  : formatCurrency(params.value)
+              }
               return formatCurrency(params.value)
             },
           },
+          // Bars packed tightly (many categories) can produce labels wider
+          // than the gap between them; let ECharts drop the colliding ones
+          // instead of letting them overlap illegibly.
+          labelLayout: { hideOverlap: true },
         },
       ],
     }
