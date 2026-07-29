@@ -6,31 +6,31 @@ import { CheckmarkCircle02Icon, Coins01Icon } from '@hugeicons/core-free-icons'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { formatCurrency } from '../lib/format'
 import { StatCard, StatStrip } from '../ui/StatStrip'
 import { baseAxisStyle, compactNumber, seriesHoverSafe, tooltipStyle, useChartTheme } from '../reports/chartTheme'
 import { ToolPanel, EmptyResults, InfoBanner } from './ToolPanel'
+import { SecondaryNav } from './SecondaryNav'
 import * as advisorApi from './advisorApi'
 import type { EarlyPayoffResponse, LoanAmortizationResponse } from './advisorApi'
 
+type LoanTab = 'amortization' | 'early-payoff'
+
+const LOAN_TABS: { value: LoanTab; label: string }[] = [
+  { value: 'amortization', label: 'Amortization' },
+  { value: 'early-payoff', label: 'Early payoff' },
+]
+
 export function LoanTool() {
-  const [tab, setTab] = useState('amortization')
+  const [tab, setTab] = useState<LoanTab>('amortization')
 
   return (
-    <Tabs value={tab} onValueChange={setTab}>
-      <TabsList className="mb-4">
-        <TabsTrigger value="amortization">Amortization</TabsTrigger>
-        <TabsTrigger value="early-payoff">Early payoff</TabsTrigger>
-      </TabsList>
-      <TabsContent value="amortization">
-        <AmortizationTab />
-      </TabsContent>
-      <TabsContent value="early-payoff">
-        <EarlyPayoffTab />
-      </TabsContent>
-    </Tabs>
+    <div className="flex flex-col gap-4">
+      <SecondaryNav value={tab} onValueChange={setTab} options={LOAN_TABS} />
+      {tab === 'amortization' && <AmortizationTab />}
+      {tab === 'early-payoff' && <EarlyPayoffTab />}
+    </div>
   )
 }
 

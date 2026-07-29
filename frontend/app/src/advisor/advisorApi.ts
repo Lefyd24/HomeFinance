@@ -126,6 +126,48 @@ export function calculateRetirement(
   })
 }
 
+export interface SelfSustainingRequest {
+  initial_investment: number
+  monthly_contribution: number
+  annual_rate: number
+  monthly_withdrawal: number
+}
+
+export interface SelfSustainingYearlyEntry {
+  year: number
+  balance: number
+  contributions: number
+  interest_earned: number
+  year_growth: number
+  target_reached: boolean
+}
+
+export interface SustainabilityCheckEntry {
+  month: number
+  balance: number
+}
+
+export interface SelfSustainingResponse {
+  target_capital: number
+  months_to_goal: number
+  years_to_goal: number
+  monthly_interest_at_goal: number
+  total_contributions: number
+  total_interest_earned: number
+  parameters: Record<string, unknown>
+  yearly_breakdown: SelfSustainingYearlyEntry[]
+  sustainability_check: SustainabilityCheckEntry[]
+}
+
+export function calculateSelfSustaining(
+  payload: SelfSustainingRequest,
+): Promise<SelfSustainingResponse> {
+  return apiFetch<SelfSustainingResponse>('/advisor/investment/self-sustaining', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  })
+}
+
 // Loan calculator
 
 export interface LoanAmortizationRequest {

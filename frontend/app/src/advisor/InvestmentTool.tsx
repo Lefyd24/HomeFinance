@@ -2,40 +2,41 @@ import { useMemo, useState } from 'react'
 import ReactECharts from 'echarts-for-react'
 import { toast } from 'sonner'
 import { HugeiconsIcon } from '@hugeicons/react'
-import { ChartLineData01Icon } from '@hugeicons/core-free-icons'
+import { ChartLineData01Icon, Csv01Icon, Xls01Icon } from '@hugeicons/core-free-icons'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { formatCurrency } from '../lib/format'
 import { StatCard, StatStrip } from '../ui/StatStrip'
 import { baseAxisStyle, compactNumber, seriesHoverSafe, tooltipStyle, useChartTheme } from '../reports/chartTheme'
 import { ToolPanel, EmptyResults, InfoBanner } from './ToolPanel'
+import { SecondaryNav } from './SecondaryNav'
+import { downloadCsv, downloadExcel } from './exportTable'
 import * as advisorApi from './advisorApi'
-import type { InvestmentCalculationResponse, RetirementProjectionResponse } from './advisorApi'
+import type { InvestmentCalculationResponse, RetirementProjectionResponse, SelfSustainingResponse } from './advisorApi'
+
+type InvestmentTab = 'compound' | 'retirement' | 'compare' | 'self-sustaining'
+
+const INVESTMENT_TABS: { value: InvestmentTab; label: string }[] = [
+  { value: 'compound', label: 'Compound' },
+  { value: 'retirement', label: 'Retirement' },
+  { value: 'compare', label: 'Compare' },
+  { value: 'self-sustaining', label: 'Self-sustaining' },
+]
 
 export function InvestmentTool() {
-  const [tab, setTab] = useState('compound')
+  const [tab, setTab] = useState<InvestmentTab>('compound')
 
   return (
-    <Tabs value={tab} onValueChange={setTab}>
-      <TabsList className="mb-4">
-        <TabsTrigger value="compound">Compound</TabsTrigger>
-        <TabsTrigger value="retirement">Retirement</TabsTrigger>
-        <TabsTrigger value="compare">Compare</TabsTrigger>
-      </TabsList>
-      <TabsContent value="compound">
-        <CompoundTab />
-      </TabsContent>
-      <TabsContent value="retirement">
-        <RetirementTab />
-      </TabsContent>
-      <TabsContent value="compare">
-        <CompareTab />
-      </TabsContent>
-    </Tabs>
+    <div className="flex flex-col gap-4">
+      <SecondaryNav value={tab} onValueChange={setTab} options={INVESTMENT_TABS} />
+      {tab === 'compound' && <CompoundTab />}
+      {tab === 'retirement' && <RetirementTab />}
+      {tab === 'compare' && <CompareTab />}
+      {tab === 'self-sustaining' && <SelfSustainingTab />}
+    </div>
   )
 }
 
@@ -540,6 +541,236 @@ function CompareTab() {
             <h2 className="mb-2 font-heading text-lg font-semibold">Scenario comparison over time</h2>
             <ReactECharts option={chartOption} style={{ height: 320, width: '100%' }} opts={{ renderer: 'svg' }} notMerge />
           </>
+        )
+      }
+    />
+  )
+}
+
+function SelfSustainingTab() {
+  const [initial, setInitial] = useState('10000')
+  const [monthly, setMonthly] = useState('300')
+  const [rate, setRate] = useState('6')
+  const [withdrawal, setWithdrawal] = useState('1000')
+  const [loading, setLoading] = useState(false)
+  const [result, setResult] = useState<SelfSustainingResponse | null>(null)
+
+  async function calculate() {
+    setLoading(true)
+    try {
+      const data = await advisorApi.calculateSelfSustaining({
+        initial_investment: Number.parseFloat(initial) || 0,
+        monthly_contribution: Number.parseFloat(monthly) || 0,
+        annual_rate: (Number.parseFloat(rate) || 0) / 100,
+        monthly_withdrawal: Number.parseFloat(withdrawal) || 0,
+      })
+      setResult(data)
+    } catch {
+      toast.error('Could not reach a self-sustaining balance with these inputs — try a higher return or contribution.')
+      setResult(null)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const theme = useChartTheme()
+  const chartOption = useMemo(() => {
+    if (!result) return null
+    return {
+      tooltip: { trigger: 'axis' as const, ...tooltipStyle(theme) },
+      legend: { data: ['Balance', 'Your contributions', 'Target capital'], bottom: 0, textStyle: { color: theme.muted, fontSize: 11 } },
+      grid: { left: '3%', right: '4%', top: 20, bottom: '16%', containLabel: true },
+      xAxis: {
+        type: 'category' as const,
+        data: result.yearly_breakdown.map((y) => `Year ${y.year}`),
+        ...baseAxisStyle(theme),
+      },
+      yAxis: {
+        type: 'value' as const,
+        ...baseAxisStyle(theme),
+        axisLabel: { color: theme.muted, fontSize: 11, formatter: compactNumber },
+      },
+      series: [
+        {
+          name: 'Balance',
+          type: 'line' as const,
+          ...seriesHoverSafe,
+          data: result.yearly_breakdown.map((y) => y.balance),
+          smooth: true,
+          areaStyle: { opacity: 0.12 },
+          itemStyle: { color: theme.neutral },
+          lineStyle: { width: 2, color: theme.neutral },
+        },
+        {
+          name: 'Your contributions',
+          type: 'line' as const,
+          ...seriesHoverSafe,
+          data: result.yearly_breakdown.map((y) => y.contributions),
+          itemStyle: { color: theme.positive },
+          lineStyle: { width: 2, type: 'dashed' as const, color: theme.positive },
+        },
+        {
+          name: 'Target capital',
+          type: 'line' as const,
+          ...seriesHoverSafe,
+          data: result.yearly_breakdown.map(() => result.target_capital),
+          itemStyle: { color: theme.negative },
+          lineStyle: { width: 1.5, type: 'dotted' as const, color: theme.negative },
+          symbol: 'none',
+        },
+      ],
+    }
+  }, [result, theme])
+
+  const sustainabilityChartOption = useMemo(() => {
+    if (!result) return null
+    return {
+      tooltip: { trigger: 'axis' as const, ...tooltipStyle(theme) },
+      grid: { left: '3%', right: '4%', top: 20, bottom: '10%', containLabel: true },
+      xAxis: {
+        type: 'category' as const,
+        data: result.sustainability_check.map((s) => `Month ${s.month}`),
+        ...baseAxisStyle(theme),
+      },
+      yAxis: {
+        type: 'value' as const,
+        ...baseAxisStyle(theme),
+        axisLabel: { color: theme.muted, fontSize: 11, formatter: compactNumber },
+        scale: true,
+      },
+      series: [
+        {
+          name: 'Balance after withdrawal',
+          type: 'line' as const,
+          ...seriesHoverSafe,
+          data: result.sustainability_check.map((s) => s.balance),
+          smooth: true,
+          areaStyle: { opacity: 0.12 },
+          itemStyle: { color: theme.positive },
+          lineStyle: { width: 2, color: theme.positive },
+        },
+      ],
+    }
+  }, [result, theme])
+
+  function exportRows(): { headers: string[]; rows: (string | number)[][] } {
+    const headers = ['Year', 'Balance', 'Contributions', 'Interest earned', 'Year growth', 'Target reached']
+    const rows = (result?.yearly_breakdown ?? []).map((y) => [
+      y.year,
+      y.balance,
+      y.contributions,
+      y.interest_earned,
+      y.year_growth,
+      y.target_reached ? 'Yes' : 'No',
+    ])
+    return { headers, rows }
+  }
+
+  function handleExportCsv() {
+    if (!result) return
+    const { headers, rows } = exportRows()
+    downloadCsv('self-sustaining-portfolio', headers, rows)
+  }
+
+  function handleExportExcel() {
+    if (!result) return
+    const { headers, rows } = exportRows()
+    downloadExcel('self-sustaining-portfolio', headers, rows)
+  }
+
+  const monthsRemainder = result ? result.months_to_goal % 12 : 0
+  const yearsWhole = result ? Math.floor(result.months_to_goal / 12) : 0
+
+  return (
+    <ToolPanel
+      title="Self-sustaining portfolio"
+      description="Find the capital needed so monthly interest alone covers a fixed withdrawal — the balance no longer has to shrink to fund it."
+      form={
+        <div className="flex flex-col gap-4">
+          <InfoBanner>
+            Once your balance is large enough that its monthly interest covers your withdrawal, you can draw that
+            amount every month forever without depleting your capital.
+          </InfoBanner>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="sust-initial">Initial investment (€)</Label>
+              <Input id="sust-initial" type="number" min={0} step={100} value={initial} onChange={(e) => setInitial(e.target.value)} />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="sust-monthly">Monthly contribution (€)</Label>
+              <Input id="sust-monthly" type="number" min={0} step={50} value={monthly} onChange={(e) => setMonthly(e.target.value)} />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="sust-rate">Annual interest rate (%)</Label>
+              <Input id="sust-rate" type="number" min={0.1} max={30} step={0.1} value={rate} onChange={(e) => setRate(e.target.value)} />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="sust-withdrawal">Monthly withdrawal target (€)</Label>
+              <Input id="sust-withdrawal" type="number" min={1} step={50} value={withdrawal} onChange={(e) => setWithdrawal(e.target.value)} />
+            </div>
+          </div>
+          <Button className="w-full" disabled={loading} onClick={() => void calculate()}>
+            Calculate target
+          </Button>
+        </div>
+      }
+      results={
+        result ? (
+          <div className="flex flex-col gap-4">
+            <div className="rounded-xl bg-primary/10 p-4">
+              <p className="text-xs text-muted-foreground">Target capital</p>
+              <p className="font-heading text-2xl font-bold tabular-nums text-primary">{formatCurrency(result.target_capital)}</p>
+              <p className="text-xs text-muted-foreground">
+                Generates {formatCurrency(result.monthly_interest_at_goal)}/month in interest — enough to cover your {formatCurrency(Number.parseFloat(withdrawal) || 0)} withdrawal
+              </p>
+            </div>
+            <StatStrip className="sm:grid-cols-3 xl:grid-cols-3">
+              <StatCard label="Time to goal" value={`${yearsWhole}y ${monthsRemainder}m`} hint={`${result.months_to_goal} months total`} tone="primary" />
+              <StatCard label="Total contributed" value={formatCurrency(result.total_contributions)} hint="Your deposits" />
+              <StatCard label="Interest earned" value={formatCurrency(result.total_interest_earned)} hint="Compound growth" tone="success" />
+            </StatStrip>
+
+            <div className="flex items-center justify-between gap-3 rounded-lg border border-border bg-muted/30 px-3.5 py-2.5">
+              <p className="text-xs font-medium text-muted-foreground">Export the yearly breakdown</p>
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" onClick={handleExportCsv}>
+                  <HugeiconsIcon icon={Csv01Icon} className="text-success" />
+                  CSV
+                </Button>
+                <Button variant="outline" size="sm" onClick={handleExportExcel}>
+                  <HugeiconsIcon icon={Xls01Icon} className="text-primary" />
+                  Excel
+                </Button>
+              </div>
+            </div>
+
+            <InfoBanner>
+              <strong>Sustainability check:</strong> withdrawing {formatCurrency(Number.parseFloat(withdrawal) || 0)}/month from{' '}
+              {formatCurrency(result.target_capital)} for a year still leaves{' '}
+              {formatCurrency(result.sustainability_check[result.sustainability_check.length - 1]?.balance ?? result.target_capital)}.
+            </InfoBanner>
+          </div>
+        ) : (
+          <EmptyResults>
+            <HugeiconsIcon icon={ChartLineData01Icon} strokeWidth={1.5} className="mb-3 size-10 text-muted-foreground/50" />
+            Fill in your numbers and calculate to see your self-sustaining target.
+          </EmptyResults>
+        )
+      }
+      chart={
+        chartOption && (
+          <div className="flex flex-col gap-6">
+            <div>
+              <h2 className="mb-2 font-heading text-lg font-semibold">Growth toward target capital</h2>
+              <ReactECharts option={chartOption} style={{ height: 320, width: '100%' }} opts={{ renderer: 'svg' }} notMerge />
+            </div>
+            {sustainabilityChartOption && (
+              <div>
+                <h2 className="mb-2 font-heading text-lg font-semibold">Balance during a year of withdrawals</h2>
+                <ReactECharts option={sustainabilityChartOption} style={{ height: 260, width: '100%' }} opts={{ renderer: 'svg' }} notMerge />
+              </div>
+            )}
+          </div>
         )
       }
     />

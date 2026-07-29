@@ -48,7 +48,7 @@ export function AdvisorPage() {
       />
 
       <Tabs value={tool} onValueChange={(v) => setTool(v as ToolId)} className="max-sm:hidden">
-        <TabsList className="w-full justify-start gap-1 sm:w-fit">
+        <TabsList fullWidth className="w-full">
           {TOOLS.map((t) => (
             <TabsTrigger key={t.id} value={t.id} className="px-3.5">
               {t.label}

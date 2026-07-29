@@ -88,6 +88,40 @@ class ScenarioComparisonResponse(BaseModel):
     best_final_balance: float
 
 
+class SelfSustainingRequest(BaseModel):
+    initial_investment: float = Field(..., ge=0, description="Initial investment amount")
+    monthly_contribution: float = Field(..., ge=0, description="Regular monthly contribution")
+    annual_rate: float = Field(..., gt=0, le=1, description="Annual interest rate as decimal (e.g., 0.07 for 7%)")
+    monthly_withdrawal: float = Field(..., gt=0, description="Desired fixed monthly withdrawal amount")
+
+
+class SelfSustainingYearlyEntry(BaseModel):
+    year: int
+    balance: float
+    contributions: float
+    interest_earned: float
+    year_growth: float
+    target_reached: bool
+
+
+class SustainabilityCheckEntry(BaseModel):
+    month: int
+    balance: float
+
+
+class SelfSustainingResponse(BaseModel):
+    target_capital: float
+    months_to_goal: int
+    years_to_goal: float
+    monthly_interest_at_goal: float
+    total_contributions: float
+    total_interest_earned: float
+    parameters: Dict[str, Any]
+    yearly_breakdown: List[SelfSustainingYearlyEntry]
+    sustainability_check: List[SustainabilityCheckEntry]
+    error: Optional[str] = None
+
+
 class LoanAmortizationRequest(BaseModel):
     principal: float = Field(..., gt=0, description="Loan amount")
     annual_rate: float = Field(..., ge=0, le=1, description="Annual interest rate as decimal")
