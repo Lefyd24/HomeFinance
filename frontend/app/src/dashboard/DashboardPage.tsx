@@ -21,6 +21,7 @@ import { formatCurrency, formatDate, currentMonthRange } from '../lib/format'
 import { PageContainer } from '../ui/PageContainer'
 import { PageHeader } from '../ui/PageHeader'
 import { ProgressBar, progressVariantForPercent } from '../ui/ProgressBar'
+import { useMediaQuery } from '../ui/useMediaQuery'
 import { Amount, CategoryChip, flowOfType, flowRail } from '../ui/money'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -87,6 +88,7 @@ function EmptyLine({ children }: { children: ReactNode }) {
 }
 
 export function DashboardPage() {
+  const isDesktop = useMediaQuery('(min-width: 1024px)')
   const monthRange = currentMonthRange()
 
   const { data: accounts, isLoading: accountsLoading } = useAccounts()
@@ -177,10 +179,233 @@ export function DashboardPage() {
 
   const upcomingTotal = upcomingPayments.reduce((sum, p) => sum + p.amount, 0)
 
-  // Share of the month's income that stayed put. Drives the in/out bar.
-  const inShare = totalIncome + totalExpenses > 0
-    ? (totalIncome / (totalIncome + totalExpenses)) * 100
-    : 0
+  // Built once, placed twice below: DOM order for phones (single column, top
+  // to bottom) versus the two independent desktop columns need a different
+  // sequence, and a plain CSS grid can't reorder without coupling row heights
+  // across columns again.
+  const accountsPanel = (
+    <Panel
+      key="accounts"
+      title="Accounts"
+      hint={accountsLoading ? undefined : 'Live balances'}
+      icon={WalletIcon}
+      to="/accounts"
+    >
+      {accountsLoading ? (
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+          {[1, 2, 3, 4].map((i) => (
+            <Skeleton key={i} className="h-12 w-full" />
+          ))}
+        </div>
+      ) : (accounts?.length ?? 0) === 0 ? (
+        <EmptyLine>No accounts yet. Add one on the Accounts page.</EmptyLine>
+      ) : (
+        <div className="grid grid-cols-1 gap-x-6 sm:grid-cols-2">
+          {accounts?.map((account) => (
+            <AccountRow key={account.id} account={account} />
+          ))}
+        </div>
+      )}
+    </Panel>
+  )
+
+  const duePanel = (
+    <Panel
+      key="due"
+      title="Due in 30 days"
+      hint={
+        debtsLoading || recurringLoading
+          ? undefined
+          : upcomingPayments.length === 0
+            ? 'Nothing scheduled'
+            : `${formatCurrency(upcomingTotal)} across ${upcomingPayments.length}`
+      }
+      icon={AlarmClockIcon}
+      to="/recurring"
+    >
+      {debtsLoading || recurringLoading ? (
+        <div className="flex flex-col gap-3">
+          {[1, 2, 3, 4].map((i) => (
+            <Skeleton key={i} className="h-10 w-full" />
+          ))}
+        </div>
+      ) : upcomingPayments.length === 0 ? (
+        <EmptyLine>Nothing due in the next 30 days.</EmptyLine>
+      ) : (
+        <ul className="flex flex-col">
+          {upcomingPayments.slice(0, 5).map((payment) => (
+            <li
+              key={payment.id}
+              className={cn(
+                'flex items-center justify-between gap-3 border-b border-border/60 py-2 ps-2.5 last:border-b-0',
+                'border-s-2',
+                payment.isOverdue ? 'border-s-destructive' : 'border-s-flow-out',
+              )}
+            >
+              <div className="min-w-0">
+                <p className="truncate text-sm font-medium">{payment.name}</p>
+                <p className="text-xs text-muted-foreground">
+                  {payment.isOverdue ? (
+                    <span className="font-medium text-destructive">Overdue</span>
+                  ) : payment.daysUntil === 0 ? (
+                    'Due today'
+                  ) : (
+                    `In ${payment.daysUntil} day${payment.daysUntil === 1 ? '' : 's'} · ${formatDate(payment.dueDate)}`
+                  )}
+                </p>
+              </div>
+              <div className="shrink-0 text-end">
+                <Amount value={payment.amount} flow="out" signed={false} className="text-sm" />
+                <p className="text-[0.65rem] uppercase tracking-wide text-muted-foreground">
+                  {payment.type}
+                </p>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+    </Panel>
+  )
+
+  const spendingPanel = (
+    <Panel
+      key="spending"
+      title="Spending by category"
+      hint={
+        reportLoading
+          ? undefined
+          : `${formatCurrency(totalSpent)} across ${categoryCount} categor${categoryCount === 1 ? 'y' : 'ies'}${topCategory ? ` · most on ${topCategory.name}` : ''}`
+      }
+      icon={TagIcon}
+      to="/reports"
+      linkLabel="Reports"
+    >
+      {reportLoading ? (
+        <Skeleton className="h-[280px] w-full" />
+      ) : (
+        <SpendingChart report={spendingReport} colorByLabel={categoryColors} height={280} />
+      )}
+    </Panel>
+  )
+
+  const budgetsPanel = (
+    <Panel
+      key="budgets"
+      title="Budgets"
+      hint={budgetsLoading ? undefined : 'How this period is tracking'}
+      icon={PiggyBankIcon}
+      to="/budgets"
+    >
+      {budgetsLoading ? (
+        <div className="flex flex-col gap-4">
+          {[1, 2, 3].map((i) => (
+            <Skeleton key={i} className="h-12 w-full" />
+          ))}
+        </div>
+      ) : (budgets?.length ?? 0) === 0 ? (
+        <EmptyLine>No budgets yet.</EmptyLine>
+      ) : (
+        <ul className="flex flex-col gap-3.5">
+          {budgets?.slice(0, 4).map((budget) => (
+            <li key={budget.id}>
+              <div className="mb-1.5 flex items-baseline justify-between gap-2">
+                <p className="truncate text-sm font-medium">{budget.name}</p>
+                <p className="shrink-0 text-xs tabular-nums text-muted-foreground">
+                  {formatCurrency(budget.spent)} / {formatCurrency(budget.amount)}
+                </p>
+              </div>
+              <ProgressBar
+                value={budget.percentage}
+                variant={progressVariantForPercent(budget.percentage)}
+              />
+            </li>
+          ))}
+        </ul>
+      )}
+    </Panel>
+  )
+
+  const recentPanel = (
+    <Panel key="recent" title="Recent activity" hint="Your latest six entries" icon={BankIcon} to="/transactions">
+      {recentTxnLoading ? (
+        <div className="flex flex-col gap-3">
+          {[1, 2, 3, 4, 5].map((i) => (
+            <Skeleton key={i} className="h-10 w-full" />
+          ))}
+        </div>
+      ) : (recentTxnData?.items.length ?? 0) === 0 ? (
+        <EmptyLine>Nothing recorded yet.</EmptyLine>
+      ) : (
+        <ul className="flex flex-col">
+          {recentTxnData?.items.map((txn) => {
+            const flow = flowOfType(txn.type)
+            return (
+              <li
+                key={txn.id}
+                className={cn(
+                  'flex items-center justify-between gap-3 border-b border-border/60 py-2 ps-2.5 last:border-b-0',
+                  flowRail[flow],
+                )}
+              >
+                <div className="flex min-w-0 items-center gap-2.5">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium">{txn.description}</p>
+                    <p className="text-xs text-muted-foreground">{formatDate(txn.date)}</p>
+                  </div>
+                </div>
+                <div className="flex shrink-0 items-center gap-3">
+                  {txn.type !== 'transfer' && (
+                    <CategoryChip
+                      name={txn.category_name}
+                      color={txn.category_color}
+                      className="hidden sm:inline-flex"
+                    />
+                  )}
+                  <Amount value={txn.amount} flow={flow} className="text-sm" />
+                </div>
+              </li>
+            )
+          })}
+        </ul>
+      )}
+    </Panel>
+  )
+
+  const goalsPanel = (
+    <Panel key="goals" title="Goals" hint={goalsLoading ? undefined : 'Progress toward your targets'} icon={TargetIcon} to="/goals">
+      {goalsLoading ? (
+        <div className="flex flex-col gap-4">
+          {[1, 2, 3].map((i) => (
+            <Skeleton key={i} className="h-12 w-full" />
+          ))}
+        </div>
+      ) : activeGoals.length === 0 ? (
+        <EmptyLine>No active goals.</EmptyLine>
+      ) : (
+        <ul className="flex flex-col gap-3.5">
+          {activeGoals.map((goal) => (
+            <li key={goal.id}>
+              <div className="mb-1.5 flex items-baseline justify-between gap-2">
+                <p className="truncate text-sm font-medium">{goal.name}</p>
+                <Badge variant="outline" className="shrink-0 text-xs tabular-nums">
+                  {Math.round(goal.progress_percentage ?? 0)}%
+                </Badge>
+              </div>
+              <ProgressBar
+                value={goal.progress_percentage ?? 0}
+                variant={progressVariantForPercent(goal.progress_percentage ?? 0)}
+              />
+              <p className="mt-1 text-xs tabular-nums text-muted-foreground">
+                {formatCurrency(goal.current_amount)} of{' '}
+                {formatCurrency(goal.target_amount)}
+                {goal.target_date ? ` · by ${formatDate(goal.target_date)}` : ''}
+              </p>
+            </li>
+          ))}
+        </ul>
+      )}
+    </Panel>
+  )
 
   return (
     <PageContainer wide className="flex flex-col gap-5">
@@ -190,7 +415,7 @@ export function DashboardPage() {
         className="mb-0"
       />
 
-      {/* The month in four figures and one bar. Everything below explains it. */}
+      {/* The month in four figures. Everything below explains it. */}
       <section
         aria-label="This month"
         className="glass-panel rounded-xl border p-5"
@@ -225,241 +450,35 @@ export function DashboardPage() {
             />
           </dl>
         </div>
-
-        {!txnLoading && totalIncome + totalExpenses > 0 && (
-          <div className="mt-5 flex h-2 w-full overflow-hidden rounded-full bg-muted">
-            <div className="h-full bg-flow-in" style={{ width: `${inShare}%` }} />
-            <div className="h-full bg-flow-out" style={{ width: `${100 - inShare}%` }} />
-          </div>
-        )}
       </section>
 
-      <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-3">
-        <Panel
-          title="Spending by category"
-          hint={
-            reportLoading
-              ? undefined
-              : `${formatCurrency(totalSpent)} across ${categoryCount} categor${categoryCount === 1 ? 'y' : 'ies'}${topCategory ? ` · most on ${topCategory.name}` : ''}`
-          }
-          icon={TagIcon}
-          to="/reports"
-          linkLabel="Reports"
-          className="lg:col-span-2"
-        >
-          {reportLoading ? (
-            <Skeleton className="h-[280px] w-full" />
-          ) : (
-            <SpendingChart report={spendingReport} colorByLabel={categoryColors} height={280} />
-          )}
-        </Panel>
-
-        <Panel
-          title="Due in 30 days"
-          hint={
-            debtsLoading || recurringLoading
-              ? undefined
-              : upcomingPayments.length === 0
-                ? 'Nothing scheduled'
-                : `${formatCurrency(upcomingTotal)} across ${upcomingPayments.length}`
-          }
-          icon={AlarmClockIcon}
-          to="/recurring"
-        >
-          {debtsLoading || recurringLoading ? (
-            <div className="flex flex-col gap-3">
-              {[1, 2, 3, 4].map((i) => (
-                <Skeleton key={i} className="h-10 w-full" />
-              ))}
-            </div>
-          ) : upcomingPayments.length === 0 ? (
-            <EmptyLine>Nothing due in the next 30 days.</EmptyLine>
-          ) : (
-            <ul className="flex flex-col">
-              {upcomingPayments.slice(0, 5).map((payment) => (
-                <li
-                  key={payment.id}
-                  className={cn(
-                    'flex items-center justify-between gap-3 border-b border-border/60 py-2 ps-2.5 last:border-b-0',
-                    'border-s-2',
-                    payment.isOverdue ? 'border-s-destructive' : 'border-s-flow-out',
-                  )}
-                >
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-medium">{payment.name}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {payment.isOverdue ? (
-                        <span className="font-medium text-destructive">Overdue</span>
-                      ) : payment.daysUntil === 0 ? (
-                        'Due today'
-                      ) : (
-                        `In ${payment.daysUntil} day${payment.daysUntil === 1 ? '' : 's'} · ${formatDate(payment.dueDate)}`
-                      )}
-                    </p>
-                  </div>
-                  <div className="shrink-0 text-end">
-                    <Amount value={payment.amount} flow="out" signed={false} className="text-sm" />
-                    <p className="text-[0.65rem] uppercase tracking-wide text-muted-foreground">
-                      {payment.type}
-                    </p>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          )}
-        </Panel>
-      </div>
-
-      <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-3">
-        <Panel
-          title="Accounts"
-          hint={accountsLoading ? undefined : 'Live balances'}
-          icon={WalletIcon}
-          to="/accounts"
-          className="lg:col-span-2"
-        >
-          {accountsLoading ? (
-            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-              {[1, 2, 3, 4].map((i) => (
-                <Skeleton key={i} className="h-12 w-full" />
-              ))}
-            </div>
-          ) : (accounts?.length ?? 0) === 0 ? (
-            <EmptyLine>No accounts yet. Add one on the Accounts page.</EmptyLine>
-          ) : (
-            <div className="grid grid-cols-1 gap-x-6 sm:grid-cols-2">
-              {accounts?.map((account) => (
-                <AccountRow key={account.id} account={account} />
-              ))}
-            </div>
-          )}
-        </Panel>
-
-        <Panel
-          title="Budgets"
-          hint={budgetsLoading ? undefined : 'How this period is tracking'}
-          icon={PiggyBankIcon}
-          to="/budgets"
-        >
-          {budgetsLoading ? (
-            <div className="flex flex-col gap-4">
-              {[1, 2, 3].map((i) => (
-                <Skeleton key={i} className="h-12 w-full" />
-              ))}
-            </div>
-          ) : (budgets?.length ?? 0) === 0 ? (
-            <EmptyLine>No budgets yet.</EmptyLine>
-          ) : (
-            <ul className="flex flex-col gap-3.5">
-              {budgets?.slice(0, 4).map((budget) => (
-                <li key={budget.id}>
-                  <div className="mb-1.5 flex items-baseline justify-between gap-2">
-                    <p className="truncate text-sm font-medium">{budget.name}</p>
-                    <p className="shrink-0 text-xs tabular-nums text-muted-foreground">
-                      {formatCurrency(budget.spent)} / {formatCurrency(budget.amount)}
-                    </p>
-                  </div>
-                  <ProgressBar
-                    value={budget.percentage}
-                    variant={progressVariantForPercent(budget.percentage)}
-                  />
-                </li>
-              ))}
-            </ul>
-          )}
-        </Panel>
-      </div>
-
-      <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-3">
-        <Panel
-          title="Recent activity"
-          hint="Your latest six entries"
-          icon={BankIcon}
-          to="/transactions"
-          className="lg:col-span-2"
-        >
-          {recentTxnLoading ? (
-            <div className="flex flex-col gap-3">
-              {[1, 2, 3, 4, 5].map((i) => (
-                <Skeleton key={i} className="h-10 w-full" />
-              ))}
-            </div>
-          ) : (recentTxnData?.items.length ?? 0) === 0 ? (
-            <EmptyLine>Nothing recorded yet.</EmptyLine>
-          ) : (
-            <ul className="flex flex-col">
-              {recentTxnData?.items.map((txn) => {
-                const flow = flowOfType(txn.type)
-                return (
-                  <li
-                    key={txn.id}
-                    className={cn(
-                      'flex items-center justify-between gap-3 border-b border-border/60 py-2 ps-2.5 last:border-b-0',
-                      flowRail[flow],
-                    )}
-                  >
-                    <div className="flex min-w-0 items-center gap-2.5">
-                      <div className="min-w-0">
-                        <p className="truncate text-sm font-medium">{txn.description}</p>
-                        <p className="text-xs text-muted-foreground">{formatDate(txn.date)}</p>
-                      </div>
-                    </div>
-                    <div className="flex shrink-0 items-center gap-3">
-                      {txn.type !== 'transfer' && (
-                        <CategoryChip
-                          name={txn.category_name}
-                          color={txn.category_color}
-                          className="hidden sm:inline-flex"
-                        />
-                      )}
-                      <Amount value={txn.amount} flow={flow} className="text-sm" />
-                    </div>
-                  </li>
-                )
-              })}
-            </ul>
-          )}
-        </Panel>
-
-        <Panel
-          title="Goals"
-          hint={goalsLoading ? undefined : 'Progress toward your targets'}
-          icon={TargetIcon}
-          to="/goals"
-        >
-          {goalsLoading ? (
-            <div className="flex flex-col gap-4">
-              {[1, 2, 3].map((i) => (
-                <Skeleton key={i} className="h-12 w-full" />
-              ))}
-            </div>
-          ) : activeGoals.length === 0 ? (
-            <EmptyLine>No active goals.</EmptyLine>
-          ) : (
-            <ul className="flex flex-col gap-3.5">
-              {activeGoals.map((goal) => (
-                <li key={goal.id}>
-                  <div className="mb-1.5 flex items-baseline justify-between gap-2">
-                    <p className="truncate text-sm font-medium">{goal.name}</p>
-                    <Badge variant="outline" className="shrink-0 text-xs tabular-nums">
-                      {Math.round(goal.progress_percentage ?? 0)}%
-                    </Badge>
-                  </div>
-                  <ProgressBar
-                    value={goal.progress_percentage ?? 0}
-                    variant={progressVariantForPercent(goal.progress_percentage ?? 0)}
-                  />
-                  <p className="mt-1 text-xs tabular-nums text-muted-foreground">
-                    {formatCurrency(goal.current_amount)} of{' '}
-                    {formatCurrency(goal.target_amount)}
-                    {goal.target_date ? ` · by ${formatDate(goal.target_date)}` : ''}
-                  </p>
-                </li>
-              ))}
-            </ul>
-          )}
-        </Panel>
-      </div>
+      {isDesktop ? (
+        // Two independent columns rather than a shared grid — each column
+        // stacks its own cards back-to-back, so a tall card in one column
+        // never leaves a gap above the next card in the other column.
+        <div className="grid items-start gap-5 lg:grid-cols-3">
+          <div className="flex flex-col gap-5 lg:col-span-2">
+            {accountsPanel}
+            {spendingPanel}
+            {recentPanel}
+          </div>
+          <div className="flex flex-col gap-5">
+            {duePanel}
+            {budgetsPanel}
+            {goalsPanel}
+          </div>
+        </div>
+      ) : (
+        // Phone: one column, in the same row-by-row order the desktop grid reads in.
+        <div className="flex flex-col gap-5">
+          {accountsPanel}
+          {duePanel}
+          {spendingPanel}
+          {budgetsPanel}
+          {recentPanel}
+          {goalsPanel}
+        </div>
+      )}
     </PageContainer>
   )
 }

@@ -131,7 +131,7 @@ function buildZip(entries: ZipEntry[]): Blob {
   eocd.setUint32(16, centralStart, true)
   eocd.setUint16(20, 0, true)
 
-  return new Blob([...localParts, ...centralParts, new Uint8Array(eocd.buffer)], {
+  return new Blob([...localParts, ...centralParts, new Uint8Array(eocd.buffer)] as BlobPart[], {
     type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
   })
 }
