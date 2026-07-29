@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
 import ReactECharts from 'echarts-for-react'
+import { useTranslation } from 'react-i18next'
 import type { SpendingReport } from './reportsApi'
 import { formatCurrency } from '../lib/format'
 import { baseAxisStyle, seriesHoverSafe, tooltipStyle, useChartTheme } from '../reports/chartTheme'
@@ -12,6 +13,7 @@ interface SpendingChartProps {
 }
 
 export function SpendingChart({ report, colorByLabel, height = 340 }: SpendingChartProps) {
+  const { t } = useTranslation('dashboard')
   const theme = useChartTheme()
 
   const option = useMemo(() => {
@@ -119,7 +121,7 @@ export function SpendingChart({ report, colorByLabel, height = 340 }: SpendingCh
   }, [report, colorByLabel, theme])
 
   if (!option) {
-    return <p className="text-muted-foreground text-sm">No spending data for this period.</p>
+    return <p className="text-muted-foreground text-sm">{t('spendingChart.noData')}</p>
   }
 
   return (

@@ -1,0 +1,72 @@
+{
+  "brand": {
+    "name": "Home Finance",
+    "tagline": ""
+  },
+  "workspace": "Workspace",
+  "items": {
+    "dashboard": "Πίνακας ελέγχου",
+    "transactions": "Συναλλαγές",
+    "accounts": "Λογαριασμοί",
+    "budgets": "Προϋπολογισμοί",
+    "notifications": "Ειδοποιήσεις",
+    "categories": "Κατηγορίες",
+    "debts": "Χρέη",
+    "goals": "Στόχοι",
+    "recurring": "Επαναλαμβανόμενα",
+    "reports": "Αναφορές",
+    "advice": "Συμβουλές",
+    "analysis": "Ανάλυση",
+    "askAi": "Ρωτήστε το AI",
+    "documents": "Έγγραφα",
+    "import": "Εισαγωγή"
+  },
+  "groups": {
+    "overview": "ΕΠΙΣΚΟΠΗΣΗ",
+    "planning": "ΣΧΕΔΙΑΣΜΟΣ",
+    "insights": "ΛΟΙΠΑ"
+  },
+  "dock": {
+    "home": "Αρχική",
+    "transactions": "Συν/γές"
+  },
+  "more": "Περισσότερα",
+  "moreSheet": {
+    "description": "Σχεδιασμός, στατιστικά και εργαλεία λογαριασμού"
+  },
+  "primaryNav": "Κύρια πλοήγηση",
+  "moreNavigationAria": "Περισσότερη πλοήγηση",
+  "sidebar": {
+    "collapse": "Σύμπτυξη πλαϊνής στήλης",
+    "expand": "Ανάπτυξη πλαϊνής στήλης",
+    "expandTooltip": "Ανάπτυξη"
+  },
+  "userMenu": {
+    "accountMenu": "Μενού λογαριασμού",
+    "apiKeys": "Κλειδιά API",
+    "admin": "Διαχείριση",
+    "defaultAccountName": "Λογαριασμός"
+  },
+  "quickAdd": "Προσθήκη συναλλαγής",
+  "themeToggle": {
+    "changeTheme": "Αλλαγή θέματος"
+  },
+  "languageToggle": {
+    "changeLanguage": "Αλλαγή γλώσσας"
+  },
+  "notificationsPanel": {
+    "title": "Ειδοποιήσεις",
+    "ariaLabel": "Ειδοποιήσεις",
+    "ariaLabelWithCount": "Ειδοποιήσεις, {{count}} το τελευταίο 24ωρο",
+    "inLastDay": "{{count}} το τελευταίο 24ωρο",
+    "nothingNew": "Τίποτα νέο",
+    "empty": "Δεν υπάρχουν ειδοποιήσεις ακόμα.",
+    "emptyHint": "Οι κανόνες προϋπολογισμού και λογαριασμών εμφανίζονται εδώ όταν ενεργοποιούνται.",
+    "time": {
+      "justNow": "Μόλις τώρα",
+      "minutesAgo": "πριν {{count}}λ",
+      "hoursAgo": "πριν {{count}}ώ",
+      "daysAgo": "πριν {{count}}η"
+    }
+  }
+}

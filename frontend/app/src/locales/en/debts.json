@@ -1,0 +1,287 @@
+{
+  "types": {
+    "creditCard": "Credit Card",
+    "personalLoan": "Personal Loan",
+    "studentLoan": "Student Loan",
+    "mortgage": "Mortgage",
+    "carLoan": "Car Loan",
+    "informal": "Informal",
+    "utilities": "Utilities",
+    "subscription": "Subscription",
+    "medical": "Medical",
+    "tax": "Tax",
+    "legal": "Legal",
+    "other": "Other",
+    "custom": "Custom"
+  },
+  "page": {
+    "title": "Debts",
+    "description": "Tap a debt to see the interest math, payment schedule, and linked transactions.",
+    "payoffStrategies": "Payoff strategies",
+    "addDebt": "Add debt",
+    "addFirstDebt": "Add first debt",
+    "totalOwed": "Total owed",
+    "overallPayoff": "overall payoff",
+    "minMonthly": "Min. monthly",
+    "projInterest": "Proj. interest",
+    "allPaidOff": "Every tracked debt is paid off.",
+    "paidOffCount": "Paid off · {{count}}",
+    "empty": {
+      "title": "No debts tracked yet",
+      "description": "Add a loan or card with APR and minimum payment to project interest and payoff."
+    },
+    "deleteDialog": {
+      "title": "Delete {{name}}?",
+      "description": "The debt and every payment recorded against it are removed. Linked transactions stay in your ledger.",
+      "confirmLabel": "Delete debt"
+    },
+    "toasts": {
+      "deleted": "Debt deleted",
+      "deleteFailed": "Could not delete the debt. Try again."
+    }
+  },
+  "payoffBar": {
+    "ariaLabel": "{{paid}} paid, {{remaining}} still owed, {{interest}} interest ahead",
+    "paidOff": "Paid off",
+    "stillOwed": "Still owed",
+    "interestAhead": "Interest ahead"
+  },
+  "tile": {
+    "ofOriginal": "of {{amount}} original",
+    "cleared": "Cleared",
+    "paidOff": "Paid off",
+    "minPayment": "Min. payment",
+    "aprSuffix": " · {{apr}}% APR"
+  },
+  "detail": {
+    "addPayment": "Add payment",
+    "payments": "Payments",
+    "edit": "Edit",
+    "delete": "Delete",
+    "amountDueInterestIncluded": "Amount due, interest included",
+    "currentBalance": "Current balance",
+    "ofOriginal": "of {{amount}} original",
+    "cleared": "Cleared",
+    "percentPaidOff": "{{percent}}% paid off",
+    "priority": "Priority P{{priority}}",
+    "interestAndPayoff": {
+      "title": "Interest & payoff",
+      "description": "Projected from the APR and minimum payment, assuming you pay the minimum only.",
+      "apr": "APR",
+      "aprHint": "Compounded monthly",
+      "minPayment": "Min. payment",
+      "everyUnit": "Every {{unit}}",
+      "everyIntervalUnit": "Every {{interval}} {{unit}}",
+      "setOneToUnlock": "Set one to unlock projections",
+      "monthsToPayoff": "Months to payoff",
+      "estDate": "Est. {{date}}",
+      "needsAprAndMinPayment": "Needs an APR and a minimum payment",
+      "totalInterest": "Total interest",
+      "totalInterestHint": "What the minimum-only path costs you",
+      "recurrenceUnits": {
+        "days": "days",
+        "weeks": "weeks",
+        "months": "months",
+        "day": "day",
+        "week": "week",
+        "month": "month"
+      }
+    },
+    "opened": "Opened",
+    "maturity": "Maturity",
+    "nextPayment": "Next payment",
+    "scheduleDay": "Schedule day",
+    "day": "Day {{day}}",
+    "clearedOn": "Cleared on",
+    "notes": "Notes"
+  },
+  "paymentsSheet": {
+    "title": "Payments & transactions",
+    "descriptionWithDebt": "Payment history for {{name}}. Linked transaction IDs appear when a payment created or attached a ledger entry.",
+    "descriptionNoDebt": "Select a debt to view payments.",
+    "empty": {
+      "title": "No payments yet",
+      "description": "Record a payment to reduce the balance and optionally create a transaction."
+    },
+    "payment": "Payment",
+    "transactionHash": "Txn #{{id}}",
+    "principal": "Principal {{amount}}",
+    "interest": "Interest {{amount}}"
+  },
+  "strategies": {
+    "title": "Payoff strategy comparison",
+    "loadError": "Could not load payoff strategies.",
+    "recommended": "Recommended: {{strategy}}",
+    "debtAvalanche": "Debt Avalanche",
+    "debtSnowball": "Debt Snowball",
+    "recommendAvalanche": "Save {{amount}} in interest and finish {{months}} month(s) sooner.",
+    "recommendSnowball": "Pay smallest balances first for quick wins while staying motivated.",
+    "snowballSubtitle": "Lowest balance first",
+    "avalancheSubtitle": "Highest APR first",
+    "recommendedBadge": "Recommended",
+    "totalMonths": "Total months",
+    "totalInterest": "Total interest",
+    "totalPayments": "Total payments",
+    "scheduleTitle": "Payoff schedule preview",
+    "scheduleSubtitle": "First months of the {{strategy}} plan",
+    "table": {
+      "month": "Month",
+      "debt": "Debt",
+      "payment": "Payment",
+      "remaining": "Remaining"
+    }
+  },
+  "form": {
+    "titleEdit": "Edit debt",
+    "titleCreate": "Add a debt",
+    "description": "Give it an APR and a minimum payment and the app can project interest and a payoff date.",
+    "newDebt": "New debt",
+    "cancel": "Cancel",
+    "saving": "Saving…",
+    "saveChanges": "Save changes",
+    "addDebt": "Add debt",
+    "name": {
+      "label": "Debt name",
+      "placeholder": "e.g., Credit Card, Car Loan"
+    },
+    "creditor": {
+      "label": "Creditor",
+      "placeholder": "e.g., Bank of America"
+    },
+    "type": {
+      "label": "Debt type",
+      "placeholder": "Choose a type",
+      "options": {
+        "creditCard": "Credit card",
+        "personalLoan": "Personal loan",
+        "studentLoan": "Student loan",
+        "mortgage": "Mortgage",
+        "carLoan": "Car loan",
+        "informal": "Personal / Informal",
+        "utilities": "Utilities",
+        "subscription": "Subscription",
+        "medical": "Medical",
+        "tax": "Tax",
+        "legal": "Legal",
+        "other": "Other",
+        "custom": "Custom…"
+      }
+    },
+    "priority": {
+      "label": "Priority"
+    },
+    "customType": {
+      "label": "Custom type name",
+      "placeholder": "e.g., Insurance, Rent, HOA Fee"
+    },
+    "originalBalance": {
+      "label": "Original balance"
+    },
+    "currentBalance": {
+      "label": "Current balance"
+    },
+    "interestRate": {
+      "label": "Interest rate (APR %)",
+      "placeholder": "e.g., 15.99",
+      "hint": "Annual rate; payoff math compounds monthly."
+    },
+    "minimumPayment": {
+      "label": "Minimum payment",
+      "placeholder": "Required for interest projections"
+    },
+    "openedDate": {
+      "label": "Opened date"
+    },
+    "maturityDate": {
+      "label": "Maturity date"
+    },
+    "status": {
+      "title": "Status",
+      "markPaidOff": "Mark as paid off",
+      "paidOffDate": "Paid off date"
+    },
+    "schedule": {
+      "title": "Payment schedule",
+      "paymentEvery": "Payment every",
+      "frequencyPlaceholder": "Frequency",
+      "recurrence": {
+        "notRecurring": "Not recurring",
+        "days": "Days",
+        "weeks": "Weeks",
+        "months": "Months"
+      },
+      "dayOfMonth": "Day of month",
+      "dayOfMonthPlaceholder": "For monthly"
+    },
+    "linkedAccount": {
+      "label": "Linked account",
+      "placeholder": "Select account…",
+      "none": "No linked account"
+    },
+    "nextPaymentDate": {
+      "label": "Next payment date"
+    },
+    "notify": {
+      "label": "Notify me before due",
+      "daysBefore": "Days before",
+      "daysBeforePlaceholder": "Uses default if empty"
+    },
+    "notes": {
+      "label": "Notes",
+      "placeholder": "Any additional notes about this debt"
+    },
+    "toasts": {
+      "updated": "Debt updated",
+      "created": "Debt created",
+      "updateFailed": "Failed to update debt",
+      "createFailed": "Failed to create debt"
+    },
+    "validation": {
+      "nameRequired": "Debt name is required",
+      "originalBalancePositive": "Original balance must be greater than 0",
+      "currentBalanceNonNegative": "Current balance cannot be negative",
+      "customTypeRequired": "Custom type name is required"
+    }
+  },
+  "paymentDialog": {
+    "title": "Record a payment",
+    "descriptionWithDebt": "Reduces the balance on {{name}}. Split principal and interest if your statement shows them separately.",
+    "descriptionNoDebt": "Reduces the balance on this debt.",
+    "cancel": "Cancel",
+    "saving": "Saving…",
+    "recordPayment": "Record payment",
+    "amount": {
+      "label": "Payment amount"
+    },
+    "principal": {
+      "label": "Principal amount",
+      "placeholder": "Optional"
+    },
+    "interest": {
+      "label": "Interest amount",
+      "placeholder": "Optional"
+    },
+    "date": {
+      "label": "Payment date"
+    },
+    "account": {
+      "label": "Payment account",
+      "placeholder": "Select account…",
+      "none": "No account (payment only)",
+      "hint": "Selecting an account can create a linked transaction."
+    },
+    "createTransaction": "Create transaction record",
+    "notes": {
+      "label": "Notes",
+      "placeholder": "e.g., Monthly payment"
+    },
+    "toasts": {
+      "recorded": "Payment recorded",
+      "failed": "Failed to add payment"
+    },
+    "validation": {
+      "amountRequired": "Payment amount is required",
+      "paymentDateRequired": "Payment date is required"
+    }
+  }
+}

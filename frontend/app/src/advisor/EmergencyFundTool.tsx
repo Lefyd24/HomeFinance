@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { Shield01Icon } from '@hugeicons/core-free-icons'
@@ -12,14 +13,8 @@ import { ToolPanel, EmptyResults } from './ToolPanel'
 import * as advisorApi from './advisorApi'
 import type { EmergencyFundRecommendation } from './advisorApi'
 
-const STATUS_EXPLANATION: Record<string, string> = {
-  excellent: 'You have a robust emergency fund that can cover extended periods without income. Great job!',
-  good: 'Your emergency fund is solid. Consider continuing to build toward 6+ months for extra security.',
-  fair: 'Your emergency fund is below recommended levels. Prioritize building this up before other investments.',
-  critical: 'Your emergency fund is critically low. Focus on saving at least 1–2 months of expenses immediately.',
-}
-
 export function EmergencyFundTool() {
+  const { t } = useTranslation('advisor')
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState<EmergencyFundRecommendation | null>(null)
 
@@ -29,7 +24,7 @@ export function EmergencyFundTool() {
       const data = await advisorApi.getEmergencyFundRecommendation()
       setResult(data)
     } catch {
-      toast.error('Error loading recommendation')
+      toast.error(t('emergencyFund.loadError'))
     } finally {
       setLoading(false)
     }
@@ -38,26 +33,41 @@ export function EmergencyFundTool() {
   const noData = result && (result.status === 'unknown' || result.monthly_expenses <= 0)
   const monthsCovered = result?.current_coverage.months_covered ?? 0
 
+  const statusExplanation = (status: string) => {
+    const key = `emergencyFund.status.${status}` as const
+    return t(key, { defaultValue: '' })
+  }
+
+  const tierLabels = {
+    minimum: t('emergencyFund.tiers.minimum'),
+    recommended: t('emergencyFund.tiers.recommended'),
+    maximum: t('emergencyFund.tiers.maximum'),
+  }
+
   return (
     <ToolPanel
-      title="Emergency fund"
-      description="Financial experts recommend 3–6 months of essential expenses saved for unexpected medical bills, repairs, or job loss."
+      title={t('emergencyFund.title')}
+      description={t('emergencyFund.description')}
       form={
         <div className="flex flex-col gap-4">
           <div className="rounded-lg bg-info/10 p-3.5">
-            <p className="mb-2 text-sm font-medium">Why you need one</p>
+            <p className="mb-2 text-sm font-medium">{t('emergencyFund.whyYouNeedOne')}</p>
             <ul className="list-inside list-disc space-y-1 text-xs text-muted-foreground">
-              <li><strong className="text-foreground">3 months:</strong> Minimum safety net for stable jobs</li>
-              <li><strong className="text-foreground">6 months:</strong> Recommended for most people</li>
-              <li><strong className="text-foreground">12 months:</strong> For freelancers or volatile income</li>
+              <li>
+                <strong className="text-foreground">{t('emergencyFund.reasons.threeMonths')}</strong> {t('emergencyFund.reasons.threeMonthsText')}
+              </li>
+              <li>
+                <strong className="text-foreground">{t('emergencyFund.reasons.sixMonths')}</strong> {t('emergencyFund.reasons.sixMonthsText')}
+              </li>
+              <li>
+                <strong className="text-foreground">{t('emergencyFund.reasons.twelveMonths')}</strong> {t('emergencyFund.reasons.twelveMonthsText')}
+              </li>
             </ul>
           </div>
-          <p className="text-sm text-muted-foreground">
-            We'll analyze your actual spending over the last 6 months to calculate a personalized recommendation.
-          </p>
+          <p className="text-sm text-muted-foreground">{t('emergencyFund.analyzeIntro')}</p>
           <Button className="w-full" disabled={loading} onClick={() => void load()}>
             <HugeiconsIcon icon={Shield01Icon} strokeWidth={2} data-icon="inline-start" />
-            Analyze my spending
+            {t('emergencyFund.analyzeButton')}
           </Button>
         </div>
       }
@@ -65,21 +75,22 @@ export function EmergencyFundTool() {
         !result ? (
           <EmptyResults>
             <HugeiconsIcon icon={Shield01Icon} strokeWidth={1.5} className="mb-3 size-10 text-muted-foreground/50" />
-            Run the analysis to see your emergency fund recommendation.
+            {t('emergencyFund.emptyResults')}
           </EmptyResults>
         ) : noData ? (
           <div className="flex flex-col gap-4">
             <Alert variant="destructive">
               <AlertDescription>
-                <strong>Not enough data.</strong> {result.message || 'We need more expense transactions to calculate a recommendation.'}
+                <strong>{t('emergencyFund.notEnoughData')}</strong>{' '}
+                {result.message || t('emergencyFund.notEnoughDataFallback')}
               </AlertDescription>
             </Alert>
             <div className="rounded-lg bg-muted/30 p-3.5 text-sm">
-              <p>To calculate your emergency fund needs, make sure you have:</p>
+              <p>{t('emergencyFund.notEnoughDataHelp')}</p>
               <ul className="mt-2 list-inside list-disc space-y-1 text-xs text-muted-foreground">
-                <li>Expense transactions recorded in your accounts</li>
-                <li>At least a few weeks of spending data</li>
-                <li>Transactions categorized for better analysis</li>
+                <li>{t('emergencyFund.notEnoughDataChecklist.expenses')}</li>
+                <li>{t('emergencyFund.notEnoughDataChecklist.history')}</li>
+                <li>{t('emergencyFund.notEnoughDataChecklist.categorized')}</li>
               </ul>
             </div>
           </div>
@@ -88,22 +99,24 @@ export function EmergencyFundTool() {
             <Alert>
               <AlertDescription>
                 <strong>{result.message}</strong>
-                <p className="mt-1 text-xs">{STATUS_EXPLANATION[result.status] ?? ''}</p>
+                <p className="mt-1 text-xs">{statusExplanation(result.status)}</p>
               </AlertDescription>
             </Alert>
 
             <div className="rounded-lg bg-muted/30 p-3.5">
-              <p className="text-xs text-muted-foreground">Current emergency fund coverage</p>
+              <p className="text-xs text-muted-foreground">{t('emergencyFund.currentCoverage')}</p>
               <p
                 className={`font-heading text-2xl font-bold tabular-nums ${
                   monthsCovered >= 6 ? 'text-success' : monthsCovered >= 3 ? 'text-info' : 'text-amber-500'
                 }`}
               >
-                {monthsCovered.toFixed(1)} months
+                {t('emergencyFund.months', { count: monthsCovered.toFixed(1) })}
               </p>
               <p className="mt-1 text-xs text-muted-foreground">
-                {formatCurrency(result.current_liquid_assets)} in liquid assets · monthly expenses average{' '}
-                {formatCurrency(result.monthly_expenses)}
+                {t('emergencyFund.coverageDetail', {
+                  assets: formatCurrency(result.current_liquid_assets),
+                  expenses: formatCurrency(result.monthly_expenses),
+                })}
               </p>
               <ProgressBar
                 value={Math.min(result.current_coverage.percentage_of_recommended, 100)}
@@ -111,25 +124,29 @@ export function EmergencyFundTool() {
                 className="mt-3"
               />
               <p className="mt-1 text-xs text-muted-foreground">
-                {result.current_coverage.percentage_of_recommended.toFixed(0)}% of recommended 6-month target
+                {t('emergencyFund.percentOfTarget', {
+                  percent: result.current_coverage.percentage_of_recommended.toFixed(0),
+                })}
               </p>
             </div>
 
             <div className="rounded-lg bg-muted/30 p-3.5">
-              <p className="mb-1 text-sm font-medium">Your emergency fund targets</p>
-              <p className="mb-3 text-xs text-muted-foreground">Based on monthly expenses of {formatCurrency(result.monthly_expenses)}</p>
+              <p className="mb-1 text-sm font-medium">{t('emergencyFund.targets')}</p>
+              <p className="mb-3 text-xs text-muted-foreground">
+                {t('emergencyFund.targetsBasedOn', { amount: formatCurrency(result.monthly_expenses) })}
+              </p>
               <div className="grid grid-cols-3 gap-2 text-center">
                 {[
-                  { label: 'Minimum', value: result.recommendations.minimum, met: monthsCovered >= 3 },
-                  { label: 'Recommended', value: result.recommendations.recommended, met: monthsCovered >= 6 },
-                  { label: 'Maximum', value: result.recommendations.maximum, met: monthsCovered >= 12 },
+                  { label: tierLabels.minimum, value: result.recommendations.minimum, met: monthsCovered >= 3 },
+                  { label: tierLabels.recommended, value: result.recommendations.recommended, met: monthsCovered >= 6 },
+                  { label: tierLabels.maximum, value: result.recommendations.maximum, met: monthsCovered >= 12 },
                 ].map((tier) => (
                   <div key={tier.label} className="rounded-lg border border-border p-2">
                     <p className="text-xs font-medium">{tier.label}</p>
                     <p className="text-lg font-bold">{formatCurrency(tier.value)}</p>
                     {tier.met && (
                       <Badge variant="secondary" className="mt-1 text-[10px]">
-                        Met
+                        {t('emergencyFund.met')}
                       </Badge>
                     )}
                   </div>
@@ -141,9 +158,9 @@ export function EmergencyFundTool() {
               <Accordion type="single" collapsible defaultValue="plans">
                 <AccordionItem value="plans">
                   <AccordionTrigger>
-                    Savings plans to reach 6-month goal{' '}
+                    {t('emergencyFund.savingsPlansTitle')}{' '}
                     <Badge variant="outline" className="ms-2">
-                      Gap: {formatCurrency(result.gap_to_recommended)}
+                      {t('emergencyFund.gapLabel', { amount: formatCurrency(result.gap_to_recommended) })}
                     </Badge>
                   </AccordionTrigger>
                   <AccordionContent>
@@ -156,9 +173,14 @@ export function EmergencyFundTool() {
                           }`}
                         >
                           <span className="font-medium">
-                            {plan.months} months {i === 1 && <Badge variant="secondary" className="ms-1 text-[10px]">Recommended</Badge>}
+                            {t('emergencyFund.monthsCount', { count: plan.months })}{' '}
+                            {i === 1 && (
+                              <Badge variant="secondary" className="ms-1 text-[10px]">
+                                {t('emergencyFund.recommendedBadge')}
+                              </Badge>
+                            )}
                           </span>
-                          <span className="font-bold text-primary">{formatCurrency(plan.monthly_savings)}/month</span>
+                          <span className="font-bold text-primary">{t('emergencyFund.perMonth', { amount: formatCurrency(plan.monthly_savings) })}</span>
                         </div>
                       ))}
                     </div>
@@ -167,7 +189,7 @@ export function EmergencyFundTool() {
               </Accordion>
             ) : (
               <Alert>
-                <AlertDescription>Congratulations! You've reached your recommended emergency fund target.</AlertDescription>
+                <AlertDescription>{t('emergencyFund.goalReached')}</AlertDescription>
               </Alert>
             )}
           </div>

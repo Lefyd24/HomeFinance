@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { HugeiconsIcon } from '@hugeicons/react'
 import {
@@ -63,33 +64,18 @@ import {
 import { RecurringFormDialog } from './RecurringFormDialog'
 import { MarkPaidDialog } from './MarkPaidDialog'
 import type { RecurringExpense } from './recurringApi'
+import {
+  cadenceLabel,
+  daysUntilDue,
+  dueLabel,
+  isOverdue,
+} from './recurringLabels'
 
 type View = 'all' | 'expense' | 'income' | 'paused'
 
 function parseLocalDate(iso: string): Date {
   const [y, m, d] = iso.split('-').map(Number)
   return new Date(y, (m ?? 1) - 1, d ?? 1)
-}
-
-function startOfToday(now = new Date()): Date {
-  return new Date(now.getFullYear(), now.getMonth(), now.getDate())
-}
-
-function daysUntilDue(expense: RecurringExpense, now = new Date()): number {
-  if (typeof expense.days_until_due === 'number') return expense.days_until_due
-  const due = parseLocalDate(expense.next_due_date.slice(0, 10))
-  return Math.round((due.getTime() - startOfToday(now).getTime()) / 86_400_000)
-}
-
-function isOverdue(expense: RecurringExpense): boolean {
-  if (typeof expense.is_overdue === 'boolean') return expense.is_overdue
-  return daysUntilDue(expense) < 0
-}
-
-function cadenceLabel(expense: RecurringExpense): string {
-  const { recurrence_interval: interval, recurrence_unit: unit } = expense
-  if (interval === 1) return { days: 'Daily', weeks: 'Weekly', months: 'Monthly' }[unit]
-  return `Every ${interval} ${unit}`
 }
 
 /** What this line costs per month, whatever cadence it runs on. */
@@ -101,17 +87,8 @@ function monthlyEquivalent(expense: RecurringExpense): number {
   return amount / per
 }
 
-function dueLabel(expense: RecurringExpense): string {
-  if (!expense.is_active) return 'Paused'
-  const days = daysUntilDue(expense)
-  if (days < 0) return `${Math.abs(days)}d overdue`
-  if (days === 0) return 'Today'
-  if (days === 1) return 'Tomorrow'
-  if (days <= 30) return `In ${days} days`
-  return formatDate(parseLocalDate(expense.next_due_date.slice(0, 10)))
-}
-
 export function RecurringPage() {
+  const { t } = useTranslation(['recurring', 'common'])
   const { data: expenses = [], isLoading } = useRecurringExpenses()
   const { data: accounts = [] } = useAccounts()
   const { data: categories = [] } = useCategories()
@@ -147,18 +124,18 @@ export function RecurringPage() {
   /** Three horizons, because that is how a bill actually feels: late, soon, later. */
   const sections = useMemo(() => {
     if (view === 'paused') {
-      return [{ key: 'paused', label: 'Paused', items: visible, urgent: false }]
+      return [{ key: 'paused', label: t('sections.paused'), items: visible, urgent: false }]
     }
     const sorted = [...visible].sort((a, b) => a.next_due_date.localeCompare(b.next_due_date))
     const overdue = sorted.filter((e) => isOverdue(e))
     const soon = sorted.filter((e) => !isOverdue(e) && daysUntilDue(e) <= 7)
     const later = sorted.filter((e) => !isOverdue(e) && daysUntilDue(e) > 7)
     return [
-      { key: 'overdue', label: 'Overdue', items: overdue, urgent: true },
-      { key: 'soon', label: 'Next 7 days', items: soon, urgent: false },
-      { key: 'later', label: 'Later', items: later, urgent: false },
+      { key: 'overdue', label: t('sections.overdue'), items: overdue, urgent: true },
+      { key: 'soon', label: t('sections.next7'), items: soon, urgent: false },
+      { key: 'later', label: t('sections.later'), items: later, urgent: false },
     ].filter((section) => section.items.length > 0)
-  }, [visible, view])
+  }, [visible, view, t])
 
   const totals = useMemo(() => {
     const due30 = active
@@ -195,44 +172,45 @@ export function RecurringPage() {
   const handleSetActive = async (expense: RecurringExpense, next: boolean) => {
     try {
       await setActive.mutateAsync({ id: expense.id, active: next })
-      toast.success(next ? `${expense.name} resumed` : `${expense.name} paused`)
+      toast.success(
+        next ? t('toast.resumed', { name: expense.name }) : t('toast.paused', { name: expense.name }),
+      )
     } catch {
-      toast.error(next ? 'Could not resume it. Try again.' : 'Could not pause it. Try again.')
+      toast.error(next ? t('toast.resumeError') : t('toast.pauseError'))
     }
   }
 
   const handleDelete = async (expense: RecurringExpense) => {
     const ok = await confirm({
-      title: `Delete ${expense.name}?`,
-      description:
-        'Its payment history goes with it. Pause it instead if you only want it off the agenda.',
-      confirmLabel: 'Delete permanently',
+      title: t('deleteConfirm.title', { name: expense.name }),
+      description: t('deleteConfirm.description'),
+      confirmLabel: t('deleteConfirm.confirmLabel'),
     })
     if (!ok) return
     try {
       await deleteRecurring.mutateAsync(expense.id)
-      toast.success('Deleted')
+      toast.success(t('toast.deleted'))
       if (detailId === expense.id) setDetailId(null)
     } catch {
-      toast.error('Could not delete it. Try again.')
+      toast.error(t('toast.deleteError'))
     }
   }
 
   const metaLine = (expense: RecurringExpense) => {
     const account = expense.account_id != null ? accountById.get(expense.account_id) : null
-    return [cadenceLabel(expense), account?.name].filter(Boolean).join(' · ')
+    return [cadenceLabel(expense, t), account?.name].filter(Boolean).join(' · ')
   }
 
   return (
     <PageContainer wide className="flex flex-col gap-6">
       <PageHeader
-        title="Recurring"
-        description="What leaves your accounts on a schedule, and when it is next due."
+        title={t('page.title')}
+        description={t('page.description')}
         className="mb-0"
         action={
           <Button size="sm" onClick={openCreate}>
             <HugeiconsIcon icon={Add01Icon} strokeWidth={2} data-icon="inline-start" />
-            <PageHeaderActionLabel>Add</PageHeaderActionLabel>
+            <PageHeaderActionLabel>{t('page.addAction')}</PageHeaderActionLabel>
           </Button>
         }
       />
@@ -248,40 +226,41 @@ export function RecurringPage() {
             <EmptyMedia variant="icon">
               <HugeiconsIcon icon={RepeatIcon} strokeWidth={2} />
             </EmptyMedia>
-            <EmptyTitle>Nothing on a schedule yet</EmptyTitle>
-            <EmptyDescription>
-              Add the bills and subscriptions that repeat, and they will show up here before they
-              are due.
-            </EmptyDescription>
+            <EmptyTitle>{t('empty.title')}</EmptyTitle>
+            <EmptyDescription>{t('empty.description')}</EmptyDescription>
           </EmptyHeader>
           <EmptyContent>
             <Button size="sm" onClick={openCreate}>
               <HugeiconsIcon icon={Add01Icon} strokeWidth={2} data-icon="inline-start" />
-              Add the first one
+              {t('empty.addFirst')}
             </Button>
           </EmptyContent>
         </Empty>
       ) : (
         <div className="flex flex-col gap-6">
           <section
-            aria-label="Recurring totals"
+            aria-label={t('aria.totals')}
             className="glass-panel overflow-hidden rounded-xl border"
           >
             <div className="grid grid-cols-1 divide-y divide-border/70 sm:grid-cols-3 sm:divide-x sm:divide-y-0">
             <Figure
-              label="Due in 30 days"
+              label={t('totals.due30.label')}
               value={formatCurrency(totals.due30)}
-              hint={`${active.length} active`}
+              hint={t('totals.due30.hint', { count: active.length })}
             />
             <Figure
-              label="Monthly commitment"
+              label={t('totals.monthly.label')}
               value={formatCurrency(totals.monthly)}
-              hint="All cadences normalised"
+              hint={t('totals.monthly.hint')}
             />
             <Figure
-              label="Overdue"
+              label={t('totals.overdue.label')}
               value={formatCurrency(totals.overdueTotal)}
-              hint={totals.overdueTotal > 0 ? 'Needs attention' : 'All clear'}
+              hint={
+                totals.overdueTotal > 0
+                  ? t('totals.overdue.hintAttention')
+                  : t('totals.overdue.hintClear')
+              }
               tone={totals.overdueTotal > 0 ? 'urgent' : 'calm'}
             />
             </div>
@@ -289,17 +268,17 @@ export function RecurringPage() {
 
           <Tabs value={view} onValueChange={(v) => setView(v as View)}>
             <TabsList>
-              <TabsTrigger value="all">All</TabsTrigger>
-              <TabsTrigger value="expense">Expenses</TabsTrigger>
-              <TabsTrigger value="income">Income</TabsTrigger>
-              <TabsTrigger value="paused">Paused ({paused.length})</TabsTrigger>
+              <TabsTrigger value="all">{t('tabs.all')}</TabsTrigger>
+              <TabsTrigger value="expense">{t('tabs.expenses')}</TabsTrigger>
+              <TabsTrigger value="income">{t('tabs.income')}</TabsTrigger>
+              <TabsTrigger value="paused">{t('tabs.paused', { count: paused.length })}</TabsTrigger>
             </TabsList>
           </Tabs>
 
-          <section aria-label="Recurring schedule" className="flex flex-col gap-5">
+          <section aria-label={t('aria.schedule')} className="flex flex-col gap-5">
             {sections.length === 0 ? (
               <div className="glass-panel rounded-xl border px-4 py-10 text-center">
-                <p className="text-sm text-muted-foreground">Nothing here in this view.</p>
+                <p className="text-sm text-muted-foreground">{t('sections.empty')}</p>
               </div>
             ) : (
               sections.map((section) => (
@@ -334,6 +313,7 @@ export function RecurringPage() {
                             : undefined
                         }
                         meta={metaLine(expense)}
+                        dueText={dueLabel(expense, t)}
                         onOpen={() => setDetailId(expense.id)}
                         onPay={() => openPay(expense)}
                         onEdit={() => openEdit(expense)}
@@ -352,11 +332,11 @@ export function RecurringPage() {
       <Sheet open={detailId != null} onOpenChange={(open) => !open && setDetailId(null)}>
         <SheetContent side="right" className="flex w-full flex-col gap-0 p-0 sm:max-w-lg">
           <SheetHeader className="border-b">
-            <SheetTitle>{detailExpense?.name ?? 'Recurring payment'}</SheetTitle>
+            <SheetTitle>{detailExpense?.name ?? t('detail.fallbackTitle')}</SheetTitle>
             <SheetDescription>
               {detailExpense
-                ? `${cadenceLabel(detailExpense)} · ${formatCurrency(detailExpense.amount)}`
-                : 'Connected payments'}
+                ? `${cadenceLabel(detailExpense, t)} · ${formatCurrency(detailExpense.amount)}`
+                : t('detail.fallbackDescription')}
             </SheetDescription>
           </SheetHeader>
 
@@ -367,15 +347,13 @@ export function RecurringPage() {
                 <Skeleton className="h-32 w-full" />
               </div>
             ) : linkedQuery.isError ? (
-              <p className="p-4 text-sm text-destructive">
-                Could not load the payment history.
-              </p>
+              <p className="p-4 text-sm text-destructive">{t('detail.loadError')}</p>
             ) : (
               <>
                 <div className="glass-panel mx-4 mt-4 grid grid-cols-3 gap-3 rounded-xl border px-4 py-4">
                   <div>
                     <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
-                      Total paid
+                      {t('detail.stats.totalPaid')}
                     </p>
                     <p className="mt-1 font-heading font-semibold tabular-nums">
                       {formatCurrency(linkedQuery.data?.summary.total_paid ?? 0)}
@@ -383,7 +361,7 @@ export function RecurringPage() {
                   </div>
                   <div>
                     <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
-                      Payments
+                      {t('detail.stats.payments')}
                     </p>
                     <p className="mt-1 font-heading font-semibold tabular-nums">
                       {linkedQuery.data?.summary.payment_count ?? 0}
@@ -391,7 +369,7 @@ export function RecurringPage() {
                   </div>
                   <div>
                     <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
-                      Last payment
+                      {t('detail.stats.lastPayment')}
                     </p>
                     <p className="mt-1 text-sm font-medium tabular-nums">
                       {linkedQuery.data?.summary.last_payment_date
@@ -407,18 +385,16 @@ export function RecurringPage() {
 
                 {(linkedQuery.data?.transactions.length ?? 0) === 0 ? (
                   <div className="px-4 py-10 text-center">
-                    <p className="text-sm text-muted-foreground">No payments recorded yet.</p>
-                    <p className="mt-1 text-xs text-muted-foreground">
-                      Mark it paid once and the history starts here.
-                    </p>
+                    <p className="text-sm text-muted-foreground">{t('detail.empty.title')}</p>
+                    <p className="mt-1 text-xs text-muted-foreground">{t('detail.empty.description')}</p>
                   </div>
                 ) : (
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>Date</TableHead>
-                        <TableHead>Description</TableHead>
-                        <TableHead className="text-end">Amount</TableHead>
+                        <TableHead>{t('detail.table.date')}</TableHead>
+                        <TableHead>{t('detail.table.description')}</TableHead>
+                        <TableHead className="text-end">{t('detail.table.amount')}</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -463,17 +439,17 @@ export function RecurringPage() {
             {detailExpense && !detailExpense.is_active && (
               <Button size="sm" onClick={() => handleSetActive(detailExpense, true)}>
                 <HugeiconsIcon icon={PlayIcon} strokeWidth={2} data-icon="inline-start" />
-                Resume
+                {t('actions.resume')}
               </Button>
             )}
             {detailExpense?.is_active && (
               <Button size="sm" onClick={() => openPay(detailExpense)}>
-                Mark paid
+                {t('actions.markPaid')}
               </Button>
             )}
             {detailExpense && (
               <Button size="sm" variant="outline" onClick={() => openEdit(detailExpense)}>
-                Edit
+                {t('common:actions.edit')}
               </Button>
             )}
           </SheetFooter>
@@ -535,6 +511,7 @@ function RecurringRow({
   flow,
   category,
   meta,
+  dueText,
   onOpen,
   onPay,
   onEdit,
@@ -545,12 +522,14 @@ function RecurringRow({
   flow: 'expense' | 'income'
   category?: { name: string; color: string | null }
   meta: string
+  dueText: string
   onOpen: () => void
   onPay: () => void
   onEdit: () => void
   onToggleActive: () => void
   onDelete: () => void
 }) {
+  const { t } = useTranslation(['recurring', 'common'])
   const overdue = expense.is_active && isOverdue(expense)
   const paused = !expense.is_active
 
@@ -595,7 +574,7 @@ function RecurringRow({
             overdue ? 'font-medium text-destructive' : 'text-muted-foreground',
           )}
         >
-          {dueLabel(expense)}
+          {dueText}
         </span>
 
         <span className="w-24 shrink-0 text-end">
@@ -623,12 +602,12 @@ function RecurringRow({
               strokeWidth={2}
               data-icon="inline-start"
             />
-            Mark paid
+            {t('actions.markPaid')}
           </Button>
         ) : (
           <Button size="sm" variant="outline" onClick={onToggleActive}>
             <HugeiconsIcon icon={PlayIcon} strokeWidth={2} data-icon="inline-start" />
-            Resume
+            {t('actions.resume')}
           </Button>
         )}
         <Button
@@ -637,11 +616,11 @@ function RecurringRow({
           onClick={onOpen}
           className="hidden md:inline-flex md:opacity-0 md:group-hover/row:opacity-100 md:group-focus-within/row:opacity-100"
         >
-          Transactions
+          {t('actions.viewTransactions')}
         </Button>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon-sm" aria-label="More actions">
+            <Button variant="ghost" size="icon-sm" aria-label={t('actions.moreActionsAria')}>
               <HugeiconsIcon icon={MoreVerticalIcon} strokeWidth={2} />
             </Button>
           </DropdownMenuTrigger>
@@ -649,20 +628,20 @@ function RecurringRow({
             <DropdownMenuGroup>
               <DropdownMenuItem onClick={onEdit}>
                 <HugeiconsIcon icon={PencilEdit02Icon} strokeWidth={2} />
-                Edit
+                {t('common:actions.edit')}
               </DropdownMenuItem>
               <DropdownMenuItem onClick={onToggleActive}>
                 <HugeiconsIcon
                   icon={expense.is_active ? PauseIcon : PlayIcon}
                   strokeWidth={2}
                 />
-                {expense.is_active ? 'Disable' : 'Resume'}
+                {expense.is_active ? t('actions.disable') : t('actions.resume')}
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuItem variant="destructive" onClick={onDelete}>
               <HugeiconsIcon icon={Delete02Icon} strokeWidth={2} />
-              Delete
+              {t('common:actions.delete')}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

@@ -55,13 +55,13 @@ describe('BudgetsPage', () => {
 
     renderPage()
 
-    expect(await screen.findByText('Portfolio utilization')).toBeInTheDocument()
+    expect(await screen.findByText('1 envelope')).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Groceries' })).toBeInTheDocument()
-    expect(
-      screen.getByText((_, el) => el?.textContent === `${formatCurrency(150)} of ${formatCurrency(400)}`),
-    ).toBeInTheDocument()
-    expect(screen.getByText('37.5% used')).toBeInTheDocument()
-    expect(screen.getByText('Food')).toBeInTheDocument()
+    const card = screen.getByRole('heading', { name: 'Groceries' }).closest('section')
+    expect(card).not.toBeNull()
+    expect(within(card!).getByText(formatCurrency(150))).toBeInTheDocument()
+    expect(within(card!).getByText(`of ${formatCurrency(400)} limit`)).toBeInTheDocument()
+    expect(await screen.findByText(/Food/)).toBeInTheDocument()
   })
 
   it('opens the create-budget dialog', async () => {
@@ -135,13 +135,13 @@ describe('BudgetsPage', () => {
 
     renderPage()
     await screen.findByText('Groceries')
-    await userEvent.click(screen.getByRole('button', { name: /view period details/i }))
+    await userEvent.click(screen.getByRole('button', { name: /period details/i }))
 
     expect(await screen.findByText('Year usage')).toBeInTheDocument()
     expect(screen.getByText('July 2026')).toBeInTheDocument()
     expect(summarySpy).toHaveBeenCalledWith(1, 2026)
 
-    await userEvent.click(screen.getByRole('button', { name: /next year/i }))
+    await userEvent.click(screen.getByRole('button', { name: 'Next year 2027' }))
     expect(summarySpy).toHaveBeenCalledWith(1, 2027)
   })
 
@@ -152,7 +152,7 @@ describe('BudgetsPage', () => {
     renderPage()
     await screen.findByText('Groceries')
 
-    await userEvent.click(screen.getByRole('button', { name: /budget actions/i }))
+    await userEvent.click(screen.getByRole('button', { name: 'Groceries actions' }))
     const menu = await screen.findByRole('menu')
     await userEvent.click(within(menu).getByRole('menuitem', { name: /delete/i }))
 

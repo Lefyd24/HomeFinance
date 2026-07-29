@@ -1,4 +1,5 @@
 import { useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -81,6 +82,7 @@ export function TransactionFormDialog({
   onOpenChange,
   transaction,
 }: TransactionFormDialogProps) {
+  const { t } = useTranslation('transactions')
   const createTransaction = useCreateTransaction()
   const updateTransaction = useUpdateTransaction()
   const { data: accounts = [] } = useAccounts()
@@ -174,14 +176,14 @@ export function TransactionFormDialog({
 
       if (transaction) {
         await updateTransaction.mutateAsync({ id: transaction.id, input })
-        toast.success('Transaction updated')
+        toast.success(t('form.toast.updated'))
       } else {
         await createTransaction.mutateAsync(input)
-        toast.success('Transaction created')
+        toast.success(t('form.toast.created'))
       }
       onOpenChange(false)
     } catch {
-      toast.error(transaction ? 'Failed to update transaction' : 'Failed to create transaction')
+      toast.error(transaction ? t('form.toast.updateError') : t('form.toast.createError'))
     }
   })
 
@@ -203,13 +205,13 @@ export function TransactionFormDialog({
   return (
     <Dialog
       open={open}
-      title={transaction ? 'Edit transaction' : 'Add transaction'}
+      title={transaction ? t('form.title.edit') : t('form.title.add')}
       description={
         isTransfer
-          ? 'Move money between two of your own accounts. It affects both balances and neither budget.'
+          ? t('form.description.transfer')
           : selectedType === 'income'
-            ? 'Record money arriving in an account.'
-            : 'Record money leaving an account, against a spending category.'
+            ? t('form.description.income')
+            : t('form.description.expense')
       }
       icon={
         isTransfer ? Exchange01Icon : selectedType === 'income' ? ArrowDownLeft01Icon : ArrowUpRight01Icon
@@ -219,11 +221,11 @@ export function TransactionFormDialog({
       footer={
         <>
           <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
+            {t('common:actions.cancel')}
           </Button>
           <Button type="submit" form={formId} disabled={isSubmitting}>
             {isSubmitting && <Spinner data-icon="inline-start" />}
-            {transaction ? 'Save changes' : 'Add transaction'}
+            {transaction ? t('form.actions.save') : t('form.actions.add')}
           </Button>
         </>
       }
@@ -231,7 +233,7 @@ export function TransactionFormDialog({
       <form id={formId} onSubmit={onSubmit} noValidate>
         <FieldGroup>
           <Field>
-            <FieldLabel htmlFor="type">Direction</FieldLabel>
+            <FieldLabel htmlFor="type">{t('form.fields.direction')}</FieldLabel>
             <ToggleGroup
               type="single"
               variant="outline"
@@ -245,7 +247,7 @@ export function TransactionFormDialog({
                 className="data-[state=on]:border-flow-out/40 data-[state=on]:bg-flow-out/10 data-[state=on]:text-flow-out"
               >
                 <HugeiconsIcon icon={ArrowUpRight01Icon} strokeWidth={2} data-icon="inline-start" />
-                Expense
+                {t('form.fields.expense')}
               </ToggleGroupItem>
               <ToggleGroupItem
                 value="income"
@@ -256,44 +258,44 @@ export function TransactionFormDialog({
                   strokeWidth={2}
                   data-icon="inline-start"
                 />
-                Income
+                {t('form.fields.income')}
               </ToggleGroupItem>
               <ToggleGroupItem
                 value="transfer"
                 className="data-[state=on]:border-flow-move/40 data-[state=on]:bg-flow-move/10 data-[state=on]:text-flow-move"
               >
                 <HugeiconsIcon icon={Exchange01Icon} strokeWidth={2} data-icon="inline-start" />
-                Transfer
+                {t('form.fields.transfer')}
               </ToggleGroupItem>
             </ToggleGroup>
             <FieldError errors={[errors.type]} />
           </Field>
 
           <Field data-invalid={errors.amount ? true : undefined}>
-            <FieldLabel htmlFor="amount">Amount</FieldLabel>
+            <FieldLabel htmlFor="amount">{t('form.fields.amount')}</FieldLabel>
             <InputGroup className="h-11">
               <InputGroupInput
                 id="amount"
                 type="number"
                 step="0.01"
                 inputMode="decimal"
-                placeholder="0,00"
+                placeholder={t('form.fields.amountPlaceholder')}
                 aria-invalid={errors.amount ? true : undefined}
                 className="text-lg font-semibold tabular-nums"
                 {...register('amount')}
               />
               <InputGroupAddon align="inline-end">
-                <span className="text-sm text-muted-foreground">EUR</span>
+                <span className="text-sm text-muted-foreground">{t('form.fields.currency')}</span>
               </InputGroupAddon>
             </InputGroup>
             <FieldError errors={[errors.amount]} />
           </Field>
 
           <Field data-invalid={errors.description ? true : undefined}>
-            <FieldLabel htmlFor="description">Description</FieldLabel>
+            <FieldLabel htmlFor="description">{t('form.fields.description')}</FieldLabel>
             <Input
               id="description"
-              placeholder="What was it for?"
+              placeholder={t('form.fields.descriptionPlaceholder')}
               aria-invalid={errors.description ? true : undefined}
               {...register('description')}
             />
@@ -303,36 +305,38 @@ export function TransactionFormDialog({
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <Field data-invalid={errors.account_id ? true : undefined}>
               <FieldLabel htmlFor="account_id">
-                {isTransfer ? 'From account' : 'Account'}
+                {isTransfer ? t('form.fields.fromAccount') : t('form.fields.account')}
               </FieldLabel>
               <Select
                 value={watch('account_id')}
                 onValueChange={(value) => setValue('account_id', value)}
                 options={accountOptions}
-                placeholder="Choose an account"
+                placeholder={t('form.fields.accountPlaceholder')}
               />
               <FieldError errors={[errors.account_id]} />
             </Field>
 
             {isTransfer ? (
               <Field data-invalid={errors.destination_account_id ? true : undefined}>
-                <FieldLabel htmlFor="destination_account_id">To account</FieldLabel>
+                <FieldLabel htmlFor="destination_account_id">
+                  {t('form.fields.toAccount')}
+                </FieldLabel>
                 <Select
                   value={watch('destination_account_id') || ''}
                   onValueChange={(value) => setValue('destination_account_id', value)}
                   options={accountOptions}
-                  placeholder="Choose a destination"
+                  placeholder={t('form.fields.destinationPlaceholder')}
                 />
                 <FieldError errors={[errors.destination_account_id]} />
               </Field>
             ) : (
               <Field data-invalid={errors.category_id ? true : undefined}>
-                <FieldLabel htmlFor="category_id">Category</FieldLabel>
+                <FieldLabel htmlFor="category_id">{t('form.fields.category')}</FieldLabel>
                 <Select
                   value={watch('category_id') || ''}
                   onValueChange={(value) => setValue('category_id', value)}
                   options={categoryOptions}
-                  placeholder="Choose a category"
+                  placeholder={t('form.fields.categoryPlaceholder')}
                 />
                 <FieldError errors={[errors.category_id]} />
               </Field>
@@ -340,17 +344,17 @@ export function TransactionFormDialog({
           </div>
 
           <Field data-invalid={errors.date ? true : undefined}>
-            <FieldLabel htmlFor="date">Date</FieldLabel>
+            <FieldLabel htmlFor="date">{t('form.fields.date')}</FieldLabel>
             <Input id="date" type="date" {...register('date')} />
             <FieldError errors={[errors.date]} />
           </Field>
 
           <Field>
-            <FieldLabel htmlFor="notes">Notes</FieldLabel>
+            <FieldLabel htmlFor="notes">{t('form.fields.notes')}</FieldLabel>
             <Textarea
               id="notes"
               rows={2}
-              placeholder="Anything worth remembering later"
+              placeholder={t('form.fields.notesPlaceholder')}
               {...register('notes')}
             />
             <FieldError errors={[errors.notes]} />

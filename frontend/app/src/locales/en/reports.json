@@ -1,0 +1,230 @@
+{
+  "page": {
+    "title": "Reports",
+    "description": "Pick a window, then read what happened in it."
+  },
+  "tabs": {
+    "overview": "Overview",
+    "cashflow": "Cash flow",
+    "spending": "Spending",
+    "budgets": "Budgets",
+    "debt": "Debt"
+  },
+  "viewSelect": {
+    "report": "Report"
+  },
+  "filters": {
+    "range": {
+      "mtd": "Month to date",
+      "30d": "Last 30 days",
+      "3m": "Last 3 months",
+      "6m": "Last 6 months",
+      "ytd": "Year to date",
+      "1y": "Last 12 months",
+      "custom": "Custom"
+    },
+    "startDateAria": "Start date",
+    "endDateAria": "End date",
+    "accounts": "Accounts",
+    "categories": "Categories",
+    "noAccounts": "No accounts yet",
+    "noCategories": "No categories yet",
+    "clearFilters": "Clear filters",
+    "clear": "Clear"
+  },
+  "periodBand": {
+    "eyebrow": "The period in one line",
+    "askAdvisor": "Ask the advisor about this",
+    "metrics": {
+      "moneyIn": "Money in",
+      "moneyOut": "Money out",
+      "net": "Net",
+      "savingsRate": "Savings rate",
+      "noRate": "—"
+    },
+    "delta": {
+      "flatVsPrior": "Flat vs prior",
+      "vsPrior": "{{value}}{{unit}} vs prior"
+    }
+  },
+  "read": {
+    "noActivityHeadline": "No activity recorded in this range.",
+    "noActivityDetail": "Widen the date range, or clear a filter, to see something here.",
+    "keptHeadline": "You kept {{net}} of the {{income}} that came in.",
+    "overspentHeadline": "You spent {{net}} more than you brought in.",
+    "savingsRateDetail": "That is a {{rate}}% savings rate",
+    "spendingUpJoined": "and spending is up {{pct}}% on the period before",
+    "spendingDownJoined": "and spending is down {{pct}}% on the period before",
+    "yourSpendingUp": "Your spending is up {{pct}}% on the period before",
+    "yourSpendingDown": "Your spending is down {{pct}}% on the period before"
+  },
+  "advisorPrompt": {
+    "template": "Looking at {{start}} to {{end}}, tell me {{focus}}. Use my actual transactions.",
+    "focus": {
+      "overview": "what stands out about my finances",
+      "cashflow": "how my cash flow moved and whether the trend is healthy",
+      "spending": "where my spending went and what I could cut",
+      "budgets": "which budgets I am at risk of blowing",
+      "debt": "which debt I should attack first and why"
+    }
+  },
+  "chart": {
+    "defaultEmpty": "Nothing to chart for this range."
+  },
+  "series": {
+    "moneyIn": "Money in",
+    "moneyOut": "Money out",
+    "net": "Net",
+    "other": "Other",
+    "otherCount": "Other ({{count}})",
+    "total": "Total",
+    "changeInBalance": "Change in balance"
+  },
+  "months": {
+    "jan": "Jan",
+    "feb": "Feb",
+    "mar": "Mar",
+    "apr": "Apr",
+    "may": "May",
+    "jun": "Jun",
+    "jul": "Jul",
+    "aug": "Aug",
+    "sep": "Sep",
+    "oct": "Oct",
+    "nov": "Nov",
+    "dec": "Dec"
+  },
+  "periodLabel": {
+    "week": "W{{week}} {{year}}",
+    "monthDay": "{{day}} {{month}}",
+    "monthYear": "{{month}} {{year}}"
+  },
+  "weekdays": {
+    "Mon": "Mon",
+    "Tue": "Tue",
+    "Wed": "Wed",
+    "Thu": "Thu",
+    "Fri": "Fri",
+    "Sat": "Sat",
+    "Sun": "Sun"
+  },
+  "overview": {
+    "cashflow": {
+      "title": "Money in, money out, and what was left",
+      "hint": "Bars are the two flows; the line is what survived each period.",
+      "empty": "No income or expenses landed in this range."
+    },
+    "ranked": {
+      "title": "Where it went",
+      "hint": "Expense categories, largest first.",
+      "empty": "No categorised expenses in this range."
+    },
+    "savingsRate": {
+      "title": "Savings rate by month",
+      "hint": "Share of each month's income you did not spend. Below the line means you dipped into reserves.",
+      "empty": "Needs at least one month with recorded income."
+    }
+  },
+  "cashflow": {
+    "waterfall": {
+      "title": "What each month did to your balance",
+      "hint": "Each bar starts where the last one ended, so the steps trace your running total.",
+      "empty": "No transactions in this range.",
+      "tooltipAdded": "Added {{amount}}",
+      "tooltipDrewDown": "Drew down {{amount}}",
+      "tooltipRunningTotal": "Running total {{amount}}"
+    },
+    "balanceHistory": {
+      "title": "Balance history",
+      "hint": "Daily running balance per account. Total is the thick line.",
+      "empty": "No active accounts match this filter."
+    },
+    "table": {
+      "title": "Period by period",
+      "hint": "The same numbers as a table, for when you need the exact figure.",
+      "empty": "No transactions in this range.",
+      "period": "Period",
+      "moneyIn": "Money in",
+      "moneyOut": "Money out",
+      "net": "Net"
+    }
+  },
+  "spending": {
+    "byCategory": {
+      "title": "Spending by category",
+      "hint": "Tile area is the share of total spend.",
+      "empty": "No categorised expenses in this range.",
+      "tooltipShare": "{{pct}}% of spend · {{count}} transactions"
+    },
+    "merchants": {
+      "title": "Top 10 payees",
+      "hint": "Grouped by the description on each transaction.",
+      "empty": "No expenses in this range."
+    },
+    "weekday": {
+      "title": "Your week",
+      "hintDefault": "Spend split across the days of the week.",
+      "hintPeak": "{{day}} is your heaviest day — {{pct}}% of everything you spent in this range.",
+      "empty": "No expenses in this range.",
+      "tooltip": "{{day}}: {{amount}}"
+    },
+    "mom": {
+      "title": "Month-on-month change",
+      "hint": "How each month's spend compares with the one before it.",
+      "empty": "Needs at least two months of expenses to compare.",
+      "tooltipSpent": "{{amount}} spent",
+      "tooltipChange": "{{arrow}} {{pct}}% on the month before"
+    }
+  },
+  "budgets": {
+    "empty": {
+      "title": "No budgets to measure",
+      "description": "Create a budget and this tab will show how close each one is to its limit."
+    },
+    "summary": {
+      "allComfortable": "Every budget is comfortably inside its limit.",
+      "over_one": "{{count}} budget is over the limit.",
+      "over_other": "{{count}} budgets are over the limit.",
+      "tight_one": "{{count}} budget is close to the limit.",
+      "tight_other": "{{count}} budgets are close to the limit.",
+      "description": "{{spent}} spent against {{limit}} budgeted, across {{count}} budget. Sorted by how much of each is used.",
+      "description_other": "{{spent}} spent against {{limit}} budgeted, across {{count}} budgets. Sorted by how much of each is used."
+    },
+    "status": {
+      "over": "Over",
+      "tight": "Close",
+      "ok": "On track"
+    },
+    "row": {
+      "spentOf": "{{spent}} of {{limit}} · {{pct}}%",
+      "overLimit": "{{amount}} over the limit."
+    }
+  },
+  "debt": {
+    "empty": {
+      "title": "No debts tracked",
+      "description": "Add a debt and this tab will show payoff progress, interest cost, and which one to clear first."
+    },
+    "stats": {
+      "stillOwed": "Still owed",
+      "across_one": "Across {{count}} debt",
+      "across_other": "Across {{count}} debts",
+      "paidDown": "Paid down",
+      "paidDownHint": "{{pct}}% of the original {{amount}}",
+      "interestPaid": "Interest paid so far",
+      "interestHint": "The part of your payments that bought nothing"
+    },
+    "recommendation": {
+      "title": "Clear {{name}} first.",
+      "description": "At {{rate}}% it is your most expensive debt, so every euro sent there saves more than the same euro sent anywhere else. Keep the minimum payment on the rest while you do it."
+    },
+    "progress": {
+      "title": "Payoff progress",
+      "description": "Ordered by interest rate — most expensive first.",
+      "leftOf": "{{current}} left of {{original}}",
+      "paidOff": "{{pct}}% paid off",
+      "clearBy": " · clear by {{date}} at the current minimum payment",
+      "setMinimum": " · set a minimum payment to project a payoff date"
+    }
+  }
+}

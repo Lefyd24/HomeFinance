@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
+import { useTranslation } from 'react-i18next'
 import { AlertTriangle, CheckCircle2, CircleAlert } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -9,13 +10,6 @@ import { getBudgetPerformance } from '../reportsPageApi'
 
 type Status = 'over' | 'tight' | 'ok'
 
-/** Icon + word always accompany the colour, so state never rests on hue alone. */
-const STATUS_META: Record<Status, { label: string; icon: typeof CheckCircle2; className: string }> = {
-  over: { label: 'Over', icon: AlertTriangle, className: 'text-destructive' },
-  tight: { label: 'Close', icon: CircleAlert, className: 'text-warning' },
-  ok: { label: 'On track', icon: CheckCircle2, className: 'text-success' },
-}
-
 function statusFor(pct: number): Status {
   if (pct > 100) return 'over'
   if (pct >= 85) return 'tight'
@@ -23,10 +17,20 @@ function statusFor(pct: number): Status {
 }
 
 export function BudgetsTab() {
+  const { t } = useTranslation('reports')
   const { data, isLoading } = useQuery({
     queryKey: ['reports', 'budget-performance'],
     queryFn: getBudgetPerformance,
   })
+
+  const statusMeta: Record<
+    Status,
+    { label: string; icon: typeof CheckCircle2; className: string }
+  > = {
+    over: { label: t('budgets.status.over'), icon: AlertTriangle, className: 'text-destructive' },
+    tight: { label: t('budgets.status.tight'), icon: CircleAlert, className: 'text-warning' },
+    ok: { label: t('budgets.status.ok'), icon: CheckCircle2, className: 'text-success' },
+  }
 
   if (isLoading) {
     return (
@@ -44,8 +48,8 @@ export function BudgetsTab() {
     return (
       <EmptyState
         icon={CircleAlert}
-        title="No budgets to measure"
-        description="Create a budget and this tab will show how close each one is to its limit."
+        title={t('budgets.empty.title')}
+        description={t('budgets.empty.description')}
       />
     )
   }
@@ -55,25 +59,29 @@ export function BudgetsTab() {
   const totalLimit = budgets.reduce((sum, budget) => sum + budget.limit, 0)
   const totalSpent = budgets.reduce((sum, budget) => sum + budget.spent, 0)
 
+  let summaryTitle = t('budgets.summary.allComfortable')
+  if (over.length > 0) {
+    summaryTitle = t('budgets.summary.over', { count: over.length })
+  } else if (tight.length > 0) {
+    summaryTitle = t('budgets.summary.tight', { count: tight.length })
+  }
+
   return (
     <div className="flex flex-col gap-4">
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">
-            {over.length === 0 && tight.length === 0
-              ? 'Every budget is comfortably inside its limit.'
-              : over.length > 0
-                ? `${over.length} budget${over.length === 1 ? ' is' : 's are'} over the limit.`
-                : `${tight.length} budget${tight.length === 1 ? ' is' : 's are'} close to the limit.`}
-          </CardTitle>
+          <CardTitle className="text-base">{summaryTitle}</CardTitle>
           <CardDescription>
-            {formatCurrency(totalSpent)} spent against {formatCurrency(totalLimit)} budgeted, across{' '}
-            {budgets.length} budget{budgets.length === 1 ? '' : 's'}. Sorted by how much of each is used.
+            {t('budgets.summary.description', {
+              spent: formatCurrency(totalSpent),
+              limit: formatCurrency(totalLimit),
+              count: budgets.length,
+            })}
           </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-5">
           {budgets.map((budget) => (
-            <BudgetRow key={budget.name} {...budget} />
+            <BudgetRow key={budget.name} {...budget} statusMeta={statusMeta} t={t} />
           ))}
         </CardContent>
       </Card>
@@ -91,14 +99,18 @@ function BudgetRow({
   limit,
   spent,
   pct,
+  statusMeta,
+  t,
 }: {
   name: string
   limit: number
   spent: number
   pct: number
+  statusMeta: Record<Status, { label: string; icon: typeof CheckCircle2; className: string }>
+  t: ReturnType<typeof useTranslation<'reports'>>['t']
 }) {
   const status = statusFor(pct)
-  const meta = STATUS_META[status]
+  const meta = statusMeta[status]
   const Icon = meta.icon
 
   // The track shows up to 130% of the limit; the limit marker sits at 100/130.
@@ -116,7 +128,11 @@ function BudgetRow({
           <span className={cn('text-xs font-medium shrink-0', meta.className)}>{meta.label}</span>
         </div>
         <p className="text-xs tabular-nums text-muted-foreground">
-          {formatCurrency(spent)} of {formatCurrency(limit)} · {pct.toFixed(0)}%
+          {t('budgets.row.spentOf', {
+            spent: formatCurrency(spent),
+            limit: formatCurrency(limit),
+            pct: pct.toFixed(0),
+          })}
         </p>
       </div>
 
@@ -143,7 +159,7 @@ function BudgetRow({
 
       {pct > 100 && (
         <p className="mt-1.5 text-xs text-destructive">
-          {formatCurrency(spent - limit)} over the limit.
+          {t('budgets.row.overLimit', { amount: formatCurrency(spent - limit) })}
         </p>
       )}
     </div>

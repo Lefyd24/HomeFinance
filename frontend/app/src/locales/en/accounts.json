@@ -1,0 +1,81 @@
+{
+  "page": {
+    "title": "Accounts",
+    "description": "Where your money sits, and how much of it sits where.",
+    "addAccount": "Add account"
+  },
+  "empty": {
+    "title": "No accounts yet",
+    "description": "Add your first account to start tracking balances and linking transactions."
+  },
+  "allocationLabel": "Balance allocation",
+  "summary": {
+    "totalHeld": "Total held",
+    "liquid": "Liquid",
+    "credit": "Credit",
+    "net": "Net"
+  },
+  "card": {
+    "inactive": "Inactive",
+    "outstanding": "Outstanding",
+    "balance": "Balance",
+    "sharePct": "{{percent}}% held",
+    "transactions": "Transactions",
+    "actionsLabel": "Account actions",
+    "edit": "Edit",
+    "delete": "Delete"
+  },
+  "deleteDialog": {
+    "title": "Delete {{name}}?",
+    "description": "Transactions recorded against this account are removed with it. This cannot be undone.",
+    "confirmLabel": "Delete account"
+  },
+  "toasts": {
+    "deleted": "Account deleted",
+    "deleteFailed": "Could not delete the account. Try again.",
+    "updated": "Account updated",
+    "created": "Account created",
+    "updateFailed": "Failed to update account",
+    "createFailed": "Failed to create account"
+  },
+  "types": {
+    "checking": { "label": "Checking", "plural": "Checking accounts" },
+    "savings": { "label": "Savings", "plural": "Savings" },
+    "credit": { "label": "Credit", "plural": "Credit" },
+    "cash": { "label": "Cash", "plural": "Cash" },
+    "investment": { "label": "Investment", "plural": "Investments" }
+  },
+  "form": {
+    "titleEdit": "Edit account",
+    "titleAdd": "Add an account",
+    "description": "The card below is exactly how it will look on the Accounts page.",
+    "newAccountPreview": "New account",
+    "nameLabel": "Account name",
+    "namePlaceholder": "e.g., Eurobank Checking",
+    "typeLabel": "Account type",
+    "typePlaceholder": "Choose a type",
+    "currencyLabel": "Currency",
+    "currencyPlaceholder": "Currency",
+    "balanceLabel": "Current balance",
+    "balanceHint": "Use a negative value for credit cards with outstanding balance.",
+    "iconLabel": "Account icon",
+    "iconDefault": "Default",
+    "descriptionLabel": "Description",
+    "descriptionPlaceholder": "Optional notes about this account",
+    "saving": "Saving…",
+    "saveChanges": "Save changes",
+    "createAccount": "Create account",
+    "typeOptions": {
+      "checking": "Checking",
+      "savings": "Savings",
+      "credit": "Credit Card",
+      "cash": "Cash",
+      "investment": "Investment"
+    },
+    "currencyOptions": {
+      "eur": "EUR — Euro",
+      "usd": "USD — US Dollar",
+      "gbp": "GBP — British Pound"
+    }
+  }
+}

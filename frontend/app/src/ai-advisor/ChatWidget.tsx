@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import type { TFunction } from 'i18next'
 import { ArrowUp, Check, Copy, PenLine, RotateCcw, Sparkles, Square } from 'lucide-react'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
@@ -20,7 +22,7 @@ import {
 } from '@/components/ui/message-scroller'
 import { Textarea } from '@/components/ui/textarea'
 import { cn } from '@/lib/utils'
-import { SUGGESTION_GROUPS } from './aiChatApi'
+import { getSuggestionGroups } from './aiAdvisorLabels'
 import { Markdown } from './Markdown'
 import { ToolTrail } from './ToolTrail'
 import type { Turn } from './useAiChat'
@@ -48,6 +50,7 @@ export function ChatWidget({
   /** A question handed over from another page, asked once on arrival. */
   initialPrompt?: string
 }) {
+  const { t } = useTranslation('advisor')
   const composerRef = useRef<HTMLTextAreaElement>(null)
   const sentInitial = useRef(false)
 
@@ -69,7 +72,7 @@ export function ChatWidget({
           className="glass-panel absolute end-4 top-3 z-10 shadow-sm"
         >
           <PenLine data-icon="inline-start" />
-          New chat
+          {t('aiAdvisor.chat.newChat')}
         </Button>
       )}
 
@@ -119,6 +122,7 @@ export function ChatWidget({
         disabled={disabled}
         onSend={onSend}
         onStop={onStop}
+        t={t}
       />
     </div>
   )
@@ -145,6 +149,7 @@ function AssistantTurn({
   isLast: boolean
   onRetry: () => void
 }) {
+  const { t } = useTranslation('advisor')
   const [copied, setCopied] = useState(false)
   const hasAnswer = turn.content.trim().length > 0
 
@@ -176,7 +181,7 @@ function AssistantTurn({
         ) : turn.streaming && turn.tools.length === 0 ? (
           <Bubble variant="muted">
             <BubbleContent>
-              <span className="shimmer">Thinking</span>
+              <span className="shimmer">{t('aiAdvisor.chat.thinking')}</span>
             </BubbleContent>
           </Bubble>
         ) : null}
@@ -192,13 +197,13 @@ function AssistantTurn({
             {hasAnswer && (
               <Button variant="ghost" size="sm" onClick={() => void handleCopy()}>
                 {copied ? <Check data-icon="inline-start" /> : <Copy data-icon="inline-start" />}
-                {copied ? 'Copied' : 'Copy'}
+                {copied ? t('aiAdvisor.chat.copied') : t('aiAdvisor.chat.copy')}
               </Button>
             )}
             {isLast && (
               <Button variant="ghost" size="sm" onClick={onRetry}>
                 <RotateCcw data-icon="inline-start" />
-                Ask again
+                {t('aiAdvisor.chat.askAgain')}
               </Button>
             )}
           </MessageFooter>
@@ -217,6 +222,7 @@ function EmptyState({
   disabledReason?: string
   onPick: (prompt: string) => void
 }) {
+  const { t } = useTranslation('advisor')
   if (disabled) {
     return (
       <div className="flex flex-1 items-center justify-center">
@@ -230,16 +236,15 @@ function EmptyState({
   return (
     <div className="flex flex-1 flex-col items-center justify-center text-center">
       <h2 className="font-heading text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
-        Ask your money anything.
+        {t('aiAdvisor.chat.heading')}
       </h2>
       <p className="mx-auto mt-2 max-w-lg text-sm text-muted-foreground">
-        The advisor reads your real transactions, balances, budgets, recurring bills and debts as it
-        answers — and can email you a copy of anything it works out.
+        {t('aiAdvisor.chat.subheading')}
       </p>
 
       <div className="mt-8 flex w-full max-w-xl flex-col gap-6">
-        {SUGGESTION_GROUPS.map((group) => (
-          <div key={group.title}>
+        {getSuggestionGroups(t).map((group) => (
+          <div key={group.key}>
             {/* The groups name the job, so the openers read as directions to
                 take rather than an undifferentiated list of prompts. */}
             <Marker variant="separator" className="mb-2 justify-center">
@@ -270,12 +275,14 @@ function Composer({
   disabled,
   onSend,
   onStop,
+  t,
 }: {
   ref: React.RefObject<HTMLTextAreaElement | null>
   isStreaming: boolean
   disabled?: boolean
   onSend: (text: string) => void
   onStop: () => void
+  t: TFunction<'advisor'>
 }) {
   const [value, setValue] = useState('')
 
@@ -309,8 +316,10 @@ function Composer({
           rows={1}
           value={value}
           disabled={disabled}
-          placeholder={disabled ? 'The advisor is unavailable' : 'Ask about your finances…'}
-          aria-label="Ask about your finances"
+          placeholder={
+            disabled ? t('aiAdvisor.chat.composerPlaceholderDisabled') : t('aiAdvisor.chat.composerPlaceholder')
+          }
+          aria-label={t('aiAdvisor.chat.composerAriaLabel')}
           onChange={(event) => {
             setValue(event.target.value)
             resize(event.currentTarget)
@@ -334,7 +343,7 @@ function Composer({
             size="icon"
             variant="secondary"
             onClick={onStop}
-            aria-label="Stop"
+            aria-label={t('aiAdvisor.chat.stopAriaLabel')}
             className="rounded-full"
           >
             <Square />
@@ -344,7 +353,7 @@ function Composer({
             type="submit"
             size="icon"
             disabled={disabled || !value.trim()}
-            aria-label="Send"
+            aria-label={t('aiAdvisor.chat.sendAriaLabel')}
             className="rounded-full"
           >
             <ArrowUp />
@@ -352,7 +361,7 @@ function Composer({
         )}
       </form>
       <p className="mx-auto mt-2 max-w-3xl text-center text-xs text-muted-foreground">
-        Enter to send, Shift + Enter for a new line.
+        {t('aiAdvisor.chat.composerHint')}
       </p>
     </div>
   )

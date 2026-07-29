@@ -29,13 +29,13 @@ interface ColumnHandlers {
   onDelete: (transaction: Transaction) => void
 }
 
+type Translate = (key: string, options?: Record<string, unknown>) => string
+
 const FLOW_ICON = {
   in: ArrowDownLeft01Icon,
   out: ArrowUpRight01Icon,
   move: Exchange01Icon,
 } as const
-
-const FLOW_LABEL = { in: 'Income', out: 'Expense', move: 'Transfer' } as const
 
 function splitDate(iso: string) {
   const date = new Date(iso)
@@ -46,11 +46,20 @@ function splitDate(iso: string) {
   }
 }
 
-export function createColumns(handlers: ColumnHandlers): ColumnDef<Transaction>[] {
+export function createColumns(
+  handlers: ColumnHandlers,
+  t: Translate,
+): ColumnDef<Transaction>[] {
+  const FLOW_LABEL = {
+    in: t('columns.flowLabel.in'),
+    out: t('columns.flowLabel.out'),
+    move: t('columns.flowLabel.move'),
+  } as const
+
   return [
     {
       accessorKey: 'date',
-      header: ({ column }) => <DataTableColumnHeader column={column} title="Date" />,
+      header: ({ column }) => <DataTableColumnHeader column={column} title={t('columns.date')} />,
       cell: ({ row }) => {
         const { day, weekday } = splitDate(row.original.date)
         return (
@@ -65,7 +74,9 @@ export function createColumns(handlers: ColumnHandlers): ColumnDef<Transaction>[
     },
     {
       accessorKey: 'description',
-      header: ({ column }) => <DataTableColumnHeader column={column} title="Description" />,
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title={t('columns.description')} />
+      ),
       cell: ({ row }) => {
         const { description, notes, type, is_imported, debt_name } = row.original
         const flow = flowOfType(type)
@@ -85,7 +96,11 @@ export function createColumns(handlers: ColumnHandlers): ColumnDef<Transaction>[
               <span className="truncate text-sm font-medium">{description}</span>
               {(notes || debt_name || is_imported) && (
                 <span className="truncate text-xs text-muted-foreground">
-                  {[debt_name && `Debt · ${debt_name}`, notes, is_imported && 'Imported']
+                  {[
+                    debt_name && t('columns.debtPrefix', { name: debt_name }),
+                    notes,
+                    is_imported && t('columns.imported'),
+                  ]
                     .filter(Boolean)
                     .join(' · ')}
                 </span>
@@ -98,18 +113,22 @@ export function createColumns(handlers: ColumnHandlers): ColumnDef<Transaction>[
     },
     {
       accessorKey: 'category_name',
-      header: ({ column }) => <DataTableColumnHeader column={column} title="Category" />,
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title={t('columns.category')} />
+      ),
       cell: ({ row }) => {
         const { category_name, category_color, type } = row.original
         if (type === 'transfer') {
-          return <span className="text-xs text-muted-foreground">Between accounts</span>
+          return (
+            <span className="text-xs text-muted-foreground">{t('columns.betweenAccounts')}</span>
+          )
         }
         return <CategoryChip name={category_name} color={category_color} />
       },
     },
     {
       accessorKey: 'account_name',
-      header: ({ column }) => <DataTableColumnHeader column={column} title="Account" />,
+      header: ({ column }) => <DataTableColumnHeader column={column} title={t('columns.account')} />,
       cell: ({ row }) => {
         const { account_name, destination_account_name, type } = row.original
         if (type === 'transfer' && destination_account_name) {
@@ -131,7 +150,7 @@ export function createColumns(handlers: ColumnHandlers): ColumnDef<Transaction>[
     {
       accessorKey: 'amount',
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Amount" className="justify-end" />
+        <DataTableColumnHeader column={column} title={t('columns.amount')} className="justify-end" />
       ),
       cell: ({ row }) => {
         const { amount, type } = row.original
@@ -146,7 +165,7 @@ export function createColumns(handlers: ColumnHandlers): ColumnDef<Transaction>[
     },
     {
       id: 'actions',
-      header: () => <span className="sr-only">Actions</span>,
+      header: () => <span className="sr-only">{t('columns.actions')}</span>,
       cell: ({ row }) => {
         const transaction = row.original
         return (
@@ -159,25 +178,27 @@ export function createColumns(handlers: ColumnHandlers): ColumnDef<Transaction>[
                 onClick={(e) => e.stopPropagation()}
               >
                 <HugeiconsIcon icon={MoreVerticalIcon} strokeWidth={2} />
-                <span className="sr-only">Actions for {transaction.description}</span>
+                <span className="sr-only">
+                  {t('columns.actionsFor', { description: transaction.description })}
+                </span>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuGroup>
                 <DropdownMenuItem onClick={() => handlers.onView(transaction)}>
                   <HugeiconsIcon icon={ViewIcon} strokeWidth={2} />
-                  View details
+                  {t('columns.menu.view')}
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => handlers.onEdit(transaction)}>
                   <HugeiconsIcon icon={PencilEdit02Icon} strokeWidth={2} />
-                  Edit
+                  {t('common:actions.edit')}
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   variant="destructive"
                   onClick={() => handlers.onDelete(transaction)}
                 >
                   <HugeiconsIcon icon={Delete02Icon} strokeWidth={2} />
-                  Delete
+                  {t('common:actions.delete')}
                 </DropdownMenuItem>
               </DropdownMenuGroup>
             </DropdownMenuContent>

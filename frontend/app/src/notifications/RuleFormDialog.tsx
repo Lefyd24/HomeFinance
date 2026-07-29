@@ -1,8 +1,9 @@
-import { useEffect } from 'react'
+import { useEffect, useMemo } from 'react'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { toast } from 'sonner'
+import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -17,38 +18,22 @@ import {
 } from './useNotificationSettings'
 import type { NotificationRule, NotificationRuleType } from './notificationsApi'
 
-const ruleSchema = z.object({
-  type: z.enum(['balance_below', 'budget_percent', 'scheduled_report']),
-  name: z.string().min(1, 'Name is required').max(200),
-  target_id: z.string().optional(),
-  threshold: z.string().optional(),
-  report_type: z.enum(['spending', 'cashflow', 'income']),
-  schedule_kind: z.enum(['every_n_days', 'weekly', 'monthly']),
-  schedule_value: z.coerce.number<number>().int().min(1),
-  channel_email: z.boolean(),
-  channel_push: z.boolean(),
-  is_active: z.boolean(),
-})
+function createRuleSchema(t: (key: string) => string) {
+  return z.object({
+    type: z.enum(['balance_below', 'budget_percent', 'scheduled_report']),
+    name: z.string().min(1, t('ruleForm.validation.nameRequired')).max(200),
+    target_id: z.string().optional(),
+    threshold: z.string().optional(),
+    report_type: z.enum(['spending', 'cashflow', 'income']),
+    schedule_kind: z.enum(['every_n_days', 'weekly', 'monthly']),
+    schedule_value: z.coerce.number<number>().int().min(1),
+    channel_email: z.boolean(),
+    channel_push: z.boolean(),
+    is_active: z.boolean(),
+  })
+}
 
-type RuleForm = z.infer<typeof ruleSchema>
-
-const TYPE_OPTIONS = [
-  { value: 'balance_below', label: 'Balance below threshold' },
-  { value: 'budget_percent', label: 'Budget usage percent' },
-  { value: 'scheduled_report', label: 'Scheduled report' },
-]
-
-const REPORT_TYPE_OPTIONS = [
-  { value: 'spending', label: 'Spending' },
-  { value: 'cashflow', label: 'Cashflow' },
-  { value: 'income', label: 'Income' },
-]
-
-const SCHEDULE_KIND_OPTIONS = [
-  { value: 'every_n_days', label: 'Every N days' },
-  { value: 'weekly', label: 'Weekly' },
-  { value: 'monthly', label: 'Monthly' },
-]
+type RuleForm = z.infer<ReturnType<typeof createRuleSchema>>
 
 function emptyDefaults(): RuleForm {
   return {
@@ -88,11 +73,40 @@ interface RuleFormDialogProps {
 }
 
 export function RuleFormDialog({ open, onOpenChange, rule }: RuleFormDialogProps) {
+  const { t } = useTranslation('notifications')
+  const ruleSchema = useMemo(() => createRuleSchema(t), [t])
   const isEdit = !!rule
   const createRule = useCreateNotificationRule()
   const updateRule = useUpdateNotificationRule()
   const { data: accounts = [] } = useAccounts()
   const { data: budgets = [] } = useBudgets(false)
+
+  const typeOptions = useMemo(
+    () => [
+      { value: 'balance_below', label: t('ruleForm.typeOptions.balance_below') },
+      { value: 'budget_percent', label: t('ruleForm.typeOptions.budget_percent') },
+      { value: 'scheduled_report', label: t('ruleForm.typeOptions.scheduled_report') },
+    ],
+    [t],
+  )
+
+  const reportTypeOptions = useMemo(
+    () => [
+      { value: 'spending', label: t('ruleForm.reportTypes.spending') },
+      { value: 'cashflow', label: t('ruleForm.reportTypes.cashflow') },
+      { value: 'income', label: t('ruleForm.reportTypes.income') },
+    ],
+    [t],
+  )
+
+  const scheduleKindOptions = useMemo(
+    () => [
+      { value: 'every_n_days', label: t('ruleForm.scheduleKinds.every_n_days') },
+      { value: 'weekly', label: t('ruleForm.scheduleKinds.weekly') },
+      { value: 'monthly', label: t('ruleForm.scheduleKinds.monthly') },
+    ],
+    [t],
+  )
 
   const {
     register,
@@ -136,12 +150,12 @@ export function RuleFormDialog({ open, onOpenChange, rule }: RuleFormDialogProps
 
     if (data.type === 'balance_below' || data.type === 'budget_percent') {
       if (!data.target_id) {
-        toast.error('Please select a target')
+        toast.error(t('ruleForm.validation.selectTarget'))
         return
       }
       const threshold = Number.parseFloat(data.threshold ?? '')
       if (Number.isNaN(threshold)) {
-        toast.error('Please enter a valid threshold')
+        toast.error(t('ruleForm.validation.validThreshold'))
         return
       }
       payload.target_id = Number(data.target_id)
@@ -159,27 +173,27 @@ export function RuleFormDialog({ open, onOpenChange, rule }: RuleFormDialogProps
     try {
       if (isEdit && rule) {
         await updateRule.mutateAsync({ id: rule.id, payload })
-        toast.success('Rule updated')
+        toast.success(t('toasts.ruleUpdated'))
       } else {
         await createRule.mutateAsync(payload)
-        toast.success('Rule created')
+        toast.success(t('toasts.ruleCreated'))
       }
       onOpenChange(false)
     } catch {
-      toast.error(isEdit ? 'Failed to update rule' : 'Failed to create rule')
+      toast.error(isEdit ? t('toasts.ruleUpdateFailed') : t('toasts.ruleCreateFailed'))
     }
   })
 
   return (
     <Dialog
       open={open}
-      title={isEdit ? 'Edit notification rule' : 'Add notification rule'}
+      title={isEdit ? t('ruleForm.titleEdit') : t('ruleForm.titleCreate')}
       onOpenChange={onOpenChange}
       className="sm:max-w-lg"
     >
       <form onSubmit={onSubmit} className="flex flex-col gap-4" noValidate>
         <div className="flex flex-col gap-2">
-          <Label>Rule type</Label>
+          <Label>{t('ruleForm.ruleType')}</Label>
           <Controller
             control={control}
             name="type"
@@ -187,19 +201,19 @@ export function RuleFormDialog({ open, onOpenChange, rule }: RuleFormDialogProps
               <Select
                 value={field.value}
                 onValueChange={field.onChange}
-                options={TYPE_OPTIONS}
-                placeholder="Select type"
+                options={typeOptions}
+                placeholder={t('ruleForm.selectType')}
               />
             )}
           />
         </div>
 
         <div className="flex flex-col gap-2">
-          <Label htmlFor="rule-name">Name</Label>
+          <Label htmlFor="rule-name">{t('ruleForm.name')}</Label>
           <Input
             id="rule-name"
             maxLength={200}
-            placeholder="e.g. Checking account low balance"
+            placeholder={t('ruleForm.namePlaceholder')}
             {...register('name')}
           />
           {errors.name && <p className="text-destructive text-sm">{errors.name.message}</p>}
@@ -208,7 +222,7 @@ export function RuleFormDialog({ open, onOpenChange, rule }: RuleFormDialogProps
         {(type === 'balance_below' || type === 'budget_percent') && (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="flex flex-col gap-2">
-              <Label>{type === 'balance_below' ? 'Account' : 'Budget'}</Label>
+              <Label>{type === 'balance_below' ? t('ruleForm.account') : t('ruleForm.budget')}</Label>
               <Controller
                 control={control}
                 name="target_id"
@@ -217,14 +231,16 @@ export function RuleFormDialog({ open, onOpenChange, rule }: RuleFormDialogProps
                     value={field.value}
                     onValueChange={field.onChange}
                     options={type === 'balance_below' ? accountOptions : budgetOptions}
-                    placeholder="Select…"
+                    placeholder={t('ruleForm.selectTarget')}
                   />
                 )}
               />
             </div>
             <div className="flex flex-col gap-2">
               <Label htmlFor="rule-threshold">
-                {type === 'balance_below' ? 'Balance threshold' : 'Usage threshold (%)'}
+                {type === 'balance_below'
+                  ? t('ruleForm.balanceThreshold')
+                  : t('ruleForm.usageThreshold')}
               </Label>
               <Input
                 id="rule-threshold"
@@ -240,7 +256,7 @@ export function RuleFormDialog({ open, onOpenChange, rule }: RuleFormDialogProps
         {type === 'scheduled_report' && (
           <div className="flex flex-col gap-4">
             <div className="flex flex-col gap-2">
-              <Label>Report type</Label>
+              <Label>{t('ruleForm.reportType')}</Label>
               <Controller
                 control={control}
                 name="report_type"
@@ -248,15 +264,15 @@ export function RuleFormDialog({ open, onOpenChange, rule }: RuleFormDialogProps
                   <Select
                     value={field.value}
                     onValueChange={field.onChange}
-                    options={REPORT_TYPE_OPTIONS}
-                    placeholder="Select report"
+                    options={reportTypeOptions}
+                    placeholder={t('ruleForm.selectReport')}
                   />
                 )}
               />
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="flex flex-col gap-2">
-                <Label>Schedule</Label>
+                <Label>{t('ruleForm.schedule')}</Label>
                 <Controller
                   control={control}
                   name="schedule_kind"
@@ -264,15 +280,15 @@ export function RuleFormDialog({ open, onOpenChange, rule }: RuleFormDialogProps
                     <Select
                       value={field.value}
                       onValueChange={field.onChange}
-                      options={SCHEDULE_KIND_OPTIONS}
-                      placeholder="Select schedule"
+                      options={scheduleKindOptions}
+                      placeholder={t('ruleForm.selectSchedule')}
                     />
                   )}
                 />
               </div>
               {scheduleKind === 'every_n_days' && (
                 <div className="flex flex-col gap-2">
-                  <Label htmlFor="rule-schedule-value">Every (days)</Label>
+                  <Label htmlFor="rule-schedule-value">{t('ruleForm.everyDays')}</Label>
                   <Input
                     id="rule-schedule-value"
                     type="number"
@@ -286,7 +302,7 @@ export function RuleFormDialog({ open, onOpenChange, rule }: RuleFormDialogProps
         )}
 
         <div className="flex flex-col gap-2">
-          <Label>Channels</Label>
+          <Label>{t('ruleForm.channels')}</Label>
           <div className="flex flex-wrap gap-4">
             <label className="flex cursor-pointer items-center gap-2">
               <Controller
@@ -299,7 +315,7 @@ export function RuleFormDialog({ open, onOpenChange, rule }: RuleFormDialogProps
                   />
                 )}
               />
-              <span className="text-sm">Email</span>
+              <span className="text-sm">{t('ruleForm.channelEmail')}</span>
             </label>
             <label className="flex cursor-pointer items-center gap-2">
               <Controller
@@ -312,7 +328,7 @@ export function RuleFormDialog({ open, onOpenChange, rule }: RuleFormDialogProps
                   />
                 )}
               />
-              <span className="text-sm">Push</span>
+              <span className="text-sm">{t('ruleForm.channelPush')}</span>
             </label>
           </div>
         </div>
@@ -321,13 +337,15 @@ export function RuleFormDialog({ open, onOpenChange, rule }: RuleFormDialogProps
           <Controller
             control={control}
             name="is_active"
-            render={({ field }) => <Checkbox checked={field.value} onCheckedChange={(v) => field.onChange(v === true)} />}
+            render={({ field }) => (
+              <Checkbox checked={field.value} onCheckedChange={(v) => field.onChange(v === true)} />
+            )}
           />
-          <span className="text-sm">Rule active</span>
+          <span className="text-sm">{t('ruleForm.ruleActive')}</span>
         </label>
 
         <Button type="submit" className="w-full" disabled={isSubmitting}>
-          {isEdit ? 'Update rule' : 'Save rule'}
+          {isEdit ? t('ruleForm.updateRule') : t('ruleForm.saveRule')}
         </Button>
       </form>
     </Dialog>

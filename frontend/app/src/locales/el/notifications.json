@@ -1,0 +1,171 @@
+{
+  "page": {
+    "title": "Ειδοποιήσεις",
+    "description": "Επιλέξτε πώς θέλετε να ειδοποιείστε για υπόλοιπα, προϋπολογισμούς και προγραμματισμένες αναφορές."
+  },
+  "hourNone": "Κανένα",
+  "channels": {
+    "title": "Κανάλια ειδοποιήσεων",
+    "email": {
+      "title": "Ειδοποιήσεις email",
+      "description": "Αποστολή ειδοποιήσεων στο email του λογαριασμού σας"
+    },
+    "push": {
+      "title": "Push ειδοποιήσεις",
+      "description": "Ειδοποιήσεις προγράμματος περιήγησης όταν είναι ενεργές"
+    },
+    "enableDesktop": "Ενεργοποίηση ειδοποιήσεων επιφάνειας εργασίας",
+    "disableDesktop": "Απενεργοποίηση ειδοποιήσεων επιφάνειας εργασίας",
+    "notSupported": "Οι ειδοποιήσεις επιφάνειας εργασίας δεν υποστηρίζονται",
+    "checkRulesNow": "Έλεγχος κανόνων τώρα",
+    "sendTestPush": "Αποστολή δοκιμαστικής ειδοποίησης",
+    "status": {
+      "vapidNotConfigured": "Το push του διακομιστή δεν έχει ρυθμιστεί — ορίστε κλειδιά VAPID στο backend",
+      "enabled": "Οι ειδοποιήσεις επιφάνειας εργασίας είναι ενεργές για αυτόν τον browser",
+      "subscribedNotRegistered": "Ο browser είναι εγγεγραμμένος αλλά όχι στον διακομιστή — πατήστε Ενεργοποίηση ξανά",
+      "clickEnable": "Πατήστε Ενεργοποίηση για να επιτρέψετε ειδοποιήσεις browser"
+    }
+  },
+  "general": {
+    "title": "Γενικές ρυθμίσεις",
+    "defaultDaysBefore": "Προεπιλεγμένες ημέρες πριν",
+    "defaultDaysBeforeHint": "Για επαναλαμβανόμενα έξοδα και υπενθυμίσεις οφειλών",
+    "quietHoursStart": "Έναρξη ωρών ησυχίας",
+    "quietHoursStartHint": "Ώρα (0–23), δεν αποστέλλονται ειδοποιήσεις",
+    "quietHoursEnd": "Λήξη ωρών ησυχίας",
+    "quietHoursEndHint": "Ώρα (0–23)",
+    "save": "Αποθήκευση ρυθμίσεων"
+  },
+  "smtp": {
+    "title": "Παράκαμψη SMTP",
+    "description": "Προαιρετικές ρυθμίσεις SMTP ανά χρήστη. Τα κενά πεδία χρησιμοποιούν τη διαμόρφωση του διακομιστή.",
+    "host": "Διακομιστής SMTP",
+    "hostPlaceholder": "smtp.example.com",
+    "port": "Θύρα SMTP",
+    "portPlaceholder": "587",
+    "user": "Χρήστης SMTP",
+    "password": "Κωδικός SMTP",
+    "passwordPlaceholder": "Αφήστε κενό για να κρατήσετε τον τρέχοντα",
+    "passwordSaved": "Έχει ήδη αποθηκευτεί κωδικός",
+    "from": "Διεύθυνση αποστολέα",
+    "fromPlaceholder": "noreply@example.com",
+    "useTls": "Χρήση TLS",
+    "enableTls": "Ενεργοποίηση TLS",
+    "sendTestEmail": "Αποστολή δοκιμαστικού email",
+    "save": "Αποθήκευση ρυθμίσεων SMTP"
+  },
+  "rules": {
+    "title": "Κανόνες ειδοποιήσεων",
+    "description": "Προσαρμοσμένες ειδοποιήσεις για χαμηλά υπόλοιπα, χρήση προϋπολογισμού και προγραμματισμένες αναφορές.",
+    "add": "Προσθήκη κανόνα",
+    "empty": {
+      "title": "Δεν υπάρχουν κανόνες ειδοποιήσεων ακόμα",
+      "description": "Προσθέστε έναν για ειδοποιήσεις για υπόλοιπα, προϋπολογισμούς ή αναφορές.",
+      "addFirst": "Προσθήκη του πρώτου κανόνα"
+    },
+    "table": {
+      "name": "Όνομα",
+      "type": "Τύπος",
+      "details": "Λεπτομέρειες",
+      "channels": "Κανάλια",
+      "status": "Κατάσταση",
+      "actions": "Ενέργειες"
+    },
+    "typeLabels": {
+      "balance_below": "Υπόλοιπο",
+      "budget_percent": "Προϋπολογισμός",
+      "scheduled_report": "Αναφορά"
+    },
+    "statusActive": "Ενεργός",
+    "statusInactive": "Ανενεργός",
+    "actionsFor": "Ενέργειες για {{name}}",
+    "describe": {
+      "accountFallback": "Λογαριασμός #{{id}}",
+      "budgetFallback": "Προϋπολογισμός #{{id}}",
+      "balanceBelow": "{{target}} κάτω από {{amount}}",
+      "budgetPercent": "{{target}} στο {{percent}}%",
+      "scheduleEveryNDays": "κάθε {{count}} ημέρες",
+      "scheduleFallback": "προγραμματισμένο",
+      "scheduledReport": "{{report}}, {{schedule}}"
+    }
+  },
+  "deleteConfirm": {
+    "title": "Διαγραφή {{name}};",
+    "description": "Αυτός ο κανόνας ειδοποίησης θα σταματήσει αμέσως.",
+    "confirmLabel": "Διαγραφή κανόνα"
+  },
+  "toasts": {
+    "desktopEnableFailed": "Αποτυχία ενεργοποίησης ειδοποιήσεων επιφάνειας εργασίας",
+    "desktopDisableFailed": "Αποτυχία απενεργοποίησης ειδοποιήσεων επιφάνειας εργασίας",
+    "channelsUpdated": "Οι προτιμήσεις καναλιών ενημερώθηκαν",
+    "channelsFailed": "Αποτυχία ενημέρωσης καναλιών",
+    "generalSaved": "Οι ρυθμίσεις ειδοποιήσεων αποθηκεύτηκαν",
+    "generalFailed": "Αποτυχία αποθήκευσης ρυθμίσεων",
+    "smtpSaved": "Οι ρυθμίσεις SMTP αποθηκεύτηκαν",
+    "smtpFailed": "Αποτυχία αποθήκευσης ρυθμίσεων SMTP",
+    "desktopEnabled": "Οι ειδοποιήσεις επιφάνειας εργασίας ενεργοποιήθηκαν",
+    "desktopDisabled": "Οι ειδοποιήσεις επιφάνειας εργασίας απενεργοποιήθηκαν",
+    "rulesCheckFailed": "Αποτυχία ελέγχου κανόνων",
+    "testEmailSent": "Το δοκιμαστικό email στάλθηκε — ελέγξτε τα εισερχόμενά σας",
+    "testEmailFailed": "Αποτυχία δοκιμαστικού email: {{detail}}",
+    "testEmailFailedGeneric": "ελέγξτε τις ρυθμίσεις SMTP",
+    "testPushSent": "Η δοκιμαστική ειδοποίηση στάλθηκε",
+    "testPushFailed": "Αποτυχία δοκιμαστικού push: {{detail}}",
+    "testPushFailedGeneric": "ελέγξτε τη διαμόρφωση",
+    "testFailed": "Η δοκιμή απέτυχε",
+    "ruleDeleted": "Ο κανόνας διαγράφηκε",
+    "ruleDeleteFailed": "Αποτυχία διαγραφής κανόνα",
+    "ruleUpdated": "Ο κανόνας ενημερώθηκε",
+    "ruleCreated": "Ο κανόνας δημιουργήθηκε",
+    "ruleUpdateFailed": "Αποτυχία ενημέρωσης κανόνα",
+    "ruleCreateFailed": "Αποτυχία δημιουργίας κανόνα"
+  },
+  "ruleForm": {
+    "titleEdit": "Επεξεργασία κανόνα ειδοποίησης",
+    "titleCreate": "Προσθήκη κανόνα ειδοποίησης",
+    "ruleType": "Τύπος κανόνα",
+    "selectType": "Επιλέξτε τύπο",
+    "name": "Όνομα",
+    "namePlaceholder": "π.χ. Χαμηλό υπόλοιπο τρεχούμενου",
+    "account": "Λογαριασμός",
+    "budget": "Προϋπολογισμός",
+    "selectTarget": "Επιλέξτε…",
+    "balanceThreshold": "Όριο υπολοίπου",
+    "usageThreshold": "Όριο χρήσης (%)",
+    "reportType": "Τύπος αναφοράς",
+    "selectReport": "Επιλέξτε αναφορά",
+    "schedule": "Πρόγραμμα",
+    "selectSchedule": "Επιλέξτε πρόγραμμα",
+    "everyDays": "Κάθε (ημέρες)",
+    "channels": "Κανάλια",
+    "channelEmail": "Email",
+    "channelPush": "Push",
+    "ruleActive": "Ενεργός κανόνας",
+    "updateRule": "Ενημέρωση κανόνα",
+    "saveRule": "Αποθήκευση κανόνα",
+    "typeOptions": {
+      "balance_below": "Υπόλοιπο κάτω από όριο",
+      "budget_percent": "Ποσοστό χρήσης προϋπολογισμού",
+      "scheduled_report": "Προγραμματισμένη αναφορά"
+    },
+    "reportTypes": {
+      "spending": "Έξοδα",
+      "cashflow": "Ταμειακές ροές",
+      "income": "Έσοδα"
+    },
+    "scheduleKinds": {
+      "every_n_days": "Κάθε N ημέρες",
+      "weekly": "Εβδομαδιαία",
+      "monthly": "Μηνιαία"
+    },
+    "validation": {
+      "nameRequired": "Το όνομα είναι υποχρεωτικό",
+      "selectTarget": "Επιλέξτε έναν στόχο",
+      "validThreshold": "Εισαγάγετε έγκυρο όριο"
+    }
+  },
+  "actions": {
+    "edit": "Επεξεργασία",
+    "delete": "Διαγραφή"
+  }
+}

@@ -1,8 +1,9 @@
-import { useEffect } from 'react'
+import { useEffect, useMemo } from 'react'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { toast } from 'sonner'
+import { useTranslation } from 'react-i18next'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { MoneyReceive01Icon } from '@hugeicons/core-free-icons'
 import { Button } from '@/components/ui/button'
@@ -22,14 +23,16 @@ import { useAddGoalTransaction } from './useGoals'
 import { remainingAmount, todayISO } from './goalMeta'
 import type { Goal } from './goalsApi'
 
-const contributeSchema = z.object({
-  amount: z.number().positive('Amount must be greater than 0'),
-  type: z.enum(['contribution', 'withdrawal']),
-  description: z.string().max(500).optional(),
-  date: z.string().min(1, 'Date is required'),
-})
+function createContributeSchema(t: (key: string) => string) {
+  return z.object({
+    amount: z.number().positive(t('contribute.validation.amountPositive')),
+    type: z.enum(['contribution', 'withdrawal']),
+    description: z.string().max(500).optional(),
+    date: z.string().min(1, t('contribute.validation.dateRequired')),
+  })
+}
 
-type ContributeForm = z.infer<typeof contributeSchema>
+type ContributeForm = z.infer<ReturnType<typeof createContributeSchema>>
 
 interface ContributeSheetProps {
   open: boolean
@@ -38,6 +41,8 @@ interface ContributeSheetProps {
 }
 
 export function ContributeSheet({ open, onOpenChange, goal }: ContributeSheetProps) {
+  const { t } = useTranslation('goals')
+  const contributeSchema = useMemo(() => createContributeSchema(t), [t])
   const addTx = useAddGoalTransaction()
   const {
     register,
@@ -80,10 +85,14 @@ export function ContributeSheet({ open, onOpenChange, goal }: ContributeSheetPro
           date: data.date,
         },
       })
-      toast.success(data.type === 'contribution' ? 'Contribution added' : 'Withdrawal recorded')
+      toast.success(
+        data.type === 'contribution'
+          ? t('contribute.toasts.contributionAdded')
+          : t('contribute.toasts.withdrawalRecorded'),
+      )
       onOpenChange(false)
     } catch {
-      toast.error('Failed to add transaction')
+      toast.error(t('contribute.toasts.failed'))
     }
   })
 
@@ -96,19 +105,22 @@ export function ContributeSheet({ open, onOpenChange, goal }: ContributeSheetPro
         <SheetHeader className="border-b border-border p-4">
           <SheetTitle className="flex items-center gap-2">
             <HugeiconsIcon icon={MoneyReceive01Icon} strokeWidth={2} />
-            Add contribution
+            {t('contribute.title')}
           </SheetTitle>
           <SheetDescription>
             {goal
-              ? `${goal.name} · ${formatCurrency(remaining, goal.currency)} remaining`
-              : 'Contribute toward a goal'}
+              ? t('contribute.descriptionWithGoal', {
+                  name: goal.name,
+                  amount: formatCurrency(remaining, goal.currency),
+                })
+              : t('contribute.descriptionNoGoal')}
           </SheetDescription>
         </SheetHeader>
 
         <form onSubmit={onSubmit} className="flex flex-1 flex-col gap-4 p-4" noValidate>
           <div className="flex flex-col gap-2">
             <Label htmlFor="contribute-amount">
-              Amount <span className="text-destructive">*</span>
+              {t('contribute.amount.label')} <span className="text-destructive">*</span>
             </Label>
             <Input
               id="contribute-amount"
@@ -125,7 +137,7 @@ export function ContributeSheet({ open, onOpenChange, goal }: ContributeSheetPro
           </div>
 
           <div className="flex flex-col gap-2">
-            <Label>Type</Label>
+            <Label>{t('contribute.type.label')}</Label>
             <Controller
               name="type"
               control={control}
@@ -134,20 +146,20 @@ export function ContributeSheet({ open, onOpenChange, goal }: ContributeSheetPro
                   value={field.value}
                   onValueChange={field.onChange}
                   options={[
-                    { value: 'contribution', label: 'Contribution (add to goal)' },
-                    { value: 'withdrawal', label: 'Withdrawal (remove from goal)' },
+                    { value: 'contribution', label: t('contribute.type.contribution') },
+                    { value: 'withdrawal', label: t('contribute.type.withdrawal') },
                   ]}
-                  placeholder="Type"
+                  placeholder={t('contribute.type.label')}
                 />
               )}
             />
           </div>
 
           <div className="flex flex-col gap-2">
-            <Label htmlFor="contribute-description">Description</Label>
+            <Label htmlFor="contribute-description">{t('contribute.description.label')}</Label>
             <Input
               id="contribute-description"
-              placeholder="e.g. Monthly savings"
+              placeholder={t('contribute.description.placeholder')}
               disabled={isPending}
               {...register('description')}
             />
@@ -155,7 +167,7 @@ export function ContributeSheet({ open, onOpenChange, goal }: ContributeSheetPro
 
           <div className="flex flex-col gap-2">
             <Label htmlFor="contribute-date">
-              Date <span className="text-destructive">*</span>
+              {t('contribute.date.label')} <span className="text-destructive">*</span>
             </Label>
             <Input
               id="contribute-date"
@@ -169,7 +181,9 @@ export function ContributeSheet({ open, onOpenChange, goal }: ContributeSheetPro
 
           <SheetFooter className="mt-auto px-0 pb-0">
             <Button type="submit" disabled={isPending || !goal} className="w-full">
-              {type === 'withdrawal' ? 'Record withdrawal' : 'Add contribution'}
+              {type === 'withdrawal'
+                ? t('contribute.submitWithdrawal')
+                : t('contribute.submitContribution')}
             </Button>
           </SheetFooter>
         </form>

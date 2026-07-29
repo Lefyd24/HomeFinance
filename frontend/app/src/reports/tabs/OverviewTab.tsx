@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
+import { useTranslation } from 'react-i18next'
 import { Chart, ChartFrame } from '../ChartFrame'
 import { baseAxisStyle, compactNumber, tooltipStyle, useChartTheme, MAX_SERIES, seriesHoverSafe } from '../chartTheme'
 import { formatCurrency } from '../../lib/format'
@@ -16,6 +17,7 @@ export function OverviewTab({
   cashflow: CashflowReport | undefined
   cashflowLoading: boolean
 }) {
+  const { t } = useTranslation('reports')
   const theme = useChartTheme()
 
   const { data: breakdown, isLoading: breakdownLoading } = useQuery({
@@ -27,6 +29,10 @@ export function OverviewTab({
     queryKey: ['reports', 'savings-rate', filters.params],
     queryFn: () => getSavingsRate(filters.params),
   })
+
+  const moneyInLabel = t('series.moneyIn')
+  const moneyOutLabel = t('series.moneyOut')
+  const netLabel = t('series.net')
 
   /**
    * Income and expenses are the same measure (money, same currency), so they
@@ -56,7 +62,7 @@ export function OverviewTab({
       grid: { left: 4, right: 8, top: 16, bottom: 40, containLabel: true },
       xAxis: {
         type: 'category' as const,
-        data: labels.map(formatPeriodLabel),
+        data: labels.map((label) => formatPeriodLabel(label, t)),
         ...baseAxisStyle(theme),
         splitLine: { show: false },
       },
@@ -68,7 +74,7 @@ export function OverviewTab({
       },
       series: [
         {
-          name: 'Money in',
+          name: moneyInLabel,
           type: 'bar' as const,
           ...seriesHoverSafe,
           data: cashflow.income,
@@ -76,7 +82,7 @@ export function OverviewTab({
           itemStyle: { color: theme.positive, borderRadius: [4, 4, 0, 0] },
         },
         {
-          name: 'Money out',
+          name: moneyOutLabel,
           type: 'bar' as const,
           ...seriesHoverSafe,
           data: cashflow.expenses,
@@ -84,7 +90,7 @@ export function OverviewTab({
           itemStyle: { color: theme.negative, borderRadius: [4, 4, 0, 0] },
         },
         {
-          name: 'Net',
+          name: netLabel,
           type: 'line' as const,
           ...seriesHoverSafe,
           data: net,
@@ -95,7 +101,7 @@ export function OverviewTab({
         },
       ],
     }
-  }, [cashflow, theme])
+  }, [cashflow, theme, t, moneyInLabel, moneyOutLabel, netLabel])
 
   /**
    * Categories are ranked, so they run horizontally: the label sits beside its
@@ -109,8 +115,9 @@ export function OverviewTab({
     const sorted = [...rows].sort((a, b) => b.amount - a.amount)
     const head = sorted.slice(0, MAX_SERIES)
     const tail = sorted.slice(MAX_SERIES)
+    const otherLabel = t('series.other')
     const items = tail.length
-      ? [...head, { name: 'Other', amount: tail.reduce((sum, row) => sum + row.amount, 0), color: null, count: 0 }]
+      ? [...head, { name: otherLabel, amount: tail.reduce((sum, row) => sum + row.amount, 0), color: null, count: 0 }]
       : head
 
     // ECharts draws the first category at the bottom of a value/category pair.
@@ -154,7 +161,7 @@ export function OverviewTab({
         },
       ],
     }
-  }, [breakdown, theme])
+  }, [breakdown, theme, t])
 
   const savingsOption = useMemo(() => {
     if (!savings || savings.labels.length === 0) return null
@@ -168,7 +175,7 @@ export function OverviewTab({
       grid: { left: 4, right: 8, top: 16, bottom: 8, containLabel: true },
       xAxis: {
         type: 'category' as const,
-        data: savings.labels.map(formatPeriodLabel),
+        data: savings.labels.map((label) => formatPeriodLabel(label, t)),
         ...baseAxisStyle(theme),
         splitLine: { show: false },
       },
@@ -200,7 +207,7 @@ export function OverviewTab({
         },
       ],
     }
-  }, [savings, theme])
+  }, [savings, theme, t])
 
   const rankedHeight = Math.max(240, Math.min((breakdown?.categories.length ?? 0) + 1, MAX_SERIES + 1) * 34 + 40)
 
@@ -209,22 +216,22 @@ export function OverviewTab({
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
         <ChartFrame
           className="xl:col-span-2"
-          title="Money in, money out, and what was left"
-          hint="Bars are the two flows; the line is what survived each period."
+          title={t('overview.cashflow.title')}
+          hint={t('overview.cashflow.hint')}
           loading={cashflowLoading}
           isEmpty={!cashflowOption}
-          emptyMessage="No income or expenses landed in this range."
+          emptyMessage={t('overview.cashflow.empty')}
           height={340}
         >
           {cashflowOption && <Chart option={cashflowOption} height={340} />}
         </ChartFrame>
 
         <ChartFrame
-          title="Where it went"
-          hint="Expense categories, largest first."
+          title={t('overview.ranked.title')}
+          hint={t('overview.ranked.hint')}
           loading={breakdownLoading}
           isEmpty={!rankedOption}
-          emptyMessage="No categorised expenses in this range."
+          emptyMessage={t('overview.ranked.empty')}
           height={rankedHeight}
         >
           {rankedOption && <Chart option={rankedOption} height={rankedHeight} />}
@@ -232,11 +239,11 @@ export function OverviewTab({
       </div>
 
       <ChartFrame
-        title="Savings rate by month"
-        hint="Share of each month's income you did not spend. Below the line means you dipped into reserves."
+        title={t('overview.savingsRate.title')}
+        hint={t('overview.savingsRate.hint')}
         loading={savingsLoading}
         isEmpty={!savingsOption}
-        emptyMessage="Needs at least one month with recorded income."
+        emptyMessage={t('overview.savingsRate.empty')}
         height={220}
       >
         {savingsOption && <Chart option={savingsOption} height={220} />}

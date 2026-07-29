@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { HugeiconsIcon } from '@hugeicons/react'
 import {
@@ -38,10 +39,6 @@ import { BudgetFormDialog } from './BudgetFormDialog'
 import { BudgetDetailsSheet } from './BudgetDetailsSheet'
 import type { Budget } from './budgetsApi'
 
-function periodLabel(period: Budget['period']): string {
-  return period.charAt(0).toUpperCase() + period.slice(1)
-}
-
 function budgetDateRange(budget: Budget): string | null {
   const start = budget.period_start ?? budget.start_date
   const end = budget.period_end ?? budget.end_date
@@ -66,14 +63,15 @@ const TONE_BAR: Record<Tone, string> = {
   unused: 'bg-border',
 }
 
-const TONE_STATUS: Record<Tone, string> = {
-  over: 'Over',
-  watch: 'Almost',
-  unused: 'Unused',
-  good: 'On track',
+const TONE_STATUS_KEY: Record<Tone, string> = {
+  over: 'status.over',
+  watch: 'status.watch',
+  unused: 'status.unused',
+  good: 'status.good',
 }
 
 export function BudgetsPage() {
+  const { t } = useTranslation('budgets')
   const { data: budgets = [], isLoading } = useBudgets()
   const { data: categories = [] } = useCategories()
   const deleteBudget = useDeleteBudget()
@@ -116,20 +114,20 @@ export function BudgetsPage() {
 
   const handleDelete = async (budget: Budget) => {
     const ok = await confirm({
-      title: `Delete ${budget.name}?`,
-      description: 'Your spending stays; only the budget and its limit are removed.',
-      confirmLabel: 'Delete budget',
+      title: t('deleteDialog.title', { name: budget.name }),
+      description: t('deleteDialog.description'),
+      confirmLabel: t('deleteDialog.confirmLabel'),
     })
     if (!ok) return
     try {
       await deleteBudget.mutateAsync(budget.id)
-      toast.success('Budget deleted')
+      toast.success(t('toasts.deleted'))
       if (detailsBudget?.id === budget.id) {
         setDetailsOpen(false)
         setDetailsBudget(null)
       }
     } catch {
-      toast.error('Failed to delete budget')
+      toast.error(t('toasts.deleteError'))
     }
   }
 
@@ -141,12 +139,12 @@ export function BudgetsPage() {
   return (
     <PageContainer wide>
       <PageHeader
-        title="Budgets"
-        description="Set spending limits for categories and periods. Scan every envelope at a glance, drill into one when you need the history."
+        title={t('page.title')}
+        description={t('page.description')}
         action={
           <Button size="sm" onClick={handleAdd}>
             <HugeiconsIcon icon={Add01Icon} strokeWidth={2} data-icon="inline-start" />
-            <PageHeaderActionLabel>Create Budget</PageHeaderActionLabel>
+            <PageHeaderActionLabel>{t('page.createButton')}</PageHeaderActionLabel>
           </Button>
         }
       />
@@ -166,15 +164,15 @@ export function BudgetsPage() {
             <EmptyMedia variant="icon">
               <HugeiconsIcon icon={PiggyBankIcon} strokeWidth={2} />
             </EmptyMedia>
-            <EmptyTitle>No budgets created yet</EmptyTitle>
+            <EmptyTitle>{t('empty.title')}</EmptyTitle>
             <EmptyDescription>
-              Create a budget to watch how much you spend in each category before the period resets.
+              {t('empty.description')}
             </EmptyDescription>
           </EmptyHeader>
           <EmptyContent>
             <Button size="sm" onClick={handleAdd}>
               <HugeiconsIcon icon={Add01Icon} strokeWidth={2} data-icon="inline-start" />
-              Create your first budget
+              {t('empty.cta')}
             </Button>
           </EmptyContent>
         </Empty>
@@ -187,12 +185,14 @@ export function BudgetsPage() {
                   {formatCurrency(summary.totalSpent)}
                 </span>
                 <span className="text-sm text-muted-foreground">
-                  of {formatCurrency(summary.totalBudgeted)}
+                  {t('summary.of', { amount: formatCurrency(summary.totalBudgeted) })}
                 </span>
               </div>
               <div className="flex flex-wrap items-center gap-2">
                 <Badge variant={summary.overCount > 0 ? 'destructive' : 'secondary'}>
-                  {summary.overCount > 0 ? `${summary.overCount} over limit` : `${summary.count} envelopes`}
+                  {summary.overCount > 0
+                    ? t('summary.overLimit', { count: summary.overCount })
+                    : t('summary.envelopes', { count: summary.count })}
                 </Badge>
                 <span
                   className={cn(
@@ -202,7 +202,7 @@ export function BudgetsPage() {
                 >
                   {summary.totalRemaining < 0 ? '−' : ''}
                   {formatCurrency(Math.abs(summary.totalRemaining))}{' '}
-                  {summary.totalRemaining < 0 ? 'over' : 'left'}
+                  {summary.totalRemaining < 0 ? t('summary.over') : t('summary.left')}
                 </span>
               </div>
             </div>
@@ -267,14 +267,15 @@ function BudgetCard({
   onDelete: () => void
   onViewDetails: () => void
 }) {
+  const { t } = useTranslation('budgets')
   const tone = budgetTone(budget.percentage)
   const range = budgetDateRange(budget)
   const meta = [
-    periodLabel(budget.period),
-    TONE_STATUS[tone],
+    t(`period.${budget.period}`),
+    t(TONE_STATUS_KEY[tone]),
     range,
-    categoryNames.length > 0 ? categoryNames.slice(0, 2).join(', ') : 'All categories',
-    categoryNames.length > 2 ? `+${categoryNames.length - 2}` : null,
+    categoryNames.length > 0 ? categoryNames.slice(0, 2).join(', ') : t('card.allCategories'),
+    categoryNames.length > 2 ? t('card.more', { count: categoryNames.length - 2 }) : null,
   ]
     .filter(Boolean)
     .join(' · ')
@@ -296,7 +297,7 @@ function BudgetCard({
               <Button
                 variant="ghost"
                 size="icon-sm"
-                aria-label={`${budget.name} actions`}
+                aria-label={t('card.actionsAria', { name: budget.name })}
                 className="shrink-0"
               >
                 <HugeiconsIcon icon={MoreVerticalIcon} strokeWidth={2} />
@@ -304,14 +305,14 @@ function BudgetCard({
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-40">
               <DropdownMenuGroup>
-                <DropdownMenuItem onClick={onEdit}>Edit</DropdownMenuItem>
-                <DropdownMenuItem onClick={onViewDetails}>Period details</DropdownMenuItem>
+                <DropdownMenuItem onClick={onEdit}>{t('card.edit')}</DropdownMenuItem>
+                <DropdownMenuItem onClick={onViewDetails}>{t('card.periodDetails')}</DropdownMenuItem>
               </DropdownMenuGroup>
               <DropdownMenuSeparator />
               <DropdownMenuGroup>
                 <DropdownMenuItem variant="destructive" onClick={onDelete}>
                   <HugeiconsIcon icon={Delete02Icon} strokeWidth={2} data-icon="inline-start" />
-                  Delete
+                  {t('card.delete')}
                 </DropdownMenuItem>
               </DropdownMenuGroup>
             </DropdownMenuContent>
@@ -329,7 +330,7 @@ function BudgetCard({
               {formatCurrency(budget.spent)}
             </p>
             <p className="text-[11px] text-muted-foreground">
-              of {formatCurrency(budget.amount)} limit
+              {t('card.ofLimit', { amount: formatCurrency(budget.amount) })}
             </p>
           </div>
           <p
@@ -341,7 +342,7 @@ function BudgetCard({
             {budget.remaining < 0 ? '−' : ''}
             {formatCurrency(Math.abs(budget.remaining))}
             <span className="block text-[10px] font-normal text-muted-foreground">
-              {budget.remaining < 0 ? 'over' : 'remaining'}
+              {budget.remaining < 0 ? t('card.over') : t('card.remaining')}
             </span>
           </p>
         </div>
@@ -355,10 +356,10 @@ function BudgetCard({
 
       <div className="mt-auto flex gap-2 border-t border-border/70 px-3.5 py-2.5">
         <Button size="sm" variant="outline" className="flex-1" onClick={onViewDetails}>
-          Period details
+          {t('card.periodDetails')}
         </Button>
         <Button size="sm" variant="ghost" onClick={onEdit}>
-          Edit
+          {t('card.edit')}
         </Button>
       </div>
     </section>

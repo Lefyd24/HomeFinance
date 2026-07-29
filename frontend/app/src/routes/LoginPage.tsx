@@ -3,6 +3,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Link, useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { Mail, Lock, Eye, EyeOff, TriangleAlert } from 'lucide-react'
 import { useAuth } from '../auth/AuthContext'
 import { AuthLayout, BrandPanelHeader, BrandPanelStep, BrandPanelTrust } from '../auth/AuthLayout'
@@ -23,6 +24,7 @@ const loginSchema = z.object({
 type LoginForm = z.infer<typeof loginSchema>
 
 export function LoginPage() {
+  const { t } = useTranslation('auth')
   const { login } = useAuth()
   const navigate = useNavigate()
   const [serverError, setServerError] = useState<string | null>(null)
@@ -39,7 +41,7 @@ export function LoginPage() {
       await login(data.email, data.password)
       navigate('/dashboard')
     } catch {
-      setServerError('Invalid email or password.')
+      setServerError(t('login.serverError'))
     }
   })
 
@@ -51,53 +53,50 @@ export function LoginPage() {
 
           <div>
             <p className="mb-4 text-xs font-semibold uppercase tracking-widest text-white/70">
-              Welcome back
+              {t('login.brandPanel.eyebrow')}
             </p>
             <h1 className="mb-6 text-[clamp(1.875rem,3.25vw,2.5rem)] font-bold leading-tight text-white">
-              Every euro,
+              {t('login.brandPanel.headingLine1')}
               <br />
-              accounted for.
+              {t('login.brandPanel.headingLine2')}
             </h1>
             <p className="mb-10 max-w-[34ch] text-base leading-relaxed text-white/80">
-              Sign in to see where your money went, what's coming up, and how close you are to
-              your goals.
+              {t('login.brandPanel.subtitle')}
             </p>
 
             <div className="flex flex-col gap-4">
               <BrandPanelStep
                 index={1}
-                title="One dashboard for everything"
-                description="Accounts, budgets, debts, and goals in a single glance"
+                title={t('login.brandPanel.steps.dashboard.title')}
+                description={t('login.brandPanel.steps.dashboard.description')}
               />
               <BrandPanelStep
                 index={2}
-                title="Spending, mapped by category"
-                description="See exactly where this month's money is going"
+                title={t('login.brandPanel.steps.spending.title')}
+                description={t('login.brandPanel.steps.spending.description')}
               />
               <BrandPanelStep
                 index={3}
-                title="Nothing sneaks up on you"
-                description="Upcoming bills and recurring payments, tracked automatically"
+                title={t('login.brandPanel.steps.bills.title')}
+                description={t('login.brandPanel.steps.bills.description')}
               />
             </div>
           </div>
 
-          <BrandPanelTrust>
-            All data is stored on your own server. No third-party analytics, no data selling.
-          </BrandPanelTrust>
+          <BrandPanelTrust>{t('shared.trustMessage')}</BrandPanelTrust>
         </>
       }
     >
       <div className="mb-7">
         <h2 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
-          Welcome back
+          {t('login.heading')}
         </h2>
-        <p className="mt-2 text-sm text-muted-foreground">Sign in to your account to continue</p>
+        <p className="mt-2 text-sm text-muted-foreground">{t('login.subtitle')}</p>
       </div>
 
       <form onSubmit={onSubmit} className="flex flex-col gap-4" noValidate>
         <div className="space-y-1.5">
-          <Label htmlFor="email">Email address</Label>
+          <Label htmlFor="email">{t('login.emailLabel')}</Label>
           <InputGroup className="h-11 bg-muted dark:bg-muted/70">
             <InputGroupAddon>
               <Mail size={16} />
@@ -106,7 +105,7 @@ export function LoginPage() {
               id="email"
               type="email"
               autoComplete="email"
-              placeholder="name@example.com"
+              placeholder={t('login.emailPlaceholder')}
               aria-invalid={!!errors.email}
               {...register('email')}
             />
@@ -121,12 +120,12 @@ export function LoginPage() {
 
         <div className="space-y-1.5">
           <div className="flex items-baseline justify-between">
-            <Label htmlFor="password">Password</Label>
+            <Label htmlFor="password">{t('login.passwordLabel')}</Label>
             <Link
               to="/forgot-password"
               className="text-xs font-medium text-primary hover:underline"
             >
-              Forgot password?
+              {t('login.forgotPassword')}
             </Link>
           </div>
           <InputGroup className="h-11 bg-muted dark:bg-muted/70">
@@ -137,7 +136,7 @@ export function LoginPage() {
               id="password"
               type={showPassword ? 'text' : 'password'}
               autoComplete="current-password"
-              placeholder="Enter your password"
+              placeholder={t('login.passwordPlaceholder')}
               aria-invalid={!!errors.password}
               {...register('password')}
             />
@@ -145,7 +144,7 @@ export function LoginPage() {
               <InputGroupButton
                 type="button"
                 size="icon-xs"
-                aria-label={showPassword ? 'Hide password' : 'Show password'}
+                aria-label={t(showPassword ? 'shared.hidePassword' : 'shared.showPassword')}
                 onClick={() => setShowPassword((v) => !v)}
               >
                 {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
@@ -168,14 +167,14 @@ export function LoginPage() {
         )}
 
         <Button type="submit" className="mt-1 h-11 w-full font-semibold" disabled={isSubmitting}>
-          {isSubmitting ? 'Signing in…' : 'Sign in'}
+          {isSubmitting ? t('login.submitting') : t('login.submit')}
         </Button>
       </form>
 
       <p className="mt-6 text-center text-sm text-muted-foreground">
-        Don't have an account?{' '}
+        {t('login.noAccount')}{' '}
         <Link to="/register" className="font-semibold text-primary hover:underline">
-          Create one
+          {t('login.createAccount')}
         </Link>
       </p>
     </AuthLayout>

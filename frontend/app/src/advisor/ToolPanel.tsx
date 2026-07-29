@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { useTranslation } from 'react-i18next'
 import { cn } from '@/lib/utils'
 
 /** Shared two-column shell for a calculator: inputs on the left, results on the right. */
@@ -15,6 +16,8 @@ export function ToolPanel({
   results: ReactNode
   chart?: ReactNode
 }) {
+  const { t } = useTranslation('advisor')
+
   return (
     <div className="flex flex-col gap-5">
       <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-5">
@@ -25,7 +28,7 @@ export function ToolPanel({
         </section>
 
         <section className="glass-panel rounded-xl border p-4 sm:p-5 lg:col-span-3">
-          <h2 className="font-heading text-lg font-semibold">Results</h2>
+          <h2 className="font-heading text-lg font-semibold">{t('toolPanel.results')}</h2>
           <div className="mt-4 max-h-[70vh] overflow-y-auto">{results}</div>
         </section>
       </div>

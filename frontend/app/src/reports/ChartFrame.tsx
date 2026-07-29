@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { useTranslation } from 'react-i18next'
 import ReactECharts from 'echarts-for-react'
 import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -17,7 +18,7 @@ export function ChartFrame({
   action,
   loading,
   isEmpty,
-  emptyMessage = 'Nothing to chart for this range.',
+  emptyMessage,
   height = 300,
   className,
   children,
@@ -32,6 +33,8 @@ export function ChartFrame({
   className?: string
   children: ReactNode
 }) {
+  const { t } = useTranslation('reports')
+  const resolvedEmpty = emptyMessage ?? t('chart.defaultEmpty')
   return (
     <Card className={cn('h-full', className)}>
       <CardHeader>
@@ -47,7 +50,7 @@ export function ChartFrame({
             className="flex items-center justify-center rounded-lg border border-dashed border-border text-sm text-muted-foreground"
             style={{ height }}
           >
-            {emptyMessage}
+            {resolvedEmpty}
           </div>
         ) : (
           children

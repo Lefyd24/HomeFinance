@@ -1,8 +1,9 @@
-import { useEffect } from 'react'
+import { useEffect, useMemo } from 'react'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { toast } from 'sonner'
+import { useTranslation } from 'react-i18next'
 import { useQuery } from '@tanstack/react-query'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -18,19 +19,21 @@ import type { RecurringExpense } from './recurringApi'
 const NONE = '__none__'
 const today = () => new Date().toISOString().slice(0, 10)
 
-const paySchema = z.object({
-  amount: z.coerce.number<number>().positive('Amount must be greater than 0'),
-  payment_date: z.string().min(1, 'Payment date is required'),
-  transaction_id: z.string(),
-  notes: z.string().optional(),
-})
-
-type PayForm = z.infer<typeof paySchema>
-
 function parseLocalDate(iso: string): Date {
   const [y, m, d] = iso.split('-').map(Number)
   return new Date(y, (m ?? 1) - 1, d ?? 1)
 }
+
+function createPaySchema(t: (key: string) => string) {
+  return z.object({
+    amount: z.coerce.number<number>().positive(t('markPaid.validation.amountPositive')),
+    payment_date: z.string().min(1, t('markPaid.validation.paymentDateRequired')),
+    transaction_id: z.string(),
+    notes: z.string().optional(),
+  })
+}
+
+type PayForm = z.infer<ReturnType<typeof createPaySchema>>
 
 export function MarkPaidDialog({
   open,
@@ -41,6 +44,8 @@ export function MarkPaidDialog({
   onOpenChange: (open: boolean) => void
   expense: RecurringExpense | null
 }) {
+  const { t } = useTranslation(['recurring', 'common'])
+  const paySchema = useMemo(() => createPaySchema(t), [t])
   const recordPayment = useRecordRecurringPayment()
   const { data: txnList } = useQuery({
     queryKey: ['transactions', { forRecurringPay: true }],
@@ -75,10 +80,14 @@ export function MarkPaidDialog({
   }, [open, expense, reset])
 
   const txnOptions = [
-    { value: NONE, label: 'No transaction link' },
-    ...(txnList?.items ?? []).slice(0, 60).map((t) => ({
-      value: String(t.id),
-      label: `${formatDate(parseLocalDate(t.date.slice(0, 10)))} — ${t.description} (${formatCurrency(t.amount)})`,
+    { value: NONE, label: t('markPaid.noTransactionLink') },
+    ...(txnList?.items ?? []).slice(0, 60).map((txn) => ({
+      value: String(txn.id),
+      label: t('markPaid.transactionOption', {
+        date: formatDate(parseLocalDate(txn.date.slice(0, 10))),
+        description: txn.description,
+        amount: formatCurrency(txn.amount),
+      }),
     })),
   ]
 
@@ -94,10 +103,10 @@ export function MarkPaidDialog({
           notes: data.notes?.trim() ? data.notes.trim() : null,
         },
       })
-      toast.success('Payment recorded — next due date advanced')
+      toast.success(t('markPaid.toastSuccess'))
       onOpenChange(false)
     } catch {
-      toast.error('Failed to record payment')
+      toast.error(t('markPaid.toastError'))
     }
   })
 
@@ -106,11 +115,11 @@ export function MarkPaidDialog({
   return (
     <Dialog
       open={open}
-      title="Mark as paid"
+      title={t('markPaid.title')}
       description={
         expense
-          ? `Records a payment for ${expense.name} and rolls its next due date forward.`
-          : 'Records a payment and rolls the next due date forward.'
+          ? t('markPaid.descriptionFor', { name: expense.name })
+          : t('markPaid.descriptionGeneric')
       }
       icon={CheckmarkCircle02Icon}
       tone="in"
@@ -124,23 +133,23 @@ export function MarkPaidDialog({
             onClick={() => onOpenChange(false)}
             disabled={isPending}
           >
-            Cancel
+            {t('common:actions.cancel')}
           </Button>
           <Button type="submit" form="mark-paid-form" disabled={isPending || !expense}>
-            {isPending ? 'Saving…' : 'Mark as paid'}
+            {isPending ? t('markPaid.saving') : t('markPaid.submit')}
           </Button>
         </>
       }
     >
       <form id="mark-paid-form" onSubmit={onSubmit} className="flex flex-col gap-4" noValidate>
         <div className="flex flex-col gap-2">
-          <Label htmlFor="pay-amount">Amount paid (€)</Label>
+          <Label htmlFor="pay-amount">{t('markPaid.fields.amountPaid')}</Label>
           <Input id="pay-amount" type="number" step="0.01" min="0.01" {...register('amount')} />
           {errors.amount && <p className="text-destructive text-sm">{errors.amount.message}</p>}
         </div>
 
         <div className="flex flex-col gap-2">
-          <Label htmlFor="pay-date">Payment date</Label>
+          <Label htmlFor="pay-date">{t('markPaid.fields.paymentDate')}</Label>
           <Input id="pay-date" type="date" {...register('payment_date')} />
           {errors.payment_date && (
             <p className="text-destructive text-sm">{errors.payment_date.message}</p>
@@ -148,7 +157,7 @@ export function MarkPaidDialog({
         </div>
 
         <div className="flex flex-col gap-2">
-          <Label>Link to existing transaction (optional)</Label>
+          <Label>{t('markPaid.fields.linkTransaction')}</Label>
           <Controller
             control={control}
             name="transaction_id"
@@ -157,17 +166,20 @@ export function MarkPaidDialog({
                 value={field.value}
                 onValueChange={field.onChange}
                 options={txnOptions}
-                placeholder="No transaction link"
+                placeholder={t('markPaid.noTransactionLink')}
               />
             )}
           />
         </div>
 
         <div className="flex flex-col gap-2">
-          <Label htmlFor="pay-notes">Notes</Label>
-          <Input id="pay-notes" placeholder="Optional" {...register('notes')} />
+          <Label htmlFor="pay-notes">{t('markPaid.fields.notes')}</Label>
+          <Input
+            id="pay-notes"
+            placeholder={t('markPaid.fields.notesPlaceholder')}
+            {...register('notes')}
+          />
         </div>
-
       </form>
     </Dialog>
   )

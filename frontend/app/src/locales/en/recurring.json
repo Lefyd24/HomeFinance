@@ -1,0 +1,158 @@
+{
+  "page": {
+    "title": "Recurring",
+    "description": "What leaves your accounts on a schedule, and when it is next due.",
+    "addAction": "Add"
+  },
+  "totals": {
+    "due30": { "label": "Due in 30 days", "hint": "{{count}} active" },
+    "monthly": { "label": "Monthly commitment", "hint": "All cadences normalised" },
+    "overdue": { "label": "Overdue", "hintAttention": "Needs attention", "hintClear": "All clear" }
+  },
+  "tabs": {
+    "all": "All",
+    "expenses": "Expenses",
+    "income": "Income",
+    "paused": "Paused ({{count}})"
+  },
+  "sections": {
+    "paused": "Paused",
+    "overdue": "Overdue",
+    "next7": "Next 7 days",
+    "later": "Later",
+    "empty": "Nothing here in this view."
+  },
+  "empty": {
+    "title": "Nothing on a schedule yet",
+    "description": "Add the bills and subscriptions that repeat, and they will show up here before they are due.",
+    "addFirst": "Add the first one"
+  },
+  "cadence": {
+    "daily": "Daily",
+    "weekly": "Weekly",
+    "monthly": "Monthly",
+    "every": "Every {{interval}} {{unit}}"
+  },
+  "units": {
+    "days": "days",
+    "weeks": "weeks",
+    "months": "months"
+  },
+  "due": {
+    "paused": "Paused",
+    "overdue": "{{count}}d overdue",
+    "today": "Today",
+    "tomorrow": "Tomorrow",
+    "inDays": "In {{count}} days"
+  },
+  "detail": {
+    "fallbackTitle": "Recurring payment",
+    "fallbackDescription": "Connected payments",
+    "loadError": "Could not load the payment history.",
+    "stats": {
+      "totalPaid": "Total paid",
+      "payments": "Payments",
+      "lastPayment": "Last payment"
+    },
+    "empty": {
+      "title": "No payments recorded yet.",
+      "description": "Mark it paid once and the history starts here."
+    },
+    "table": {
+      "date": "Date",
+      "description": "Description",
+      "amount": "Amount"
+    }
+  },
+  "actions": {
+    "resume": "Resume",
+    "markPaid": "Mark paid",
+    "viewTransactions": "Transactions",
+    "moreActionsAria": "More actions",
+    "disable": "Disable"
+  },
+  "toast": {
+    "resumed": "{{name}} resumed",
+    "paused": "{{name}} paused",
+    "resumeError": "Could not resume it. Try again.",
+    "pauseError": "Could not pause it. Try again.",
+    "deleted": "Deleted",
+    "deleteError": "Could not delete it. Try again.",
+    "updated": "Recurring expense updated",
+    "created": "Recurring expense created",
+    "updateError": "Failed to update recurring expense",
+    "createError": "Failed to add recurring expense"
+  },
+  "deleteConfirm": {
+    "title": "Delete {{name}}?",
+    "description": "Its payment history goes with it. Pause it instead if you only want it off the agenda.",
+    "confirmLabel": "Delete permanently"
+  },
+  "aria": {
+    "totals": "Recurring totals",
+    "schedule": "Recurring schedule"
+  },
+  "form": {
+    "titleCreate": "Add a recurring payment",
+    "titleEdit": "Edit recurring payment",
+    "description": "Set the amount and how often it repeats. The agenda will surface it before each due date.",
+    "saving": "Saving…",
+    "saveChanges": "Save changes",
+    "addIt": "Add it",
+    "none": "None",
+    "categoryPrefix": {
+      "expense": "Expense",
+      "income": "Income"
+    },
+    "units": {
+      "days": "Days",
+      "weeks": "Weeks",
+      "months": "Months"
+    },
+    "fields": {
+      "name": "Name",
+      "namePlaceholder": "e.g. Netflix, Rent",
+      "amount": "Amount (€)",
+      "account": "Account",
+      "accountPlaceholder": "Account",
+      "category": "Category",
+      "categoryPlaceholder": "Category",
+      "startDate": "Start date",
+      "nextDueDate": "Next due date",
+      "repeatsEvery": "Repeats every",
+      "unitPlaceholder": "Unit",
+      "notifyBeforeDue": "Notify me before due",
+      "daysBefore": "Days before",
+      "notifyDaysPlaceholder": "Uses default if empty",
+      "notes": "Notes"
+    },
+    "validation": {
+      "nameRequired": "Name is required",
+      "amountPositive": "Amount must be greater than 0",
+      "startDateRequired": "Start date is required",
+      "nextDueDateRequired": "Next due date is required"
+    }
+  },
+  "markPaid": {
+    "validation": {
+      "amountPositive": "Amount must be greater than 0",
+      "paymentDateRequired": "Payment date is required"
+    },
+    "title": "Mark as paid",
+    "submit": "Mark as paid",
+    "saving": "Saving…",
+    "descriptionFor": "Records a payment for {{name}} and rolls its next due date forward.",
+    "descriptionGeneric": "Records a payment and rolls the next due date forward.",
+    "noTransactionLink": "No transaction link",
+    "transactionOption": "{{date}} — {{description}} ({{amount}})",
+    "toastSuccess": "Payment recorded — next due date advanced",
+    "toastError": "Failed to record payment",
+    "fields": {
+      "amountPaid": "Amount paid (€)",
+      "paymentDate": "Payment date",
+      "linkTransaction": "Link to existing transaction (optional)",
+      "notes": "Notes",
+      "notesPlaceholder": "Optional"
+    }
+  }
+}

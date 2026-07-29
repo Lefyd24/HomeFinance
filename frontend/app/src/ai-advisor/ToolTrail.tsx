@@ -1,7 +1,9 @@
+import { useTranslation } from 'react-i18next'
 import { Check } from 'lucide-react'
 import { Spinner } from '@/components/ui/spinner'
 import { cn } from '@/lib/utils'
-import { toolLabel, type ToolCall } from './aiChatApi'
+import { toolLabel } from './aiAdvisorLabels'
+import type { ToolCall } from './aiChatApi'
 
 /**
  * What the advisor looked up, shown while it looks.
@@ -12,6 +14,7 @@ import { toolLabel, type ToolCall } from './aiChatApi'
  * as the receipt for what the answer was built from.
  */
 export function ToolTrail({ tools, className }: { tools: ToolCall[]; className?: string }) {
+  const { t } = useTranslation('advisor')
   if (tools.length === 0) return null
 
   return (
@@ -29,7 +32,7 @@ export function ToolTrail({ tools, className }: { tools: ToolCall[]; className?:
           ) : (
             <Check className="size-3 shrink-0 text-success" />
           )}
-          <span className={cn(tool.state === 'running' && 'shimmer')}>{toolLabel(tool.name)}</span>
+          <span className={cn(tool.state === 'running' && 'shimmer')}>{toolLabel(tool.name, t)}</span>
         </li>
       ))}
     </ul>

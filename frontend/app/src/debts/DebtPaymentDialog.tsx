@@ -1,8 +1,9 @@
-import { useEffect } from 'react'
+import { useEffect, useMemo } from 'react'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { toast } from 'sonner'
+import { useTranslation } from 'react-i18next'
 import { Wallet01Icon } from '@hugeicons/core-free-icons'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -16,17 +17,19 @@ import type { Debt } from './debtsApi'
 
 const NONE = '__none__'
 
-const paymentSchema = z.object({
-  amount: z.coerce.number<number>().positive('Payment amount is required'),
-  principal_amount: z.coerce.number<number>().min(0).optional().or(z.literal('')),
-  interest_amount: z.coerce.number<number>().min(0).optional().or(z.literal('')),
-  payment_date: z.string().min(1, 'Payment date is required'),
-  account_id: z.string().optional(),
-  create_transaction: z.boolean(),
-  notes: z.string().optional(),
-})
+function createPaymentSchema(t: (key: string) => string) {
+  return z.object({
+    amount: z.coerce.number<number>().positive(t('paymentDialog.validation.amountRequired')),
+    principal_amount: z.coerce.number<number>().min(0).optional().or(z.literal('')),
+    interest_amount: z.coerce.number<number>().min(0).optional().or(z.literal('')),
+    payment_date: z.string().min(1, t('paymentDialog.validation.paymentDateRequired')),
+    account_id: z.string().optional(),
+    create_transaction: z.boolean(),
+    notes: z.string().optional(),
+  })
+}
 
-type PaymentForm = z.infer<typeof paymentSchema>
+type PaymentForm = z.infer<ReturnType<typeof createPaymentSchema>>
 
 function emptyToNull(value: number | '' | undefined): number | null {
   if (value === '' || value == null || Number.isNaN(Number(value))) return null
@@ -42,6 +45,8 @@ export function DebtPaymentDialog({
   onOpenChange: (open: boolean) => void
   debt: Debt | null
 }) {
+  const { t } = useTranslation('debts')
+  const paymentSchema = useMemo(() => createPaymentSchema(t), [t])
   const addPayment = useAddDebtPayment()
   const { data: accounts = [] } = useAccounts()
 
@@ -78,7 +83,7 @@ export function DebtPaymentDialog({
   }, [open, debt, reset])
 
   const accountOptions = [
-    { value: NONE, label: 'No account (payment only)' },
+    { value: NONE, label: t('paymentDialog.account.none') },
     ...accounts.map((a) => ({ value: String(a.id), label: `${a.name} (${a.type})` })),
   ]
 
@@ -98,10 +103,10 @@ export function DebtPaymentDialog({
           create_transaction: data.create_transaction,
         },
       })
-      toast.success('Payment recorded')
+      toast.success(t('paymentDialog.toasts.recorded'))
       onOpenChange(false)
     } catch {
-      toast.error('Failed to add payment')
+      toast.error(t('paymentDialog.toasts.failed'))
     }
   })
 
@@ -110,11 +115,11 @@ export function DebtPaymentDialog({
   return (
     <Dialog
       open={open}
-      title="Record a payment"
+      title={t('paymentDialog.title')}
       description={
         debt
-          ? `Reduces the balance on ${debt.creditor || debt.name}. Split principal and interest if your statement shows them separately.`
-          : 'Reduces the balance on this debt.'
+          ? t('paymentDialog.descriptionWithDebt', { name: debt.creditor || debt.name })
+          : t('paymentDialog.descriptionNoDebt')
       }
       icon={Wallet01Icon}
       tone="in"
@@ -128,17 +133,17 @@ export function DebtPaymentDialog({
             onClick={() => onOpenChange(false)}
             disabled={isPending}
           >
-            Cancel
+            {t('paymentDialog.cancel')}
           </Button>
           <Button type="submit" form="debt-payment-form" disabled={isPending || !debt}>
-            {isPending ? 'Saving…' : 'Record payment'}
+            {isPending ? t('paymentDialog.saving') : t('paymentDialog.recordPayment')}
           </Button>
         </>
       }
     >
       <form id="debt-payment-form" onSubmit={onSubmit} className="flex flex-col gap-4" noValidate>
         <div className="flex flex-col gap-2">
-          <Label htmlFor="payment-amount">Payment amount</Label>
+          <Label htmlFor="payment-amount">{t('paymentDialog.amount.label')}</Label>
           <Input
             id="payment-amount"
             type="number"
@@ -152,31 +157,31 @@ export function DebtPaymentDialog({
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="flex flex-col gap-2">
-            <Label htmlFor="payment-principal">Principal amount</Label>
+            <Label htmlFor="payment-principal">{t('paymentDialog.principal.label')}</Label>
             <Input
               id="payment-principal"
               type="number"
               step="0.01"
               min={0}
-              placeholder="Optional"
+              placeholder={t('paymentDialog.principal.placeholder')}
               {...register('principal_amount')}
             />
           </div>
           <div className="flex flex-col gap-2">
-            <Label htmlFor="payment-interest">Interest amount</Label>
+            <Label htmlFor="payment-interest">{t('paymentDialog.interest.label')}</Label>
             <Input
               id="payment-interest"
               type="number"
               step="0.01"
               min={0}
-              placeholder="Optional"
+              placeholder={t('paymentDialog.interest.placeholder')}
               {...register('interest_amount')}
             />
           </div>
         </div>
 
         <div className="flex flex-col gap-2">
-          <Label htmlFor="payment-date">Payment date</Label>
+          <Label htmlFor="payment-date">{t('paymentDialog.date.label')}</Label>
           <Input
             id="payment-date"
             type="date"
@@ -189,22 +194,20 @@ export function DebtPaymentDialog({
         </div>
 
         <div className="flex flex-col gap-2">
-          <Label>Payment account</Label>
+          <Label>{t('paymentDialog.account.label')}</Label>
           <Controller
             control={control}
             name="account_id"
             render={({ field }) => (
-                <Select
-                  value={field.value || NONE}
-                  onValueChange={field.onChange}
-                  options={accountOptions}
-                  placeholder="Select account…"
-                />
+              <Select
+                value={field.value || NONE}
+                onValueChange={field.onChange}
+                options={accountOptions}
+                placeholder={t('paymentDialog.account.placeholder')}
+              />
             )}
           />
-          <p className="text-xs text-muted-foreground">
-            Selecting an account can create a linked transaction.
-          </p>
+          <p className="text-xs text-muted-foreground">{t('paymentDialog.account.hint')}</p>
         </div>
 
         <label className="flex items-center gap-3 cursor-pointer">
@@ -218,18 +221,17 @@ export function DebtPaymentDialog({
               />
             )}
           />
-          <span className="text-sm font-medium">Create transaction record</span>
+          <span className="text-sm font-medium">{t('paymentDialog.createTransaction')}</span>
         </label>
 
         <div className="flex flex-col gap-2">
-          <Label htmlFor="payment-notes">Notes</Label>
+          <Label htmlFor="payment-notes">{t('paymentDialog.notes.label')}</Label>
           <Input
             id="payment-notes"
-            placeholder="e.g., Monthly payment"
+            placeholder={t('paymentDialog.notes.placeholder')}
             {...register('notes')}
           />
         </div>
-
       </form>
     </Dialog>
   )

@@ -3,6 +3,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Link, useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { Mail, Lock, KeyRound, Eye, EyeOff, TriangleAlert } from 'lucide-react'
 import * as authApi from '../auth/authApi'
 import { AuthLayout, BrandPanelHeader, BrandPanelStep, BrandPanelTrust } from '../auth/AuthLayout'
@@ -24,7 +25,7 @@ const registerSchema = z.object({
 
 type RegisterForm = z.infer<typeof registerSchema>
 
-const STRENGTH_LABELS = ['Weak', 'Fair', 'Good', 'Strong']
+const STRENGTH_KEYS = ['weak', 'fair', 'good', 'strong'] as const
 const STRENGTH_COLORS = [
   'bg-destructive',
   'bg-warning',
@@ -42,6 +43,7 @@ function passwordScore(value: string) {
 }
 
 export function RegisterPage() {
+  const { t } = useTranslation('auth')
   const navigate = useNavigate()
   const [serverError, setServerError] = useState<string | null>(null)
   const [showPassword, setShowPassword] = useState(false)
@@ -60,9 +62,7 @@ export function RegisterPage() {
       await authApi.register(data)
       navigate('/login')
     } catch {
-      setServerError(
-        'Could not create your account. The email may already be registered, or the invite code is invalid.',
-      )
+      setServerError(t('register.serverError'))
     }
   })
 
@@ -76,52 +76,50 @@ export function RegisterPage() {
 
           <div>
             <p className="mb-4 text-xs font-semibold uppercase tracking-widest text-white/70">
-              Get started in minutes
+              {t('register.brandPanel.eyebrow')}
             </p>
             <h1 className="mb-6 text-[clamp(1.875rem,3.25vw,2.5rem)] font-bold leading-tight text-white">
-              Take control of
+              {t('register.brandPanel.headingLine1')}
               <br />
-              your finances.
+              {t('register.brandPanel.headingLine2')}
             </h1>
             <p className="mb-10 max-w-[34ch] text-base leading-relaxed text-white/80">
-              Join and start tracking every euro in and out — from groceries to goals.
+              {t('register.brandPanel.subtitle')}
             </p>
 
             <div className="flex flex-col gap-4">
               <BrandPanelStep
                 index={1}
-                title="Create your account"
-                description="Takes under 30 seconds, no credit card needed"
+                title={t('register.brandPanel.steps.createAccount.title')}
+                description={t('register.brandPanel.steps.createAccount.description')}
               />
               <BrandPanelStep
                 index={2}
-                title="Add your accounts"
-                description="Bank accounts, cash, savings — all in one view"
+                title={t('register.brandPanel.steps.addAccounts.title')}
+                description={t('register.brandPanel.steps.addAccounts.description')}
               />
               <BrandPanelStep
                 index={3}
-                title="Start tracking"
-                description="Import past transactions or add them manually"
+                title={t('register.brandPanel.steps.startTracking.title')}
+                description={t('register.brandPanel.steps.startTracking.description')}
               />
             </div>
           </div>
 
-          <BrandPanelTrust>
-            All data is stored on your own server. No third-party analytics, no data selling.
-          </BrandPanelTrust>
+          <BrandPanelTrust>{t('shared.trustMessage')}</BrandPanelTrust>
         </>
       }
     >
       <div className="mb-7">
         <h2 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
-          Create account
+          {t('register.heading')}
         </h2>
-        <p className="mt-2 text-sm text-muted-foreground">Fill in your details to get started</p>
+        <p className="mt-2 text-sm text-muted-foreground">{t('register.subtitle')}</p>
       </div>
 
       <form onSubmit={onSubmit} className="flex flex-col gap-4" noValidate>
         <div className="space-y-1.5">
-          <Label htmlFor="email">Email address</Label>
+          <Label htmlFor="email">{t('register.emailLabel')}</Label>
           <InputGroup className="h-11 bg-muted dark:bg-muted/70">
             <InputGroupAddon>
               <Mail size={16} />
@@ -130,7 +128,7 @@ export function RegisterPage() {
               id="email"
               type="email"
               autoComplete="email"
-              placeholder="name@example.com"
+              placeholder={t('register.emailPlaceholder')}
               aria-invalid={!!errors.email}
               {...registerField('email')}
             />
@@ -145,8 +143,8 @@ export function RegisterPage() {
 
         <div className="space-y-1.5">
           <div className="flex items-baseline justify-between">
-            <Label htmlFor="password">Password</Label>
-            <span className="text-xs text-muted-foreground">min. 8 characters</span>
+            <Label htmlFor="password">{t('register.passwordLabel')}</Label>
+            <span className="text-xs text-muted-foreground">{t('register.passwordHint')}</span>
           </div>
           <InputGroup className="h-11 bg-muted dark:bg-muted/70">
             <InputGroupAddon>
@@ -156,7 +154,7 @@ export function RegisterPage() {
               id="password"
               type={showPassword ? 'text' : 'password'}
               autoComplete="new-password"
-              placeholder="Create a strong password"
+              placeholder={t('register.passwordPlaceholder')}
               aria-invalid={!!errors.password}
               {...passwordFieldProps}
               onChange={(e) => {
@@ -168,7 +166,7 @@ export function RegisterPage() {
               <InputGroupButton
                 type="button"
                 size="icon-xs"
-                aria-label={showPassword ? 'Hide password' : 'Show password'}
+                aria-label={t(showPassword ? 'shared.hidePassword' : 'shared.showPassword')}
                 onClick={() => setShowPassword((v) => !v)}
               >
                 {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
@@ -192,7 +190,7 @@ export function RegisterPage() {
               </div>
               {score > 0 && (
                 <span className="text-[0.65rem] font-medium text-muted-foreground">
-                  {STRENGTH_LABELS[score - 1]}
+                  {t(`register.passwordStrength.${STRENGTH_KEYS[score - 1]}`)}
                 </span>
               )}
             </div>
@@ -206,7 +204,7 @@ export function RegisterPage() {
         </div>
 
         <div className="space-y-1.5">
-          <Label htmlFor="invite_code">Invite code</Label>
+          <Label htmlFor="invite_code">{t('register.inviteCodeLabel')}</Label>
           <InputGroup className="h-11 bg-muted dark:bg-muted/70">
             <InputGroupAddon>
               <KeyRound size={16} />
@@ -215,14 +213,12 @@ export function RegisterPage() {
               id="invite_code"
               type="text"
               autoComplete="off"
-              placeholder="Paste your invite code"
+              placeholder={t('register.inviteCodePlaceholder')}
               aria-invalid={!!errors.invite_code}
               {...registerField('invite_code')}
             />
           </InputGroup>
-          <p className="text-xs text-muted-foreground">
-            Registration is invite-only — ask the site owner for a code.
-          </p>
+          <p className="text-xs text-muted-foreground">{t('register.inviteCodeHint')}</p>
           {errors.invite_code && (
             <p className="flex items-center gap-1.5 text-sm text-destructive">
               <TriangleAlert size={13} className="shrink-0" />
@@ -239,14 +235,14 @@ export function RegisterPage() {
         )}
 
         <Button type="submit" className="mt-1 h-11 w-full font-semibold" disabled={isSubmitting}>
-          {isSubmitting ? 'Creating…' : 'Create account'}
+          {isSubmitting ? t('register.submitting') : t('register.submit')}
         </Button>
       </form>
 
       <p className="mt-6 text-center text-sm text-muted-foreground">
-        Already have an account?{' '}
+        {t('register.haveAccount')}{' '}
         <Link to="/login" className="font-semibold text-primary hover:underline">
-          Sign in
+          {t('register.signIn')}
         </Link>
       </p>
     </AuthLayout>

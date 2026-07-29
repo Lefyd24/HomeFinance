@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { useTranslation } from 'react-i18next'
 import { HugeiconsIcon } from '@hugeicons/react'
 import {
   ArrowDownLeft01Icon,
@@ -30,8 +31,6 @@ const FLOW_ICON = {
   move: Exchange01Icon,
 } as const
 
-const FLOW_TITLE = { in: 'Money in', out: 'Money out', move: 'Moved between accounts' } as const
-
 function Row({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div className="flex items-baseline justify-between gap-4 border-b border-border/60 py-2.5 last:border-b-0">
@@ -48,10 +47,17 @@ export function TransactionDetailDialog({
   onEdit,
   onDelete,
 }: TransactionDetailDialogProps) {
+  const { t } = useTranslation('transactions')
+
   if (!transaction) return null
 
   const isTransfer = transaction.type === 'transfer'
   const flow = flowOfType(transaction.type)
+  const FLOW_TITLE = {
+    in: t('detail.flowTitle.in'),
+    out: t('detail.flowTitle.out'),
+    move: t('detail.flowTitle.move'),
+  } as const
 
   return (
     <Dialog
@@ -72,7 +78,7 @@ export function TransactionDetailDialog({
             className="text-destructive hover:text-destructive"
           >
             <HugeiconsIcon icon={Delete02Icon} strokeWidth={2} data-icon="inline-start" />
-            Delete
+            {t('common:actions.delete')}
           </Button>
           <Button
             onClick={() => {
@@ -81,7 +87,7 @@ export function TransactionDetailDialog({
             }}
           >
             <HugeiconsIcon icon={PencilEdit02Icon} strokeWidth={2} data-icon="inline-start" />
-            Edit
+            {t('common:actions.edit')}
           </Button>
         </>
       }
@@ -104,7 +110,7 @@ export function TransactionDetailDialog({
         </div>
 
         <div className="flex flex-col">
-          <Row label={isTransfer ? 'Route' : 'Account'}>
+          <Row label={isTransfer ? t('detail.rows.route') : t('detail.rows.account')}>
             {isTransfer && transaction.destination_account_name ? (
               <span className="inline-flex items-center gap-1.5">
                 <span>{transaction.account_name}</span>
@@ -121,7 +127,7 @@ export function TransactionDetailDialog({
           </Row>
 
           {!isTransfer && (
-            <Row label="Category">
+            <Row label={t('detail.rows.category')}>
               <CategoryChip
                 name={transaction.category_name}
                 color={transaction.category_color}
@@ -130,21 +136,23 @@ export function TransactionDetailDialog({
           )}
 
           {transaction.debt_payment_id && transaction.debt_name && (
-            <Row label="Pays down">
+            <Row label={t('detail.rows.paysDown')}>
               <Badge variant="secondary">{transaction.debt_name}</Badge>
             </Row>
           )}
 
           {transaction.is_imported && (
-            <Row label="Source">
+            <Row label={t('detail.rows.source')}>
               <span className="text-muted-foreground">
-                Imported{transaction.source_file ? ` from ${transaction.source_file}` : ''}
+                {transaction.source_file
+                  ? t('detail.rows.importedFrom', { file: transaction.source_file })
+                  : t('detail.rows.imported')}
               </span>
             </Row>
           )}
 
           {transaction.notes && (
-            <Row label="Notes">
+            <Row label={t('detail.rows.notes')}>
               <span className="whitespace-pre-wrap text-muted-foreground">
                 {transaction.notes}
               </span>

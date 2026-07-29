@@ -27,45 +27,17 @@ export type ChatEvent =
   | { type: 'done'; content?: string }
   | { type: 'error'; message?: string }
 
-/** Plain-language name for each backend tool, shown while it runs. */
-export const TOOL_LABELS: Record<string, string> = {
-  get_transactions_tool: 'Reading your transactions',
-  get_totals_tool: 'Adding up totals',
-  get_account_balances_tool: 'Checking account balances',
-  get_budgets_status_tool: 'Reviewing your budgets',
-  get_recurring_expenses_tool: 'Checking recurring expenses',
-  get_debts_tool: 'Reviewing your debts',
-  send_analysis_email_tool: 'Sending the email',
-}
+export class AdvisorStreamError extends Error {
+  readonly code: 'unreachable' | 'empty_response'
+  readonly status?: number
 
-export function toolLabel(name: string): string {
-  return TOOL_LABELS[name] ?? `Using ${name.replace(/_tool$/, '').replace(/_/g, ' ')}`
+  constructor(code: 'unreachable' | 'empty_response', status?: number) {
+    super(code)
+    this.name = 'AdvisorStreamError'
+    this.code = code
+    this.status = status
+  }
 }
-
-/** Opening prompts, grouped so the empty state suggests a direction, not a list. */
-export const SUGGESTION_GROUPS = [
-  {
-    title: 'Find the leak',
-    prompts: [
-      'What are my top 3 expense categories this month?',
-      'Which subscriptions am I paying for that I barely use?',
-    ],
-  },
-  {
-    title: 'Check the plan',
-    prompts: [
-      'Am I on track with my budgets?',
-      'Which recurring expenses hit in the next 7 days?',
-    ],
-  },
-  {
-    title: 'Get out of debt',
-    prompts: [
-      'How much total debt do I have, and what should I pay off first?',
-      'If I put an extra 200 a month at my debts, when am I clear?',
-    ],
-  },
-] as const
 
 export function getChatStatus(): Promise<ChatStatus> {
   return apiFetch<ChatStatus>('/ai/status')
@@ -94,8 +66,8 @@ export async function streamChat(
     signal,
   })
 
-  if (!response.ok) throw new Error(`The advisor could not be reached (${response.status}).`)
-  if (!response.body) throw new Error('The advisor returned an empty response.')
+  if (!response.ok) throw new AdvisorStreamError('unreachable', response.status)
+  if (!response.body) throw new AdvisorStreamError('empty_response')
 
   const reader = response.body.getReader()
   const decoder = new TextDecoder()

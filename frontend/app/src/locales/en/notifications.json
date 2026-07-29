@@ -1,0 +1,171 @@
+{
+  "page": {
+    "title": "Notifications",
+    "description": "Choose how you want to be alerted about balances, budgets, and scheduled reports."
+  },
+  "hourNone": "None",
+  "channels": {
+    "title": "Notification channels",
+    "email": {
+      "title": "Email notifications",
+      "description": "Send alerts to your account email address"
+    },
+    "push": {
+      "title": "Push notifications",
+      "description": "Desktop browser notifications when enabled"
+    },
+    "enableDesktop": "Enable desktop notifications",
+    "disableDesktop": "Disable desktop notifications",
+    "notSupported": "Desktop notifications not supported",
+    "checkRulesNow": "Check rules now",
+    "sendTestPush": "Send test desktop notification",
+    "status": {
+      "vapidNotConfigured": "Server push not configured — set VAPID keys on the backend",
+      "enabled": "Desktop notifications are enabled for this browser",
+      "subscribedNotRegistered": "Browser subscribed but not registered on server — click Enable again",
+      "clickEnable": "Click Enable to allow browser notifications"
+    }
+  },
+  "general": {
+    "title": "General settings",
+    "defaultDaysBefore": "Default days before",
+    "defaultDaysBeforeHint": "For recurring expenses and debt reminders",
+    "quietHoursStart": "Quiet hours start",
+    "quietHoursStartHint": "Hour (0–23), no notifications sent",
+    "quietHoursEnd": "Quiet hours end",
+    "quietHoursEndHint": "Hour (0–23)",
+    "save": "Save settings"
+  },
+  "smtp": {
+    "title": "SMTP override",
+    "description": "Optional per-user SMTP settings. Unset fields fall back to server configuration.",
+    "host": "SMTP host",
+    "hostPlaceholder": "smtp.example.com",
+    "port": "SMTP port",
+    "portPlaceholder": "587",
+    "user": "SMTP user",
+    "password": "SMTP password",
+    "passwordPlaceholder": "Leave blank to keep current",
+    "passwordSaved": "A password is already saved",
+    "from": "From address",
+    "fromPlaceholder": "noreply@example.com",
+    "useTls": "Use TLS",
+    "enableTls": "Enable TLS",
+    "sendTestEmail": "Send test email",
+    "save": "Save SMTP settings"
+  },
+  "rules": {
+    "title": "Notification rules",
+    "description": "Custom alerts for low balances, budget usage, and scheduled reports.",
+    "add": "Add rule",
+    "empty": {
+      "title": "No notification rules yet",
+      "description": "Add one to get alerted about balances, budgets, or reports.",
+      "addFirst": "Add your first rule"
+    },
+    "table": {
+      "name": "Name",
+      "type": "Type",
+      "details": "Details",
+      "channels": "Channels",
+      "status": "Status",
+      "actions": "Actions"
+    },
+    "typeLabels": {
+      "balance_below": "Balance",
+      "budget_percent": "Budget",
+      "scheduled_report": "Report"
+    },
+    "statusActive": "Active",
+    "statusInactive": "Inactive",
+    "actionsFor": "{{name}} actions",
+    "describe": {
+      "accountFallback": "Account #{{id}}",
+      "budgetFallback": "Budget #{{id}}",
+      "balanceBelow": "{{target}} below {{amount}}",
+      "budgetPercent": "{{target}} at {{percent}}%",
+      "scheduleEveryNDays": "every {{count}} days",
+      "scheduleFallback": "scheduled",
+      "scheduledReport": "{{report}}, {{schedule}}"
+    }
+  },
+  "deleteConfirm": {
+    "title": "Delete {{name}}?",
+    "description": "This notification rule will stop running immediately.",
+    "confirmLabel": "Delete rule"
+  },
+  "toasts": {
+    "desktopEnableFailed": "Failed to enable desktop notifications",
+    "desktopDisableFailed": "Failed to disable desktop notifications",
+    "channelsUpdated": "Channel preferences updated",
+    "channelsFailed": "Failed to update channels",
+    "generalSaved": "Notification settings saved",
+    "generalFailed": "Failed to save settings",
+    "smtpSaved": "SMTP settings saved",
+    "smtpFailed": "Failed to save SMTP settings",
+    "desktopEnabled": "Desktop notifications enabled",
+    "desktopDisabled": "Desktop notifications disabled",
+    "rulesCheckFailed": "Failed to check rules",
+    "testEmailSent": "Test email sent — check your inbox",
+    "testEmailFailed": "Test email failed: {{detail}}",
+    "testEmailFailedGeneric": "check SMTP settings",
+    "testPushSent": "Test desktop notification sent",
+    "testPushFailed": "Test push failed: {{detail}}",
+    "testPushFailedGeneric": "check configuration",
+    "testFailed": "Test failed",
+    "ruleDeleted": "Rule deleted",
+    "ruleDeleteFailed": "Failed to delete rule",
+    "ruleUpdated": "Rule updated",
+    "ruleCreated": "Rule created",
+    "ruleUpdateFailed": "Failed to update rule",
+    "ruleCreateFailed": "Failed to create rule"
+  },
+  "ruleForm": {
+    "titleEdit": "Edit notification rule",
+    "titleCreate": "Add notification rule",
+    "ruleType": "Rule type",
+    "selectType": "Select type",
+    "name": "Name",
+    "namePlaceholder": "e.g. Checking account low balance",
+    "account": "Account",
+    "budget": "Budget",
+    "selectTarget": "Select…",
+    "balanceThreshold": "Balance threshold",
+    "usageThreshold": "Usage threshold (%)",
+    "reportType": "Report type",
+    "selectReport": "Select report",
+    "schedule": "Schedule",
+    "selectSchedule": "Select schedule",
+    "everyDays": "Every (days)",
+    "channels": "Channels",
+    "channelEmail": "Email",
+    "channelPush": "Push",
+    "ruleActive": "Rule active",
+    "updateRule": "Update rule",
+    "saveRule": "Save rule",
+    "typeOptions": {
+      "balance_below": "Balance below threshold",
+      "budget_percent": "Budget usage percent",
+      "scheduled_report": "Scheduled report"
+    },
+    "reportTypes": {
+      "spending": "Spending",
+      "cashflow": "Cashflow",
+      "income": "Income"
+    },
+    "scheduleKinds": {
+      "every_n_days": "Every N days",
+      "weekly": "Weekly",
+      "monthly": "Monthly"
+    },
+    "validation": {
+      "nameRequired": "Name is required",
+      "selectTarget": "Please select a target",
+      "validThreshold": "Please enter a valid threshold"
+    }
+  },
+  "actions": {
+    "edit": "Edit",
+    "delete": "Delete"
+  }
+}

@@ -1,0 +1,107 @@
+{
+  "page": {
+    "title": "Budgets",
+    "description": "Set spending limits for categories and periods. Scan every envelope at a glance, drill into one when you need the history.",
+    "createButton": "Create Budget"
+  },
+  "summary": {
+    "of": "of {{amount}}",
+    "envelopes_one": "{{count}} envelope",
+    "envelopes_other": "{{count}} envelopes",
+    "overLimit": "{{count}} over limit",
+    "over": "over",
+    "left": "left"
+  },
+  "empty": {
+    "title": "No budgets created yet",
+    "description": "Create a budget to watch how much you spend in each category before the period resets.",
+    "cta": "Create your first budget"
+  },
+  "period": {
+    "monthly": "Monthly",
+    "yearly": "Yearly",
+    "custom": "Custom"
+  },
+  "status": {
+    "over": "Over",
+    "watch": "Almost",
+    "unused": "Unused",
+    "good": "On track"
+  },
+  "card": {
+    "actionsAria": "{{name}} actions",
+    "edit": "Edit",
+    "periodDetails": "Period details",
+    "delete": "Delete",
+    "ofLimit": "of {{amount}} limit",
+    "over": "over",
+    "remaining": "remaining",
+    "allCategories": "All categories",
+    "more": "+{{count}}"
+  },
+  "deleteDialog": {
+    "title": "Delete {{name}}?",
+    "description": "Your spending stays; only the budget and its limit are removed.",
+    "confirmLabel": "Delete budget"
+  },
+  "toasts": {
+    "deleted": "Budget deleted",
+    "deleteError": "Failed to delete budget",
+    "created": "Budget created",
+    "updated": "Budget updated",
+    "createError": "Failed to create budget",
+    "updateError": "Failed to update budget"
+  },
+  "form": {
+    "createTitle": "Create Budget",
+    "editTitle": "Edit Budget",
+    "name": "Budget Name",
+    "amount": "Amount",
+    "period": "Period",
+    "selectPeriod": "Select period",
+    "startDate": "Start Date",
+    "endDate": "End Date",
+    "categories": "Categories",
+    "noExpenseCategories": "No expense categories available.",
+    "submitCreate": "Create Budget",
+    "submitUpdate": "Update Budget",
+    "validation": {
+      "nameRequired": "Budget name is required",
+      "amountPositive": "Amount must be greater than zero"
+    }
+  },
+  "details": {
+    "titleFallback": "Budget Details",
+    "description": "Period-by-period usage for {{year}}, including linked expense transactions.",
+    "prevYearAria": "Previous year {{year}}",
+    "nextYearAria": "Next year {{year}}",
+    "unableToLoad": "Unable to load budget details.",
+    "budgetPeriod": "Budget {{suffix}}",
+    "perMonth": "/month",
+    "perYear": "/year",
+    "yearBudget": "Year Budget",
+    "yearSpent": "Year Spent",
+    "yearRemaining": "Year Remaining",
+    "yearUsage": "Year usage",
+    "noDataForYear": "No data for this year",
+    "current": "Current",
+    "statusOver": "Over",
+    "statusAlmost": "Almost",
+    "statusNoSpending": "No spending",
+    "noTransactions": "No transactions in this period",
+    "table": {
+      "date": "Date",
+      "description": "Description",
+      "category": "Category",
+      "account": "Account",
+      "amount": "Amount",
+      "uncategorized": "Uncategorized"
+    },
+    "totalMobile": "Total ({{count}})",
+    "totalDesktop_one": "Total ({{count}} transaction)",
+    "totalDesktop_other": "Total ({{count}} transactions)",
+    "percentUsed": "{{percent}}% of budget used",
+    "over": "over",
+    "left": "left"
+  }
+}

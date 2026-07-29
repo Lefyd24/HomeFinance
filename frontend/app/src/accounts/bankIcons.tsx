@@ -103,9 +103,15 @@ export const ACCOUNT_TYPE_ORDER: AccountType[] = [
   'credit',
 ]
 
-export function getAccountTypeMeta(type: AccountType) {
-  return (
-    TYPE_META[type] ?? {
+/**
+ * `t` is optional so this can still be called from contexts without an
+ * i18next instance handy; pass the `accounts` namespace's `t` (e.g. from
+ * `useTranslation('accounts')`) to get translated labels.
+ */
+export function getAccountTypeMeta(type: AccountType, t?: (key: string, defaultValue: string) => string) {
+  const meta = TYPE_META[type]
+  if (!meta) {
+    return {
       label: type,
       plural: type,
       icon: Wallet01Icon,
@@ -114,7 +120,12 @@ export function getAccountTypeMeta(type: AccountType) {
       ambient: 'bg-muted-foreground/20',
       text: 'text-muted-foreground',
     }
-  )
+  }
+  return {
+    ...meta,
+    label: t ? t(`types.${type}.label`, meta.label) : meta.label,
+    plural: t ? t(`types.${type}.plural`, meta.plural) : meta.plural,
+  }
 }
 
 export function AccountIcon({

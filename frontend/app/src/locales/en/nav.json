@@ -1,0 +1,72 @@
+{
+  "brand": {
+    "name": "Home Finance",
+    "tagline": "Personal"
+  },
+  "workspace": "Workspace",
+  "items": {
+    "dashboard": "Dashboard",
+    "transactions": "Transactions",
+    "accounts": "Accounts",
+    "budgets": "Budgets",
+    "notifications": "Notifications",
+    "categories": "Categories",
+    "debts": "Debts",
+    "goals": "Goals",
+    "recurring": "Recurring",
+    "reports": "Reports",
+    "advice": "Advice",
+    "analysis": "Analysis",
+    "askAi": "Ask AI",
+    "documents": "Documents",
+    "import": "Import"
+  },
+  "groups": {
+    "overview": "Overview",
+    "planning": "Planning",
+    "insights": "Insights"
+  },
+  "dock": {
+    "home": "Home",
+    "transactions": "Txns"
+  },
+  "more": "More",
+  "moreSheet": {
+    "description": "Planning, insights, and account tools"
+  },
+  "primaryNav": "Primary",
+  "moreNavigationAria": "More navigation",
+  "sidebar": {
+    "collapse": "Collapse sidebar",
+    "expand": "Expand sidebar",
+    "expandTooltip": "Expand"
+  },
+  "userMenu": {
+    "accountMenu": "Account menu",
+    "apiKeys": "API Keys",
+    "admin": "Admin",
+    "defaultAccountName": "Account"
+  },
+  "quickAdd": "Add transaction",
+  "themeToggle": {
+    "changeTheme": "Change theme"
+  },
+  "languageToggle": {
+    "changeLanguage": "Change language"
+  },
+  "notificationsPanel": {
+    "title": "Notifications",
+    "ariaLabel": "Notifications",
+    "ariaLabelWithCount": "Notifications, {{count}} in the last day",
+    "inLastDay": "{{count}} in the last day",
+    "nothingNew": "Nothing new",
+    "empty": "No alerts yet.",
+    "emptyHint": "Budget and bill rules post here when they fire.",
+    "time": {
+      "justNow": "Just now",
+      "minutesAgo": "{{count}}m ago",
+      "hoursAgo": "{{count}}h ago",
+      "daysAgo": "{{count}}d ago"
+    }
+  }
+}

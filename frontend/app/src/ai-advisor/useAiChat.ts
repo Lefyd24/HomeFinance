@@ -7,7 +7,9 @@
  * clicked through to Transactions to check something would be its own bug.
  */
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { streamChat, type ChatMessage, type ToolCall } from './aiChatApi'
+import { useTranslation } from 'react-i18next'
+import type { TFunction } from 'i18next'
+import { AdvisorStreamError, streamChat, type ChatMessage, type ToolCall } from './aiChatApi'
 
 const STORAGE_KEY = 'ai-advisor:transcript'
 
@@ -26,6 +28,17 @@ function newId(): string {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
 }
 
+function formatAdvisorError(error: unknown, t: TFunction<'advisor'>): string {
+  if (error instanceof AdvisorStreamError) {
+    if (error.code === 'unreachable') {
+      return t('aiAdvisor.chat.unreachableError', { status: error.status ?? '?' })
+    }
+    return t('aiAdvisor.chat.emptyResponseError')
+  }
+  if (error instanceof Error) return error.message
+  return t('aiAdvisor.chat.streamError')
+}
+
 function loadTranscript(): Turn[] {
   try {
     const raw = window.sessionStorage.getItem(STORAGE_KEY)
@@ -40,6 +53,7 @@ function loadTranscript(): Turn[] {
 }
 
 export function useAiChat() {
+  const { t } = useTranslation('advisor')
   const [turns, setTurns] = useState<Turn[]>(loadTranscript)
   const [isStreaming, setIsStreaming] = useState(false)
   const abortRef = useRef<AbortController | null>(null)
@@ -127,7 +141,7 @@ export function useAiChat() {
               case 'error':
                 patchAnswer((turn) => ({
                   ...turn,
-                  error: event.message || 'The advisor stopped part-way through.',
+                  error: event.message || t('aiAdvisor.chat.genericError'),
                   streaming: false,
                 }))
                 break
@@ -142,9 +156,7 @@ export function useAiChat() {
           streaming: false,
           error: stopped
             ? undefined
-            : error instanceof Error
-              ? error.message
-              : 'Something went wrong reaching the advisor.',
+            : formatAdvisorError(error, t),
         }))
       } finally {
         abortRef.current = null
@@ -156,7 +168,7 @@ export function useAiChat() {
         }))
       }
     },
-    [],
+    [t],
   )
 
   const stop = useCallback(() => abortRef.current?.abort(), [])

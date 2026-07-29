@@ -1,14 +1,13 @@
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { ScrollArea } from '@/components/ui/scroll-area'
 import { Dialog } from '../ui/Dialog'
 import { Select } from '../ui/Select'
 import { useCreateCategory, useUpdateCategory, useCategories } from './useCategories'
-import { CategoryIcon, ICON_MAP, type IconKey } from './categoryIcons'
-import { cn } from '@/lib/utils'
+import { IconPicker } from './IconPicker'
 import type { Category, CategoryType } from './categoriesApi'
 
 interface CategoryFormDialogProps {
@@ -20,6 +19,7 @@ interface CategoryFormDialogProps {
 const NONE_PARENT = '__none__'
 
 export function CategoryFormDialog({ open, onOpenChange, category }: CategoryFormDialogProps) {
+  const { t } = useTranslation('categories')
   const isEdit = !!category
   const isSystem = category?.is_system ?? false
 
@@ -51,7 +51,7 @@ export function CategoryFormDialog({ open, onOpenChange, category }: CategoryFor
   }, [open, category])
 
   const parentOptions = [
-    { value: NONE_PARENT, label: 'None (top-level)' },
+    { value: NONE_PARENT, label: t('form.noneTopLevel') },
     ...categories
       .filter((cat) => !cat.parent_id && cat.type === type && cat.id !== category?.id)
       .map((cat) => ({ value: String(cat.id), label: cat.name })),
@@ -61,7 +61,7 @@ export function CategoryFormDialog({ open, onOpenChange, category }: CategoryFor
     e.preventDefault()
 
     if (isSystem) {
-      toast.error('System categories cannot be edited')
+      toast.error(t('toasts.systemEditError'))
       return
     }
 
@@ -76,37 +76,40 @@ export function CategoryFormDialog({ open, onOpenChange, category }: CategoryFor
     try {
       if (isEdit && category) {
         await updateMutation.mutateAsync({ id: category.id, input })
-        toast.success('Category updated')
+        toast.success(t('toasts.updated'))
       } else {
         await createMutation.mutateAsync(input)
-        toast.success('Category created')
+        toast.success(t('toasts.created'))
       }
       onOpenChange(false)
     } catch {
-      toast.error(isEdit ? 'Failed to update category' : 'Failed to create category')
+      toast.error(isEdit ? t('toasts.updateError') : t('toasts.createError'))
     }
   }
 
   const isPending = createMutation.isPending || updateMutation.isPending
-  const iconKeys = Object.keys(ICON_MAP) as IconKey[]
 
   return (
-    <Dialog open={open} title={isEdit ? 'Edit category' : 'Add category'} onOpenChange={onOpenChange}>
+    <Dialog
+      open={open}
+      title={isEdit ? t('form.editTitle') : t('form.addTitle')}
+      onOpenChange={onOpenChange}
+    >
       <form onSubmit={handleSubmit} className="flex flex-col gap-4" noValidate>
         <div className="flex flex-col gap-2">
-          <Label htmlFor="name">Name</Label>
+          <Label htmlFor="name">{t('form.name')}</Label>
           <Input
             id="name"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="Category name"
+            placeholder={t('form.namePlaceholder')}
             disabled={isSystem || isPending}
             required
           />
         </div>
 
         <div className="flex flex-col gap-2">
-          <Label>Type</Label>
+          <Label>{t('form.type')}</Label>
           <Select
             value={type}
             onValueChange={(value) => {
@@ -114,16 +117,16 @@ export function CategoryFormDialog({ open, onOpenChange, category }: CategoryFor
               setParentId(NONE_PARENT)
             }}
             options={[
-              { value: 'income', label: 'Income' },
-              { value: 'expense', label: 'Expense' },
-              { value: 'transfer', label: 'Transfer' },
+              { value: 'income', label: t('form.types.income') },
+              { value: 'expense', label: t('form.types.expense') },
+              { value: 'transfer', label: t('form.types.transfer') },
             ]}
-            placeholder="Select type"
+            placeholder={t('form.selectType')}
           />
         </div>
 
         <div className="flex flex-col gap-2">
-          <Label htmlFor="color">Color</Label>
+          <Label htmlFor="color">{t('form.color')}</Label>
           <div className="flex items-center gap-2">
             <Input
               id="color"
@@ -145,63 +148,32 @@ export function CategoryFormDialog({ open, onOpenChange, category }: CategoryFor
         </div>
 
         <div className="flex flex-col gap-2">
-          <Label>Icon</Label>
-          <div className="flex items-center gap-3 rounded-lg border border-border bg-muted/40 p-2">
-            <CategoryIcon icon={icon} color={color} className="size-11" size={22} />
-            <div className="min-w-0">
-              <p className="text-sm font-medium capitalize">{icon}</p>
-              <p className="text-xs text-muted-foreground">Preview with selected color</p>
-            </div>
-          </div>
-          <ScrollArea className="h-44 rounded-lg border border-border">
-            <div className="grid grid-cols-4 sm:grid-cols-5 gap-2 p-2">
-              {iconKeys.map((key) => {
-                const selected = icon === key
-                return (
-                  <button
-                    key={key}
-                    type="button"
-                    disabled={isSystem || isPending}
-                    onClick={() => setIcon(key)}
-                    className={cn(
-                      'flex flex-col items-center gap-1.5 rounded-lg border p-2 transition-colors',
-                      selected
-                        ? 'border-primary bg-primary/15 ring-1 ring-primary/40'
-                        : 'border-transparent hover:bg-muted',
-                      (isSystem || isPending) && 'opacity-50 cursor-not-allowed',
-                    )}
-                    aria-pressed={selected}
-                    aria-label={`Icon ${key}`}
-                  >
-                    <CategoryIcon icon={key} color={selected ? color : '#64748b'} size={18} />
-                    <span className="text-[10px] capitalize text-muted-foreground truncate w-full text-center">
-                      {key}
-                    </span>
-                  </button>
-                )
-              })}
-            </div>
-          </ScrollArea>
+          <Label>{t('form.icon')}</Label>
+          <IconPicker
+            value={icon}
+            onChange={setIcon}
+            color={color}
+            disabled={isSystem || isPending}
+          />
         </div>
-
         {parentOptions.length > 1 && (
           <div className="flex flex-col gap-2">
-            <Label>Parent category (optional)</Label>
+            <Label>{t('form.parentCategory')}</Label>
             <Select
               value={parentId}
               onValueChange={setParentId}
               options={parentOptions}
-              placeholder="Select parent"
+              placeholder={t('form.selectParent')}
             />
           </div>
         )}
 
         <div className="flex justify-end gap-2 pt-2">
           <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isPending}>
-            Cancel
+            {t('form.cancel')}
           </Button>
           <Button type="submit" disabled={isSystem || isPending || !name.trim()}>
-            {isPending ? 'Saving…' : isEdit ? 'Save' : 'Create'}
+            {isPending ? t('form.saving') : isEdit ? t('form.save') : t('form.create')}
           </Button>
         </div>
       </form>

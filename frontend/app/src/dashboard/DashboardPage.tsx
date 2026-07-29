@@ -1,6 +1,7 @@
 import { useMemo, type ReactNode } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { HugeiconsIcon } from '@hugeicons/react'
 import type { IconSvgElement } from '@hugeicons/react'
 import {
@@ -43,7 +44,7 @@ function Panel({
   hint,
   icon,
   to,
-  linkLabel = 'View all',
+  linkLabel,
   children,
   className,
 }: {
@@ -55,6 +56,7 @@ function Panel({
   children: ReactNode
   className?: string
 }) {
+  const { t } = useTranslation('dashboard')
   return (
     <section
       className={cn(
@@ -74,7 +76,7 @@ function Panel({
         </div>
         {to && (
           <Button variant="ghost" size="sm" className="-me-1.5 shrink-0" asChild>
-            <Link to={to}>{linkLabel}</Link>
+            <Link to={to}>{linkLabel ?? t('panel.viewAll')}</Link>
           </Button>
         )}
       </header>
@@ -88,6 +90,7 @@ function EmptyLine({ children }: { children: ReactNode }) {
 }
 
 export function DashboardPage() {
+  const { t } = useTranslation('dashboard')
   const isDesktop = useMediaQuery('(min-width: 1024px)')
   const monthRange = currentMonthRange()
 
@@ -186,8 +189,8 @@ export function DashboardPage() {
   const accountsPanel = (
     <Panel
       key="accounts"
-      title="Accounts"
-      hint={accountsLoading ? undefined : 'Live balances'}
+      title={t('accounts.title')}
+      hint={accountsLoading ? undefined : t('accounts.hint')}
       icon={WalletIcon}
       to="/accounts"
     >
@@ -198,7 +201,7 @@ export function DashboardPage() {
           ))}
         </div>
       ) : (accounts?.length ?? 0) === 0 ? (
-        <EmptyLine>No accounts yet. Add one on the Accounts page.</EmptyLine>
+        <EmptyLine>{t('accounts.empty')}</EmptyLine>
       ) : (
         <div className="grid grid-cols-1 gap-x-6 sm:grid-cols-2">
           {accounts?.map((account) => (
@@ -212,13 +215,16 @@ export function DashboardPage() {
   const duePanel = (
     <Panel
       key="due"
-      title="Due in 30 days"
+      title={t('due.title')}
       hint={
         debtsLoading || recurringLoading
           ? undefined
           : upcomingPayments.length === 0
-            ? 'Nothing scheduled'
-            : `${formatCurrency(upcomingTotal)} across ${upcomingPayments.length}`
+            ? t('due.hintEmpty')
+            : t('due.hintSummary', {
+                amount: formatCurrency(upcomingTotal),
+                count: upcomingPayments.length,
+              })
       }
       icon={AlarmClockIcon}
       to="/recurring"
@@ -230,7 +236,7 @@ export function DashboardPage() {
           ))}
         </div>
       ) : upcomingPayments.length === 0 ? (
-        <EmptyLine>Nothing due in the next 30 days.</EmptyLine>
+        <EmptyLine>{t('due.empty')}</EmptyLine>
       ) : (
         <ul className="flex flex-col">
           {upcomingPayments.slice(0, 5).map((payment) => (
@@ -238,7 +244,7 @@ export function DashboardPage() {
               key={payment.id}
               className={cn(
                 'flex items-center justify-between gap-3 border-b border-border/60 py-2 ps-2.5 last:border-b-0',
-                'border-s-2',
+                
                 payment.isOverdue ? 'border-s-destructive' : 'border-s-flow-out',
               )}
             >
@@ -246,18 +252,18 @@ export function DashboardPage() {
                 <p className="truncate text-sm font-medium">{payment.name}</p>
                 <p className="text-xs text-muted-foreground">
                   {payment.isOverdue ? (
-                    <span className="font-medium text-destructive">Overdue</span>
+                    <span className="font-medium text-destructive">{t('due.overdue')}</span>
                   ) : payment.daysUntil === 0 ? (
-                    'Due today'
+                    t('due.dueToday')
                   ) : (
-                    `In ${payment.daysUntil} day${payment.daysUntil === 1 ? '' : 's'} · ${formatDate(payment.dueDate)}`
+                    `${t('due.inDays', { count: payment.daysUntil })} · ${formatDate(payment.dueDate)}`
                   )}
                 </p>
               </div>
               <div className="shrink-0 text-end">
                 <Amount value={payment.amount} flow="out" signed={false} className="text-sm" />
                 <p className="text-[0.65rem] uppercase tracking-wide text-muted-foreground">
-                  {payment.type}
+                  {t(`due.types.${payment.type}`)}
                 </p>
               </div>
             </li>
@@ -270,15 +276,18 @@ export function DashboardPage() {
   const spendingPanel = (
     <Panel
       key="spending"
-      title="Spending by category"
+      title={t('spending.title')}
       hint={
         reportLoading
           ? undefined
-          : `${formatCurrency(totalSpent)} across ${categoryCount} categor${categoryCount === 1 ? 'y' : 'ies'}${topCategory ? ` · most on ${topCategory.name}` : ''}`
+          : `${t('spending.hintSummary', {
+              amount: formatCurrency(totalSpent),
+              count: categoryCount,
+            })}${topCategory ? t('spending.mostOn', { category: topCategory.name }) : ''}`
       }
       icon={TagIcon}
       to="/reports"
-      linkLabel="Reports"
+      linkLabel={t('spending.reportsLink')}
     >
       {reportLoading ? (
         <Skeleton className="h-[280px] w-full" />
@@ -291,8 +300,8 @@ export function DashboardPage() {
   const budgetsPanel = (
     <Panel
       key="budgets"
-      title="Budgets"
-      hint={budgetsLoading ? undefined : 'How this period is tracking'}
+      title={t('budgets.title')}
+      hint={budgetsLoading ? undefined : t('budgets.hint')}
       icon={PiggyBankIcon}
       to="/budgets"
     >
@@ -303,7 +312,7 @@ export function DashboardPage() {
           ))}
         </div>
       ) : (budgets?.length ?? 0) === 0 ? (
-        <EmptyLine>No budgets yet.</EmptyLine>
+        <EmptyLine>{t('budgets.empty')}</EmptyLine>
       ) : (
         <ul className="flex flex-col gap-3.5">
           {budgets?.slice(0, 4).map((budget) => (
@@ -326,7 +335,13 @@ export function DashboardPage() {
   )
 
   const recentPanel = (
-    <Panel key="recent" title="Recent activity" hint="Your latest six entries" icon={BankIcon} to="/transactions">
+    <Panel
+      key="recent"
+      title={t('recent.title')}
+      hint={t('recent.hint')}
+      icon={BankIcon}
+      to="/transactions"
+    >
       {recentTxnLoading ? (
         <div className="flex flex-col gap-3">
           {[1, 2, 3, 4, 5].map((i) => (
@@ -334,7 +349,7 @@ export function DashboardPage() {
           ))}
         </div>
       ) : (recentTxnData?.items.length ?? 0) === 0 ? (
-        <EmptyLine>Nothing recorded yet.</EmptyLine>
+        <EmptyLine>{t('recent.empty')}</EmptyLine>
       ) : (
         <ul className="flex flex-col">
           {recentTxnData?.items.map((txn) => {
@@ -372,7 +387,13 @@ export function DashboardPage() {
   )
 
   const goalsPanel = (
-    <Panel key="goals" title="Goals" hint={goalsLoading ? undefined : 'Progress toward your targets'} icon={TargetIcon} to="/goals">
+    <Panel
+      key="goals"
+      title={t('goals.title')}
+      hint={goalsLoading ? undefined : t('goals.hint')}
+      icon={TargetIcon}
+      to="/goals"
+    >
       {goalsLoading ? (
         <div className="flex flex-col gap-4">
           {[1, 2, 3].map((i) => (
@@ -380,7 +401,7 @@ export function DashboardPage() {
           ))}
         </div>
       ) : activeGoals.length === 0 ? (
-        <EmptyLine>No active goals.</EmptyLine>
+        <EmptyLine>{t('goals.empty')}</EmptyLine>
       ) : (
         <ul className="flex flex-col gap-3.5">
           {activeGoals.map((goal) => (
@@ -396,9 +417,13 @@ export function DashboardPage() {
                 variant={progressVariantForPercent(goal.progress_percentage ?? 0)}
               />
               <p className="mt-1 text-xs tabular-nums text-muted-foreground">
-                {formatCurrency(goal.current_amount)} of{' '}
-                {formatCurrency(goal.target_amount)}
-                {goal.target_date ? ` · by ${formatDate(goal.target_date)}` : ''}
+                {t('goals.progressAmount', {
+                  current: formatCurrency(goal.current_amount),
+                  target: formatCurrency(goal.target_amount),
+                })}
+                {goal.target_date
+                  ? t('goals.targetDate', { date: formatDate(goal.target_date) })
+                  : ''}
               </p>
             </li>
           ))}
@@ -410,41 +435,41 @@ export function DashboardPage() {
   return (
     <PageContainer wide className="flex flex-col gap-5">
       <PageHeader
-        title="Dashboard"
-        description="This month at a glance."
+        title={t('title')}
+        description={t('subtitle')}
         className="mb-0"
       />
 
       {/* The month in four figures. Everything below explains it. */}
       <section
-        aria-label="This month"
-        className="glass-panel rounded-xl border p-5"
+        aria-label={t('summary.ariaLabel')}
+        className={`rounded-3xl ${isDesktop ? 'bg-gradient-to-l from-sidebar via-secondary/5 to-primary/90' : ''} p-5 glass-panel`}
       >
         <div className="flex flex-wrap items-end justify-between gap-x-8 gap-y-5">
           <div>
-            <p className="text-[0.65rem] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-              Total balance
+            <p className={`text-[0.65rem] font-semibold uppercase tracking-[0.14em] ${isDesktop ? 'text-white' : 'text-muted-foreground'}`}>
+              {t('summary.totalBalance')}
             </p>
-            <p className="mt-1 font-heading text-4xl font-bold tabular-nums tracking-tight">
+            <p className={`mt-1 font-heading text-4xl font-bold tabular-nums tracking-tight ${isDesktop ? 'text-white' : 'text-muted-foreground'}`}>
               {accountsLoading ? '…' : formatCurrency(totalBalance)}
             </p>
-            <p className="mt-0.5 text-xs text-muted-foreground">
-              across {accountCount} account{accountCount === 1 ? '' : 's'}
+            <p className={`mt-0.5 text-xs ${isDesktop ? 'text-white' : 'text-muted-foreground'}`}>
+              {t('summary.accountsCount', { count: accountCount })}
             </p>
           </div>
           <dl className="flex flex-wrap gap-x-8 gap-y-4">
             <Figure
-              label="In this month"
+              label={t('summary.incomeThisMonth')}
               value={txnLoading ? '…' : formatCurrency(totalIncome)}
               tone="in"
             />
             <Figure
-              label="Out this month"
+              label={t('summary.expensesThisMonth')}
               value={txnLoading ? '…' : formatCurrency(totalExpenses)}
               tone="out"
             />
             <Figure
-              label="Net saved"
+              label={t('summary.netSaved')}
               value={txnLoading ? '…' : formatCurrency(netSaved)}
               tone={netSaved >= 0 ? 'in' : 'out'}
             />
@@ -517,7 +542,7 @@ function AccountRow({ account }: { account: Account }) {
   return (
     <Link
       to={`/transactions?account_id=${account.id}`}
-      className="flex items-center gap-2.5 border-b border-border/60 py-2 transition-colors hover:bg-muted/40"
+      className="flex items-center gap-2.5 py-2 px-1 transition-colors hover:bg-primary/10"
     >
       <AccountIcon
         icon={account.icon}

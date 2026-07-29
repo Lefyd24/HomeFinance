@@ -10,13 +10,13 @@ import { useSearchParams } from 'react-router-dom'
 import type { ReportParams } from './reportsPageApi'
 
 export const RANGE_PRESETS = [
-  { key: 'mtd', label: 'Month to date' },
-  { key: '30d', label: 'Last 30 days' },
-  { key: '3m', label: 'Last 3 months' },
-  { key: '6m', label: 'Last 6 months' },
-  { key: 'ytd', label: 'Year to date' },
-  { key: '1y', label: 'Last 12 months' },
-  { key: 'custom', label: 'Custom' },
+  { key: 'mtd' },
+  { key: '30d' },
+  { key: '3m' },
+  { key: '6m' },
+  { key: 'ytd' },
+  { key: '1y' },
+  { key: 'custom' },
 ] as const
 
 export type RangeKey = (typeof RANGE_PRESETS)[number]['key']

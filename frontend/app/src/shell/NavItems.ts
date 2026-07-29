@@ -19,7 +19,10 @@ import {
 export type HugeIcon = typeof DashboardSquare01Icon
 
 export interface NavItem {
-  label: string
+  /** Translation key within the `nav` namespace, e.g. "items.dashboard". */
+  labelKey: string
+  /** Translation key for the short mobile-dock label, if different from `labelKey`. */
+  dockLabelKey?: string
   to: string
   icon: HugeIcon
   /** Renders as a collapsible parent. The parent's own `to` is used for matching only. */
@@ -27,16 +30,27 @@ export interface NavItem {
 }
 
 export interface NavGroup {
-  label: string
+  /** Translation key within the `nav` namespace, e.g. "groups.overview". */
+  groupKey: string
   items: NavItem[]
 }
 
 /** First 4 are the mobile bottom-bar items; the 5th slot is always "More". */
 export const PRIMARY_NAV_ITEMS: NavItem[] = [
-  { label: 'Dashboard', to: '/dashboard', icon: DashboardSquare01Icon },
-  { label: 'Transactions', to: '/transactions', icon: ArrowDataTransferHorizontalIcon },
-  { label: 'Accounts', to: '/accounts', icon: WalletIcon },
-  { label: 'Budgets', to: '/budgets', icon: PiggyBankIcon },
+  {
+    labelKey: 'items.dashboard',
+    dockLabelKey: 'dock.home',
+    to: '/dashboard',
+    icon: DashboardSquare01Icon,
+  },
+  {
+    labelKey: 'items.transactions',
+    dockLabelKey: 'dock.transactions',
+    to: '/transactions',
+    icon: ArrowDataTransferHorizontalIcon,
+  },
+  { labelKey: 'items.accounts', to: '/accounts', icon: WalletIcon },
+  { labelKey: 'items.budgets', to: '/budgets', icon: PiggyBankIcon },
 ]
 
 /**
@@ -45,42 +59,42 @@ export const PRIMARY_NAV_ITEMS: NavItem[] = [
  * is not repeated here.
  */
 export const NOTIFICATIONS_NAV_ITEM: NavItem = {
-  label: 'Notifications',
+  labelKey: 'items.notifications',
   to: '/notifications',
   icon: Notification03Icon,
 }
 
 export const NAV_GROUPS: NavGroup[] = [
   {
-    label: 'Overview',
+    groupKey: 'groups.overview',
     items: [
       ...PRIMARY_NAV_ITEMS,
       NOTIFICATIONS_NAV_ITEM,
     ],
   },
   {
-    label: 'Planning',
+    groupKey: 'groups.planning',
     items: [
-      { label: 'Categories', to: '/categories', icon: TagIcon },
-      { label: 'Debts', to: '/debts', icon: BankIcon },
-      { label: 'Goals', to: '/goals', icon: TargetIcon },
-      { label: 'Recurring', to: '/recurring', icon: RepeatIcon },
+      { labelKey: 'items.categories', to: '/categories', icon: TagIcon },
+      { labelKey: 'items.debts', to: '/debts', icon: BankIcon },
+      { labelKey: 'items.goals', to: '/goals', icon: TargetIcon },
+      { labelKey: 'items.recurring', to: '/recurring', icon: RepeatIcon },
     ],
   },
   {
-    label: 'Insights',
+    groupKey: 'groups.insights',
     items: [
-      { label: 'Reports', to: '/reports', icon: Analytics01Icon },
+      { labelKey: 'items.reports', to: '/reports', icon: Analytics01Icon },
       {
-        label: 'Advice',
+        labelKey: 'items.advice',
         to: '/advisor',
         icon: Idea01Icon,
         children: [
-          { label: 'Analysis', to: '/advisor', icon: ChartLineData01Icon },
-          { label: 'Ask AI', to: '/ai-advisor', icon: SparklesIcon },
+          { labelKey: 'items.analysis', to: '/advisor', icon: ChartLineData01Icon },
+          { labelKey: 'items.askAi', to: '/ai-advisor', icon: SparklesIcon },
         ],
       },
-      { label: 'Documents', to: '/documents', icon: File01Icon },
+      { labelKey: 'items.documents', to: '/documents', icon: File01Icon },
     ],
   },
 ]
@@ -91,7 +105,7 @@ function flatten(items: NavItem[]): NavItem[] {
 
 /** Destinations only available from the mobile More sheet (not the primary dock). */
 export const MORE_NAV_GROUPS: NavGroup[] = [
-  { label: 'Overview', items: [NOTIFICATIONS_NAV_ITEM] },
+  { groupKey: 'groups.overview', items: [NOTIFICATIONS_NAV_ITEM] },
   ...NAV_GROUPS.slice(1),
 ]
 
@@ -107,5 +121,5 @@ export const ALL_NAV_ITEMS: NavItem[] = [
   ...PRIMARY_NAV_ITEMS,
   NOTIFICATIONS_NAV_ITEM,
   ...NAV_GROUPS.slice(1).flatMap((group) => flatten(group.items)),
-  { label: 'Import', to: '/import', icon: ArrowDataTransferHorizontalIcon },
+  { labelKey: 'items.import', to: '/import', icon: ArrowDataTransferHorizontalIcon },
 ]

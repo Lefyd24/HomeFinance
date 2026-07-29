@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { HugeiconsIcon } from '@hugeicons/react'
 import {
   ArrowDown01Icon,
@@ -46,6 +47,7 @@ export function GoalDetailsSheet({
   onContribute,
   onEdit,
 }: GoalDetailsSheetProps) {
+  const { t } = useTranslation(['goals', 'common'])
   const goalId = open && goal ? goal.id : null
   const { data: transactions = [], isLoading: txLoading } = useGoalTransactions(goalId)
   const { data: progress } = useGoalProgress(goalId)
@@ -72,12 +74,12 @@ export function GoalDetailsSheet({
           <SheetTitle className="truncate">{goal.name}</SheetTitle>
           <SheetDescription className="flex flex-wrap items-center gap-2">
             <Badge variant="outline" className="text-xs capitalize">
-              {categoryLabel(goal.category)}
+              {categoryLabel(goal.category, t)}
             </Badge>
-            {goal.is_primary && <Badge className="text-xs">Primary</Badge>}
+            {goal.is_primary && <Badge className="text-xs">{t('details.primary')}</Badge>}
             {complete && (
               <Badge variant="secondary" className="text-xs">
-                Completed
+                {t('details.completed')}
               </Badge>
             )}
           </SheetDescription>
@@ -97,7 +99,7 @@ export function GoalDetailsSheet({
                   <span className="text-2xl font-heading font-bold tabular-nums">
                     {clamped.toFixed(0)}%
                   </span>
-                  <span className="text-xs text-muted-foreground">complete</span>
+                  <span className="text-xs text-muted-foreground">{t('details.complete')}</span>
                 </div>
               </ProgressRing>
 
@@ -107,33 +109,33 @@ export function GoalDetailsSheet({
 
               <div className="grid w-full grid-cols-2 gap-3 text-center">
                 <div className="rounded-xl bg-background p-3">
-                  <p className="text-xs text-muted-foreground">Saved</p>
+                  <p className="text-xs text-muted-foreground">{t('details.saved')}</p>
                   <p className="mt-1 font-heading font-semibold tabular-nums">
                     {formatCurrency(goal.current_amount, goal.currency)}
                   </p>
                 </div>
                 <div className="rounded-xl bg-background p-3">
-                  <p className="text-xs text-muted-foreground">Target</p>
+                  <p className="text-xs text-muted-foreground">{t('details.target')}</p>
                   <p className="mt-1 font-heading font-semibold tabular-nums">
                     {formatCurrency(goal.target_amount, goal.currency)}
                   </p>
                 </div>
                 <div className="rounded-xl bg-background p-3">
-                  <p className="text-xs text-muted-foreground">Remaining</p>
+                  <p className="text-xs text-muted-foreground">{t('details.remaining')}</p>
                   <p className="mt-1 font-heading font-semibold tabular-nums">
                     {formatCurrency(remaining, goal.currency)}
                   </p>
                 </div>
                 {goal.target_date ? (
                   <div className="rounded-xl bg-background p-3">
-                    <p className="text-xs text-muted-foreground">Target date</p>
+                    <p className="text-xs text-muted-foreground">{t('details.targetDate')}</p>
                     <p className="mt-1 font-heading font-semibold">
                       {formatDate(goal.target_date)}
                     </p>
                   </div>
                 ) : (
                   <div className="rounded-xl bg-background p-3">
-                    <p className="text-xs text-muted-foreground">Days left</p>
+                    <p className="text-xs text-muted-foreground">{t('details.daysLeft')}</p>
                     <p className="mt-1 font-heading font-semibold">
                       {goal.days_remaining ?? progress?.days_remaining ?? '—'}
                     </p>
@@ -151,23 +153,23 @@ export function GoalDetailsSheet({
 
               {monthlyNeeded != null && monthlyNeeded > 0 && goal.target_date && (
                 <p className="text-sm text-center text-muted-foreground">
-                  Save{' '}
-                  <span className="font-medium text-foreground tabular-nums">
-                    {formatCurrency(monthlyNeeded, goal.currency)}
-                  </span>
-                  /month to reach by {formatDate(goal.target_date)}
+                  {t('details.saveToReach', {
+                    amount: formatCurrency(monthlyNeeded, goal.currency),
+                    date: formatDate(goal.target_date),
+                  })}
                 </p>
               )}
 
               {progress && goal.target_date && (
                 <Badge variant={progress.on_track ? 'secondary' : 'outline'} className="text-xs">
-                  {progress.on_track ? 'On track' : 'Behind pace'}
+                  {progress.on_track ? t('details.onTrack') : t('details.behindPace')}
                   {progress.average_monthly_contribution > 0 && (
                     <>
                       {' '}
-                      · avg{' '}
-                      {formatCurrency(progress.average_monthly_contribution, goal.currency)}
-                      /mo
+                      ·{' '}
+                      {t('details.avgPerMonth', {
+                        amount: formatCurrency(progress.average_monthly_contribution, goal.currency),
+                      })}
                     </>
                   )}
                 </Badge>
@@ -180,7 +182,7 @@ export function GoalDetailsSheet({
 
             <div className="flex flex-col gap-3">
               <div className="flex items-center justify-between gap-2">
-                <h4 className="font-heading font-semibold">Recent activity</h4>
+                <h4 className="font-heading font-semibold">{t('details.recentActivity')}</h4>
                 {goal.target_date && (
                   <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
                     <HugeiconsIcon icon={Calendar03Icon} strokeWidth={2} />
@@ -197,7 +199,7 @@ export function GoalDetailsSheet({
                 </div>
               ) : transactions.length === 0 ? (
                 <p className="text-sm text-muted-foreground text-center py-6">
-                  No contributions yet
+                  {t('details.noContributions')}
                 </p>
               ) : (
                 <ul className="flex flex-col gap-2">
@@ -224,7 +226,7 @@ export function GoalDetailsSheet({
                           </div>
                           <div className="min-w-0">
                             <p className="text-sm font-medium truncate">
-                              {isIn ? 'Contribution' : 'Withdrawal'}
+                              {isIn ? t('details.contribution') : t('details.withdrawal')}
                             </p>
                             {tx.description && (
                               <p className="text-xs text-muted-foreground truncate">
@@ -258,16 +260,16 @@ export function GoalDetailsSheet({
         <SheetFooter className="flex-row gap-2 p-4">
           {!complete && onContribute && (
             <Button className="flex-1" onClick={() => onContribute(goal)}>
-              Contribute
+              {t('details.contribute')}
             </Button>
           )}
           {onEdit && (
             <Button variant="outline" className="flex-1" onClick={() => onEdit(goal)}>
-              Edit
+              {t('details.edit')}
             </Button>
           )}
           <Button variant="ghost" onClick={() => onOpenChange(false)}>
-            Close
+            {t('details.close')}
           </Button>
         </SheetFooter>
       </SheetContent>

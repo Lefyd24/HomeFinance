@@ -9,6 +9,7 @@ import { Toaster } from '@/components/ui/sonner'
 import App from './App.tsx'
 import { AuthProvider } from './auth/AuthContext.tsx'
 import { ensureServiceWorker } from './notifications/pushNotifications'
+import './i18n/config'
 import './index.css'
 
 const queryClient = new QueryClient()
