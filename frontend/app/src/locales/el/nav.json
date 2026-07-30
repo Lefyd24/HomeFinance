@@ -8,6 +8,7 @@
     "dashboard": "Πίνακας ελέγχου",
     "transactions": "Συναλλαγές",
     "accounts": "Λογαριασμοί",
+    "investments": "Επενδύσεις",
     "budgets": "Προϋπολογισμοί",
     "notifications": "Ειδοποιήσεις",
     "categories": "Κατηγορίες",
@@ -19,7 +20,10 @@
     "analysis": "Ανάλυση",
     "askAi": "Ρωτήστε το AI",
     "documents": "Έγγραφα",
-    "import": "Εισαγωγή"
+    "import": "Εισαγωγή",
+    "marketNews": "Ειδήσεις αγορών",
+    "tickerSearch": "Αναζήτηση τίτλων",
+    "companyResearch": "Έρευνα εταιρείας"
   },
   "groups": {
     "overview": "ΕΠΙΣΚΟΠΗΣΗ",

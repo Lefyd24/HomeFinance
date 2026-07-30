@@ -38,6 +38,7 @@ interface AccountFormDialogProps {
 export function AccountFormDialog({ open, onOpenChange, account }: AccountFormDialogProps) {
   const { t } = useTranslation('accounts')
   const isEdit = !!account
+  const isProviderSynced = !!account?.provider
   const createAccount = useCreateAccount()
   const updateAccount = useUpdateAccount()
 
@@ -102,21 +103,29 @@ export function AccountFormDialog({ open, onOpenChange, account }: AccountFormDi
   const preview = watch()
 
   const onSubmit = handleSubmit(async (data) => {
-    const input = {
+    const common = {
       name: data.name.trim(),
-      type: data.type,
-      currency: data.currency,
-      balance: data.balance,
       description: data.description?.trim() || undefined,
       icon: data.icon || undefined,
     }
 
     try {
       if (isEdit && account) {
+        // Balance/type/currency are set by the brokerage sync for provider-linked
+        // accounts (see backend/app/routers/accounts.py) — sending them (even
+        // unchanged) is rejected, so they're only included for manual accounts.
+        const input = isProviderSynced
+          ? common
+          : { ...common, type: data.type, currency: data.currency, balance: data.balance }
         await updateAccount.mutateAsync({ id: account.id, input })
         toast.success(t('toasts.updated'))
       } else {
-        await createAccount.mutateAsync(input)
+        await createAccount.mutateAsync({
+          ...common,
+          type: data.type,
+          currency: data.currency,
+          balance: data.balance,
+        })
         toast.success(t('toasts.created'))
       }
       onOpenChange(false)
@@ -184,6 +193,12 @@ export function AccountFormDialog({ open, onOpenChange, account }: AccountFormDi
           {errors.name && <p className="text-destructive text-sm">{errors.name.message}</p>}
         </div>
 
+        {isProviderSynced && (
+          <p className="rounded-lg border border-border bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
+            {t('form.providerSyncedNote', { provider: account?.provider })}
+          </p>
+        )}
+
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="flex flex-col gap-2">
             <Label>{t('form.typeLabel')}</Label>
@@ -196,6 +211,7 @@ export function AccountFormDialog({ open, onOpenChange, account }: AccountFormDi
                   onValueChange={field.onChange}
                   options={ACCOUNT_TYPE_OPTIONS}
                   placeholder={t('form.typePlaceholder')}
+                  disabled={isProviderSynced}
                 />
               )}
             />
@@ -211,6 +227,7 @@ export function AccountFormDialog({ open, onOpenChange, account }: AccountFormDi
                   onValueChange={field.onChange}
                   options={CURRENCY_OPTIONS}
                   placeholder={t('form.currencyPlaceholder')}
+                  disabled={isProviderSynced}
                 />
               )}
             />
@@ -219,7 +236,7 @@ export function AccountFormDialog({ open, onOpenChange, account }: AccountFormDi
 
         <div className="flex flex-col gap-2">
           <Label htmlFor="balance">{t('form.balanceLabel')}</Label>
-          <Input id="balance" type="number" step="0.01" {...register('balance')} />
+          <Input id="balance" type="number" step="0.01" disabled={isProviderSynced} {...register('balance')} />
           <p className="text-xs text-muted-foreground">{t('form.balanceHint')}</p>
           {errors.balance && <p className="text-destructive text-sm">{errors.balance.message}</p>}
         </div>

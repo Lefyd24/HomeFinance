@@ -12,8 +12,11 @@ import {
   File01Icon,
   SparklesIcon,
   ChartLineData01Icon,
+  ChartIncreaseIcon,
   Idea01Icon,
   Notification03Icon,
+  News01Icon,
+  Search01Icon,
 } from '@hugeicons/core-free-icons'
 
 export type HugeIcon = typeof DashboardSquare01Icon
@@ -95,6 +98,7 @@ export const NAV_GROUPS: NavGroup[] = [
         ],
       },
       { labelKey: 'items.documents', to: '/documents', icon: File01Icon },
+      { labelKey: 'items.investments', to: '/investments', icon: ChartIncreaseIcon },
     ],
   },
 ]
@@ -116,8 +120,17 @@ export const SECONDARY_NAV_ITEMS: NavItem[] = [
 
 export const MORE_NAV_ICON = MoreHorizontalCircleIcon
 
-/** Every routable destination, including ones no longer shown in the sidebar. */
+/**
+ * Every routable destination, including ones no longer shown in the sidebar.
+ *
+ * Resolved by prefix match, first hit wins, so nested routes have to come
+ * before the parent they sit under — otherwise `/investments` would claim
+ * `/investments/news` and the header would name the wrong page.
+ */
 export const ALL_NAV_ITEMS: NavItem[] = [
+  { labelKey: 'items.marketNews', to: '/investments/news', icon: News01Icon },
+  { labelKey: 'items.tickerSearch', to: '/investments/search', icon: Search01Icon },
+  { labelKey: 'items.companyResearch', to: '/investments/research', icon: ChartLineData01Icon },
   ...PRIMARY_NAV_ITEMS,
   NOTIFICATIONS_NAV_ITEM,
   ...NAV_GROUPS.slice(1).flatMap((group) => flatten(group.items)),

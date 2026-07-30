@@ -75,7 +75,7 @@ class NotificationSettingsUpdate(BaseModel):
 class NotificationRuleCreate(BaseModel):
     type: str = Field(
         ...,
-        pattern="^(balance_below|budget_percent|scheduled_report)$",
+        pattern="^(balance_below|budget_percent|scheduled_report|investment_return_below|investment_scheduled)$",
     )
     name: str = Field(..., min_length=1, max_length=200)
     target_id: Optional[int] = None
@@ -93,7 +93,7 @@ class NotificationRuleCreate(BaseModel):
 class NotificationRuleUpdate(BaseModel):
     type: Optional[str] = Field(
         None,
-        pattern="^(balance_below|budget_percent|scheduled_report)$",
+        pattern="^(balance_below|budget_percent|scheduled_report|investment_return_below|investment_scheduled)$",
     )
     name: Optional[str] = Field(None, min_length=1, max_length=200)
     target_id: Optional[int] = None

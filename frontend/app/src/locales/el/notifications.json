@@ -74,7 +74,9 @@
     "typeLabels": {
       "balance_below": "Υπόλοιπο",
       "budget_percent": "Προϋπολογισμός",
-      "scheduled_report": "Αναφορά"
+      "scheduled_report": "Αναφορά",
+      "investment_return_below": "Απόδοση χαρτοφυλακίου",
+      "investment_scheduled": "Σύνοψη χαρτοφυλακίου"
     },
     "statusActive": "Ενεργός",
     "statusInactive": "Ανενεργός",
@@ -86,7 +88,9 @@
       "budgetPercent": "{{target}} στο {{percent}}%",
       "scheduleEveryNDays": "κάθε {{count}} ημέρες",
       "scheduleFallback": "προγραμματισμένο",
-      "scheduledReport": "{{report}}, {{schedule}}"
+      "scheduledReport": "{{report}}, {{schedule}}",
+      "investmentReturnBelow": "{{target}} απόδοση κάτω από {{percent}}%",
+      "investmentScheduled": "{{target}}, {{schedule}}"
     }
   },
   "deleteConfirm": {
@@ -129,9 +133,12 @@
     "namePlaceholder": "π.χ. Χαμηλό υπόλοιπο τρεχούμενου",
     "account": "Λογαριασμός",
     "budget": "Προϋπολογισμός",
+    "investmentAccount": "Επενδυτικός λογαριασμός",
     "selectTarget": "Επιλέξτε…",
     "balanceThreshold": "Όριο υπολοίπου",
     "usageThreshold": "Όριο χρήσης (%)",
+    "returnThreshold": "Όριο απόδοσης (%)",
+    "returnThresholdHint": "Ειδοποιεί όταν η συνολική απόδοση του χαρτοφυλακίου πέσει κάτω από αυτό το ποσοστό — χρησιμοποιήστε αρνητικό αριθμό για ειδοποίηση μόνο σε ζημία.",
     "reportType": "Τύπος αναφοράς",
     "selectReport": "Επιλέξτε αναφορά",
     "schedule": "Πρόγραμμα",
@@ -146,7 +153,9 @@
     "typeOptions": {
       "balance_below": "Υπόλοιπο κάτω από όριο",
       "budget_percent": "Ποσοστό χρήσης προϋπολογισμού",
-      "scheduled_report": "Προγραμματισμένη αναφορά"
+      "scheduled_report": "Προγραμματισμένη αναφορά",
+      "investment_return_below": "Απόδοση χαρτοφυλακίου κάτω από όριο",
+      "investment_scheduled": "Προγραμματισμένη σύνοψη χαρτοφυλακίου"
     },
     "reportTypes": {
       "spending": "Έξοδα",

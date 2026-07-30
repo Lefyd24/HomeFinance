@@ -74,7 +74,9 @@
     "typeLabels": {
       "balance_below": "Balance",
       "budget_percent": "Budget",
-      "scheduled_report": "Report"
+      "scheduled_report": "Report",
+      "investment_return_below": "Portfolio return",
+      "investment_scheduled": "Portfolio summary"
     },
     "statusActive": "Active",
     "statusInactive": "Inactive",
@@ -86,7 +88,9 @@
       "budgetPercent": "{{target}} at {{percent}}%",
       "scheduleEveryNDays": "every {{count}} days",
       "scheduleFallback": "scheduled",
-      "scheduledReport": "{{report}}, {{schedule}}"
+      "scheduledReport": "{{report}}, {{schedule}}",
+      "investmentReturnBelow": "{{target}} return below {{percent}}%",
+      "investmentScheduled": "{{target}}, {{schedule}}"
     }
   },
   "deleteConfirm": {
@@ -129,9 +133,12 @@
     "namePlaceholder": "e.g. Checking account low balance",
     "account": "Account",
     "budget": "Budget",
+    "investmentAccount": "Investment account",
     "selectTarget": "Select…",
     "balanceThreshold": "Balance threshold",
     "usageThreshold": "Usage threshold (%)",
+    "returnThreshold": "Return threshold (%)",
+    "returnThresholdHint": "Alerts when the portfolio's overall return falls below this percentage — use a negative number to only alert on a loss.",
     "reportType": "Report type",
     "selectReport": "Select report",
     "schedule": "Schedule",
@@ -146,7 +153,9 @@
     "typeOptions": {
       "balance_below": "Balance below threshold",
       "budget_percent": "Budget usage percent",
-      "scheduled_report": "Scheduled report"
+      "scheduled_report": "Scheduled report",
+      "investment_return_below": "Portfolio return below threshold",
+      "investment_scheduled": "Scheduled portfolio summary"
     },
     "reportTypes": {
       "spending": "Spending",

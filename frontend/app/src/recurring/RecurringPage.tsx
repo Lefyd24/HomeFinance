@@ -70,6 +70,7 @@ import {
   dueLabel,
   isOverdue,
 } from './recurringLabels'
+import { Badge } from '@/components/ui/badge'
 
 type View = 'all' | 'expense' | 'income' | 'paused'
 
@@ -292,10 +293,10 @@ export function RecurringPage() {
                     >
                       {section.label}
                     </h2>
-                    <span className="text-xs tabular-nums text-muted-foreground">
+                    <Badge variant="secondary">
                       {section.items.length}
-                    </span>
-                    <span className="h-px flex-1 bg-border/70" />
+                    </Badge>
+                    <span className="h-px flex-1" />
                     <span className="text-xs font-semibold tabular-nums text-foreground">
                       {formatCurrency(section.items.reduce((sum, e) => sum + e.amount, 0))}
                     </span>

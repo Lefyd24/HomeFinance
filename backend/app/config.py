@@ -117,6 +117,12 @@ class Settings(BaseSettings):
     # Frontend static files (served by this app so Tailscale Funnel can expose one origin)
     FRONTEND_DIR: str = Field(default_factory=_default_frontend_dir)
 
+    # Investment account syncing (Freedom24 and future brokers)
+    INVESTMENT_SYNC_ENABLED: bool = True
+    INVESTMENT_SYNC_INTERVAL_HOURS: int = 4
+    # Manual "Sync now" cooldown per account, to avoid hammering broker APIs.
+    INVESTMENT_MANUAL_SYNC_COOLDOWN_SECONDS: int = 60
+
     # Notifications
     NOTIFICATIONS_ENABLED: bool = True
     NOTIFICATION_ENCRYPTION_KEY: str | None = None

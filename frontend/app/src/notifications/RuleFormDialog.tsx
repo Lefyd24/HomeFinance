@@ -12,6 +12,7 @@ import { Dialog } from '../ui/Dialog'
 import { Select } from '../ui/Select'
 import { useAccounts } from '../accounts/useAccounts'
 import { useBudgets } from '../budgets/useBudgets'
+import { useInvestmentAccounts } from '../investments/useInvestments'
 import {
   useCreateNotificationRule,
   useUpdateNotificationRule,
@@ -20,7 +21,13 @@ import type { NotificationRule, NotificationRuleType } from './notificationsApi'
 
 function createRuleSchema(t: (key: string) => string) {
   return z.object({
-    type: z.enum(['balance_below', 'budget_percent', 'scheduled_report']),
+    type: z.enum([
+      'balance_below',
+      'budget_percent',
+      'scheduled_report',
+      'investment_return_below',
+      'investment_scheduled',
+    ]),
     name: z.string().min(1, t('ruleForm.validation.nameRequired')).max(200),
     target_id: z.string().optional(),
     threshold: z.string().optional(),
@@ -80,12 +87,15 @@ export function RuleFormDialog({ open, onOpenChange, rule }: RuleFormDialogProps
   const updateRule = useUpdateNotificationRule()
   const { data: accounts = [] } = useAccounts()
   const { data: budgets = [] } = useBudgets(false)
+  const { data: investmentAccounts = [] } = useInvestmentAccounts()
 
   const typeOptions = useMemo(
     () => [
       { value: 'balance_below', label: t('ruleForm.typeOptions.balance_below') },
       { value: 'budget_percent', label: t('ruleForm.typeOptions.budget_percent') },
       { value: 'scheduled_report', label: t('ruleForm.typeOptions.scheduled_report') },
+      { value: 'investment_return_below', label: t('ruleForm.typeOptions.investment_return_below') },
+      { value: 'investment_scheduled', label: t('ruleForm.typeOptions.investment_scheduled') },
     ],
     [t],
   )
@@ -130,6 +140,10 @@ export function RuleFormDialog({ open, onOpenChange, rule }: RuleFormDialogProps
 
   const accountOptions = accounts.map((a) => ({ value: String(a.id), label: a.name }))
   const budgetOptions = budgets.map((b) => ({ value: String(b.id), label: b.name }))
+  const investmentAccountOptions = investmentAccounts.map((a) => ({
+    value: String(a.id),
+    label: a.name,
+  }))
 
   const onSubmit = handleSubmit(async (data) => {
     const channels = [data.channel_email && 'email', data.channel_push && 'push']
@@ -162,8 +176,34 @@ export function RuleFormDialog({ open, onOpenChange, rule }: RuleFormDialogProps
       payload.threshold = threshold
     }
 
+    if (data.type === 'investment_return_below') {
+      if (!data.target_id) {
+        toast.error(t('ruleForm.validation.selectTarget'))
+        return
+      }
+      const threshold = Number.parseFloat(data.threshold ?? '')
+      if (Number.isNaN(threshold)) {
+        toast.error(t('ruleForm.validation.validThreshold'))
+        return
+      }
+      payload.target_id = Number(data.target_id)
+      payload.threshold = threshold
+    }
+
     if (data.type === 'scheduled_report') {
       payload.report_type = data.report_type
+      payload.schedule_kind = data.schedule_kind
+      if (data.schedule_kind === 'every_n_days') {
+        payload.schedule_value = data.schedule_value
+      }
+    }
+
+    if (data.type === 'investment_scheduled') {
+      if (!data.target_id) {
+        toast.error(t('ruleForm.validation.selectTarget'))
+        return
+      }
+      payload.target_id = Number(data.target_id)
       payload.schedule_kind = data.schedule_kind
       if (data.schedule_kind === 'every_n_days') {
         payload.schedule_value = data.schedule_value
@@ -219,10 +259,16 @@ export function RuleFormDialog({ open, onOpenChange, rule }: RuleFormDialogProps
           {errors.name && <p className="text-destructive text-sm">{errors.name.message}</p>}
         </div>
 
-        {(type === 'balance_below' || type === 'budget_percent') && (
+        {(type === 'balance_below' || type === 'budget_percent' || type === 'investment_return_below') && (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="flex flex-col gap-2">
-              <Label>{type === 'balance_below' ? t('ruleForm.account') : t('ruleForm.budget')}</Label>
+              <Label>
+                {type === 'balance_below'
+                  ? t('ruleForm.account')
+                  : type === 'investment_return_below'
+                    ? t('ruleForm.investmentAccount')
+                    : t('ruleForm.budget')}
+              </Label>
               <Controller
                 control={control}
                 name="target_id"
@@ -230,7 +276,13 @@ export function RuleFormDialog({ open, onOpenChange, rule }: RuleFormDialogProps
                   <Select
                     value={field.value}
                     onValueChange={field.onChange}
-                    options={type === 'balance_below' ? accountOptions : budgetOptions}
+                    options={
+                      type === 'balance_below'
+                        ? accountOptions
+                        : type === 'investment_return_below'
+                          ? investmentAccountOptions
+                          : budgetOptions
+                    }
                     placeholder={t('ruleForm.selectTarget')}
                   />
                 )}
@@ -240,15 +292,67 @@ export function RuleFormDialog({ open, onOpenChange, rule }: RuleFormDialogProps
               <Label htmlFor="rule-threshold">
                 {type === 'balance_below'
                   ? t('ruleForm.balanceThreshold')
-                  : t('ruleForm.usageThreshold')}
+                  : type === 'investment_return_below'
+                    ? t('ruleForm.returnThreshold')
+                    : t('ruleForm.usageThreshold')}
               </Label>
               <Input
                 id="rule-threshold"
                 type="number"
                 step="0.01"
-                min="0"
                 {...register('threshold')}
               />
+              {type === 'investment_return_below' && (
+                <p className="text-xs text-muted-foreground">{t('ruleForm.returnThresholdHint')}</p>
+              )}
+            </div>
+          </div>
+        )}
+
+        {type === 'investment_scheduled' && (
+          <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-2">
+              <Label>{t('ruleForm.investmentAccount')}</Label>
+              <Controller
+                control={control}
+                name="target_id"
+                render={({ field }) => (
+                  <Select
+                    value={field.value}
+                    onValueChange={field.onChange}
+                    options={investmentAccountOptions}
+                    placeholder={t('ruleForm.selectTarget')}
+                  />
+                )}
+              />
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="flex flex-col gap-2">
+                <Label>{t('ruleForm.schedule')}</Label>
+                <Controller
+                  control={control}
+                  name="schedule_kind"
+                  render={({ field }) => (
+                    <Select
+                      value={field.value}
+                      onValueChange={field.onChange}
+                      options={scheduleKindOptions}
+                      placeholder={t('ruleForm.selectSchedule')}
+                    />
+                  )}
+                />
+              </div>
+              {scheduleKind === 'every_n_days' && (
+                <div className="flex flex-col gap-2">
+                  <Label htmlFor="rule-schedule-value-investment">{t('ruleForm.everyDays')}</Label>
+                  <Input
+                    id="rule-schedule-value-investment"
+                    type="number"
+                    min={1}
+                    {...register('schedule_value')}
+                  />
+                </div>
+              )}
             </div>
           </div>
         )}

@@ -12,6 +12,9 @@ export interface Account {
   description: string | null
   icon: string | null
   is_active: boolean
+  /** Set only for accounts synced from an external brokerage (e.g. "freedom24"). */
+  provider: string | null
+  last_synced_at: string | null
   created_at: string
   updated_at: string
 }

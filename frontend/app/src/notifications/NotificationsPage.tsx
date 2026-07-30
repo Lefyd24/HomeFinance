@@ -41,6 +41,7 @@ import { useConfirm } from '../ui/useConfirm'
 import { formatCurrency } from '../lib/format'
 import { useAccounts } from '../accounts/useAccounts'
 import { useBudgets } from '../budgets/useBudgets'
+import { useInvestmentAccounts } from '../investments/useInvestments'
 import { isPushSupported, isPushSubscribed, subscribePush, unsubscribePush } from './pushNotifications'
 import * as notificationsApi from './notificationsApi'
 import {
@@ -57,6 +58,7 @@ function describeRule(
   rule: NotificationRule,
   accountName: (id: number) => string,
   budgetName: (id: number) => string,
+  investmentAccountName: (id: number) => string,
   t: TFunction<'notifications'>,
 ): string {
   if (rule.type === 'balance_below') {
@@ -89,6 +91,27 @@ function describeRule(
       : t('rules.typeLabels.scheduled_report')
     return t('rules.describe.scheduledReport', { report: reportLabel, schedule })
   }
+  if (rule.type === 'investment_return_below') {
+    const target =
+      rule.target_id != null
+        ? investmentAccountName(rule.target_id)
+        : t('rules.describe.accountFallback', { id: rule.target_id })
+    return t('rules.describe.investmentReturnBelow', {
+      target,
+      percent: rule.threshold ?? 0,
+    })
+  }
+  if (rule.type === 'investment_scheduled') {
+    const target =
+      rule.target_id != null
+        ? investmentAccountName(rule.target_id)
+        : t('rules.describe.accountFallback', { id: rule.target_id })
+    const schedule =
+      rule.schedule_kind === 'every_n_days'
+        ? t('rules.describe.scheduleEveryNDays', { count: rule.schedule_value || 7 })
+        : rule.schedule_kind || t('rules.describe.scheduleFallback')
+    return t('rules.describe.investmentScheduled', { target, schedule })
+  }
   return ''
 }
 
@@ -109,6 +132,7 @@ export function NotificationsPage() {
   const { data: rules = [], isLoading: rulesLoading } = useNotificationRules()
   const { data: accounts = [] } = useAccounts()
   const { data: budgets = [] } = useBudgets(false)
+  const { data: investmentAccounts = [] } = useInvestmentAccounts()
   const { data: pushStatus, refetch: refetchPushStatus } = usePushStatus()
   const updateSettings = useUpdateNotificationSettings()
   const deleteRule = useDeleteNotificationRule()
@@ -158,6 +182,8 @@ export function NotificationsPage() {
 
   const accountName = (id: number) => accounts.find((a) => a.id === id)?.name ?? `Account #${id}`
   const budgetName = (id: number) => budgets.find((b) => b.id === id)?.name ?? `Budget #${id}`
+  const investmentAccountName = (id: number) =>
+    investmentAccounts.find((a) => a.id === id)?.name ?? `Account #${id}`
 
   async function handleToggleChannel(channel: 'email_enabled' | 'push_enabled', value: boolean) {
     try {
@@ -563,7 +589,7 @@ export function NotificationsPage() {
                       </Badge>
                     </TableCell>
                     <TableCell className="whitespace-normal text-sm text-muted-foreground">
-                      {describeRule(rule, accountName, budgetName, t)}
+                      {describeRule(rule, accountName, budgetName, investmentAccountName, t)}
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">{rule.channels || 'email'}</TableCell>
                     <TableCell>

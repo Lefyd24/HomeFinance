@@ -8,6 +8,7 @@
     "dashboard": "Dashboard",
     "transactions": "Transactions",
     "accounts": "Accounts",
+    "investments": "Investments",
     "budgets": "Budgets",
     "notifications": "Notifications",
     "categories": "Categories",
@@ -19,7 +20,10 @@
     "analysis": "Analysis",
     "askAi": "Ask AI",
     "documents": "Documents",
-    "import": "Import"
+    "import": "Import",
+    "marketNews": "Market news",
+    "tickerSearch": "Ticker search",
+    "companyResearch": "Company research"
   },
   "groups": {
     "overview": "Overview",

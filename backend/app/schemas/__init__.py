@@ -81,6 +81,19 @@ from app.schemas.invite import (
     UserActiveUpdate,
     UserAdminRead,
 )
+from app.schemas.investment import (
+    CompanyProfileResponse,
+    InvestmentAccountCreate,
+    InvestmentAccountResponse,
+    InvestmentCredentialUpdate,
+    InvestmentSyncResult,
+    InvestmentTransactionResponse,
+    NewsItemResponse,
+    NewsPageResponse,
+    PortfolioPositionResponse,
+    PortfolioSnapshotResponse,
+    SymbolSearchResult,
+)
 from app.schemas.notification import (
     NotificationLogRead,
     NotificationRuleCreate,
@@ -176,6 +189,18 @@ __all__ = [
     "InviteCodeRead",
     "UserAdminRead",
     "UserActiveUpdate",
+    # Investment schemas
+    "InvestmentAccountCreate",
+    "InvestmentAccountResponse",
+    "InvestmentCredentialUpdate",
+    "InvestmentSyncResult",
+    "InvestmentTransactionResponse",
+    "NewsItemResponse",
+    "NewsPageResponse",
+    "CompanyProfileResponse",
+    "PortfolioPositionResponse",
+    "PortfolioSnapshotResponse",
+    "SymbolSearchResult",
     # Dashboard schemas
     "DashboardSummary",
     "DashboardRecentTransaction",

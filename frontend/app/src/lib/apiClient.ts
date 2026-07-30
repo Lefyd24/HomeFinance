@@ -15,6 +15,20 @@ export function getApiBaseUrl(): string {
   return '/api'
 }
 
+/** Thrown by `apiFetch` so callers can branch on HTTP status (e.g. skip retries on 404). */
+export class ApiError extends Error {
+  status: number
+  detail: string | null
+
+  constructor(status: number, statusText: string, detail?: string | null) {
+    const message = detail?.trim() || `API request failed: ${status} ${statusText}`
+    super(message)
+    this.name = 'ApiError'
+    this.status = status
+    this.detail = detail ?? null
+  }
+}
+
 export async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
   const token = window.localStorage.getItem('token')
   const response = await fetch(`${getApiBaseUrl()}${path}`, {
@@ -27,7 +41,14 @@ export async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> 
   })
 
   if (!response.ok) {
-    throw new Error(`API request failed: ${response.status} ${response.statusText}`)
+    let detail: string | null = null
+    try {
+      const body = (await response.json()) as { detail?: unknown }
+      if (typeof body?.detail === 'string') detail = body.detail
+    } catch {
+      // Non-JSON error bodies are fine — fall back to status text.
+    }
+    throw new ApiError(response.status, response.statusText, detail)
   }
 
   if (response.status === 204) {

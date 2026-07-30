@@ -19,6 +19,7 @@ from app.routers import (
     documents,
     goals,
     import_wizard,
+    investments,
     notifications,
     recurring_expenses,
     reports,
@@ -187,6 +188,7 @@ app.include_router(goals.router, prefix="/api")
 app.include_router(debts.router, prefix="/api")
 app.include_router(advisor.router, prefix="/api")
 app.include_router(recurring_expenses.router, prefix="/api")
+app.include_router(investments.router, prefix="/api")
 app.include_router(documents.router, prefix="/api")
 app.include_router(notifications.router, prefix="/api")
 app.include_router(ai_chat.router, prefix="/api")

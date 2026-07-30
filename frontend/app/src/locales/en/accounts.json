@@ -17,6 +17,7 @@
   },
   "card": {
     "inactive": "Inactive",
+    "synced": "Synced",
     "outstanding": "Outstanding",
     "balance": "Balance",
     "sharePct": "{{percent}}% held",
@@ -62,6 +63,7 @@
     "iconDefault": "Default",
     "descriptionLabel": "Description",
     "descriptionPlaceholder": "Optional notes about this account",
+    "providerSyncedNote": "Balance, type and currency are managed automatically by the {{provider}} sync — edit them from the Investments page.",
     "saving": "Saving…",
     "saveChanges": "Save changes",
     "createAccount": "Create account",

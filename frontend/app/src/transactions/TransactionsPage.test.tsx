@@ -55,6 +55,8 @@ describe('TransactionsPage', () => {
         description: null,
         icon: null,
         is_active: true,
+        provider: null,
+        last_synced_at: null,
         created_at: '',
         updated_at: '',
       },

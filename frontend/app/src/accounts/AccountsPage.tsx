@@ -323,7 +323,7 @@ function AccountCard({
       <div className="flex flex-1 flex-col gap-2 p-3.5">
         <div className="flex items-center gap-2.5">
           <AccountIcon
-            icon={account.icon}
+            icon={account.icon ?? (account.provider === 'freedom24' ? 'freedom24.svg' : null)}
             type={account.type}
             className="size-10 rounded-lg shadow-[inset_0_1px_0_0_rgba(255,255,255,0.7)] ring-1 ring-white/45 dark:ring-white/12"
             imageClassName="size-7"
@@ -338,6 +338,12 @@ function AccountCard({
               <span className="text-[0.65rem] font-medium tabular-nums text-muted-foreground">
                 {account.currency}
               </span>
+              {account.provider && (
+                <>
+                  <span className="text-[0.65rem] text-muted-foreground/80">·</span>
+                  <span className="text-[0.65rem] font-medium text-flow-move">{t('card.synced')}</span>
+                </>
+              )}
               {!account.is_active && (
                 <>
                   <span className="text-[0.65rem] text-muted-foreground/80">·</span>

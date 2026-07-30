@@ -17,6 +17,10 @@ import { RecurringPage } from './recurring/RecurringPage'
 import { ReportsPage } from './reports/ReportsPage'
 import { ImportWizardPage } from './import/ImportWizardPage'
 import { DocumentsPage } from './documents/DocumentsPage'
+import { InvestmentsPage } from './investments/InvestmentsPage'
+import { MarketNewsPage } from './investments/MarketNewsPage'
+import { TickerSearchPage } from './investments/TickerSearchPage'
+import { CompanyResearchPage } from './investments/CompanyResearchPage'
 import { AdvisorPage } from './advisor/AdvisorPage'
 import { AiAdvisorPage } from './ai-advisor/AiAdvisorPage'
 import { NotificationsPage } from './notifications/NotificationsPage'
@@ -50,6 +54,10 @@ function App() {
           <Route path="/reports" element={<ReportsPage />} />
           <Route path="/import" element={<ImportWizardPage />} />
           <Route path="/documents" element={<DocumentsPage />} />
+          <Route path="/investments" element={<InvestmentsPage />} />
+          <Route path="/investments/news" element={<MarketNewsPage />} />
+          <Route path="/investments/search" element={<TickerSearchPage />} />
+          <Route path="/investments/research" element={<CompanyResearchPage />} />
           <Route path="/advisor" element={<AdvisorPage />} />
           <Route path="/ai-advisor" element={<AiAdvisorPage />} />
           <Route path="/notifications" element={<NotificationsPage />} />

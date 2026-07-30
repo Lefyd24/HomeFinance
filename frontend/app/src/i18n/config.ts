@@ -15,6 +15,7 @@ import goalsEn from '../locales/en/goals.json'
 import recurringEn from '../locales/en/recurring.json'
 import reportsEn from '../locales/en/reports.json'
 import documentsEn from '../locales/en/documents.json'
+import investmentsEn from '../locales/en/investments.json'
 import importEn from '../locales/en/import.json'
 import notificationsEn from '../locales/en/notifications.json'
 import advisorEn from '../locales/en/advisor.json'
@@ -34,6 +35,7 @@ import goalsEl from '../locales/el/goals.json'
 import recurringEl from '../locales/el/recurring.json'
 import reportsEl from '../locales/el/reports.json'
 import documentsEl from '../locales/el/documents.json'
+import investmentsEl from '../locales/el/investments.json'
 import importEl from '../locales/el/import.json'
 import notificationsEl from '../locales/el/notifications.json'
 import advisorEl from '../locales/el/advisor.json'
@@ -57,6 +59,7 @@ export const resources = {
     recurring: recurringEn,
     reports: reportsEn,
     documents: documentsEn,
+    investments: investmentsEn,
     import: importEn,
     notifications: notificationsEn,
     advisor: advisorEn,
@@ -77,6 +80,7 @@ export const resources = {
     recurring: recurringEl,
     reports: reportsEl,
     documents: documentsEl,
+    investments: investmentsEl,
     import: importEl,
     notifications: notificationsEl,
     advisor: advisorEl,
