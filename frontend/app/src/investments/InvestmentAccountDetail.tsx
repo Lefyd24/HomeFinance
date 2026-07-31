@@ -234,13 +234,16 @@ export function InvestmentAccountDetail({ account }: { account: InvestmentAccoun
   }, [history, theme, money, t])
 
   return (
-    <section className="flex flex-col gap-5 rounded-xl border border-border bg-card p-3.5 sm:p-5">
+    <section className="flex flex-col gap-3.5 rounded-xl border border-border bg-card p-2.5 sm:gap-5 sm:p-5">
       <header className="flex flex-wrap items-start justify-between gap-3">
         <div className="flex flex-col gap-1">
-          <h3 className="font-heading text-lg font-semibold tracking-tight">{account.name}</h3>
-          <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+          <div className="flex items-center gap-2">
+            <h3 className="font-heading text-base font-semibold tracking-tight sm:text-lg">{account.name}</h3>
             <SyncStatusBadge status={account.sync_status} />
-            <span>
+          </div>
+          <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+            
+            <span className="hidden sm:inline">
               {account.last_synced_at
                 ? t('detail.lastSynced', {
                     date: formatDate(account.last_synced_at, {
@@ -271,7 +274,7 @@ export function InvestmentAccountDetail({ account }: { account: InvestmentAccoun
 
       {/* The five figures that answer "how is this account doing", in the order
           you would ask them. Total value leads at a larger size. */}
-      <div className="grid grid-cols-2 gap-x-4 gap-y-4 rounded-lg border border-border bg-muted/30 px-3.5 py-3.5 sm:grid-cols-3 lg:grid-cols-5">
+      <div className="grid grid-cols-2 gap-x-3 gap-y-3 rounded-lg border border-border bg-muted/30 px-2.5 py-2.5 sm:gap-x-4 sm:gap-y-4 sm:px-3.5 sm:py-3.5 sm:grid-cols-3 lg:grid-cols-5">
         <Metric
           label={t('detail.summary.totalValue')}
           value={money(account.balance)}
@@ -298,16 +301,16 @@ export function InvestmentAccountDetail({ account }: { account: InvestmentAccoun
         />
       </div>
 
-      <div className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)]">
+      <div className="grid grid-cols-1 gap-3.5 sm:gap-5 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)]">
         <div className="flex flex-col gap-2">
           <SectionTitle>{t('detail.allocationTitle')}</SectionTitle>
           {allocationOption ? (
             // The ring's hole is the natural home for the figure the ring adds
             // up to, rather than repeating it as a caption underneath.
-            <div className="relative">
+            <div className="relative h-[180px] sm:h-[240px]">
               <ReactECharts
                 option={allocationOption}
-                style={{ height: 240 }}
+                style={{ height: '100%' }}
                 opts={{ renderer: 'svg' }}
                 notMerge
               />
@@ -355,7 +358,7 @@ export function InvestmentAccountDetail({ account }: { account: InvestmentAccoun
           {historyOption ? (
             <ReactECharts
               option={historyOption}
-              style={{ height: 240 }}
+              className="h-[180px] sm:h-[240px]"
               opts={{ renderer: 'svg' }}
               notMerge
             />

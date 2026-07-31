@@ -287,7 +287,7 @@ function PortfolioHero({
   const sparkColor = (totals.pnl ?? 0) >= 0 ? 'var(--flow-in)' : 'var(--flow-out)'
 
   return (
-    <section className="glass-panel relative overflow-hidden rounded-xl border border-border">
+    <section className="glass-panel relative overflow-hidden rounded-xl border border-primary/20 bg-primary/[0.04]">
       <div
         aria-hidden="true"
         className="pointer-events-none absolute -end-16 -top-20 size-56 rounded-full bg-primary/10 blur-3xl"
@@ -297,9 +297,9 @@ function PortfolioHero({
         className="pointer-events-none absolute -bottom-24 -start-10 size-52 rounded-full bg-secondary/12 blur-3xl"
       />
 
-      <div className="relative grid gap-4 p-4 sm:grid-cols-[minmax(0,1fr)_minmax(11rem,38%)] sm:items-end sm:gap-6 sm:p-5">
-        <div className="flex flex-col gap-4">
-          <div className="flex flex-wrap items-end gap-x-6 gap-y-3 sm:gap-x-8">
+      <div className="relative grid gap-3 p-3 sm:grid-cols-[minmax(0,1fr)_minmax(11rem,38%)] sm:items-end sm:gap-6 sm:p-5">
+        <div className="flex flex-col gap-3 sm:gap-4">
+          <div className="flex flex-wrap items-end gap-x-5 gap-y-2 sm:gap-x-8 sm:gap-y-3">
             <Metric
               label={t('summary.totalValue')}
               value={formatCurrency(totals.value, totals.currency)}
@@ -346,7 +346,7 @@ function PortfolioHero({
             />
           </div>
 
-          <div className="flex flex-col gap-1.5">
+          <div className="hidden flex-col gap-1.5 sm:flex">
             <div className="flex items-center justify-between gap-2 text-[0.65rem] text-muted-foreground">
               <span className="font-semibold uppercase tracking-[0.14em]">{t('summary.allocation')}</span>
               <span className="tabular-nums">
@@ -380,9 +380,26 @@ function PortfolioHero({
               </span>
             </div>
           </div>
+
+          {/* Allocation split stays visible on mobile as plain numbers — the bar
+              and per-currency breakdown are desktop-only, restored above. */}
+          <div className="flex items-center gap-3 text-xs text-muted-foreground sm:hidden">
+            <span>
+              {t('card.invested')}{' '}
+              <span className="font-medium tabular-nums text-foreground">
+                {formatCurrency(totals.invested, totals.currency)}
+              </span>
+            </span>
+            <span>
+              {t('card.cash')}{' '}
+              <span className="font-medium tabular-nums text-foreground">
+                {formatCurrency(totals.cash, totals.currency)}
+              </span>
+            </span>
+          </div>
         </div>
 
-        <div className="flex min-w-0 flex-col gap-1.5">
+        <div className="hidden min-w-0 flex-col gap-1.5 sm:flex">
           <span className="text-[0.625rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
             {t('summary.trend')}
           </span>
@@ -408,42 +425,62 @@ function MarketToolsNav() {
   return (
     <nav
       aria-label={t('page.marketTools')}
-      className="glass-panel relative flex w-full shrink-0 flex-col overflow-hidden rounded-xl border border-border p-2"
+      className="relative order-first w-full shrink-0 lg:order-none"
     >
-      <p className="relative px-2.5 pb-1.5 pt-1.5 text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-        {t('page.marketTools')}
-      </p>
-      <ItemGroup className="relative gap-1.5" data-size="sm">
+      {/* Mobile/tablet: three tiles that fit the full page width with no
+          scrolling — a full card list per tool eats too much vertical space on
+          a phone. Desktop (sidebar column) keeps the card list. */}
+      <div className="grid grid-cols-3 gap-2 lg:hidden">
         {MARKET_TOOLS.map((tool) => (
-          <Item
+          <Link
             key={tool.to}
-            asChild
-            variant="outline"
-            size="sm"
-            className="min-h-[3.75rem] glass-panel border-border/70 bg-background/40 py-3 hover:border-primary/35 hover:bg-background/55"
+            to={tool.to}
+            className="glass-panel flex min-w-0 flex-col items-center gap-1.5 rounded-lg border border-border/70 bg-background/40 px-2 py-2.5 text-center hover:border-primary/35"
           >
-            <Link to={tool.to}>
-              <ItemMedia
-                variant="icon"
-                className="size-9 rounded-md bg-primary/10 text-primary ring-1 ring-primary/15"
-              >
-                <HugeiconsIcon icon={tool.icon} strokeWidth={2} />
-              </ItemMedia>
-              <ItemContent>
-                <ItemTitle>{t(tool.titleKey)}</ItemTitle>
-                <ItemDescription>{t(tool.blurbKey)}</ItemDescription>
-              </ItemContent>
-              <ItemActions>
-                <HugeiconsIcon
-                  icon={ArrowRight01Icon}
-                  strokeWidth={2}
-                  className="text-muted-foreground rtl:rotate-180"
-                />
-              </ItemActions>
-            </Link>
-          </Item>
+            <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary ring-1 ring-primary/15">
+              <HugeiconsIcon icon={tool.icon} strokeWidth={2} className="size-4" />
+            </span>
+            <span className="w-full truncate text-xs font-medium">{t(tool.titleKey)}</span>
+          </Link>
         ))}
-      </ItemGroup>
+      </div>
+
+      <div className="glass-panel hidden flex-col overflow-hidden rounded-xl border border-border p-2 lg:flex">
+        <p className="relative px-2.5 pb-1.5 pt-1.5 text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+          {t('page.marketTools')}
+        </p>
+        <ItemGroup className="relative gap-1.5" data-size="sm">
+          {MARKET_TOOLS.map((tool) => (
+            <Item
+              key={tool.to}
+              asChild
+              variant="outline"
+              size="sm"
+              className="min-h-[3.75rem] glass-panel border-border/70 bg-background/40 py-3 hover:border-primary/35 hover:bg-background/55"
+            >
+              <Link to={tool.to}>
+                <ItemMedia
+                  variant="icon"
+                  className="size-9 rounded-md bg-primary/10 text-primary ring-1 ring-primary/15"
+                >
+                  <HugeiconsIcon icon={tool.icon} strokeWidth={2} />
+                </ItemMedia>
+                <ItemContent>
+                  <ItemTitle>{t(tool.titleKey)}</ItemTitle>
+                  <ItemDescription>{t(tool.blurbKey)}</ItemDescription>
+                </ItemContent>
+                <ItemActions>
+                  <HugeiconsIcon
+                    icon={ArrowRight01Icon}
+                    strokeWidth={2}
+                    className="text-muted-foreground rtl:rotate-180"
+                  />
+                </ItemActions>
+              </Link>
+            </Item>
+          ))}
+        </ItemGroup>
+      </div>
     </nav>
   )
 }
@@ -504,15 +541,16 @@ function AccountCard({
             imageClassName="size-6"
           />
           <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-medium leading-tight" title={account.name}>
-              {account.name}
-            </p>
+            <div className="flex items-center gap-2" >
+              <p className="truncate text-sm font-medium leading-tight" title={account.name}>
+                {account.name}
+              </p>
+              <SyncStatusBadge status={account.sync_status} iconOnly />
+            </div>
             <div className="mt-0.5 flex items-center gap-1.5">
               <span className="text-[0.65rem] font-medium capitalize text-muted-foreground">
                 {account.provider}
-              </span>
-              <span className="text-[0.65rem] text-muted-foreground/80">·</span>
-              <SyncStatusBadge status={account.sync_status} />
+              </span>              
             </div>
           </div>
           <div className="pointer-events-auto shrink-0">

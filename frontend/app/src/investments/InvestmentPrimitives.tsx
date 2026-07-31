@@ -1,6 +1,8 @@
 import type { ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { HugeiconsIcon } from '@hugeicons/react'
+import { CheckmarkBadge01Icon } from '@hugeicons/core-free-icons'
 import { Badge } from '@/components/ui/badge'
 import {
   Breadcrumb,
@@ -198,9 +200,38 @@ export function SentimentDot({ sentiment }: { sentiment: NewsSentiment | null })
   )
 }
 
-export function SyncStatusBadge({ status }: { status: InvestmentAccount['sync_status'] }) {
+export function SyncStatusBadge({
+  status,
+  iconOnly = false,
+}: {
+  status: InvestmentAccount['sync_status']
+  /** Always show the glanceable tick, skipping the text badge even at `sm+`. */
+  iconOnly?: boolean
+}) {
   const { t } = useTranslation('investments')
-  if (status === 'ok') return <Badge variant="secondary">{t('status.ok')}</Badge>
+  if (status === 'ok') {
+    return (
+      <>
+        {/* Phones get a glanceable glowing tick instead of spelling out "Synced". */}
+        <span
+          className={cn('inline-flex', iconOnly ? 'inline-flex' : 'sm:hidden')}
+          title={t('status.ok')}
+          aria-label={t('status.ok')}
+        >
+          <HugeiconsIcon
+            icon={CheckmarkBadge01Icon}
+            strokeWidth={2}
+            className="size-4 text-flow-in"
+          />
+        </span>
+        {!iconOnly && (
+          <Badge variant="secondary" className="hidden sm:inline-flex">
+            {t('status.ok')}
+          </Badge>
+        )}
+      </>
+    )
+  }
   if (status === 'error') return <Badge variant="destructive">{t('status.error')}</Badge>
   return <Badge variant="outline">{t('status.pending')}</Badge>
 }

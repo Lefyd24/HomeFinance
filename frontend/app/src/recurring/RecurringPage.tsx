@@ -566,19 +566,19 @@ function RecurringRow({
               />
             )}
           </span>
-          <span className="mt-0.5 block truncate text-xs text-muted-foreground">{meta}</span>
+          <span className="mt-0.5 hidden truncate text-xs text-muted-foreground sm:block">{meta}</span>
         </span>
 
         <span
           className={cn(
-            'hidden w-28 shrink-0 text-end text-xs tabular-nums sm:block',
+            'w-20 shrink-0 text-end text-[0.7rem] leading-tight tabular-nums sm:w-28 sm:text-xs',
             overdue ? 'font-medium text-destructive' : 'text-muted-foreground',
           )}
         >
           {dueText}
         </span>
 
-        <span className="w-24 shrink-0 text-end">
+        <span className="w-20 shrink-0 text-end sm:w-24">
           <Amount
             value={expense.amount}
             flow={paused ? undefined : flow === 'income' ? 'in' : 'out'}
@@ -596,7 +596,7 @@ function RecurringRow({
             size="sm"
             variant="ghost"
             onClick={onPay}
-            className="text-muted-foreground group-hover/row:text-foreground"
+            className="hidden text-muted-foreground group-hover/row:text-foreground sm:inline-flex"
           >
             <HugeiconsIcon
               icon={CheckmarkCircle02Icon}
@@ -606,7 +606,7 @@ function RecurringRow({
             {t('actions.markPaid')}
           </Button>
         ) : (
-          <Button size="sm" variant="outline" onClick={onToggleActive}>
+          <Button size="sm" variant="outline" onClick={onToggleActive} className="hidden sm:inline-flex">
             <HugeiconsIcon icon={PlayIcon} strokeWidth={2} data-icon="inline-start" />
             {t('actions.resume')}
           </Button>

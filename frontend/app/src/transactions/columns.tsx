@@ -70,7 +70,10 @@ export function createColumns(
         )
       },
       enableSorting: true,
-      meta: { cellClassName: 'w-24 ps-4' },
+      meta: {
+        cellClassName: 'hidden sm:table-cell w-24 ps-4',
+        headerClassName: 'hidden sm:table-cell',
+      },
     },
     {
       accessorKey: 'description',
@@ -81,16 +84,16 @@ export function createColumns(
         const { description, notes, type, is_imported, debt_name } = row.original
         const flow = flowOfType(type)
         return (
-          <div className="flex min-w-0 items-center gap-2.5">
+          <div className="flex min-w-0 items-center gap-2 sm:gap-2.5">
             <span
               title={FLOW_LABEL[flow]}
               aria-label={FLOW_LABEL[flow]}
               className={cn(
-                'flex size-7 shrink-0 items-center justify-center rounded-md border',
+                'flex size-6 shrink-0 items-center justify-center rounded-md border sm:size-7',
                 flowSurface[flow],
               )}
             >
-              <HugeiconsIcon icon={FLOW_ICON[flow]} strokeWidth={2} className="size-3.5" />
+              <HugeiconsIcon icon={FLOW_ICON[flow]} strokeWidth={2} className="size-3 sm:size-3.5" />
             </span>
             <div className="flex min-w-0 flex-col gap-0.5">
               <span className="truncate text-sm font-medium">{description}</span>
@@ -109,7 +112,7 @@ export function createColumns(
           </div>
         )
       },
-      meta: { cellClassName: 'max-w-[22rem]' },
+      meta: { cellClassName: 'max-w-[9.5rem] sm:max-w-[22rem]' },
     },
     {
       accessorKey: 'category_name',
@@ -125,6 +128,7 @@ export function createColumns(
         }
         return <CategoryChip name={category_name} color={category_color} />
       },
+      meta: { cellClassName: 'hidden sm:table-cell', headerClassName: 'hidden sm:table-cell' },
     },
     {
       accessorKey: 'account_name',
@@ -146,6 +150,7 @@ export function createColumns(
         }
         return <span className="truncate text-sm text-muted-foreground">{account_name}</span>
       },
+      meta: { cellClassName: 'hidden sm:table-cell', headerClassName: 'hidden sm:table-cell' },
     },
     {
       accessorKey: 'amount',
@@ -153,15 +158,21 @@ export function createColumns(
         <DataTableColumnHeader column={column} title={t('columns.amount')} className="justify-end" />
       ),
       cell: ({ row }) => {
-        const { amount, type } = row.original
+        const { amount, type, date } = row.original
+        const { day } = splitDate(date)
         return (
-          <div className="text-end">
+          <div className="flex flex-col items-end gap-0.5">
             <Amount value={amount} flow={flowOfType(type)} className="text-sm font-semibold" />
+            {/* Mobile only — the date column is hidden below `sm`, so it rides
+                along here instead of disappearing. */}
+            <span className="text-[0.7rem] tabular-nums text-muted-foreground sm:hidden">
+              {day}
+            </span>
           </div>
         )
       },
       enableSorting: true,
-      meta: { cellClassName: 'text-end', headerClassName: 'text-end' },
+      meta: { cellClassName: 'text-end pe-3 sm:pe-4', headerClassName: 'text-end' },
     },
     {
       id: 'actions',
@@ -205,7 +216,10 @@ export function createColumns(
           </DropdownMenu>
         )
       },
-      meta: { cellClassName: 'w-12 pe-3' },
+      meta: {
+        cellClassName: 'hidden w-12 pe-3 sm:table-cell',
+        headerClassName: 'hidden sm:table-cell',
+      },
     },
   ]
 }
