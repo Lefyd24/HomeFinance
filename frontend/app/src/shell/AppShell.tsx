@@ -668,11 +668,19 @@ function MoreSheet({
        * disclosure group (Advice) scrolls it instead of pushing Log out out of the
        * sheet and over the dock — which is exactly what a plain content-height
        * column used to do. min-h-0 is what lets the ScrollArea actually shrink.
+       *
+       * `h-[78dvh]` (not `max-h-*`) is load-bearing: an auto-height flex column
+       * only hugs its content, so `flex-1` on the nav has no free space to grow
+       * into and a max-height alone never gets a chance to clip anything. A
+       * definite height gives the nav a real box to fill and the ScrollArea
+       * viewport (percentage-sized against it) something concrete to resolve
+       * against — otherwise it silently falls back to its content's natural
+       * height and bleeds out past Log out with no scrollbar.
        */}
       <SheetContent
         side="bottom"
         showCloseButton={false}
-        className="flex max-h-[78dvh] flex-col gap-0 overflow-hidden rounded-t-3xl border-border/80 p-0"
+        className="flex h-[78dvh] flex-col gap-0 overflow-hidden rounded-t-3xl border-border/80 p-0"
       >
         <div className="mx-auto mt-3 mb-1 h-1 w-10 shrink-0 rounded-full bg-muted-foreground/25" />
         <SheetHeader className="shrink-0 gap-1 pb-2 pt-1">

@@ -276,9 +276,9 @@ export function TransactionFormDialog({
             <InputGroup className="h-11">
               <InputGroupInput
                 id="amount"
-                type="number"
-                step="0.01"
+                type="text"
                 inputMode="decimal"
+                pattern="[0-9]*[.,]?[0-9]*"
                 placeholder={t('form.fields.amountPlaceholder')}
                 aria-invalid={errors.amount ? true : undefined}
                 className="text-lg font-semibold tabular-nums"
