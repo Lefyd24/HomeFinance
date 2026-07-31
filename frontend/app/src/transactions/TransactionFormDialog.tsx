@@ -36,7 +36,10 @@ import type { Transaction, TransactionType } from './transactionsApi'
 const transactionSchema = z
   .object({
     type: z.enum(['income', 'expense', 'transfer']),
-    amount: z.coerce.number<number>().positive('Amount must be greater than 0'),
+    amount: z.preprocess(
+      (val) => (typeof val === 'string' ? val.replace(',', '.') : val),
+      z.coerce.number<number>().positive('Amount must be greater than 0'),
+    ),
     account_id: z.string().min(1, 'Account is required'),
     destination_account_id: z.string().optional(),
     category_id: z.string().optional(),
