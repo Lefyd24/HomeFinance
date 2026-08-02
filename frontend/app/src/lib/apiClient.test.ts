@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { getApiBaseUrl, apiFetch } from './apiClient'
+import { ApiError, getApiBaseUrl, apiFetch } from './apiClient'
 
 describe('getApiBaseUrl', () => {
   afterEach(() => {
@@ -63,6 +63,73 @@ describe('apiFetch', () => {
     )
 
     await expect(apiFetch('/accounts/1')).resolves.toBeUndefined()
+  })
+
+  it("surfaces the API's own detail message", async () => {
+    // For bank sync the detail IS the instruction to the user (sync cooldowns,
+    // expired consent), so it must not be swallowed in favour of status text.
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: false,
+        status: 429,
+        statusText: 'Too Many Requests',
+        json: () => Promise.resolve({ detail: 'Synced recently. Try again in 12 minute(s).' }),
+      }),
+    )
+
+    await expect(apiFetch('/bank-sync/connections/1/sync')).rejects.toThrow(
+      'Synced recently. Try again in 12 minute(s).',
+    )
+  })
+
+  it('exposes the status code on the thrown ApiError', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: false,
+        status: 409,
+        statusText: 'Conflict',
+        json: () => Promise.resolve({ detail: 'Consent expired' }),
+      }),
+    )
+
+    await expect(apiFetch('/x')).rejects.toBeInstanceOf(ApiError)
+    await expect(apiFetch('/x')).rejects.toMatchObject({ status: 409, name: 'ApiError' })
+  })
+
+  it('joins pydantic validation errors into one message', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: false,
+        status: 422,
+        statusText: 'Unprocessable Entity',
+        json: () =>
+          Promise.resolve({
+            detail: [
+              { loc: ['body', 'aspsp_name'], msg: 'field required' },
+              { loc: ['body', 'aspsp_country'], msg: 'string too short' },
+            ],
+          }),
+      }),
+    )
+
+    await expect(apiFetch('/x')).rejects.toThrow('field required; string too short')
+  })
+
+  it('falls back to status text when the body is not JSON', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: false,
+        status: 502,
+        statusText: 'Bad Gateway',
+        json: () => Promise.reject(new Error('not json')),
+      }),
+    )
+
+    await expect(apiFetch('/x')).rejects.toThrow('API request failed: 502 Bad Gateway')
   })
 
   it('attaches Authorization Bearer when a token is present', async () => {

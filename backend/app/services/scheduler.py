@@ -34,6 +34,10 @@ def evaluate_for_user(db, user, app_settings):
     notifs += ns.due_debts(db, user, today, default_days)
     notifs += ns.balance_breaches(db, user)
     notifs += ns.budget_breaches(db, user, today)
+    if app_settings.BANK_SYNC_ENABLED:
+        notifs += ns.bank_consent_expiring(
+            db, user, today, app_settings.EB_CONSENT_WARN_DAYS
+        )
     for rule in db.query(NotificationRule).filter(
         NotificationRule.user_id == user.id,
         NotificationRule.type == "scheduled_report",
@@ -70,21 +74,61 @@ def run_tick(session_factory, app_settings):
         db.close()
 
 
+def run_bank_sync_tick(session_factory):
+    """Pull new transactions for every active bank connection."""
+    from app.services import bank_sync_service
+
+    bank_sync_service.sync_all_users(session_factory)
+
+
 def start_scheduler(app_settings, session_factory):
+    """Start the background scheduler with whichever jobs are enabled.
+
+    Notifications and bank sync are gated independently — turning notifications
+    off must not silently disable bank sync as well.
+    """
     global _scheduler
-    if not app_settings.NOTIFICATIONS_ENABLED:
-        logger.info("Notifications disabled; scheduler not started")
+
+    jobs = []
+    if app_settings.NOTIFICATIONS_ENABLED:
+        jobs.append(
+            dict(
+                func=lambda: run_tick(session_factory, app_settings),
+                trigger="interval",
+                hours=1,
+                id="notif_tick",
+                next_run_time=datetime.now(),
+            )
+        )
+    else:
+        logger.info("Notifications disabled; notification tick not scheduled")
+
+    if app_settings.BANK_SYNC_ENABLED:
+        jobs.append(
+            dict(
+                func=lambda: run_bank_sync_tick(session_factory),
+                trigger="interval",
+                hours=24,
+                id="bank_sync_tick",
+                # Deliberately NOT next_run_time=now: banks allow as few as 4 AIS
+                # calls per account per day, so syncing on every restart could
+                # exhaust the quota during a deploy loop.
+            )
+        )
+    else:
+        logger.info("Bank sync disabled; sync tick not scheduled")
+
+    if not jobs:
+        logger.info("No scheduled jobs enabled; scheduler not started")
         return
+
     _scheduler = BackgroundScheduler(daemon=True)
-    _scheduler.add_job(
-        lambda: run_tick(session_factory, app_settings),
-        "interval",
-        hours=1,
-        id="notif_tick",
-        next_run_time=datetime.now(),
-    )
+    for job in jobs:
+        func = job.pop("func")
+        trigger = job.pop("trigger")
+        _scheduler.add_job(func, trigger, **job)
     _scheduler.start()
-    logger.info("Notification scheduler started")
+    logger.info("Scheduler started with jobs: %s", [j.id for j in _scheduler.get_jobs()])
 
 
 def shutdown_scheduler():

@@ -30,8 +30,15 @@ class AccountResponse(AccountBase):
     id: int
     user_id: int
     is_active: bool
+    # Bank sync state. A linked account is owned by the bank: its balance is
+    # overwritten on every sync and it rejects manual transaction writes, so the
+    # UI must render it read-only.
+    is_linked: bool = False
+    bank_connection_id: Optional[int] = None
+    last_synced_at: Optional[datetime] = None
+    sync_status: Optional[str] = None
     created_at: datetime
     updated_at: datetime
-    
+
     class Config:
         from_attributes = True

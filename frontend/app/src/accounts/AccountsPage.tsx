@@ -343,6 +343,21 @@ function AccountCard({
                   <span className="text-[0.65rem] text-muted-foreground">Inactive</span>
                 </>
               )}
+              {account.is_linked && (
+                <>
+                  <span className="text-[0.65rem] text-muted-foreground/80">·</span>
+                  <span
+                    className="text-[0.65rem] font-medium text-flow-in"
+                    title={
+                      account.last_synced_at
+                        ? `Last synced ${new Date(account.last_synced_at).toLocaleString()}`
+                        : 'Not synced yet'
+                    }
+                  >
+                    Bank-synced
+                  </span>
+                </>
+              )}
             </div>
           </div>
           <DropdownMenu>
@@ -362,6 +377,14 @@ function AccountCard({
                   <HugeiconsIcon icon={PencilEdit02Icon} strokeWidth={2} />
                   Edit
                 </DropdownMenuItem>
+                {account.is_linked && (
+                  <DropdownMenuItem asChild>
+                    <Link to="/connections">
+                      <HugeiconsIcon icon={ArrowDataTransferHorizontalIcon} strokeWidth={2} />
+                      Manage connection
+                    </Link>
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuItem asChild>
                   <Link to={`/transactions?account_id=${account.id}`}>
                     <HugeiconsIcon icon={ArrowDataTransferHorizontalIcon} strokeWidth={2} />
@@ -371,9 +394,15 @@ function AccountCard({
               </DropdownMenuGroup>
               <DropdownMenuSeparator />
               <DropdownMenuGroup>
-                <DropdownMenuItem variant="destructive" onClick={() => onDelete(account)}>
+                {/* A linked account must be removed from the Connections page
+                    so the bank consent is revoked too; the API rejects it here. */}
+                <DropdownMenuItem
+                  variant="destructive"
+                  disabled={account.is_linked}
+                  onClick={() => onDelete(account)}
+                >
                   <HugeiconsIcon icon={Delete02Icon} strokeWidth={2} />
-                  Delete
+                  {account.is_linked ? 'Delete (disconnect first)' : 'Delete'}
                 </DropdownMenuItem>
               </DropdownMenuGroup>
             </DropdownMenuContent>

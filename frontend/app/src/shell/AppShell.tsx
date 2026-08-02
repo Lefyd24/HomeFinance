@@ -413,6 +413,9 @@ function UserMenu({
             <NavLink to="/notifications">Notifications</NavLink>
           </DropdownMenuItem>
           <DropdownMenuItem asChild>
+            <NavLink to="/connections">Bank connections</NavLink>
+          </DropdownMenuItem>
+          <DropdownMenuItem asChild>
             <NavLink to="/api-keys">API Keys</NavLink>
           </DropdownMenuItem>
           {user?.is_admin && (

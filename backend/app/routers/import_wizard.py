@@ -11,6 +11,7 @@ from app.schemas import (
     ImportConfirmRequest,
     ImportPreviewResponse,
 )
+from app.utils import linked_accounts
 from app.utils.file_parsers import parse_bank_file
 from app.utils.security import get_current_user
 
@@ -275,6 +276,11 @@ def confirm_import(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Account not found"
         )
+
+    # A CSV import into a bank-linked account would double every row against
+    # what the sync already pulled: file rows carry no external_id, so the dedup
+    # index cannot see them as duplicates.
+    linked_accounts.reject_if_linked(account, action="imported into")
 
     imported_count = 0
     imported_transactions = []

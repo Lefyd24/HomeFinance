@@ -12,6 +12,14 @@ export interface Account {
   description: string | null
   icon: string | null
   is_active: boolean
+  /**
+   * Owned by the bank: balance is overwritten on every sync and the backend
+   * rejects manual transactions, balance edits and deletion.
+   */
+  is_linked: boolean
+  bank_connection_id: number | null
+  last_synced_at: string | null
+  sync_status: string | null
   created_at: string
   updated_at: string
 }

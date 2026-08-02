@@ -138,6 +138,41 @@ class Settings(BaseSettings):
     DEEPSEEK_MODEL: str = "deepseek-chat"
     AI_CHAT_MAX_TOOL_ROUNDS: int = 6
 
+    # Bank sync (Enable Banking — PSD2 account information)
+    # Off by default: without a registered application and its private key the
+    # whole feature is inert, and every route/scheduler job checks this flag.
+    BANK_SYNC_ENABLED: bool = False
+    EB_API_BASE: str = "https://api.enablebanking.com"
+    # Application ID from the Enable Banking Control Panel. Becomes the JWT `kid`.
+    EB_APPLICATION_ID: str | None = None
+    # Filesystem path to the RS256 private key (.pem) downloaded once at app
+    # registration. NEVER commit this or bake it into the Docker image — mount
+    # it as a volume. *.pem is gitignored.
+    EB_PRIVATE_KEY_PATH: str | None = None
+    # Where the bank sends the user back after SCA. Must EXACTLY match one of
+    # the redirect URLs registered with Enable Banking, and must be reachable
+    # from the user's browser (i.e. the public Tailscale Funnel origin in prod).
+    EB_REDIRECT_URL: str | None = None
+    # Requested consent lifetime. Banks cap this — Greek ASPSPs typically at 90
+    # days — and will silently grant less, so we store what the bank returns.
+    EB_CONSENT_DAYS: int = 90
+    # Days of history to request on the very first sync of a newly linked account.
+    EB_INITIAL_HISTORY_DAYS: int = 365
+    # Re-fetch this many days before last_sync_at on every sync: banks backdate
+    # bookings, so a strict "since last sync" window silently drops transactions.
+    EB_SYNC_OVERLAP_DAYS: int = 3
+    # Minimum gap between manual syncs of one connection. Banks rate-limit AIS
+    # hard (as low as 4 calls per account per day), so an impatient refresh
+    # button can burn the daily quota and break the scheduled sync.
+    EB_MANUAL_SYNC_COOLDOWN_MINUTES: int = 60
+    # Warn this many days before consent expires. Without the warning, sync goes
+    # silently dark and the register quietly stops updating.
+    EB_CONSENT_WARN_DAYS: int = 7
+    # Absolute base URL of the frontend, used to redirect the browser back after
+    # the bank callback is processed server-side. In local dev this is the Vite
+    # dev server; in production it is the same origin as the API.
+    FRONTEND_BASE_URL: str | None = None
+
     # Admin bootstrap — any EXISTING user whose email is in this list gets
     # is_admin=True at startup (see main.py lifespan). Does not create users.
     ADMIN_EMAILS: list[str] = Field(default_factory=list)
@@ -238,6 +273,37 @@ class Settings(BaseSettings):
                     "DEBUG=true — bypassing NOTIFICATION_ENCRYPTION_KEY validation. %s",
                     message,
                 )
+            else:
+                raise ValueError(message)
+        return self
+
+
+    @model_validator(mode="after")
+    def validate_bank_sync(self) -> Self:
+        logger = logging.getLogger("app")
+        if not self.BANK_SYNC_ENABLED:
+            return self
+
+        missing = [
+            name
+            for name in ("EB_APPLICATION_ID", "EB_PRIVATE_KEY_PATH", "EB_REDIRECT_URL")
+            if not getattr(self, name)
+        ]
+        problems = []
+        if missing:
+            problems.append(f"{', '.join(missing)} not set")
+        elif not Path(self.EB_PRIVATE_KEY_PATH).is_file():
+            problems.append(f"EB_PRIVATE_KEY_PATH does not exist: {self.EB_PRIVATE_KEY_PATH}")
+
+        if problems:
+            message = (
+                f"BANK_SYNC_ENABLED=true but {' and '.join(problems)}. Register an application in the "
+                "Enable Banking Control Panel, download its private key (.pem), and set EB_APPLICATION_ID, "
+                "EB_PRIVATE_KEY_PATH and EB_REDIRECT_URL in .env. EB_REDIRECT_URL must exactly match a "
+                "redirect URL registered with Enable Banking or every bank authorisation will fail."
+            )
+            if self.DEBUG:
+                logger.warning("DEBUG=true — bypassing bank sync validation. %s", message)
             else:
                 raise ValueError(message)
         return self

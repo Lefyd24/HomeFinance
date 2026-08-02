@@ -91,8 +91,22 @@ def update_account(
             status_code=status.HTTP_404_NOT_FOUND, detail="Account not found"
         )
 
-    # Update fields
     update_data = account_data.model_dump(exclude_unset=True)
+
+    # A linked account's balance, currency and type mirror the bank and are
+    # overwritten on every sync — accepting an edit here would silently discard
+    # it. Cosmetic fields (name, description, icon, is_active) stay editable.
+    if account.is_linked:
+        bank_owned = {"balance", "currency", "type"} & update_data.keys()
+        if bank_owned:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=(
+                    f"{', '.join(sorted(bank_owned))} of '{account.name}' is synced from "
+                    "your bank and cannot be edited. Disconnect the bank first."
+                ),
+            )
+
     for field, value in update_data.items():
         setattr(account, field, value)
 
@@ -120,13 +134,25 @@ def delete_account(
             status_code=status.HTTP_404_NOT_FOUND, detail="Account not found"
         )
 
+    if account.is_linked:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=(
+                f"'{account.name}' is linked to a bank. Disconnect it from the "
+                "Connections page instead — that also revokes the bank consent."
+            ),
+        )
+
     # Delete all transactions associated with this account
-    # This includes both regular transactions and transfer destination transactions
+    # This includes both regular transactions and transfer destination transactions.
+    # The user_id filter matters: account ids are global, so without it a crafted
+    # request could delete another user's transactions by id collision.
     deleted_count = (
         db.query(Transaction)
         .filter(
+            Transaction.user_id == current_user.id,
             (Transaction.account_id == account_id)
-            | (Transaction.destination_account_id == account_id)
+            | (Transaction.destination_account_id == account_id),
         )
         .delete(synchronize_session=False)
     )

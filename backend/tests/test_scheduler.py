@@ -8,6 +8,9 @@ class _FakeApp:
     NOTIFICATIONS_ENABLED = True
     SMTP_HOST = None
     VAPID_PRIVATE_KEY = None
+    # Bank sync off by default here; test_bank_sync.py covers the sync path.
+    BANK_SYNC_ENABLED = False
+    EB_CONSENT_WARN_DAYS = 7
 
 
 def test_run_tick_creates_log(db, seed_user, monkeypatch):

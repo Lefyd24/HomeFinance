@@ -4,7 +4,7 @@ from datetime import date, datetime, timedelta
 
 from sqlalchemy import func
 
-from app.models import Account, Budget, Transaction
+from app.models import Account, BankConnection, Budget, Transaction
 from app.models.recurring_expense import RecurringExpense
 from app.models.debt import Debt
 from app.models.notification import NotificationRule, NotificationLog, PushSubscription
@@ -116,6 +116,69 @@ def balance_breaches(db, user):
                 "Balance rule %s not triggered: %s balance=%.2f threshold=%.2f",
                 rule.id, acc.name, balance, threshold,
             )
+    return out
+
+
+def bank_consent_expiring(db, user, today, warn_days):
+    """Warn before (or once) a bank consent lapses.
+
+    Not rule-driven, unlike balance_below: there is nothing for the user to
+    configure, and the failure this prevents is silent. When SCA consent expires
+    the sync simply stops returning data, so without this the register quietly
+    goes stale and looks like it's working.
+    """
+    out = []
+    connections = (
+        db.query(BankConnection)
+        .filter(
+            BankConnection.user_id == user.id,
+            BankConnection.status.in_(("active", "expired")),
+        )
+        .all()
+    )
+
+    for conn in connections:
+        expires = conn.consent_valid_until
+        already_expired = conn.status == "expired" or (
+            expires is not None and expires.date() < today
+        )
+
+        if already_expired:
+            title = f"Bank connection expired: {conn.aspsp_name}"
+            body = (
+                f"Your {conn.aspsp_name} connection has expired and is no longer "
+                "syncing. Reconnect it to resume importing transactions."
+            )
+            # One notice per consent period, not one per day.
+            dedupe_suffix = expires.date().isoformat() if expires else "unknown"
+            dedupe_key = f"bank_consent_expired:{conn.id}:{dedupe_suffix}"
+        elif expires is not None and today <= expires.date() <= today + timedelta(days=warn_days):
+            days_left = (expires.date() - today).days
+            title = f"Bank connection expiring: {conn.aspsp_name}"
+            body = (
+                f"Your {conn.aspsp_name} connection expires in {days_left} day(s). "
+                "Reconnect it to keep transactions syncing."
+            )
+            dedupe_key = f"bank_consent:{conn.id}:{expires.date().isoformat()}"
+        else:
+            continue
+
+        logger.info(
+            "Bank consent notice for connection %s (user %s), expires=%s",
+            conn.id, user.id, expires,
+        )
+        out.append(Notification(
+            dedupe_key=dedupe_key,
+            type="bank_consent_expiring",
+            title=title,
+            body=body,
+            channels=["email"],
+            meta={
+                "aspsp_name": conn.aspsp_name,
+                "connection_id": conn.id,
+                "expires_at": expires.isoformat() if expires else None,
+            }))
+
     return out
 
 

@@ -1,4 +1,5 @@
 from app.models.account import Account
+from app.models.bank_connection import BankConnection
 from app.models.budget import Budget, BudgetCategory
 from app.models.category import Category
 from app.models.debt import Debt, DebtPayment
@@ -19,6 +20,7 @@ from app.models.user_token import UserToken
 
 __all__ = [
     "Account",
+    "BankConnection",
     "Budget",
     "BudgetCategory",
     "Category",

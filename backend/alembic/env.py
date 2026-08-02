@@ -26,6 +26,7 @@ from app.models import (
     DebtPayment,
     RecurringExpense,
     RecurringExpensePayment,
+    BankConnection,
 )
 
 # this is the Alembic Config object, which provides

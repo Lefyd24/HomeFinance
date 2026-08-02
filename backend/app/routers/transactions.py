@@ -5,6 +5,7 @@ from typing import List, Optional
 from datetime import datetime, date
 
 from app.database import get_db
+from app.utils import linked_accounts
 from app.utils.security import get_current_user_authenticated
 from app.schemas import (
     TransactionCreate,
@@ -136,6 +137,16 @@ def create_transaction(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Source account not found"
         )
+
+    # Bank-linked accounts are read-only — their balance is overwritten from the
+    # bank on every sync, so a manual row would be silently contradicted.
+    # Covers the transfer destination too.
+    linked_accounts.reject_linked_account_ids(
+        db,
+        current_user.id,
+        transaction_data.account_id,
+        transaction_data.destination_account_id,
+    )
 
     # Verify destination account for transfers
     if transaction_data.type == "transfer":
@@ -384,6 +395,18 @@ def update_transaction(
             status_code=status.HTTP_404_NOT_FOUND, detail="Transaction not found"
         )
 
+    update_fields = set(transaction_data.model_dump(exclude_unset=True).keys())
+    # Synced rows stay categorisable and annotatable; only the bank's own
+    # figures are frozen.
+    linked_accounts.reject_synced_field_edits(transaction, update_fields)
+    # Manual rows must not be moved onto (or off to) a linked account either.
+    linked_accounts.reject_linked_account_ids(
+        db,
+        current_user.id,
+        transaction_data.account_id,
+        transaction_data.destination_account_id,
+    )
+
     # Verify destination account if changing to transfer
     if transaction_data.type == "transfer" or (
         transaction.type == "transfer" and transaction_data.destination_account_id
@@ -479,6 +502,8 @@ def delete_transaction(
             status_code=status.HTTP_404_NOT_FOUND, detail="Transaction not found"
         )
 
+    linked_accounts.reject_synced_delete(transaction)
+
     # Use service to delete with proper balance handling
     TransactionService.delete_transaction(db, transaction)
 
@@ -501,6 +526,20 @@ def bulk_update_transactions(
     )
 
     update_data = bulk_data.data.model_dump(exclude_unset=True)
+
+    # Same rules as the single-transaction path — bulk must not be a way around
+    # them. Bulk-categorising synced rows is the main use of this endpoint, so
+    # only bank-owned fields are refused.
+    update_fields = set(update_data.keys())
+    for transaction in transactions:
+        linked_accounts.reject_synced_field_edits(transaction, update_fields)
+    linked_accounts.reject_linked_account_ids(
+        db,
+        current_user.id,
+        update_data.get("account_id"),
+        update_data.get("destination_account_id"),
+    )
+
     for transaction in transactions:
         for field, value in update_data.items():
             setattr(transaction, field, value)
@@ -526,6 +565,11 @@ def bulk_delete_transactions(
         )
         .all()
     )
+
+    # Refuse the whole batch rather than silently skipping synced rows — a
+    # partial delete that reports success is worse than a clear rejection.
+    for transaction in transactions:
+        linked_accounts.reject_synced_delete(transaction)
 
     # Use service to delete each with proper balance handling
     for transaction in transactions:

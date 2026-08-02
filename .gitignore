@@ -18,6 +18,11 @@ skills-lock.json
 .lunaos/
 CLAUDE.md
 
+# Secrets — Enable Banking private key, TLS material, anything PEM-encoded
+*.pem
+*.key
+secrets/
+
 # Database files
 *.db
 *.log

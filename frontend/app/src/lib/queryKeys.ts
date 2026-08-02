@@ -10,4 +10,6 @@ export const queryKeys = {
   spendingReport: (params?: object) => ['spendingReport', params] as const,
   cashflowReport: (params?: object) => ['cashflowReport', params] as const,
   netWorthReport: (params?: object) => ['netWorthReport', params] as const,
+  bankConnections: ['bankConnections'] as const,
+  bankInstitutions: (country: string) => ['bankInstitutions', country] as const,
 }

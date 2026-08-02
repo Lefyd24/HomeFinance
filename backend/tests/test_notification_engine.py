@@ -83,6 +83,8 @@ def test_balance_rule_via_evaluate(db, seed_user, monkeypatch):
 
     class App:
         SMTP_HOST = "smtp.test"
+        BANK_SYNC_ENABLED = False
+        EB_CONSENT_WARN_DAYS = 7
 
     result = evaluate_for_user(db, seed_user, App())
     assert result["evaluated"] == 1

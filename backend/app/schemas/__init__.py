@@ -21,6 +21,14 @@ from app.schemas.auth import (
     TokenPayload,
     VerifyEmailRequest,
 )
+from app.schemas.bank_sync import (
+    BankConnectionResponse,
+    ConnectionStartRequest,
+    ConnectionStartResponse,
+    InstitutionResponse,
+    LinkedAccountSummary,
+    SyncResultResponse,
+)
 from app.schemas.budget import (
     BudgetBase,
     BudgetCategoryAllocation,
@@ -123,6 +131,12 @@ __all__ = [
     "AccountBase",
     "AccountCreate",
     "AccountUpdate",
+    "BankConnectionResponse",
+    "ConnectionStartRequest",
+    "ConnectionStartResponse",
+    "InstitutionResponse",
+    "LinkedAccountSummary",
+    "SyncResultResponse",
     "AccountResponse",
     # Category schemas
     "CategoryBase",
