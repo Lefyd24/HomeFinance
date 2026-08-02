@@ -413,6 +413,155 @@ def sync_connection(
     return SyncResultResponse(**result)
 
 
+def _release_account(
+    db: Session, user_id: int, account: Account, delete_account: bool
+) -> tuple[int, int]:
+    """Detach one account from bank sync. Returns (deleted, released) counts.
+
+    Shared by whole-bank disconnect and single-account unlink so the subtle part
+    — clearing `external_id` — cannot drift between the two.
+    """
+    if delete_account:
+        removed = (
+            db.query(Transaction)
+            .filter(
+                Transaction.user_id == user_id,
+                (Transaction.account_id == account.id)
+                | (Transaction.destination_account_id == account.id),
+            )
+            .delete(synchronize_session=False)
+        )
+        db.delete(account)
+        return removed, 0
+
+    # Becomes an ordinary manual account again.
+    account.is_linked = False
+    account.bank_connection_id = None
+    account.external_account_id = None
+    account.sync_status = None
+
+    # Pending entries were never confirmed by the bank and will now never be
+    # reconciled — nothing is left to settle or withdraw them. Keeping them
+    # would strand un-editable "Pending" rows in the ledger forever.
+    removed = (
+        db.query(Transaction)
+        .filter(
+            Transaction.user_id == user_id,
+            Transaction.account_id == account.id,
+            Transaction.is_pending.is_(True),
+        )
+        .delete(synchronize_session=False)
+    )
+
+    # Clearing external_id is what actually makes the history editable: every
+    # guard treats "has an external_id" as "owned by the bank", so leaving it
+    # set would keep these rows frozen on an account the user just asked to be
+    # normal. Safe for a future re-link too — that creates a fresh account, and
+    # dedup keys are prefixed with the account id.
+    released = (
+        db.query(Transaction)
+        .filter(
+            Transaction.user_id == user_id,
+            Transaction.account_id == account.id,
+            Transaction.external_id.isnot(None),
+        )
+        .update(
+            {Transaction.external_id: None, Transaction.is_imported: True},
+            synchronize_session=False,
+        )
+    )
+    return removed, released
+
+
+def _revoke_session(connection: BankConnection) -> None:
+    """Best-effort consent revocation; never blocks local cleanup."""
+    if not connection.session_id_encrypted:
+        return
+    try:
+        eb.delete_session(crypto.decrypt(connection.session_id_encrypted))
+    except crypto.DecryptionError:
+        # Key rotated — nothing to revoke remotely, carry on unlinking locally.
+        logger.warning("Could not decrypt session for connection %s", connection.id)
+
+
+@router.delete("/accounts/{account_id}")
+def unlink_account(
+    account_id: int,
+    delete_account: bool = Query(
+        default=False,
+        description=(
+            "Also delete the account and its transactions. Off by default: "
+            "unlinking keeps the synced history as ordinary manual data."
+        ),
+    ),
+    current_user: User = Depends(get_current_user_authenticated),
+    db: Session = Depends(get_db),
+):
+    """Stop syncing ONE account, leaving the bank's other accounts connected.
+
+    One authorisation usually exposes several accounts, and wanting only some of
+    them in the ledger is normal — a joint account tracked elsewhere, a card the
+    user does not budget. Previously the only remedy was disconnecting the whole
+    bank, which took the wanted accounts down with it.
+    """
+    account = (
+        db.query(Account)
+        .filter(Account.id == account_id, Account.user_id == current_user.id)
+        .first()
+    )
+    if not account:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Account not found"
+        )
+    if not account.is_linked:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="This account is not linked to a bank.",
+        )
+
+    connection = (
+        db.query(BankConnection)
+        .filter(
+            BankConnection.id == account.bank_connection_id,
+            BankConnection.user_id == current_user.id,
+        )
+        .first()
+    )
+
+    removed, released = _release_account(db, current_user.id, account, delete_account)
+
+    # A connection with nothing left to sync is dead weight, and leaving the
+    # consent alive would mean holding bank access we no longer use.
+    connection_removed = False
+    if connection is not None:
+        remaining = (
+            db.query(Account)
+            .filter(
+                Account.bank_connection_id == connection.id,
+                Account.user_id == current_user.id,
+                Account.id != account.id,
+                Account.is_linked.is_(True),
+            )
+            .count()
+        )
+        if remaining == 0:
+            _revoke_session(connection)
+            db.delete(connection)
+            connection_removed = True
+
+    db.commit()
+
+    return {
+        "message": "Account unlinked",
+        "account_deleted": delete_account,
+        "transactions_deleted": removed,
+        "transactions_released": released,
+        # True when that was the bank's last account, so the UI can drop the
+        # whole connection card rather than showing an empty one.
+        "connection_removed": connection_removed,
+    }
+
+
 @router.delete("/connections/{connection_id}")
 def delete_connection(
     connection_id: int,
@@ -429,12 +578,7 @@ def delete_connection(
     """Disconnect a bank, optionally removing the accounts it created."""
     connection = _owned_connection(db, connection_id, current_user)
 
-    if connection.session_id_encrypted:
-        try:
-            eb.delete_session(crypto.decrypt(connection.session_id_encrypted))
-        except crypto.DecryptionError:
-            # Key rotated — nothing to revoke remotely, carry on unlinking locally.
-            logger.warning("Could not decrypt session for connection %s", connection_id)
+    _revoke_session(connection)
 
     accounts = (
         db.query(Account)
@@ -446,25 +590,11 @@ def delete_connection(
     )
 
     removed_transactions = 0
+    released_transactions = 0
     for account in accounts:
-        if delete_accounts:
-            removed_transactions += (
-                db.query(Transaction)
-                .filter(
-                    Transaction.user_id == current_user.id,
-                    (Transaction.account_id == account.id)
-                    | (Transaction.destination_account_id == account.id),
-                )
-                .delete(synchronize_session=False)
-            )
-            db.delete(account)
-        else:
-            # Becomes an ordinary manual account again: editable, and its synced
-            # history is preserved.
-            account.is_linked = False
-            account.bank_connection_id = None
-            account.external_account_id = None
-            account.sync_status = None
+        removed, released = _release_account(db, current_user.id, account, delete_accounts)
+        removed_transactions += removed
+        released_transactions += released
 
     db.delete(connection)
     db.commit()
@@ -474,4 +604,5 @@ def delete_connection(
         "accounts_deleted": len(accounts) if delete_accounts else 0,
         "accounts_unlinked": 0 if delete_accounts else len(accounts),
         "transactions_deleted": removed_transactions,
+        "transactions_released": released_transactions,
     }

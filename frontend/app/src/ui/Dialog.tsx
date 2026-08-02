@@ -13,6 +13,15 @@ import { cn } from '@/lib/utils'
 
 export type DialogTone = 'default' | 'primary' | 'in' | 'out' | 'move' | 'warning' | 'destructive'
 
+/** How wide the modal gets on sm+ screens. Phones always use the full width. */
+export type DialogSize = 'md' | 'lg' | 'xl'
+
+const sizeClass: Record<DialogSize, string> = {
+  md: 'sm:max-w-md',
+  lg: 'sm:max-w-xl',
+  xl: 'sm:max-w-3xl',
+}
+
 const toneBand: Record<DialogTone, string> = {
   default: 'bg-muted/50',
   primary: 'bg-primary/8',
@@ -46,6 +55,8 @@ interface DialogProps {
   tone?: DialogTone
   /** Actions pinned to the bottom; the body scrolls independently. */
   footer?: ReactNode
+  /** Widen for dense forms — the default is comfortable for a few fields. */
+  size?: DialogSize
   className?: string
 }
 
@@ -65,6 +76,7 @@ export function Dialog({
   icon,
   tone = 'default',
   footer,
+  size = 'md',
   className,
 }: DialogProps) {
   return (
@@ -74,7 +86,8 @@ export function Dialog({
           'flex flex-col gap-0 overflow-hidden p-0',
           // Mobile: bottom sheet; sm+: centered modal
           'bottom-0 top-auto start-0 end-0 w-full max-w-none translate-x-0 translate-y-0 rounded-t-2xl rounded-b-none',
-          'sm:bottom-auto sm:top-1/2 sm:start-1/2 sm:end-auto sm:w-full sm:max-w-md sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-xl',
+          'sm:bottom-auto sm:top-1/2 sm:start-1/2 sm:end-auto sm:w-full sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-xl',
+          sizeClass[size],
           'max-h-[90vh] sm:max-h-[85vh]',
           className,
         )}

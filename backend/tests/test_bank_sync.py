@@ -1067,6 +1067,257 @@ def test_callback_does_not_trust_a_user_id_in_the_query_string(client, db, seed_
     assert db.get(BankConnection, conn_id).user_id == seed_user.id
 
 
+# --- disconnecting --------------------------------------------------------
+
+
+def _disconnect(client, connection_id, delete_accounts):
+    return client.delete(
+        f"/api/bank-sync/connections/{connection_id}",
+        params={"delete_accounts": str(delete_accounts).lower()},
+    )
+
+
+def test_keeping_accounts_unlinks_them(client, db, connection, linked_account):
+    response = _disconnect(client, connection.id, False)
+    assert response.status_code == 200
+    assert response.json()["accounts_unlinked"] == 1
+    assert response.json()["accounts_deleted"] == 0
+
+    db.expire_all()
+    account = db.get(Account, linked_account.id)
+    assert account is not None
+    assert account.is_linked is False
+    assert account.bank_connection_id is None
+
+
+def test_kept_transactions_become_editable(client, db, seed_user, connection, linked_account):
+    """The whole point of keeping them: they must behave as ordinary rows.
+
+    Every guard treats "has an external_id" as "owned by the bank", so leaving
+    it set would freeze the history on an account the user asked to be normal.
+    """
+    tx = make_transaction(db, seed_user, linked_account, amount=25.0)
+    tx.external_id = f"{linked_account.id}:REF-9"
+    db.commit()
+    tx_id = tx.id
+
+    assert _disconnect(client, connection.id, False).status_code == 200
+
+    db.expire_all()
+    assert db.get(Transaction, tx_id).external_id is None
+
+    # Previously rejected as a bank-owned field.
+    edit = client.put(f"/api/transactions/{tx_id}", json={"amount": 99.0})
+    assert edit.status_code == 200, edit.json()
+    # And deletion, which used to be refused outright.
+    assert client.delete(f"/api/transactions/{tx_id}").status_code == 200
+
+
+def test_keeping_accounts_preserves_booked_history(
+    client, db, seed_user, connection, linked_account
+):
+    for i in range(3):
+        tx = make_transaction(db, seed_user, linked_account)
+        tx.external_id = f"{linked_account.id}:R{i}"
+    db.commit()
+
+    response = _disconnect(client, connection.id, False)
+    assert response.json()["transactions_released"] == 3
+    assert db.query(Transaction).count() == 3
+
+
+def test_pending_rows_are_dropped_when_keeping(
+    client, db, seed_user, connection, linked_account
+):
+    """Nothing will ever settle or withdraw them once syncing stops."""
+    booked = make_transaction(db, seed_user, linked_account)
+    booked.external_id = f"{linked_account.id}:B1"
+    pending = make_transaction(db, seed_user, linked_account)
+    pending.external_id = f"{linked_account.id}:pending:abc"
+    pending.is_pending = True
+    db.commit()
+    booked_id = booked.id
+
+    response = _disconnect(client, connection.id, False)
+    assert response.json()["transactions_deleted"] == 1
+
+    db.expire_all()
+    remaining = db.query(Transaction).all()
+    assert [t.id for t in remaining] == [booked_id]
+
+
+def test_deleting_removes_accounts_and_transactions(
+    client, db, seed_user, connection, linked_account
+):
+    for i in range(2):
+        tx = make_transaction(db, seed_user, linked_account)
+        tx.external_id = f"{linked_account.id}:D{i}"
+    db.commit()
+    account_id = linked_account.id
+
+    response = _disconnect(client, connection.id, True)
+    assert response.status_code == 200
+    assert response.json()["accounts_deleted"] == 1
+    assert response.json()["transactions_deleted"] == 2
+
+    db.expire_all()
+    assert db.get(Account, account_id) is None
+    assert db.query(Transaction).count() == 0
+
+
+def test_disconnecting_removes_the_connection_either_way(client, db, connection):
+    connection_id = connection.id
+    assert _disconnect(client, connection_id, False).status_code == 200
+    db.expire_all()
+    assert db.get(BankConnection, connection_id) is None
+
+
+def test_deleting_does_not_touch_another_users_data(client, db, connection, linked_account):
+    other = User(email="bystander@example.com", hashed_password="x", is_active=True)
+    db.add(other)
+    db.commit()
+    their_account = make_account(db, other, name="Theirs")
+    their_tx = make_transaction(db, other, their_account)
+    their_tx_id = their_tx.id
+
+    _disconnect(client, connection.id, True)
+
+    db.expire_all()
+    assert db.get(Transaction, their_tx_id) is not None
+
+
+# --- per-account unlink ---------------------------------------------------
+
+
+@pytest.fixture()
+def second_linked_account(db, seed_user, connection):
+    account = Account(
+        user_id=seed_user.id,
+        name="Eurobank Savings",
+        type="savings",
+        currency="EUR",
+        balance=0,
+        bank_connection_id=connection.id,
+        external_account_id="uid-2",
+        is_linked=True,
+        is_active=True,
+    )
+    db.add(account)
+    db.commit()
+    db.refresh(account)
+    return account
+
+
+def _unlink(client, account_id, delete_account=False):
+    return client.delete(
+        f"/api/bank-sync/accounts/{account_id}",
+        params={"delete_account": str(delete_account).lower()},
+    )
+
+
+def test_unlinking_one_account_leaves_the_others_syncing(
+    client, db, connection, linked_account, second_linked_account
+):
+    """The whole point: one authorisation, but only some accounts wanted."""
+    response = _unlink(client, linked_account.id)
+    assert response.status_code == 200
+    assert response.json()["connection_removed"] is False
+
+    db.expire_all()
+    assert db.get(Account, linked_account.id).is_linked is False
+    kept = db.get(Account, second_linked_account.id)
+    assert kept.is_linked is True
+    assert kept.bank_connection_id == connection.id
+    assert db.get(BankConnection, connection.id) is not None
+
+
+def test_unlinked_account_transactions_become_editable(
+    client, db, seed_user, linked_account, second_linked_account
+):
+    tx = make_transaction(db, seed_user, linked_account, amount=25.0)
+    tx.external_id = f"{linked_account.id}:REF-7"
+    db.commit()
+    tx_id = tx.id
+
+    assert _unlink(client, linked_account.id).json()["transactions_released"] == 1
+
+    db.expire_all()
+    assert db.get(Transaction, tx_id).external_id is None
+    assert client.put(f"/api/transactions/{tx_id}", json={"amount": 99.0}).status_code == 200
+
+
+def test_unlinking_does_not_touch_the_other_accounts_transactions(
+    client, db, seed_user, linked_account, second_linked_account
+):
+    keeper = make_transaction(db, seed_user, second_linked_account)
+    keeper.external_id = f"{second_linked_account.id}:KEEP"
+    db.commit()
+    keeper_id = keeper.id
+
+    _unlink(client, linked_account.id, delete_account=True)
+
+    db.expire_all()
+    still_there = db.get(Transaction, keeper_id)
+    assert still_there is not None
+    assert still_there.external_id == f"{second_linked_account.id}:KEEP"
+
+
+def test_deleting_one_account_removes_only_its_transactions(
+    client, db, seed_user, linked_account, second_linked_account
+):
+    doomed = make_transaction(db, seed_user, linked_account)
+    doomed.external_id = f"{linked_account.id}:X"
+    survivor = make_transaction(db, seed_user, second_linked_account)
+    survivor.external_id = f"{second_linked_account.id}:Y"
+    db.commit()
+    account_id = linked_account.id
+
+    response = _unlink(client, account_id, delete_account=True)
+    assert response.json()["transactions_deleted"] == 1
+
+    db.expire_all()
+    assert db.get(Account, account_id) is None
+    assert db.query(Transaction).count() == 1
+
+
+def test_unlinking_the_last_account_removes_the_connection(
+    client, db, connection, linked_account
+):
+    """A connection with nothing left to sync is dead weight holding live consent."""
+    response = _unlink(client, linked_account.id)
+    assert response.status_code == 200
+    assert response.json()["connection_removed"] is True
+
+    db.expire_all()
+    assert db.get(BankConnection, connection.id) is None
+
+
+def test_unlinking_pending_rows_drops_them(client, db, seed_user, linked_account):
+    pending = make_transaction(db, seed_user, linked_account)
+    pending.external_id = f"{linked_account.id}:pending:zz"
+    pending.is_pending = True
+    db.commit()
+
+    assert _unlink(client, linked_account.id).json()["transactions_deleted"] == 1
+    db.expire_all()
+    assert db.query(Transaction).count() == 0
+
+
+def test_unlinking_a_manual_account_is_rejected(client, db, seed_user):
+    manual = make_account(db, seed_user, name="Cash", type="cash")
+    response = _unlink(client, manual.id)
+    assert response.status_code == 400
+    assert "not linked" in response.json()["detail"]
+
+
+def test_cannot_unlink_another_users_account(client, db):
+    other = User(email="victim3@example.com", hashed_password="x", is_active=True)
+    db.add(other)
+    db.commit()
+    theirs = make_account(db, other, name="Theirs")
+    assert _unlink(client, theirs.id).status_code == 404
+
+
 # --- multi-tenant isolation -----------------------------------------------
 
 

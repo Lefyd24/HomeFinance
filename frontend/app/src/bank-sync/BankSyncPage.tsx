@@ -18,8 +18,15 @@ import { PageHeader } from '../ui/PageHeader'
 import { ListCard } from '../ui/ListCard'
 import { useConfirm } from '../ui/useConfirm'
 import { ConnectBankDialog } from './ConnectBankDialog'
-import { useBankConnections, useDeleteConnection, useSyncConnection } from './useBankSync'
-import type { BankConnection, ConnectionStatus } from './bankSyncApi'
+import { DisconnectChoiceDialog } from './DisconnectChoiceDialog'
+import type { DisconnectChoice, DisconnectTarget } from './DisconnectChoiceDialog'
+import {
+  useBankConnections,
+  useDeleteConnection,
+  useSyncConnection,
+  useUnlinkAccount,
+} from './useBankSync'
+import type { BankConnection, ConnectionStatus, LinkedAccount } from './bankSyncApi'
 
 const STATUS_STYLES: Record<ConnectionStatus, string> = {
   active: 'bg-flow-in/15 text-flow-in',
@@ -48,10 +55,14 @@ export function BankSyncPage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const [connectOpen, setConnectOpen] = useState(false)
   const [syncingId, setSyncingId] = useState<number | null>(null)
+  // Set once the user has confirmed; the choice dialog then decides the fate
+  // of the account(s) and their transactions. Covers both scopes.
+  const [disconnecting, setDisconnecting] = useState<DisconnectTarget | null>(null)
 
   const { data: connections = [], isLoading } = useBankConnections()
   const syncConnection = useSyncConnection()
   const deleteConnection = useDeleteConnection()
+  const unlinkAccount = useUnlinkAccount()
   const { confirm, confirmDialog } = useConfirm()
 
   // The backend handles the bank's callback server-side, then redirects here
@@ -110,10 +121,65 @@ export function BankSyncPage() {
       icon: Unlink01Icon,
     })
     if (!ok) return
+    // Confirmed the disconnect; now ask what happens to the data.
+    setDisconnecting({
+      kind: 'bank',
+      connectionId: connection.id,
+      name: connection.aspsp_name,
+      accountCount: connection.accounts.length,
+    })
+  }
+
+  async function handleUnlinkAccount(connection: BankConnection, account: LinkedAccount) {
+    const ok = await confirm({
+      title: t('unlinkAccountDialog.title', { account: account.name }),
+      description: t('unlinkAccountDialog.description', { bank: connection.aspsp_name }),
+      confirmLabel: t('unlinkAccountDialog.confirmLabel'),
+      icon: Unlink01Icon,
+    })
+    if (!ok) return
+    setDisconnecting({ kind: 'account', accountId: account.id, name: account.name })
+  }
+
+  async function handleDisconnectChoice(choice: DisconnectChoice) {
+    const target = disconnecting
+    if (!target) return
+    setDisconnecting(null)
+    const remove = choice === 'delete'
 
     try {
-      await deleteConnection.mutateAsync({ id: connection.id, deleteAccounts: false })
-      toast.success(t('toasts.disconnected', { bank: connection.aspsp_name }))
+      if (target.kind === 'bank') {
+        const result = await deleteConnection.mutateAsync({
+          id: target.connectionId,
+          deleteAccounts: remove,
+        })
+        toast.success(
+          remove
+            ? t('toasts.disconnectedAndDeleted', {
+                bank: target.name,
+                count: result?.transactions_deleted ?? 0,
+              })
+            : t('toasts.disconnectedAndKept', { bank: target.name }),
+        )
+        return
+      }
+
+      const result = await unlinkAccount.mutateAsync({
+        accountId: target.accountId,
+        deleteAccount: remove,
+      })
+      toast.success(
+        remove
+          ? t('toasts.accountDeleted', {
+              account: target.name,
+              count: result?.transactions_deleted ?? 0,
+            })
+          : t('toasts.accountUnlinked', { account: target.name }),
+      )
+      // Unlinking the bank's last account takes the connection with it.
+      if (result?.connection_removed) {
+        toast.info(t('toasts.connectionRemoved'))
+      }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : t('toasts.disconnectFailed'))
     }
@@ -230,9 +296,9 @@ export function BankSyncPage() {
                 {connection.accounts.map((account) => (
                   <li
                     key={account.id}
-                    className="flex items-center justify-between gap-3 px-3 py-2"
+                    className="flex items-center justify-between gap-2 px-3 py-2"
                   >
-                    <span className="min-w-0 truncate text-sm text-foreground">
+                    <span className="min-w-0 flex-1 truncate text-sm text-foreground">
                       {account.name}
                     </span>
                     <span className="shrink-0 text-sm tabular-nums text-muted-foreground">
@@ -241,6 +307,18 @@ export function BankSyncPage() {
                         currency: account.currency || 'EUR',
                       })}
                     </span>
+                    {/* One authorisation often exposes several accounts, and
+                        wanting only some of them synced is normal. */}
+                    <Button
+                      variant="ghost"
+                      size="icon-sm"
+                      className="shrink-0 opacity-70 hover:opacity-100"
+                      title={t('connection.unlinkAccount')}
+                      aria-label={t('connection.unlinkAccountFor', { account: account.name })}
+                      onClick={() => void handleUnlinkAccount(connection, account)}
+                    >
+                      <HugeiconsIcon icon={Unlink01Icon} strokeWidth={2} className="size-4" />
+                    </Button>
                   </li>
                 ))}
               </ul>
@@ -254,6 +332,11 @@ export function BankSyncPage() {
       })}
 
       <ConnectBankDialog open={connectOpen} onOpenChange={setConnectOpen} />
+      <DisconnectChoiceDialog
+        target={disconnecting}
+        onChoose={(choice) => void handleDisconnectChoice(choice)}
+        onCancel={() => setDisconnecting(null)}
+      />
       {confirmDialog}
     </PageContainer>
   )

@@ -23,11 +23,13 @@
     "disconnect": "Disconnect",
     "expiredNotice": "This connection has expired and is no longer syncing. Reconnect the bank to resume.",
     "expiringNotice": "Access expires in {{days}} day(s). Reconnect to keep transactions syncing.",
-    "noAccounts": "No accounts are linked to this connection. They need to be whitelisted in the Enable Banking Control Panel before they will appear here."
+    "noAccounts": "No accounts are linked to this connection. They need to be whitelisted in the Enable Banking Control Panel before they will appear here.",
+    "unlinkAccount": "Stop syncing this account",
+    "unlinkAccountFor": "Stop syncing {{account}}"
   },
   "disconnectDialog": {
     "title": "Disconnect {{bank}}?",
-    "description": "Syncing stops and the bank consent is revoked. The accounts and their transactions are kept, and become editable again.",
+    "description": "Syncing stops and the bank consent is revoked. You'll choose next what happens to the accounts and their transactions.",
     "confirmLabel": "Disconnect"
   },
   "dialog": {
@@ -50,7 +52,12 @@
     "syncFailed": "Sync failed",
     "disconnected": "{{bank}} disconnected",
     "disconnectFailed": "Could not disconnect",
-    "startFailed": "Could not start the connection"
+    "startFailed": "Could not start the connection",
+    "disconnectedAndKept": "{{bank}} disconnected — accounts kept and now editable",
+    "disconnectedAndDeleted": "{{bank}} disconnected — {{count}} transaction(s) deleted",
+    "accountUnlinked": "{{account}} is no longer syncing — kept and now editable",
+    "accountDeleted": "{{account}} deleted — {{count}} transaction(s) removed",
+    "connectionRemoved": "That was the bank's last account, so the connection was removed too"
   },
   "callbackErrors": {
     "missing_state": "The bank did not send back enough information. Please try again.",
@@ -65,5 +72,28 @@
   "transaction": {
     "pending": "Pending",
     "pendingHint": "Not yet booked by your bank. It may change or disappear."
+  },
+  "disconnectChoice": {
+    "title": "What should happen to {{name}}'s data?",
+    "keep": {
+      "title": "Keep the accounts and transactions",
+      "description": "They become ordinary manual entries you can edit and delete. Nothing is lost, but they stop updating automatically.",
+      "titleBank": "Keep the accounts and transactions",
+      "titleAccount": "Keep the account and its transactions"
+    },
+    "delete": {
+      "title": "Delete the {{count}} account(s) and everything in them",
+      "description": "Every transaction ever synced is permanently removed. This cannot be undone.",
+      "titleBank": "Delete the {{count}} account(s) and everything in them",
+      "titleAccount": "Delete the account and everything in it"
+    },
+    "cancel": "Cancel",
+    "descriptionBank": "{{count}} account(s) were synced from this bank.",
+    "descriptionAccount": "This account was synced from your bank."
+  },
+  "unlinkAccountDialog": {
+    "title": "Stop syncing {{account}}?",
+    "description": "Only this account is affected — the rest of {{bank}} keeps syncing. You'll choose next what happens to its transactions.",
+    "confirmLabel": "Stop syncing"
   }
 }

@@ -263,6 +263,9 @@ export function TransactionFormDialog({
         isTransfer ? Exchange01Icon : selectedType === 'income' ? ArrowDownLeft01Icon : ArrowUpRight01Icon
       }
       tone={flow}
+      // Denser than most forms: type toggle, amount, split editor, account,
+      // category, description, date and notes all share the body.
+      size="lg"
       onOpenChange={onOpenChange}
       footer={
         <>

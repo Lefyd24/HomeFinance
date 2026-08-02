@@ -51,3 +51,16 @@ export function useDeleteConnection() {
     },
   })
 }
+
+export function useUnlinkAccount() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ accountId, deleteAccount }: { accountId: number; deleteAccount: boolean }) =>
+      bankSyncApi.unlinkAccount(accountId, deleteAccount),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: queryKeys.bankConnections })
+      void queryClient.invalidateQueries({ queryKey: queryKeys.accounts })
+      void queryClient.invalidateQueries({ queryKey: ['transactions'] })
+    },
+  })
+}

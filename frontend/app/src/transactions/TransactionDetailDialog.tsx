@@ -66,6 +66,7 @@ export function TransactionDetailDialog({
       description={transaction.description}
       icon={FLOW_ICON[flow]}
       tone={flow}
+      size="lg"
       onOpenChange={onOpenChange}
       footer={
         <>

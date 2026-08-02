@@ -60,9 +60,41 @@ export function syncConnection(id: number): Promise<SyncResult> {
   return apiFetch<SyncResult>(`/bank-sync/connections/${id}/sync`, { method: 'POST' })
 }
 
-export function deleteConnection(id: number, deleteAccounts = false): Promise<void> {
-  return apiFetch<void>(
+export interface DisconnectResult {
+  message: string
+  accounts_deleted: number
+  accounts_unlinked: number
+  transactions_deleted: number
+  /** Transactions freed from bank ownership, and so editable again. */
+  transactions_released: number
+}
+
+export function deleteConnection(
+  id: number,
+  deleteAccounts = false,
+): Promise<DisconnectResult> {
+  return apiFetch<DisconnectResult>(
     `/bank-sync/connections/${id}?delete_accounts=${deleteAccounts ? 'true' : 'false'}`,
+    { method: 'DELETE' },
+  )
+}
+
+export interface UnlinkAccountResult {
+  message: string
+  account_deleted: boolean
+  transactions_deleted: number
+  transactions_released: number
+  /** True when that was the bank's last account and the connection went too. */
+  connection_removed: boolean
+}
+
+/** Stop syncing one account, leaving the bank's other accounts connected. */
+export function unlinkAccount(
+  accountId: number,
+  deleteAccount = false,
+): Promise<UnlinkAccountResult> {
+  return apiFetch<UnlinkAccountResult>(
+    `/bank-sync/accounts/${accountId}?delete_account=${deleteAccount ? 'true' : 'false'}`,
     { method: 'DELETE' },
   )
 }
