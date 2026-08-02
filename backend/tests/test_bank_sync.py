@@ -6,6 +6,7 @@ import pytest
 
 from app.models import Account, BankConnection, Transaction, User
 from app.services import bank_sync_service as svc
+from app.services import enable_banking_client as eb
 from app.utils import crypto
 from tests.factories import make_account, make_transaction
 
@@ -224,6 +225,187 @@ def test_dedup_does_not_leak_across_users(db, seed_user, linked_account):
     assert svc._write_transactions(db, other_account, their_rows) == 1
     db.commit()
     assert db.query(Transaction).count() == 2
+
+
+# --- ASPSP error handling -------------------------------------------------
+
+
+def _aspsp_400():
+    """The exact body Eurobank returned in production."""
+
+    class _Resp:
+        status_code = 400
+        text = '{"code":400,"message":"Error interacting with ASPSP","detail":"Unknown error","error":"ASPSP_ERROR"}'
+
+        @staticmethod
+        def json():
+            return {
+                "code": 400,
+                "message": "Error interacting with ASPSP",
+                "detail": "Unknown error",
+                "error": "ASPSP_ERROR",
+            }
+
+    return _Resp()
+
+
+def test_aspsp_error_body_is_classified_by_error_code(monkeypatch):
+    # The HTTP status is 400 for a whole family of unrelated conditions, so the
+    # body's `error` field is what must drive classification.
+    assert isinstance(eb._classify(_aspsp_400()), eb.AspspError)
+
+
+def test_wrong_transactions_period_is_classified(monkeypatch):
+    class _Resp:
+        status_code = 400
+        text = '{"error":"WRONG_TRANSACTIONS_PERIOD"}'
+
+        @staticmethod
+        def json():
+            return {"error": "WRONG_TRANSACTIONS_PERIOD"}
+
+    assert isinstance(eb._classify(_Resp()), eb.WrongTransactionsPeriod)
+
+
+def test_first_sync_uses_longest_strategy(monkeypatch, db, linked_account):
+    """A never-synced account must not guess how much history the bank allows."""
+    calls = []
+
+    def fake(uid, date_from, strategy="default", **kw):
+        calls.append(strategy)
+        return []
+
+    monkeypatch.setattr(eb, "get_transactions", fake)
+    monkeypatch.setattr(eb, "get_balances", lambda uid: [])
+
+    assert linked_account.last_synced_at is None
+    svc.sync_account(db, linked_account)
+    assert calls == ["longest"]
+
+
+def test_incremental_sync_uses_default_strategy(monkeypatch, db, linked_account):
+    calls = []
+
+    def fake(uid, date_from, strategy="default", **kw):
+        calls.append(strategy)
+        return []
+
+    monkeypatch.setattr(eb, "get_transactions", fake)
+    monkeypatch.setattr(eb, "get_balances", lambda uid: [])
+
+    linked_account.last_synced_at = datetime.utcnow() - timedelta(days=1)
+    svc.sync_account(db, linked_account)
+    assert calls == ["default"]
+
+
+def test_window_narrows_when_the_bank_rejects_the_period(monkeypatch, linked_account):
+    """Reproduces the production failure: reject the wide window, accept 90 days."""
+    attempts = []
+
+    def fake(uid, date_from, strategy="default", **kw):
+        attempts.append((date_from, strategy))
+        if len(attempts) == 1:
+            raise eb.AspspError("Error interacting with ASPSP")
+        return [raw_tx()]
+
+    monkeypatch.setattr(eb, "get_transactions", fake)
+
+    start = (datetime.utcnow() - timedelta(days=365)).date()
+    rows = svc._fetch_with_fallback(linked_account, start, "longest")
+
+    assert len(rows) == 1, "should have recovered instead of failing the account"
+    assert attempts[0][1] == "longest"
+    # Second attempt steps down to the 90-day floor most banks fall back to.
+    assert attempts[1][0] == (datetime.utcnow() - timedelta(days=90)).date()
+
+
+def test_fallback_gives_up_after_the_narrowest_window(monkeypatch, linked_account):
+    def always_fail(uid, date_from, strategy="default", **kw):
+        raise eb.AspspError("Error interacting with ASPSP")
+
+    monkeypatch.setattr(eb, "get_transactions", always_fail)
+
+    start = (datetime.utcnow() - timedelta(days=365)).date()
+    with pytest.raises(eb.AspspError):
+        svc._fetch_with_fallback(linked_account, start, "longest")
+
+
+def test_incremental_window_is_not_widened_by_the_fallback(monkeypatch, linked_account):
+    """A 3-day window failing is a bank problem, not a period problem."""
+    attempts = []
+
+    def fake(uid, date_from, strategy="default", **kw):
+        attempts.append(date_from)
+        raise eb.AspspError("boom")
+
+    monkeypatch.setattr(eb, "get_transactions", fake)
+
+    recent = (datetime.utcnow() - timedelta(days=3)).date()
+    with pytest.raises(eb.AspspError):
+        svc._fetch_with_fallback(linked_account, recent, "default")
+    assert attempts == [recent], "must not reach further back than asked"
+
+
+def test_transaction_status_filter_is_not_sent(monkeypatch):
+    """Some ASPSPs reject the whole request when transaction_status is present."""
+    captured = {}
+
+    def fake_request(method, path, **kwargs):
+        captured.update(kwargs.get("params") or {})
+        return {"transactions": []}
+
+    monkeypatch.setattr(eb, "_request", fake_request)
+    eb.get_transactions("uid-1", date_from=date(2026, 1, 1))
+
+    assert "transaction_status" not in captured
+    assert captured["strategy"] == "default"
+
+
+def test_longest_strategy_omits_date_to(monkeypatch):
+    captured = {}
+
+    def fake_request(method, path, **kwargs):
+        captured.update(kwargs.get("params") or {})
+        return {"transactions": []}
+
+    monkeypatch.setattr(eb, "_request", fake_request)
+    eb.get_transactions(
+        "uid-1", date_from=date(2026, 1, 1), date_to=date(2026, 6, 1), strategy="longest"
+    )
+
+    # date_to is ignored by `longest`; sending it is noise.
+    assert "date_to" not in captured
+
+
+def test_aspsp_errors_are_retried_with_backoff(monkeypatch):
+    calls = []
+    monkeypatch.setattr(eb.time, "sleep", lambda s: calls.append(s))
+
+    attempts = {"n": 0}
+
+    def flaky(method, path, **kwargs):
+        attempts["n"] += 1
+        if attempts["n"] < 3:
+            raise eb.AspspError("transient")
+        return {"ok": True}
+
+    monkeypatch.setattr(eb, "_request_once", flaky)
+    assert eb._request("GET", "/x") == {"ok": True}
+    assert calls == [2.0, 4.0], "delay should double between attempts"
+
+
+def test_rate_limits_are_never_retried(monkeypatch):
+    """Retrying would burn the account's tiny daily quota."""
+    slept = []
+    monkeypatch.setattr(eb.time, "sleep", lambda s: slept.append(s))
+
+    def limited(method, path, **kwargs):
+        raise eb.RateLimited("429")
+
+    monkeypatch.setattr(eb, "_request_once", limited)
+    with pytest.raises(eb.RateLimited):
+        eb._request("GET", "/x")
+    assert slept == []
 
 
 # --- connection state -----------------------------------------------------

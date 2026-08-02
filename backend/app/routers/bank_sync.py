@@ -15,7 +15,7 @@ from datetime import datetime, timedelta
 from typing import List
 from urllib.parse import urlencode
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, status
 from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
 
@@ -157,8 +157,43 @@ def start_connection(
     return ConnectionStartResponse(connection_id=connection.id, authorization_url=url)
 
 
+def _initial_sync(connection_id: int) -> None:
+    """First pull for a freshly linked connection, run just after the redirect.
+
+    Timing is the point. Enable Banking documents full transaction history as
+    reachable only for a short window after authorisation — "typically around
+    one hour" — after which many banks clamp retrieval to the last 90 days.
+    Waiting for the nightly tick would routinely miss that window and silently
+    import a fraction of the available history.
+
+    Runs as a background task with its own session: the browser is mid-redirect
+    and must not wait on several round trips to the bank.
+    """
+    from app.database import SessionLocal
+
+    db = SessionLocal()
+    try:
+        connection = db.get(BankConnection, connection_id)
+        if connection is None or connection.status != "active":
+            return
+        result = bank_sync_service.sync_connection(db, connection)
+        logger.info(
+            "Initial sync for connection %s imported %s transaction(s)",
+            connection_id,
+            result["imported"],
+        )
+    except Exception:
+        # Never surface this: the link itself succeeded, and the scheduled tick
+        # will retry. Failing loudly here would make a working connection look broken.
+        logger.exception("Initial sync failed for connection %s", connection_id)
+        db.rollback()
+    finally:
+        db.close()
+
+
 @router.get("/callback")
 def bank_callback(
+    background_tasks: BackgroundTasks,
     code: str | None = Query(default=None),
     state: str | None = Query(default=None),
     error: str | None = Query(default=None),
@@ -255,6 +290,9 @@ def bank_callback(
             connection.user_id,
         )
         return _frontend_redirect(linked="0", error="no_accounts")
+
+    # Pull history now, while the bank still offers it (see _initial_sync).
+    background_tasks.add_task(_initial_sync, connection.id)
 
     return _frontend_redirect(linked="1", accounts=str(created))
 
@@ -353,6 +391,17 @@ def sync_connection(
         raise HTTPException(
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,
             detail="The bank is rate limiting requests. Try again later.",
+        ) from exc
+    except eb.AspspError as exc:
+        # The bank refused us, not the other way round — say so, because
+        # "sync failed" sends people hunting for a bug in this app.
+        logger.warning("ASPSP error syncing connection %s: %s", connection_id, exc)
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=(
+                "Your bank rejected the request. This is usually temporary — the next "
+                "scheduled sync will retry automatically."
+            ),
         ) from exc
     except eb.EnableBankingError as exc:
         logger.warning("Manual sync failed for connection %s: %s", connection_id, exc)

@@ -32,6 +32,10 @@ _JWT_TTL_SECONDS = 3600
 # Re-sign this long before expiry so a request never carries a token that dies mid-flight.
 _JWT_REFRESH_MARGIN_SECONDS = 300
 _HTTP_TIMEOUT = 30.0
+# ASPSP_ERROR retries. Kept small: this runs inside the scheduler thread, and a
+# genuinely unwell bank will still be unwell tomorrow.
+_MAX_ASPSP_RETRIES = 3
+_RETRY_BASE_DELAY_SECONDS = 2.0
 
 
 class EnableBankingError(Exception):
@@ -52,6 +56,26 @@ class RateLimited(EnableBankingError):
     Banks cap AIS access hard — as low as 4 calls per account per day — so this
     is an expected, recoverable condition, not an error worth failing a whole
     sync tick over.
+    """
+
+
+class WrongTransactionsPeriod(EnableBankingError):
+    """The requested date range is not available for this account.
+
+    Banks restrict how far back they will serve. Crucially, Enable Banking notes
+    that full history is only reachable for a short window after authorisation —
+    "typically around one hour" — after which many institutions clamp retrieval
+    to the last 90 days. A `date_from` beyond that is the most common cause.
+    """
+
+
+class AspspError(EnableBankingError):
+    """The bank itself failed (ASPSP_ERROR).
+
+    Per Enable Banking: "uncategorized failures, primarily stemming from the
+    financial institution's side (maintenance, bugs, etc.)" — retry with
+    exponential backoff. Banks also return this instead of a precise error for
+    requests they dislike, notably an out-of-range date_from.
     """
 
 
@@ -155,10 +179,24 @@ def _classify(response: httpx.Response) -> EnableBankingError:
             return ConsentExpired(f"Consent/session no longer valid ({status}): {body}")
         if "linked" in lowered or "restricted" in lowered or "whitelist" in lowered:
             return NotWhitelisted(f"Account not linked to the application ({status}): {body}")
+
+    # Enable Banking puts a machine-readable code in the body; prefer it over the
+    # HTTP status, which is 400 for a whole family of unrelated conditions.
+    error_code = ""
+    try:
+        error_code = str((response.json() or {}).get("error") or "")
+    except ValueError:
+        pass
+
+    if error_code == "WRONG_TRANSACTIONS_PERIOD":
+        return WrongTransactionsPeriod(f"Requested transaction period unavailable: {body}")
+    if error_code == "ASPSP_ERROR":
+        return AspspError(f"The bank rejected the request ({status}): {body}")
+
     return EnableBankingError(f"Enable Banking returned {status}: {body}")
 
 
-def _request(method: str, path: str, **kwargs: Any) -> dict[str, Any]:
+def _request_once(method: str, path: str, **kwargs: Any) -> dict[str, Any]:
     _require_configured()
     url = f"{settings.EB_API_BASE.rstrip('/')}{path}"
     headers = {**_auth_header(), "Accept": "application/json"}
@@ -181,6 +219,34 @@ def _request(method: str, path: str, **kwargs: Any) -> dict[str, Any]:
         return response.json()
     except ValueError as exc:
         raise EnableBankingError(f"Enable Banking returned non-JSON for {path}") from exc
+
+
+def _request(method: str, path: str, **kwargs: Any) -> dict[str, Any]:
+    """Perform a request, retrying transient bank-side failures with backoff.
+
+    Enable Banking's guidance for ASPSP_ERROR is explicitly to "retry with
+    exponential backoff" — these are usually the bank being briefly unwell
+    rather than anything wrong with the request. Deliberately narrow: rate
+    limits are NOT retried (that would burn the account's tiny daily quota), and
+    neither is anything the caller can act on.
+    """
+    delay = _RETRY_BASE_DELAY_SECONDS
+    for attempt in range(1, _MAX_ASPSP_RETRIES + 1):
+        try:
+            return _request_once(method, path, **kwargs)
+        except AspspError:
+            if attempt == _MAX_ASPSP_RETRIES:
+                raise
+            logger.info(
+                "Bank returned ASPSP_ERROR for %s (attempt %s/%s); retrying in %.1fs",
+                path,
+                attempt,
+                _MAX_ASPSP_RETRIES,
+                delay,
+            )
+            time.sleep(delay)
+            delay *= 2
+    raise AssertionError("unreachable")
 
 
 # --- API surface ----------------------------------------------------------
@@ -253,21 +319,31 @@ def get_transactions(
     account_uid: str,
     date_from: date,
     date_to: date | None = None,
-    transaction_status: str | None = "BOOK",
+    strategy: str = "default",
 ) -> list[dict[str, Any]]:
     """Transactions in a window, following continuation keys.
 
     Enable Banking paginates with an opaque `continuation_key`; without following
     it a busy account silently returns only its first page.
 
-    Defaults to booked transactions only. Not every ASPSP honours the filter, so
-    the normalizer re-checks `status` rather than trusting this.
+    `strategy` picks how the date range is honoured:
+
+    - ``default`` — pass the range straight to the bank. Raises
+      WrongTransactionsPeriod if the bank will not serve it. Right for routine
+      incremental syncs of recent activity.
+    - ``longest`` — ask Enable Banking to find the earliest transaction actually
+      available and fetch from there, treating `date_from` as a hint and ignoring
+      `date_to`. Never fails on an out-of-range period. Right for the first pull
+      of an account, where we do not know how much history the bank will give.
+
+    No `transaction_status` filter is sent: not every ASPSP accepts it, and some
+    reject the whole request when it is present. The normalizer filters to booked
+    entries itself, so the filter was only ever an optimisation.
     """
-    params: dict[str, Any] = {"date_from": date_from.isoformat()}
-    if date_to:
+    params: dict[str, Any] = {"date_from": date_from.isoformat(), "strategy": strategy}
+    # date_to is ignored by the `longest` strategy — sending it anyway is noise.
+    if date_to and strategy != "longest":
         params["date_to"] = date_to.isoformat()
-    if transaction_status:
-        params["transaction_status"] = transaction_status
 
     transactions: list[dict[str, Any]] = []
     seen_keys: set[str] = set()

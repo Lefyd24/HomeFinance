@@ -30,6 +30,11 @@ _BALANCE_PREFERENCE = ("ITBD", "CLBD", "ITAV", "XPCD", "OTHR")
 
 STATE_TTL_MINUTES = 15
 
+# Progressively narrower windows tried when a bank refuses the requested range.
+# 90 days is the floor most institutions fall back to once the post-authorisation
+# full-history window has closed; 30 and 7 cover banks that are stricter still.
+_FALLBACK_WINDOW_DAYS = (90, 30, 7)
+
 
 def generate_state() -> str:
     """Opaque single-use nonce binding a bank callback back to a user."""
@@ -210,6 +215,50 @@ def _write_transactions(db: Session, account: Account, rows: list[dict[str, Any]
     return inserted
 
 
+def _fetch_with_fallback(
+    account: Account, date_from: date, strategy: str
+) -> list[dict[str, Any]]:
+    """Fetch transactions, narrowing the window when the bank refuses it.
+
+    Banks cap how far back they will serve, and that cap tightens sharply once
+    the account has been authorised for a while — Enable Banking documents full
+    history as reachable only for "typically around one hour" after
+    authorisation, after which many institutions allow just 90 days.
+
+    Worse, they are inconsistent about saying so: some return the precise
+    WRONG_TRANSACTIONS_PERIOD, others a bare ASPSP_ERROR / "Unknown error". Both
+    are treated the same here — step the window down and try again, rather than
+    failing the whole account and importing nothing.
+    """
+    attempts: list[tuple[date, str]] = [(date_from, strategy)]
+    today = datetime.utcnow().date()
+    for days in _FALLBACK_WINDOW_DAYS:
+        candidate = today - timedelta(days=days)
+        if candidate > date_from:
+            attempts.append((candidate, "default"))
+
+    last_error: Exception | None = None
+    for attempt_from, attempt_strategy in attempts:
+        try:
+            return eb.get_transactions(
+                account.external_account_id,
+                date_from=attempt_from,
+                strategy=attempt_strategy,
+            )
+        except (eb.WrongTransactionsPeriod, eb.AspspError) as exc:
+            last_error = exc
+            logger.info(
+                "Account %s rejected transactions from %s (strategy=%s): %s — narrowing window",
+                account.id,
+                attempt_from,
+                attempt_strategy,
+                exc,
+            )
+
+    assert last_error is not None
+    raise last_error
+
+
 def sync_account(db: Session, account: Account) -> dict[str, Any]:
     """Sync one linked account. Does not commit — the caller owns the transaction."""
     if not account.external_account_id:
@@ -220,10 +269,15 @@ def sync_account(db: Session, account: Account) -> dict[str, Any]:
         # "since last sync" cutoff silently drops transactions. Duplicates are
         # absorbed by the dedup above.
         date_from = (account.last_synced_at - timedelta(days=settings.EB_SYNC_OVERLAP_DAYS)).date()
+        strategy = "default"
     else:
         date_from = (datetime.utcnow() - timedelta(days=settings.EB_INITIAL_HISTORY_DAYS)).date()
+        # First pull: we have no idea how much history this bank will serve, and
+        # asking for more than it allows is rejected outright. `longest` lets
+        # Enable Banking discover the earliest available transaction instead.
+        strategy = "longest"
 
-    raw_transactions = eb.get_transactions(account.external_account_id, date_from=date_from)
+    raw_transactions = _fetch_with_fallback(account, date_from, strategy)
     rows = [
         row
         for row in (normalize_transaction(raw, account) for raw in raw_transactions)
