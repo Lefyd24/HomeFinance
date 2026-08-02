@@ -1,8 +1,9 @@
-import { useEffect } from 'react'
+import { useEffect, useMemo } from 'react'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { toast } from 'sonner'
+import { useTranslation } from 'react-i18next'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { BankIcon } from '@hugeicons/core-free-icons'
 import { Button } from '@/components/ui/button'
@@ -18,80 +19,63 @@ import { useAccounts } from '../accounts/useAccounts'
 import { useCreateDebt, useUpdateDebt } from './useDebts'
 import type { Debt, DebtInput } from './debtsApi'
 
-const debtSchema = z
-  .object({
-    name: z.string().min(1, 'Debt name is required').max(200),
-    creditor: z.string().max(200).optional(),
-    type: z.enum([
-      'credit_card',
-      'student_loan',
-      'mortgage',
-      'car_loan',
-      'personal_loan',
-      'utilities',
-      'subscription',
-      'medical',
-      'tax',
-      'informal',
-      'legal',
-      'other',
-      'custom',
-    ]),
-    custom_type: z.string().max(200).optional(),
-    original_balance: z.coerce.number<number>().positive('Original balance must be greater than 0'),
-    current_balance: z.coerce.number<number>().min(0, 'Current balance cannot be negative'),
-    interest_rate_pct: z.coerce.number<number>().min(0).max(100).optional().or(z.literal('')),
-    minimum_payment: z.coerce.number<number>().min(0).optional().or(z.literal('')),
-    priority: z.coerce.number<number>().int().min(0).optional().or(z.literal('')),
-    opened_date: z.string().optional(),
-    maturity_date: z.string().optional(),
-    is_paid_off: z.boolean(),
-    paid_off_date: z.string().optional(),
-    recurrence_interval: z.coerce.number<number>().int().min(1).optional().or(z.literal('')),
-    recurrence_unit: z.enum(['__none__', 'days', 'weeks', 'months']),
-    recurrence_day_of_month: z.coerce.number<number>().int().min(1).max(31).optional().or(z.literal('')),
-    linked_account_id: z.string().optional(),
-    next_payment_date: z.string().optional(),
-    notify_enabled: z.boolean(),
-    notify_days_before: z.coerce.number<number>().int().min(1).max(90).optional().or(z.literal('')),
-    notes: z.string().optional(),
-  })
-  .superRefine((data, ctx) => {
-    if (data.type === 'custom' && !data.custom_type?.trim()) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: 'Custom type name is required',
-        path: ['custom_type'],
-      })
-    }
-  })
+function createDebtSchema(t: (key: string) => string) {
+  return z
+    .object({
+      name: z.string().min(1, t('form.validation.nameRequired')).max(200),
+      creditor: z.string().max(200).optional(),
+      type: z.enum([
+        'credit_card',
+        'student_loan',
+        'mortgage',
+        'car_loan',
+        'personal_loan',
+        'utilities',
+        'subscription',
+        'medical',
+        'tax',
+        'informal',
+        'legal',
+        'other',
+        'custom',
+      ]),
+      custom_type: z.string().max(200).optional(),
+      original_balance: z.coerce
+        .number<number>()
+        .positive(t('form.validation.originalBalancePositive')),
+      current_balance: z.coerce
+        .number<number>()
+        .min(0, t('form.validation.currentBalanceNonNegative')),
+      interest_rate_pct: z.coerce.number<number>().min(0).max(100).optional().or(z.literal('')),
+      minimum_payment: z.coerce.number<number>().min(0).optional().or(z.literal('')),
+      priority: z.coerce.number<number>().int().min(0).optional().or(z.literal('')),
+      opened_date: z.string().optional(),
+      maturity_date: z.string().optional(),
+      is_paid_off: z.boolean(),
+      paid_off_date: z.string().optional(),
+      recurrence_interval: z.coerce.number<number>().int().min(1).optional().or(z.literal('')),
+      recurrence_unit: z.enum(['__none__', 'days', 'weeks', 'months']),
+      recurrence_day_of_month: z.coerce.number<number>().int().min(1).max(31).optional().or(z.literal('')),
+      linked_account_id: z.string().optional(),
+      next_payment_date: z.string().optional(),
+      notify_enabled: z.boolean(),
+      notify_days_before: z.coerce.number<number>().int().min(1).max(90).optional().or(z.literal('')),
+      notes: z.string().optional(),
+    })
+    .superRefine((data, ctx) => {
+      if (data.type === 'custom' && !data.custom_type?.trim()) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: t('form.validation.customTypeRequired'),
+          path: ['custom_type'],
+        })
+      }
+    })
+}
 
-type DebtForm = z.infer<typeof debtSchema>
+type DebtForm = z.infer<ReturnType<typeof createDebtSchema>>
 
 const NONE = '__none__'
-
-const TYPE_OPTIONS = [
-  { value: 'credit_card', label: 'Credit card' },
-  { value: 'personal_loan', label: 'Personal loan' },
-  { value: 'student_loan', label: 'Student loan' },
-  { value: 'mortgage', label: 'Mortgage' },
-  { value: 'car_loan', label: 'Car loan' },
-  { value: 'informal', label: 'Personal / Informal' },
-  { value: 'utilities', label: 'Utilities' },
-  { value: 'subscription', label: 'Subscription' },
-  { value: 'medical', label: 'Medical' },
-  { value: 'tax', label: 'Tax' },
-  { value: 'legal', label: 'Legal' },
-  { value: 'other', label: 'Other' },
-  { value: 'custom', label: 'Custom…' },
-]
-
-const RECURRENCE_OPTIONS = [
-  { value: NONE, label: 'Not recurring' },
-  { value: 'days', label: 'Days' },
-  { value: 'weeks', label: 'Weeks' },
-  { value: 'months', label: 'Months' },
-]
 
 function emptyToNullNumber(value: number | '' | undefined): number | null {
   if (value === '' || value == null || Number.isNaN(Number(value))) return null
@@ -214,10 +198,41 @@ export function DebtFormDialog({
   onOpenChange: (open: boolean) => void
   debt?: Debt | null
 }) {
+  const { t } = useTranslation('debts')
+  const debtSchema = useMemo(() => createDebtSchema(t), [t])
   const isEdit = !!debt
   const createDebt = useCreateDebt()
   const updateDebt = useUpdateDebt()
   const { data: accounts = [] } = useAccounts()
+
+  const TYPE_OPTIONS = useMemo(
+    () => [
+      { value: 'credit_card', label: t('form.type.options.creditCard') },
+      { value: 'personal_loan', label: t('form.type.options.personalLoan') },
+      { value: 'student_loan', label: t('form.type.options.studentLoan') },
+      { value: 'mortgage', label: t('form.type.options.mortgage') },
+      { value: 'car_loan', label: t('form.type.options.carLoan') },
+      { value: 'informal', label: t('form.type.options.informal') },
+      { value: 'utilities', label: t('form.type.options.utilities') },
+      { value: 'subscription', label: t('form.type.options.subscription') },
+      { value: 'medical', label: t('form.type.options.medical') },
+      { value: 'tax', label: t('form.type.options.tax') },
+      { value: 'legal', label: t('form.type.options.legal') },
+      { value: 'other', label: t('form.type.options.other') },
+      { value: 'custom', label: t('form.type.options.custom') },
+    ],
+    [t],
+  )
+
+  const RECURRENCE_OPTIONS = useMemo(
+    () => [
+      { value: NONE, label: t('form.schedule.recurrence.notRecurring') },
+      { value: 'days', label: t('form.schedule.recurrence.days') },
+      { value: 'weeks', label: t('form.schedule.recurrence.weeks') },
+      { value: 'months', label: t('form.schedule.recurrence.months') },
+    ],
+    [t],
+  )
 
   const {
     register,
@@ -240,11 +255,11 @@ export function DebtFormDialog({
   const preview = watch()
   const typeLabel =
     preview.type === 'custom'
-      ? preview.custom_type?.trim() || 'Custom'
+      ? preview.custom_type?.trim() || t('types.custom')
       : (TYPE_OPTIONS.find((o) => o.value === preview.type)?.label ?? preview.type)
 
   const accountOptions = [
-    { value: NONE, label: 'No linked account' },
+    { value: NONE, label: t('form.linkedAccount.none') },
     ...accounts.map((a) => ({ value: String(a.id), label: `${a.name} (${a.type})` })),
   ]
 
@@ -253,14 +268,14 @@ export function DebtFormDialog({
     try {
       if (isEdit && debt) {
         await updateDebt.mutateAsync({ id: debt.id, input })
-        toast.success('Debt updated')
+        toast.success(t('form.toasts.updated'))
       } else {
         await createDebt.mutateAsync(input)
-        toast.success('Debt created')
+        toast.success(t('form.toasts.created'))
       }
       onOpenChange(false)
     } catch {
-      toast.error(isEdit ? 'Failed to update debt' : 'Failed to create debt')
+      toast.error(isEdit ? t('form.toasts.updateFailed') : t('form.toasts.createFailed'))
     }
   })
 
@@ -269,8 +284,8 @@ export function DebtFormDialog({
   return (
     <Dialog
       open={open}
-      title={isEdit ? 'Edit debt' : 'Add a debt'}
-      description="Give it an APR and a minimum payment and the app can project interest and a payoff date."
+      title={isEdit ? t('form.titleEdit') : t('form.titleCreate')}
+      description={t('form.description')}
       icon={BankIcon}
       tone="primary"
       onOpenChange={onOpenChange}
@@ -283,10 +298,10 @@ export function DebtFormDialog({
             onClick={() => onOpenChange(false)}
             disabled={isPending}
           >
-            Cancel
+            {t('form.cancel')}
           </Button>
           <Button type="submit" form="debt-form" disabled={isPending}>
-            {isPending ? 'Saving…' : isEdit ? 'Save changes' : 'Add debt'}
+            {isPending ? t('form.saving') : isEdit ? t('form.saveChanges') : t('form.addDebt')}
           </Button>
         </>
       }
@@ -299,7 +314,7 @@ export function DebtFormDialog({
             </div>
             <div className="min-w-0 flex-1">
               <p className="truncate text-base font-semibold">
-                {preview.name.trim() || 'New debt'}
+                {preview.name.trim() || t('form.newDebt')}
               </p>
               <p className="text-xs text-muted-foreground">{typeLabel}</p>
             </div>
@@ -310,10 +325,10 @@ export function DebtFormDialog({
         </div>
 
         <div className="flex flex-col gap-2">
-          <Label htmlFor="debt-name">Debt name</Label>
+          <Label htmlFor="debt-name">{t('form.name.label')}</Label>
           <Input
             id="debt-name"
-            placeholder="e.g., Credit Card, Car Loan"
+            placeholder={t('form.name.placeholder')}
             aria-invalid={!!errors.name}
             {...register('name')}
           />
@@ -321,17 +336,17 @@ export function DebtFormDialog({
         </div>
 
         <div className="flex flex-col gap-2">
-          <Label htmlFor="debt-creditor">Creditor</Label>
+          <Label htmlFor="debt-creditor">{t('form.creditor.label')}</Label>
           <Input
             id="debt-creditor"
-            placeholder="e.g., Bank of America"
+            placeholder={t('form.creditor.placeholder')}
             {...register('creditor')}
           />
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="flex flex-col gap-2">
-            <Label>Debt type</Label>
+            <Label>{t('form.type.label')}</Label>
             <Controller
               control={control}
               name="type"
@@ -340,23 +355,23 @@ export function DebtFormDialog({
                   value={field.value}
                   onValueChange={field.onChange}
                   options={TYPE_OPTIONS}
-                  placeholder="Choose a type"
+                  placeholder={t('form.type.placeholder')}
                 />
               )}
             />
           </div>
           <div className="flex flex-col gap-2">
-            <Label htmlFor="debt-priority">Priority</Label>
+            <Label htmlFor="debt-priority">{t('form.priority.label')}</Label>
             <Input id="debt-priority" type="number" min={0} {...register('priority')} />
           </div>
         </div>
 
         {preview.type === 'custom' && (
           <div className="flex flex-col gap-2">
-            <Label htmlFor="debt-custom-type">Custom type name</Label>
+            <Label htmlFor="debt-custom-type">{t('form.customType.label')}</Label>
             <Input
               id="debt-custom-type"
-              placeholder="e.g., Insurance, Rent, HOA Fee"
+              placeholder={t('form.customType.placeholder')}
               aria-invalid={!!errors.custom_type}
               {...register('custom_type')}
             />
@@ -368,7 +383,7 @@ export function DebtFormDialog({
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="flex flex-col gap-2">
-            <Label htmlFor="original_balance">Original balance</Label>
+            <Label htmlFor="original_balance">{t('form.originalBalance.label')}</Label>
             <Input
               id="original_balance"
               type="number"
@@ -381,7 +396,7 @@ export function DebtFormDialog({
             )}
           </div>
           <div className="flex flex-col gap-2">
-            <Label htmlFor="current_balance">Current balance</Label>
+            <Label htmlFor="current_balance">{t('form.currentBalance.label')}</Label>
             <Input
               id="current_balance"
               type="number"
@@ -397,28 +412,26 @@ export function DebtFormDialog({
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="flex flex-col gap-2">
-            <Label htmlFor="interest_rate_pct">Interest rate (APR %)</Label>
+            <Label htmlFor="interest_rate_pct">{t('form.interestRate.label')}</Label>
             <Input
               id="interest_rate_pct"
               type="number"
               step="0.01"
               min={0}
               max={100}
-              placeholder="e.g., 15.99"
+              placeholder={t('form.interestRate.placeholder')}
               {...register('interest_rate_pct')}
             />
-            <p className="text-xs text-muted-foreground">
-              Annual rate; payoff math compounds monthly.
-            </p>
+            <p className="text-xs text-muted-foreground">{t('form.interestRate.hint')}</p>
           </div>
           <div className="flex flex-col gap-2">
-            <Label htmlFor="minimum_payment">Minimum payment</Label>
+            <Label htmlFor="minimum_payment">{t('form.minimumPayment.label')}</Label>
             <Input
               id="minimum_payment"
               type="number"
               step="0.01"
               min={0}
-              placeholder="Required for interest projections"
+              placeholder={t('form.minimumPayment.placeholder')}
               {...register('minimum_payment')}
             />
           </div>
@@ -426,17 +439,17 @@ export function DebtFormDialog({
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="flex flex-col gap-2">
-            <Label htmlFor="opened_date">Opened date</Label>
+            <Label htmlFor="opened_date">{t('form.openedDate.label')}</Label>
             <Input id="opened_date" type="date" {...register('opened_date')} />
           </div>
           <div className="flex flex-col gap-2">
-            <Label htmlFor="maturity_date">Maturity date</Label>
+            <Label htmlFor="maturity_date">{t('form.maturityDate.label')}</Label>
             <Input id="maturity_date" type="date" {...register('maturity_date')} />
           </div>
         </div>
 
         <Separator />
-        <p className="text-sm font-medium text-foreground">Status</p>
+        <p className="text-sm font-medium text-foreground">{t('form.status.title')}</p>
 
         <div className="flex flex-col gap-3">
           <label className="flex items-center gap-3 cursor-pointer">
@@ -456,22 +469,22 @@ export function DebtFormDialog({
                 />
               )}
             />
-            <span className="text-sm font-medium">Mark as paid off</span>
+            <span className="text-sm font-medium">{t('form.status.markPaidOff')}</span>
           </label>
           {preview.is_paid_off && (
             <div className="flex flex-col gap-2 ps-7">
-              <Label htmlFor="paid_off_date">Paid off date</Label>
+              <Label htmlFor="paid_off_date">{t('form.status.paidOffDate')}</Label>
               <Input id="paid_off_date" type="date" {...register('paid_off_date')} />
             </div>
           )}
         </div>
 
         <Separator />
-        <p className="text-sm font-medium text-foreground">Payment schedule</p>
+        <p className="text-sm font-medium text-foreground">{t('form.schedule.title')}</p>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="flex flex-col gap-2">
-            <Label>Payment every</Label>
+            <Label>{t('form.schedule.paymentEvery')}</Label>
             <div className="flex gap-2">
               <Input
                 type="number"
@@ -487,7 +500,7 @@ export function DebtFormDialog({
                     value={field.value || NONE}
                     onValueChange={field.onChange}
                     options={RECURRENCE_OPTIONS}
-                    placeholder="Frequency"
+                    placeholder={t('form.schedule.frequencyPlaceholder')}
                     triggerClassName="flex-1"
                   />
                 )}
@@ -495,13 +508,13 @@ export function DebtFormDialog({
             </div>
           </div>
           <div className="flex flex-col gap-2">
-            <Label htmlFor="recurrence_day">Day of month</Label>
+            <Label htmlFor="recurrence_day">{t('form.schedule.dayOfMonth')}</Label>
             <Input
               id="recurrence_day"
               type="number"
               min={1}
               max={31}
-              placeholder="For monthly"
+              placeholder={t('form.schedule.dayOfMonthPlaceholder')}
               {...register('recurrence_day_of_month')}
             />
           </div>
@@ -509,7 +522,7 @@ export function DebtFormDialog({
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="flex flex-col gap-2">
-            <Label>Linked account</Label>
+            <Label>{t('form.linkedAccount.label')}</Label>
             <Controller
               control={control}
               name="linked_account_id"
@@ -518,13 +531,13 @@ export function DebtFormDialog({
                   value={field.value || NONE}
                   onValueChange={field.onChange}
                   options={accountOptions}
-                  placeholder="Select account…"
+                  placeholder={t('form.linkedAccount.placeholder')}
                 />
               )}
             />
           </div>
           <div className="flex flex-col gap-2">
-            <Label htmlFor="next_payment_date">Next payment date</Label>
+            <Label htmlFor="next_payment_date">{t('form.nextPaymentDate.label')}</Label>
             <Input id="next_payment_date" type="date" {...register('next_payment_date')} />
           </div>
         </div>
@@ -541,17 +554,17 @@ export function DebtFormDialog({
                 />
               )}
             />
-            <span className="text-sm font-medium">Notify me before due</span>
+            <span className="text-sm font-medium">{t('form.notify.label')}</span>
           </label>
           {preview.notify_enabled && (
             <div className="flex flex-col gap-2 ps-7">
-              <Label htmlFor="notify_days_before">Days before</Label>
+              <Label htmlFor="notify_days_before">{t('form.notify.daysBefore')}</Label>
               <Input
                 id="notify_days_before"
                 type="number"
                 min={1}
                 max={90}
-                placeholder="Uses default if empty"
+                placeholder={t('form.notify.daysBeforePlaceholder')}
                 {...register('notify_days_before')}
               />
             </div>
@@ -559,11 +572,11 @@ export function DebtFormDialog({
         </div>
 
         <div className="flex flex-col gap-2">
-          <Label htmlFor="debt-notes">Notes</Label>
+          <Label htmlFor="debt-notes">{t('form.notes.label')}</Label>
           <Textarea
             id="debt-notes"
             rows={2}
-            placeholder="Any additional notes about this debt"
+            placeholder={t('form.notes.placeholder')}
             {...register('notes')}
           />
         </div>

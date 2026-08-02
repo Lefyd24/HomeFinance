@@ -1,8 +1,9 @@
-import { useEffect } from 'react'
+import { useEffect, useMemo } from 'react'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { toast } from 'sonner'
+import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -19,27 +20,23 @@ import type { RecurringExpense } from './recurringApi'
 const today = () => new Date().toISOString().slice(0, 10)
 const NONE = '__none__'
 
-const recurringSchema = z.object({
-  name: z.string().min(1, 'Name is required').max(200),
-  amount: z.coerce.number<number>().positive('Amount must be greater than 0'),
-  account_id: z.string(),
-  category_id: z.string(),
-  recurrence_interval: z.coerce.number<number>().int().min(1),
-  recurrence_unit: z.enum(['days', 'weeks', 'months']),
-  start_date: z.string().min(1, 'Start date is required'),
-  next_due_date: z.string().min(1, 'Next due date is required'),
-  notes: z.string().optional(),
-  notify_enabled: z.boolean(),
-  notify_days_before: z.string().optional(),
-})
+function createRecurringSchema(t: (key: string) => string) {
+  return z.object({
+    name: z.string().min(1, t('form.validation.nameRequired')).max(200),
+    amount: z.coerce.number<number>().positive(t('form.validation.amountPositive')),
+    account_id: z.string(),
+    category_id: z.string(),
+    recurrence_interval: z.coerce.number<number>().int().min(1),
+    recurrence_unit: z.enum(['days', 'weeks', 'months']),
+    start_date: z.string().min(1, t('form.validation.startDateRequired')),
+    next_due_date: z.string().min(1, t('form.validation.nextDueDateRequired')),
+    notes: z.string().optional(),
+    notify_enabled: z.boolean(),
+    notify_days_before: z.string().optional(),
+  })
+}
 
-type RecurringForm = z.infer<typeof recurringSchema>
-
-const UNIT_OPTIONS = [
-  { value: 'days', label: 'Days' },
-  { value: 'weeks', label: 'Weeks' },
-  { value: 'months', label: 'Months' },
-]
+type RecurringForm = z.infer<ReturnType<typeof createRecurringSchema>>
 
 function emptyDefaults(): RecurringForm {
   return {
@@ -83,6 +80,8 @@ export function RecurringFormDialog({
   onOpenChange: (open: boolean) => void
   expense?: RecurringExpense | null
 }) {
+  const { t } = useTranslation(['recurring', 'common'])
+  const recurringSchema = useMemo(() => createRecurringSchema(t), [t])
   const createRecurring = useCreateRecurringExpense()
   const updateRecurring = useUpdateRecurringExpense()
   const { data: accounts = [] } = useAccounts()
@@ -109,8 +108,17 @@ export function RecurringFormDialog({
     reset(expense ? fromExpense(expense) : emptyDefaults())
   }, [open, expense, reset])
 
+  const unitOptions = useMemo(
+    () => [
+      { value: 'days', label: t('form.units.days') },
+      { value: 'weeks', label: t('form.units.weeks') },
+      { value: 'months', label: t('form.units.months') },
+    ],
+    [t],
+  )
+
   const accountOptions = [
-    { value: NONE, label: 'None' },
+    { value: NONE, label: t('form.none') },
     ...accounts.map((a) => ({ value: String(a.id), label: a.name })),
   ]
 
@@ -121,9 +129,15 @@ export function RecurringFormDialog({
     .filter((c) => c.type === 'income')
     .sort((a, b) => a.name.localeCompare(b.name))
   const categoryOptions = [
-    { value: NONE, label: 'None' },
-    ...expenseCats.map((c) => ({ value: String(c.id), label: `Expense · ${c.name}` })),
-    ...incomeCats.map((c) => ({ value: String(c.id), label: `Income · ${c.name}` })),
+    { value: NONE, label: t('form.none') },
+    ...expenseCats.map((c) => ({
+      value: String(c.id),
+      label: `${t('form.categoryPrefix.expense')} · ${c.name}`,
+    })),
+    ...incomeCats.map((c) => ({
+      value: String(c.id),
+      label: `${t('form.categoryPrefix.income')} · ${c.name}`,
+    })),
   ]
 
   const onSubmit = handleSubmit(async (data) => {
@@ -152,14 +166,14 @@ export function RecurringFormDialog({
     try {
       if (isEditing && expense) {
         await updateRecurring.mutateAsync({ id: expense.id, input })
-        toast.success('Recurring expense updated')
+        toast.success(t('toast.updated'))
       } else {
         await createRecurring.mutateAsync(input)
-        toast.success('Recurring expense created')
+        toast.success(t('toast.created'))
       }
       onOpenChange(false)
     } catch {
-      toast.error(isEditing ? 'Failed to update recurring expense' : 'Failed to add recurring expense')
+      toast.error(isEditing ? t('toast.updateError') : t('toast.createError'))
     }
   })
 
@@ -168,8 +182,8 @@ export function RecurringFormDialog({
   return (
     <Dialog
       open={open}
-      title={isEditing ? 'Edit recurring payment' : 'Add a recurring payment'}
-      description="Set the amount and how often it repeats. The agenda will surface it before each due date."
+      title={isEditing ? t('form.titleEdit') : t('form.titleCreate')}
+      description={t('form.description')}
       icon={RepeatIcon}
       tone="primary"
       onOpenChange={onOpenChange}
@@ -182,24 +196,32 @@ export function RecurringFormDialog({
             onClick={() => onOpenChange(false)}
             disabled={isPending}
           >
-            Cancel
+            {t('common:actions.cancel')}
           </Button>
           <Button type="submit" form="recurring-form" disabled={isPending}>
-            {isPending ? 'Saving…' : isEditing ? 'Save changes' : 'Add it'}
+            {isPending
+              ? t('form.saving')
+              : isEditing
+                ? t('form.saveChanges')
+                : t('form.addIt')}
           </Button>
         </>
       }
     >
       <form id="recurring-form" onSubmit={onSubmit} className="flex flex-col gap-4" noValidate>
         <div className="flex flex-col gap-2">
-          <Label htmlFor="recurring-name">Name</Label>
-          <Input id="recurring-name" placeholder="e.g. Netflix, Rent" {...register('name')} />
+          <Label htmlFor="recurring-name">{t('form.fields.name')}</Label>
+          <Input
+            id="recurring-name"
+            placeholder={t('form.fields.namePlaceholder')}
+            {...register('name')}
+          />
           {errors.name && <p className="text-destructive text-sm">{errors.name.message}</p>}
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="flex flex-col gap-2">
-            <Label htmlFor="recurring-amount">Amount (€)</Label>
+            <Label htmlFor="recurring-amount">{t('form.fields.amount')}</Label>
             <Input
               id="recurring-amount"
               type="number"
@@ -210,7 +232,7 @@ export function RecurringFormDialog({
             {errors.amount && <p className="text-destructive text-sm">{errors.amount.message}</p>}
           </div>
           <div className="flex flex-col gap-2">
-            <Label>Account</Label>
+            <Label>{t('form.fields.account')}</Label>
             <Controller
               control={control}
               name="account_id"
@@ -219,7 +241,7 @@ export function RecurringFormDialog({
                   value={field.value}
                   onValueChange={field.onChange}
                   options={accountOptions}
-                  placeholder="Account"
+                  placeholder={t('form.fields.accountPlaceholder')}
                 />
               )}
             />
@@ -227,7 +249,7 @@ export function RecurringFormDialog({
         </div>
 
         <div className="flex flex-col gap-2">
-          <Label>Category</Label>
+          <Label>{t('form.fields.category')}</Label>
           <Controller
             control={control}
             name="category_id"
@@ -236,7 +258,7 @@ export function RecurringFormDialog({
                 value={field.value}
                 onValueChange={field.onChange}
                 options={categoryOptions}
-                placeholder="Category"
+                placeholder={t('form.fields.categoryPlaceholder')}
               />
             )}
           />
@@ -244,14 +266,14 @@ export function RecurringFormDialog({
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="flex flex-col gap-2">
-            <Label htmlFor="recurring-start">Start date</Label>
+            <Label htmlFor="recurring-start">{t('form.fields.startDate')}</Label>
             <Input id="recurring-start" type="date" {...register('start_date')} />
             {errors.start_date && (
               <p className="text-destructive text-sm">{errors.start_date.message}</p>
             )}
           </div>
           <div className="flex flex-col gap-2">
-            <Label htmlFor="recurring-next-due">Next due date</Label>
+            <Label htmlFor="recurring-next-due">{t('form.fields.nextDueDate')}</Label>
             <Input id="recurring-next-due" type="date" {...register('next_due_date')} />
             {errors.next_due_date && (
               <p className="text-destructive text-sm">{errors.next_due_date.message}</p>
@@ -260,7 +282,7 @@ export function RecurringFormDialog({
         </div>
 
         <div className="flex flex-col gap-2">
-          <Label>Repeats every</Label>
+          <Label>{t('form.fields.repeatsEvery')}</Label>
           <div className="flex gap-2">
             <Input
               type="number"
@@ -275,8 +297,8 @@ export function RecurringFormDialog({
                 <Select
                   value={field.value}
                   onValueChange={field.onChange}
-                  options={UNIT_OPTIONS}
-                  placeholder="Unit"
+                  options={unitOptions}
+                  placeholder={t('form.fields.unitPlaceholder')}
                 />
               )}
             />
@@ -301,20 +323,20 @@ export function RecurringFormDialog({
               )}
             />
             <Label htmlFor="recurring-notify" className="font-medium">
-              Notify me before due
+              {t('form.fields.notifyBeforeDue')}
             </Label>
           </div>
           {notifyEnabled && (
             <div className="flex flex-col gap-2 ps-7">
               <Label htmlFor="recurring-notify-days" className="text-sm">
-                Days before
+                {t('form.fields.daysBefore')}
               </Label>
               <Input
                 id="recurring-notify-days"
                 type="number"
                 min={1}
                 max={90}
-                placeholder="Uses default if empty"
+                placeholder={t('form.fields.notifyDaysPlaceholder')}
                 {...register('notify_days_before')}
               />
             </div>
@@ -322,10 +344,9 @@ export function RecurringFormDialog({
         </div>
 
         <div className="flex flex-col gap-2">
-          <Label htmlFor="recurring-notes">Notes</Label>
+          <Label htmlFor="recurring-notes">{t('form.fields.notes')}</Label>
           <Textarea id="recurring-notes" rows={2} {...register('notes')} />
         </div>
-
       </form>
     </Dialog>
   )

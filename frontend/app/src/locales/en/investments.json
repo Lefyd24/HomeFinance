@@ -1,0 +1,269 @@
+{
+  "page": {
+    "title": "Investments",
+    "description": "Brokerage accounts synced automatically from your provider.",
+    "connectAccount": "Connect account",
+    "marketTools": "Market tools",
+    "tools": {
+      "news": "Headlines & sentiment",
+      "search": "Lookup any ticker",
+      "research": "Company profiles"
+    }
+  },
+  "empty": {
+    "title": "No investment accounts yet",
+    "description": "Connect a Freedom24 account to start tracking its balance, holdings and trades automatically."
+  },
+  "summary": {
+    "totalValue": "Total value",
+    "unrealised": "Unrealised P/L",
+    "today": "Today",
+    "accountCount": "{{count}} account",
+    "accountCount_other": "{{count}} accounts",
+    "mixedCurrencies": "Accounts are held in different currencies, so there's no combined total. Each card below shows its own.",
+    "trend": "6-month trend",
+    "allocation": "Cash vs invested"
+  },
+  "status": {
+    "ok": "Synced",
+    "error": "Sync error",
+    "pending": "Pending"
+  },
+  "card": {
+    "actionsLabel": "Account actions",
+    "selectAccount": "Show {{name}}",
+    "edit": "Edit account",
+    "delete": "Disconnect",
+    "totalValue": "Total value",
+    "invested": "Invested",
+    "cash": "Cash",
+    "today": "Today",
+    "holdings": "{{count}} holding",
+    "holdings_other": "{{count}} holdings",
+    "lastSynced": "Last synced {{date}}",
+    "neverSynced": "Not synced yet",
+    "allocation": "Allocation"
+  },
+  "deleteDialog": {
+    "title": "Disconnect {{name}}?",
+    "description": "This removes the account and its synced positions, snapshots and transactions from the app. Nothing changes on Freedom24 itself.",
+    "confirmLabel": "Disconnect account"
+  },
+  "toasts": {
+    "deleted": "Account disconnected",
+    "deleteFailed": "Could not disconnect the account. Try again."
+  },
+  "connect": {
+    "title": "Connect an investment account",
+    "description": "Enter the API keys generated on your broker's site — the app uses them only to read your balance, holdings and trade history.",
+    "nameLabel": "Account name",
+    "namePlaceholder": "e.g., Freedom24 Brokerage",
+    "providerLabel": "Provider",
+    "providerFreedom24": "Freedom24",
+    "currencyLabel": "Currency",
+    "currencyOptions": {
+      "usd": "USD — US Dollar",
+      "eur": "EUR — Euro",
+      "gbp": "GBP — British Pound"
+    },
+    "publicKeyLabel": "Public key",
+    "publicKeyPlaceholder": "Public API key",
+    "privateKeyLabel": "Private key",
+    "privateKeyPlaceholder": "Private API key",
+    "keysHint": "Generate a key pair at freedom24.com/tradernet-api/auth-api. Keys are stored encrypted and can't be viewed again after saving.",
+    "connecting": "Connecting…",
+    "connect": "Connect account",
+    "toasts": {
+      "connected": "Account connected",
+      "connectFailed": "Could not connect — check your keys and try again."
+    }
+  },
+  "detail": {
+    "lastSynced": "Last synced {{date}}",
+    "neverSynced": "Not synced yet",
+    "syncNow": "Sync now",
+    "syncing": "Syncing…",
+    "syncCooldown": "Just synced — you can sync again in a minute.",
+    "allocationTitle": "Allocation",
+    "historyTitle": "Value over time",
+    "positionsTitle": "Positions",
+    "transactionsTitle": "Recent activity",
+    "loadingActivity": "Loading activity…",
+    "activityCount": "{{count}} recent transaction",
+    "activityCount_other": "{{count}} recent transactions",
+    "gainLossLegend": "Bars share one scale across holdings",
+    "holdingCount": "{{count}} holding",
+    "holdingCount_other": "{{count}} holdings",
+    "noPositions": "No positions to show.",
+    "noHistory": "No history yet — check back after the next sync.",
+    "noTransactions": "No activity to show.",
+    "ranges": {
+      "1m": "1M",
+      "3m": "3M",
+      "6m": "6M",
+      "1y": "1Y",
+      "all": "All"
+    },
+    "summary": {
+      "totalValue": "Total value",
+      "marketValue": "Market value",
+      "costBasis": "Cost basis",
+      "unrealised": "Unrealised P/L",
+      "today": "Today",
+      "invested": "Invested",
+      "cash": "Cash",
+      "cashHint": "including {{amount}} cash",
+      "noQuote": "No quote yet"
+    },
+    "chart": {
+      "totalValue": "Total value",
+      "invested": "Invested",
+      "cash": "Cash"
+    },
+    "table": {
+      "symbol": "Symbol",
+      "quantity": "Qty",
+      "avgPrice": "Avg price",
+      "currentPrice": "Current price",
+      "dayChange": "Day",
+      "marketValue": "Market value",
+      "gainLoss": "Gain / loss",
+      "unrealizedPnl": "Unrealised P/L",
+      "returnPct": "Return",
+      "weight": "Weight",
+      "total": "Total"
+    },
+    "txnTypes": {
+      "buy": "Buy",
+      "sell": "Sell",
+      "fx": "Currency",
+      "dividend": "Dividend",
+      "fee": "Fee",
+      "deposit": "Deposit",
+      "withdrawal": "Withdrawal",
+      "tax": "Tax"
+    },
+    "toasts": {
+      "synced": "Account synced",
+      "syncFailed": "Sync failed — try again shortly."
+    }
+  },
+  "news": {
+    "title": "Market news",
+    "description": "Headlines from your selected market-data provider, filtered by holding or search term.",
+    "searchPlaceholder": "Search headlines and tickers…",
+    "searchAction": "Search",
+    "filterByHolding": "Filter",
+    "filterBySymbol": "Show only {{symbol}}",
+    "allStories": "All stories",
+    "resultCount": "{{count}} story",
+    "resultCount_other": "{{count}} stories",
+    "clearFilters": "Clear filters",
+    "loading": "Loading…",
+    "loadMore": "Load more",
+    "emptyTitle": "Nothing matched",
+    "emptyDescription": "Try a different term, or clear the filters to see the whole feed.",
+    "failedTitle": "Couldn't load the newsfeed",
+    "failedDescription": "The provider didn't answer. Try again shortly.",
+    "needsAccount": "Connect an investment account first — news comes from your broker's feed.",
+    "storyFailed": "Couldn't load this story. Try again shortly.",
+    "noBody": "This story has no article text. Open the original to read it.",
+    "openOriginal": "Open original",
+    "textArticle": "Text story",
+    "sentiment": {
+      "positive": "Positive",
+      "negative": "Negative",
+      "neutral": "Neutral"
+    }
+  },
+  "search": {
+    "title": "Ticker search",
+    "description": "Look up any instrument via your selected market-data provider, with its latest quote.",
+    "placeholder": "Search by symbol, company name or ISIN…",
+    "action": "Search",
+    "resultCount": "{{count}} match",
+    "resultCount_other": "{{count}} matches",
+    "viewNews": "News",
+    "viewResearch": "Research",
+    "idleTitle": "Search for an instrument",
+    "idleDescription": "Type at least two characters — try a ticker like AAPL, or a company name.",
+    "emptyTitle": "No matches",
+    "emptyDescription": "Nothing found for \"{{query}}\". Try a shorter term or a different spelling.",
+    "failedTitle": "Search didn't run",
+    "failedDescription": "The provider didn't answer. Try again shortly.",
+    "needsAccountTitle": "No broker connected",
+    "needsAccount": "Connect an investment account first — search runs against your broker's instrument list.",
+    "table": {
+      "symbol": "Symbol",
+      "name": "Name",
+      "exchange": "Exchange",
+      "type": "Type",
+      "lastPrice": "Last price",
+      "dayChange": "Day",
+      "actions": ""
+    }
+  },
+  "providers": {
+    "label": "Data source",
+    "freedom24": "Freedom24",
+    "yahoo": "Yahoo Finance",
+    "comingSoonTitle": "{{provider}} is coming soon",
+    "comingSoonDescription": "This data source isn't wired up yet. Stick with Yahoo Finance for now."
+  },
+  "research": {
+    "title": "Company research",
+    "description": "Look up any listed company or fund on Yahoo Finance — profile, quote and key stats.",
+    "placeholder": "Enter a ticker, e.g. AAPL or MSFT…",
+    "action": "Research",
+    "idleTitle": "Research a company",
+    "idleDescription": "Enter a ticker symbol to see its profile, valuation and business summary.",
+    "failedTitle": "Couldn't load this company",
+    "failedDescription": "No Yahoo Finance data for \"{{symbol}}\". Check the ticker and try again.",
+    "viewNews": "Related news",
+    "website": "Website",
+    "quoteTitle": "Quote",
+    "aboutTitle": "About",
+    "stats": {
+      "marketCap": "Market cap",
+      "pe": "P/E",
+      "forwardPe": "Forward P/E",
+      "dividendYield": "Dividend yield",
+      "beta": "Beta",
+      "target": "Price target",
+      "recommendation": "Consensus",
+      "employees": "Employees",
+      "open": "Open",
+      "previousClose": "Prev close",
+      "dayHigh": "Day high",
+      "dayLow": "Day low",
+      "weekHigh": "52-week high",
+      "weekLow": "52-week low",
+      "volume": "Volume",
+      "avgVolume": "Avg volume"
+    }
+  },
+  "edit": {
+    "title": "Edit investment account",
+    "description": "Name, icon and description are yours to edit. Balance, positions and transactions are always set by the {{provider}} sync.",
+    "nameLabel": "Account name",
+    "descriptionLabel": "Description",
+    "descriptionPlaceholder": "Optional notes about this account",
+    "saveChanges": "Save changes",
+    "saving": "Saving…",
+    "rotateKeys": "Rotate API keys",
+    "toasts": {
+      "updated": "Account updated",
+      "updateFailed": "Could not update the account. Try again."
+    },
+    "rotateDialog": {
+      "title": "Rotate API keys",
+      "description": "Replace the stored public/private key pair for this account. The next sync runs immediately to confirm the new keys work.",
+      "rotate": "Rotate keys",
+      "rotating": "Rotating…",
+      "toasts": {
+        "rotated": "API keys updated",
+        "rotateFailed": "Could not update the keys — check them and try again."
+      }
+    }
+  }
+}

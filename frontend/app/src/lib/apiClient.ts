@@ -16,29 +16,34 @@ export function getApiBaseUrl(): string {
 }
 
 /**
- * An error carrying the API's own message.
+ * Thrown by `apiFetch` so callers can branch on HTTP status (e.g. skip retries
+ * on 404) and still show the API's own words.
  *
  * FastAPI puts the useful text in `detail`; without it the UI can only ever say
  * "request failed", which is useless for things like sync cooldowns or expired
  * bank consents where the message IS the instruction to the user.
  */
 export class ApiError extends Error {
-  readonly status: number
+  status: number
+  detail: string | null
 
-  constructor(message: string, status: number) {
+  constructor(status: number, statusText: string, detail?: string | null) {
+    const message = detail?.trim() || `API request failed: ${status} ${statusText}`
     super(message)
     this.name = 'ApiError'
     this.status = status
+    this.detail = detail ?? null
   }
 }
 
-async function readErrorMessage(response: Response): Promise<string> {
+/** Pull the human-readable message out of an error body, in either shape FastAPI uses. */
+async function readErrorDetail(response: Response): Promise<string | null> {
   try {
     const body = (await response.json()) as { detail?: unknown }
     if (typeof body?.detail === 'string' && body.detail.trim()) {
       return body.detail
     }
-    // Pydantic validation errors arrive as a list of {loc, msg, type}.
+    // Validation errors arrive as a list of {loc, msg, type} rather than a string.
     if (Array.isArray(body?.detail)) {
       const messages = body.detail
         .map((item) => (item as { msg?: string })?.msg)
@@ -46,10 +51,11 @@ async function readErrorMessage(response: Response): Promise<string> {
       if (messages.length) return messages.join('; ')
     }
   } catch {
-    // Non-JSON body (proxy error page, empty response) — fall through.
+    // Non-JSON error bodies are fine — the caller falls back to status text.
   }
-  return `API request failed: ${response.status} ${response.statusText}`
+  return null
 }
+
 
 export async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
   const token = window.localStorage.getItem('token')
@@ -63,7 +69,7 @@ export async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> 
   })
 
   if (!response.ok) {
-    throw new ApiError(await readErrorMessage(response), response.status)
+    throw new ApiError(response.status, response.statusText, await readErrorDetail(response))
   }
 
   if (response.status === 204) {

@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { useTranslation } from 'react-i18next'
 import { cn } from '@/lib/utils'
 
 /**
@@ -43,6 +44,7 @@ export function AuthLayout({
 }
 
 function MobileBrandMark() {
+  const { t } = useTranslation('nav')
   return (
     <div className="mb-7 flex items-center gap-3 lg:hidden">
       <img
@@ -54,19 +56,20 @@ function MobileBrandMark() {
         decoding="async"
       />
       <span className="font-heading text-lg font-bold tracking-tight text-foreground">
-        Home Finance
+        {t('brand.name')}
       </span>
     </div>
   )
 }
 
 export function BrandPanelHeader() {
+  const { t } = useTranslation('nav')
   return (
     <div className="flex items-center gap-3">
       <div className="flex size-10 items-center justify-center rounded-xl bg-white/20">
         <img src="/assets/icons/favicon.svg" alt="" width={22} height={22} className="size-[1.375rem]" />
       </div>
-      <span className="text-lg font-bold tracking-tight text-white">Home Finance</span>
+      <span className="text-lg font-bold tracking-tight text-white">{t('brand.name')}</span>
     </div>
   )
 }
@@ -94,9 +97,10 @@ export function BrandPanelStep({
 }
 
 export function BrandPanelTrust({ children }: { children: ReactNode }) {
+  const { t } = useTranslation('auth')
   return (
     <div className="rounded-xl border border-white/25 bg-white/12 p-4 xl:p-5">
-      <p className="mb-2 text-xs font-semibold text-white/75">Your data stays yours</p>
+      <p className="mb-2 text-xs font-semibold text-white/75">{t('shared.trustLabel')}</p>
       <p className="text-sm text-white/90">{children}</p>
     </div>
   )

@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
+import { useTranslation } from 'react-i18next'
 import { Landmark } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -10,6 +11,7 @@ import { formatCurrency, formatDate } from '../../lib/format'
 import { getDebtInsights } from '../reportsPageApi'
 
 export function DebtTab() {
+  const { t } = useTranslation('reports')
   const { data, isLoading } = useQuery({
     queryKey: ['reports', 'debt-insights'],
     queryFn: getDebtInsights,
@@ -30,8 +32,8 @@ export function DebtTab() {
     return (
       <EmptyState
         icon={Landmark}
-        title="No debts tracked"
-        description="Add a debt and this tab will show payoff progress, interest cost, and which one to clear first."
+        title={t('debt.empty.title')}
+        description={t('debt.empty.description')}
       />
     )
   }
@@ -52,32 +54,33 @@ export function DebtTab() {
     <div className="flex flex-col gap-4">
       <StatStrip className="xl:grid-cols-3">
         <StatCard
-          label="Still owed"
+          label={t('debt.stats.stillOwed')}
           value={formatCurrency(data?.total_current ?? 0)}
-          hint={`Across ${debts.length} debt${debts.length === 1 ? '' : 's'}`}
+          hint={t('debt.stats.across', { count: debts.length })}
           tone="destructive"
         />
         <StatCard
-          label="Paid down"
+          label={t('debt.stats.paidDown')}
           value={formatCurrency(totalPaid)}
-          hint={`${paidPct.toFixed(0)}% of the original ${formatCurrency(totalOriginal)}`}
+          hint={t('debt.stats.paidDownHint', {
+            pct: paidPct.toFixed(0),
+            amount: formatCurrency(totalOriginal),
+          })}
           tone="success"
         />
         <StatCard
-          label="Interest paid so far"
+          label={t('debt.stats.interestPaid')}
           value={formatCurrency(data?.total_interest_paid ?? 0)}
-          hint="The part of your payments that bought nothing"
+          hint={t('debt.stats.interestHint')}
         />
       </StatStrip>
 
       {target && target.interest_rate ? (
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Clear {target.name} first.</CardTitle>
+            <CardTitle className="text-base">{t('debt.recommendation.title', { name: target.name })}</CardTitle>
             <CardDescription>
-              At {target.interest_rate.toFixed(2)}% it is your most expensive debt, so every euro sent
-              there saves more than the same euro sent anywhere else. Keep the minimum payment on the
-              rest while you do it.
+              {t('debt.recommendation.description', { rate: target.interest_rate.toFixed(2) })}
             </CardDescription>
           </CardHeader>
         </Card>
@@ -85,8 +88,8 @@ export function DebtTab() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Payoff progress</CardTitle>
-          <CardDescription>Ordered by interest rate — most expensive first.</CardDescription>
+          <CardTitle className="text-base">{t('debt.progress.title')}</CardTitle>
+          <CardDescription>{t('debt.progress.description')}</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-5">
           {byRate.map((debt) => (
@@ -101,8 +104,10 @@ export function DebtTab() {
                   )}
                 </div>
                 <p className="text-xs tabular-nums text-muted-foreground">
-                  {formatCurrency(debt.current_balance)} left of{' '}
-                  {formatCurrency(debt.original_balance)}
+                  {t('debt.progress.leftOf', {
+                    current: formatCurrency(debt.current_balance),
+                    original: formatCurrency(debt.original_balance),
+                  })}
                 </p>
               </div>
 
@@ -117,10 +122,10 @@ export function DebtTab() {
               </div>
 
               <p className="mt-1.5 text-xs text-muted-foreground">
-                {debt.paid_pct.toFixed(0)}% paid off
+                {t('debt.progress.paidOff', { pct: debt.paid_pct.toFixed(0) })}
                 {debt.projected_payoff
-                  ? ` · clear by ${formatDate(debt.projected_payoff)} at the current minimum payment`
-                  : ' · set a minimum payment to project a payoff date'}
+                  ? t('debt.progress.clearBy', { date: formatDate(debt.projected_payoff) })
+                  : t('debt.progress.setMinimum')}
               </p>
             </div>
           ))}

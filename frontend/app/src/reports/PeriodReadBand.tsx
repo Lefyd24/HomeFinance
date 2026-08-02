@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { ArrowDownRight, ArrowUpRight, Minus, Sparkles } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -33,6 +34,7 @@ export function PeriodReadBand({
   loading: boolean
   filters: ReportFilters
 }) {
+  const { t } = useTranslation('reports')
   const theme = useChartTheme()
 
   if (loading || !current) {
@@ -49,7 +51,7 @@ export function PeriodReadBand({
     )
   }
 
-  const read = buildRead(current, previous)
+  const read = buildRead(current, previous, t)
   const net = current.income - current.expenses
   const rate = savingsRate(current)
   const previousRate = previous ? savingsRate(previous) : null
@@ -78,7 +80,7 @@ export function PeriodReadBand({
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div className="max-w-2xl">
           <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-            The period in one line
+            {t('periodBand.eyebrow')}
           </p>
           <h2 className="mt-2 font-heading text-2xl font-bold leading-snug tracking-tight text-foreground sm:text-3xl">
             {read.headline}
@@ -88,47 +90,51 @@ export function PeriodReadBand({
 
         <Button asChild variant="outline" className="shrink-0">
           <Link
-            to={`/ai-advisor?q=${encodeURIComponent(advisorPrompt(filters.startDate, filters.endDate, filters.tab))}`}
+            to={`/ai-advisor?q=${encodeURIComponent(advisorPrompt(filters.startDate, filters.endDate, filters.tab, t))}`}
           >
             <Sparkles data-icon="inline-start" />
-            Ask the advisor about this
+            {t('periodBand.askAdvisor')}
           </Link>
         </Button>
       </div>
 
       <div className="mt-6 grid grid-cols-2 gap-x-4 gap-y-5 lg:grid-cols-4">
         <Metric
-          label="Money in"
+          label={t('periodBand.metrics.moneyIn')}
           value={formatCurrency(current.income)}
           change={previous ? percentChange(current.income, previous.income) : null}
           changeIsGood={(delta) => delta >= 0}
           series={current.incomeSeries}
           color={theme.positive}
+          t={t}
         />
         <Metric
-          label="Money out"
+          label={t('periodBand.metrics.moneyOut')}
           value={formatCurrency(current.expenses)}
           change={previous ? percentChange(current.expenses, previous.expenses) : null}
           changeIsGood={(delta) => delta <= 0}
           series={current.expenseSeries}
           color={theme.negative}
+          t={t}
         />
         <Metric
-          label="Net"
+          label={t('periodBand.metrics.net')}
           value={formatCurrency(net)}
           change={previous ? percentChange(net, previous.income - previous.expenses) : null}
           changeIsGood={(delta) => delta >= 0}
           series={current.netSeries}
           color={theme.neutral}
+          t={t}
         />
         <Metric
-          label="Savings rate"
-          value={rate === null ? '—' : `${rate.toFixed(0)}%`}
+          label={t('periodBand.metrics.savingsRate')}
+          value={rate === null ? t('periodBand.metrics.noRate') : `${rate.toFixed(0)}%`}
           change={rate !== null && previousRate !== null ? rate - previousRate : null}
           changeIsGood={(delta) => delta >= 0}
           changeUnit="pp"
           series={current.netSeries}
           color={theme.neutral}
+          t={t}
         />
       </div>
     </section>
@@ -143,6 +149,7 @@ function Metric({
   changeUnit = '%',
   series,
   color,
+  t,
 }: {
   label: string
   value: string
@@ -151,6 +158,7 @@ function Metric({
   changeUnit?: string
   series: number[]
   color: string
+  t: ReturnType<typeof useTranslation<'reports'>>['t']
 }) {
   return (
     <div className="min-w-0">
@@ -159,7 +167,7 @@ function Metric({
         {value}
       </p>
       <div className="mt-1.5 flex items-center justify-between gap-3">
-        <DeltaChip change={change} isGood={changeIsGood} unit={changeUnit} />
+        <DeltaChip change={change} isGood={changeIsGood} unit={changeUnit} t={t} />
         <Sparkline values={series} color={color} className="shrink-0" />
       </div>
     </div>
@@ -174,22 +182,25 @@ function DeltaChip({
   change,
   isGood,
   unit,
+  t,
 }: {
   change: number | null
   isGood: (delta: number) => boolean
   unit: string
+  t: ReturnType<typeof useTranslation<'reports'>>['t']
 }) {
   if (change === null || Math.abs(change) < 0.5) {
     return (
       <span className="flex items-center gap-1 text-xs text-muted-foreground">
         <Minus className="size-3" />
-        Flat vs prior
+        {t('periodBand.delta.flatVsPrior')}
       </span>
     )
   }
 
   const good = isGood(change)
   const Icon = change > 0 ? ArrowUpRight : ArrowDownRight
+  const value = Math.abs(change).toFixed(unit === 'pp' ? 1 : 0)
 
   return (
     <span
@@ -199,8 +210,7 @@ function DeltaChip({
       )}
     >
       <Icon className="size-3" />
-      {Math.abs(change).toFixed(unit === 'pp' ? 1 : 0)}
-      {unit} vs prior
+      {t('periodBand.delta.vsPrior', { value, unit })}
     </span>
   )
 }

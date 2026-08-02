@@ -1,4 +1,6 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import type { TFunction } from 'i18next'
 import { toast } from 'sonner'
 import { HugeiconsIcon } from '@hugeicons/react'
 import {
@@ -39,6 +41,7 @@ import { useConfirm } from '../ui/useConfirm'
 import { formatCurrency } from '../lib/format'
 import { useAccounts } from '../accounts/useAccounts'
 import { useBudgets } from '../budgets/useBudgets'
+import { useInvestmentAccounts } from '../investments/useInvestments'
 import { isPushSupported, isPushSubscribed, subscribePush, unsubscribePush } from './pushNotifications'
 import * as notificationsApi from './notificationsApi'
 import {
@@ -51,48 +54,85 @@ import {
 import { RuleFormDialog } from './RuleFormDialog'
 import type { NotificationRule } from './notificationsApi'
 
-const HOUR_OPTIONS = [
-  { value: 'none', label: 'None' },
-  ...Array.from({ length: 24 }, (_, h) => ({
-    value: String(h),
-    label: `${String(h).padStart(2, '0')}:00`,
-  })),
-]
-
-const RULE_TYPE_LABEL: Record<string, string> = {
-  balance_below: 'Balance',
-  budget_percent: 'Budget',
-  scheduled_report: 'Report',
-}
-
 function describeRule(
   rule: NotificationRule,
   accountName: (id: number) => string,
   budgetName: (id: number) => string,
+  investmentAccountName: (id: number) => string,
+  t: TFunction<'notifications'>,
 ): string {
   if (rule.type === 'balance_below') {
-    const target = rule.target_id != null ? accountName(rule.target_id) : `Account #${rule.target_id}`
-    return `${target} below ${formatCurrency(rule.threshold ?? 0)}`
+    const target =
+      rule.target_id != null
+        ? accountName(rule.target_id)
+        : t('rules.describe.accountFallback', { id: rule.target_id })
+    return t('rules.describe.balanceBelow', {
+      target,
+      amount: formatCurrency(rule.threshold ?? 0),
+    })
   }
   if (rule.type === 'budget_percent') {
-    const target = rule.target_id != null ? budgetName(rule.target_id) : `Budget #${rule.target_id}`
-    return `${target} at ${rule.threshold ?? 0}%`
+    const target =
+      rule.target_id != null
+        ? budgetName(rule.target_id)
+        : t('rules.describe.budgetFallback', { id: rule.target_id })
+    return t('rules.describe.budgetPercent', {
+      target,
+      percent: rule.threshold ?? 0,
+    })
   }
   if (rule.type === 'scheduled_report') {
     const schedule =
       rule.schedule_kind === 'every_n_days'
-        ? `every ${rule.schedule_value || 7} days`
-        : rule.schedule_kind || 'scheduled'
-    return `${rule.report_type || 'report'}, ${schedule}`
+        ? t('rules.describe.scheduleEveryNDays', { count: rule.schedule_value || 7 })
+        : rule.schedule_kind || t('rules.describe.scheduleFallback')
+    const reportLabel = rule.report_type
+      ? t(`ruleForm.reportTypes.${rule.report_type}` as 'ruleForm.reportTypes.spending')
+      : t('rules.typeLabels.scheduled_report')
+    return t('rules.describe.scheduledReport', { report: reportLabel, schedule })
+  }
+  if (rule.type === 'investment_return_below') {
+    const target =
+      rule.target_id != null
+        ? investmentAccountName(rule.target_id)
+        : t('rules.describe.accountFallback', { id: rule.target_id })
+    return t('rules.describe.investmentReturnBelow', {
+      target,
+      percent: rule.threshold ?? 0,
+    })
+  }
+  if (rule.type === 'investment_scheduled') {
+    const target =
+      rule.target_id != null
+        ? investmentAccountName(rule.target_id)
+        : t('rules.describe.accountFallback', { id: rule.target_id })
+    const schedule =
+      rule.schedule_kind === 'every_n_days'
+        ? t('rules.describe.scheduleEveryNDays', { count: rule.schedule_value || 7 })
+        : rule.schedule_kind || t('rules.describe.scheduleFallback')
+    return t('rules.describe.investmentScheduled', { target, schedule })
   }
   return ''
 }
 
 export function NotificationsPage() {
+  const { t } = useTranslation('notifications')
+
+  const hourOptions = useMemo(
+    () => [
+      { value: 'none', label: t('hourNone') },
+      ...Array.from({ length: 24 }, (_, h) => ({
+        value: String(h),
+        label: `${String(h).padStart(2, '0')}:00`,
+      })),
+    ],
+    [t],
+  )
   const { data: settings, isLoading: settingsLoading } = useNotificationSettings()
   const { data: rules = [], isLoading: rulesLoading } = useNotificationRules()
   const { data: accounts = [] } = useAccounts()
   const { data: budgets = [] } = useBudgets(false)
+  const { data: investmentAccounts = [] } = useInvestmentAccounts()
   const { data: pushStatus, refetch: refetchPushStatus } = usePushStatus()
   const updateSettings = useUpdateNotificationSettings()
   const deleteRule = useDeleteNotificationRule()
@@ -142,13 +182,15 @@ export function NotificationsPage() {
 
   const accountName = (id: number) => accounts.find((a) => a.id === id)?.name ?? `Account #${id}`
   const budgetName = (id: number) => budgets.find((b) => b.id === id)?.name ?? `Budget #${id}`
+  const investmentAccountName = (id: number) =>
+    investmentAccounts.find((a) => a.id === id)?.name ?? `Account #${id}`
 
   async function handleToggleChannel(channel: 'email_enabled' | 'push_enabled', value: boolean) {
     try {
       await updateSettings.mutateAsync({ [channel]: value })
-      toast.success('Channel preferences updated')
+      toast.success(t('toasts.channelsUpdated'))
     } catch {
-      toast.error('Failed to update channels')
+      toast.error(t('toasts.channelsFailed'))
     }
   }
 
@@ -159,9 +201,9 @@ export function NotificationsPage() {
         quiet_hours_start: generalForm.quietHoursStart === 'none' ? null : Number(generalForm.quietHoursStart),
         quiet_hours_end: generalForm.quietHoursEnd === 'none' ? null : Number(generalForm.quietHoursEnd),
       })
-      toast.success('Notification settings saved')
+      toast.success(t('toasts.generalSaved'))
     } catch {
-      toast.error('Failed to save settings')
+      toast.error(t('toasts.generalFailed'))
     }
   }
 
@@ -176,9 +218,9 @@ export function NotificationsPage() {
         ...(smtpForm.password ? { smtp_password: smtpForm.password } : {}),
       })
       setSmtpForm((f) => ({ ...f, password: '' }))
-      toast.success('SMTP settings saved')
+      toast.success(t('toasts.smtpSaved'))
     } catch {
-      toast.error('Failed to save SMTP settings')
+      toast.error(t('toasts.smtpFailed'))
     }
   }
 
@@ -187,9 +229,9 @@ export function NotificationsPage() {
     try {
       await subscribePush({ forceRefresh: true })
       await updateSettings.mutateAsync({ push_enabled: true })
-      toast.success('Desktop notifications enabled')
+      toast.success(t('toasts.desktopEnabled'))
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Failed to enable desktop notifications')
+      toast.error(error instanceof Error ? error.message : t('toasts.desktopEnableFailed'))
     } finally {
       setBrowserSubscribed(await isPushSubscribed())
       await refetchPushStatus()
@@ -202,9 +244,9 @@ export function NotificationsPage() {
     try {
       await unsubscribePush()
       await updateSettings.mutateAsync({ push_enabled: false })
-      toast.success('Desktop notifications disabled')
+      toast.success(t('toasts.desktopDisabled'))
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Failed to disable desktop notifications')
+      toast.error(error instanceof Error ? error.message : t('toasts.desktopDisableFailed'))
     } finally {
       setBrowserSubscribed(await isPushSubscribed())
       await refetchPushStatus()
@@ -218,7 +260,7 @@ export function NotificationsPage() {
       const result = await notificationsApi.runNotificationsNow()
       toast[result.sent > 0 ? 'success' : 'info'](result.message)
     } catch {
-      toast.error('Failed to check rules')
+      toast.error(t('toasts.rulesCheckFailed'))
     } finally {
       setRunningRules(false)
     }
@@ -228,10 +270,15 @@ export function NotificationsPage() {
     setTestingEmail(true)
     try {
       const result = await notificationsApi.sendTestNotification('email')
-      if (result.email) toast.success('Test email sent — check your inbox')
-      else toast.error(`Test email failed: ${result.email_detail || 'check SMTP settings'}`)
+      if (result.email) toast.success(t('toasts.testEmailSent'))
+      else
+        toast.error(
+          t('toasts.testEmailFailed', {
+            detail: result.email_detail || t('toasts.testEmailFailedGeneric'),
+          }),
+        )
     } catch {
-      toast.error('Test failed')
+      toast.error(t('toasts.testFailed'))
     } finally {
       setTestingEmail(false)
     }
@@ -241,10 +288,15 @@ export function NotificationsPage() {
     setTestingPush(true)
     try {
       const result = await notificationsApi.sendTestNotification('push')
-      if (result.push) toast.success('Test desktop notification sent')
-      else toast.error(`Test push failed: ${result.push_detail || 'check configuration'}`)
+      if (result.push) toast.success(t('toasts.testPushSent'))
+      else
+        toast.error(
+          t('toasts.testPushFailed', {
+            detail: result.push_detail || t('toasts.testPushFailedGeneric'),
+          }),
+        )
     } catch {
-      toast.error('Test failed')
+      toast.error(t('toasts.testFailed'))
     } finally {
       setTestingPush(false)
     }
@@ -262,38 +314,38 @@ export function NotificationsPage() {
 
   async function handleDeleteRule(rule: NotificationRule) {
     const ok = await confirm({
-      title: `Delete ${rule.name}?`,
-      description: 'This notification rule will stop running immediately.',
-      confirmLabel: 'Delete rule',
+      title: t('deleteConfirm.title', { name: rule.name }),
+      description: t('deleteConfirm.description'),
+      confirmLabel: t('deleteConfirm.confirmLabel'),
     })
     if (!ok) return
     try {
       await deleteRule.mutateAsync(rule.id)
-      toast.success('Rule deleted')
+      toast.success(t('toasts.ruleDeleted'))
     } catch {
-      toast.error('Failed to delete rule')
+      toast.error(t('toasts.ruleDeleteFailed'))
     }
   }
 
   const desktopReady = browserSubscribed && (pushStatus?.subscription_count ?? 0) > 0
   const desktopStatusText = !pushStatus?.vapid_configured
-    ? 'Server push not configured — set VAPID keys on the backend'
+    ? t('channels.status.vapidNotConfigured')
     : desktopReady
-      ? 'Desktop notifications are enabled for this browser'
+      ? t('channels.status.enabled')
       : browserSubscribed
-        ? 'Browser subscribed but not registered on server — click Enable again'
-        : 'Click Enable to allow browser notifications'
+        ? t('channels.status.subscribedNotRegistered')
+        : t('channels.status.clickEnable')
 
   return (
     <PageContainer className="flex flex-col gap-5">
       <PageHeader
-        title="Notifications"
-        description="Choose how you want to be alerted about balances, budgets, and scheduled reports."
+        title={t('page.title')}
+        description={t('page.description')}
       />
 
       {/* Channels */}
       <ListCard as="div">
-        <h2 className="font-heading text-lg font-semibold">Notification channels</h2>
+        <h2 className="font-heading text-lg font-semibold">{t('channels.title')}</h2>
 
         {settingsLoading ? (
           <div className="mt-4 flex flex-col gap-3">
@@ -304,8 +356,8 @@ export function NotificationsPage() {
           <div className="mt-4 flex flex-col gap-3">
             <div className="flex items-center justify-between gap-4 rounded-lg border border-border bg-muted/30 p-4">
               <div>
-                <p className="font-medium text-sm">Email notifications</p>
-                <p className="text-xs text-muted-foreground">Send alerts to your account email address</p>
+                <p className="font-medium text-sm">{t('channels.email.title')}</p>
+                <p className="text-xs text-muted-foreground">{t('channels.email.description')}</p>
               </div>
               <Switch
                 checked={!!settings?.email_enabled}
@@ -315,8 +367,8 @@ export function NotificationsPage() {
 
             <div className="flex items-center justify-between gap-4 rounded-lg border border-border bg-muted/30 p-4">
               <div>
-                <p className="font-medium text-sm">Push notifications</p>
-                <p className="text-xs text-muted-foreground">Desktop browser notifications when enabled</p>
+                <p className="font-medium text-sm">{t('channels.push.title')}</p>
+                <p className="text-xs text-muted-foreground">{t('channels.push.description')}</p>
               </div>
               <Switch
                 checked={!!settings?.push_enabled}
@@ -328,16 +380,16 @@ export function NotificationsPage() {
               {isPushSupported() ? (
                 desktopReady ? (
                   <Button type="button" variant="ghost" size="sm" disabled={pushBusy} onClick={() => void handleDisableDesktop()}>
-                    Disable desktop notifications
+                    {t('channels.disableDesktop')}
                   </Button>
                 ) : (
                   <Button type="button" variant="outline" size="sm" disabled={pushBusy} onClick={() => void handleEnableDesktop()}>
-                    Enable desktop notifications
+                    {t('channels.enableDesktop')}
                   </Button>
                 )
               ) : (
                 <Button type="button" variant="outline" size="sm" disabled>
-                  Desktop notifications not supported
+                  {t('channels.notSupported')}
                 </Button>
               )}
               <span className="text-xs text-muted-foreground">{desktopStatusText}</span>
@@ -345,10 +397,10 @@ export function NotificationsPage() {
 
             <div className="flex flex-wrap gap-2 border-t border-border pt-3">
               <Button type="button" variant="outline" size="sm" disabled={runningRules} onClick={() => void handleRunRules()}>
-                Check rules now
+                {t('channels.checkRulesNow')}
               </Button>
               <Button type="button" size="sm" disabled={testingPush} onClick={() => void handleTestPush()}>
-                Send test desktop notification
+                {t('channels.sendTestPush')}
               </Button>
             </div>
           </div>
@@ -357,10 +409,10 @@ export function NotificationsPage() {
 
       {/* General settings */}
       <ListCard as="div">
-        <h2 className="font-heading text-lg font-semibold">General settings</h2>
+        <h2 className="font-heading text-lg font-semibold">{t('general.title')}</h2>
         <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <div className="flex flex-col gap-2">
-            <Label htmlFor="default-days-before">Default days before</Label>
+            <Label htmlFor="default-days-before">{t('general.defaultDaysBefore')}</Label>
             <Input
               id="default-days-before"
               type="number"
@@ -369,66 +421,64 @@ export function NotificationsPage() {
               value={generalForm.defaultDaysBefore}
               onChange={(e) => setGeneralForm((f) => ({ ...f, defaultDaysBefore: e.target.value }))}
             />
-            <p className="text-xs text-muted-foreground">For recurring expenses and debt reminders</p>
+            <p className="text-xs text-muted-foreground">{t('general.defaultDaysBeforeHint')}</p>
           </div>
           <div className="flex flex-col gap-2">
-            <Label>Quiet hours start</Label>
+            <Label>{t('general.quietHoursStart')}</Label>
             <Select
               value={generalForm.quietHoursStart}
               onValueChange={(v) => setGeneralForm((f) => ({ ...f, quietHoursStart: v }))}
-              options={HOUR_OPTIONS}
-              placeholder="None"
+              options={hourOptions}
+              placeholder={t('hourNone')}
             />
-            <p className="text-xs text-muted-foreground">Hour (0–23), no notifications sent</p>
+            <p className="text-xs text-muted-foreground">{t('general.quietHoursStartHint')}</p>
           </div>
           <div className="flex flex-col gap-2">
-            <Label>Quiet hours end</Label>
+            <Label>{t('general.quietHoursEnd')}</Label>
             <Select
               value={generalForm.quietHoursEnd}
               onValueChange={(v) => setGeneralForm((f) => ({ ...f, quietHoursEnd: v }))}
-              options={HOUR_OPTIONS}
-              placeholder="None"
+              options={hourOptions}
+              placeholder={t('hourNone')}
             />
-            <p className="text-xs text-muted-foreground">Hour (0–23)</p>
+            <p className="text-xs text-muted-foreground">{t('general.quietHoursEndHint')}</p>
           </div>
         </div>
         <div className="mt-4 flex justify-end">
           <Button size="sm" disabled={updateSettings.isPending} onClick={() => void handleSaveGeneral()}>
-            Save settings
+            {t('general.save')}
           </Button>
         </div>
       </ListCard>
 
       {/* SMTP override */}
       <ListCard as="div">
-        <h2 className="font-heading text-lg font-semibold">SMTP override</h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Optional per-user SMTP settings. Unset fields fall back to server configuration.
-        </p>
+        <h2 className="font-heading text-lg font-semibold">{t('smtp.title')}</h2>
+        <p className="mt-1 text-sm text-muted-foreground">{t('smtp.description')}</p>
         <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div className="flex flex-col gap-2">
-            <Label htmlFor="smtp-host">SMTP host</Label>
+            <Label htmlFor="smtp-host">{t('smtp.host')}</Label>
             <Input
               id="smtp-host"
-              placeholder="smtp.example.com"
+              placeholder={t('smtp.hostPlaceholder')}
               value={smtpForm.host}
               onChange={(e) => setSmtpForm((f) => ({ ...f, host: e.target.value }))}
             />
           </div>
           <div className="flex flex-col gap-2">
-            <Label htmlFor="smtp-port">SMTP port</Label>
+            <Label htmlFor="smtp-port">{t('smtp.port')}</Label>
             <Input
               id="smtp-port"
               type="number"
               min={1}
               max={65535}
-              placeholder="587"
+              placeholder={t('smtp.portPlaceholder')}
               value={smtpForm.port}
               onChange={(e) => setSmtpForm((f) => ({ ...f, port: e.target.value }))}
             />
           </div>
           <div className="flex flex-col gap-2">
-            <Label htmlFor="smtp-user">SMTP user</Label>
+            <Label htmlFor="smtp-user">{t('smtp.user')}</Label>
             <Input
               id="smtp-user"
               autoComplete="username"
@@ -437,46 +487,46 @@ export function NotificationsPage() {
             />
           </div>
           <div className="flex flex-col gap-2">
-            <Label htmlFor="smtp-password">SMTP password</Label>
+            <Label htmlFor="smtp-password">{t('smtp.password')}</Label>
             <Input
               id="smtp-password"
               type="password"
               autoComplete="new-password"
-              placeholder="Leave blank to keep current"
+              placeholder={t('smtp.passwordPlaceholder')}
               value={smtpForm.password}
               onChange={(e) => setSmtpForm((f) => ({ ...f, password: e.target.value }))}
             />
             {settings?.smtp_password_set && !smtpForm.password && (
-              <p className="text-xs text-muted-foreground">A password is already saved</p>
+              <p className="text-xs text-muted-foreground">{t('smtp.passwordSaved')}</p>
             )}
           </div>
           <div className="flex flex-col gap-2">
-            <Label htmlFor="smtp-from">From address</Label>
+            <Label htmlFor="smtp-from">{t('smtp.from')}</Label>
             <Input
               id="smtp-from"
               type="email"
-              placeholder="noreply@example.com"
+              placeholder={t('smtp.fromPlaceholder')}
               value={smtpForm.from}
               onChange={(e) => setSmtpForm((f) => ({ ...f, from: e.target.value }))}
             />
           </div>
           <div className="flex flex-col gap-2">
-            <Label>Use TLS</Label>
+            <Label>{t('smtp.useTls')}</Label>
             <label className="mt-1 flex cursor-pointer items-center gap-3">
               <Switch
                 checked={smtpForm.useTls}
                 onCheckedChange={(v) => setSmtpForm((f) => ({ ...f, useTls: v }))}
               />
-              <span className="text-sm">Enable TLS</span>
+              <span className="text-sm">{t('smtp.enableTls')}</span>
             </label>
           </div>
         </div>
         <div className="mt-4 flex justify-end gap-2">
           <Button type="button" variant="outline" size="sm" disabled={testingEmail} onClick={() => void handleTestEmail()}>
-            Send test email
+            {t('smtp.sendTestEmail')}
           </Button>
           <Button size="sm" disabled={updateSettings.isPending} onClick={() => void handleSaveSmtp()}>
-            Save SMTP settings
+            {t('smtp.save')}
           </Button>
         </div>
       </ListCard>
@@ -485,14 +535,12 @@ export function NotificationsPage() {
       <ListCard as="div">
         <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
           <div>
-            <h2 className="font-heading text-lg font-semibold">Notification rules</h2>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Custom alerts for low balances, budget usage, and scheduled reports.
-            </p>
+            <h2 className="font-heading text-lg font-semibold">{t('rules.title')}</h2>
+            <p className="mt-1 text-sm text-muted-foreground">{t('rules.description')}</p>
           </div>
           <Button size="sm" className="shrink-0" onClick={handleAddRule}>
             <HugeiconsIcon icon={Add01Icon} strokeWidth={2} data-icon="inline-start" />
-            Add rule
+            {t('rules.add')}
           </Button>
         </div>
 
@@ -509,13 +557,13 @@ export function NotificationsPage() {
                 <EmptyMedia variant="icon">
                   <HugeiconsIcon icon={BellRingIcon} strokeWidth={2} />
                 </EmptyMedia>
-                <EmptyTitle>No notification rules yet</EmptyTitle>
-                <EmptyDescription>Add one to get alerted about balances, budgets, or reports.</EmptyDescription>
+                <EmptyTitle>{t('rules.empty.title')}</EmptyTitle>
+                <EmptyDescription>{t('rules.empty.description')}</EmptyDescription>
               </EmptyHeader>
               <EmptyContent>
                 <Button size="sm" onClick={handleAddRule}>
                   <HugeiconsIcon icon={Add01Icon} strokeWidth={2} data-icon="inline-start" />
-                  Add your first rule
+                  {t('rules.empty.addFirst')}
                 </Button>
               </EmptyContent>
             </Empty>
@@ -523,12 +571,12 @@ export function NotificationsPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Details</TableHead>
-                  <TableHead>Channels</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-end">Actions</TableHead>
+                  <TableHead>{t('rules.table.name')}</TableHead>
+                  <TableHead>{t('rules.table.type')}</TableHead>
+                  <TableHead>{t('rules.table.details')}</TableHead>
+                  <TableHead>{t('rules.table.channels')}</TableHead>
+                  <TableHead>{t('rules.table.status')}</TableHead>
+                  <TableHead className="text-end">{t('rules.table.actions')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -536,21 +584,23 @@ export function NotificationsPage() {
                   <TableRow key={rule.id}>
                     <TableCell className="font-medium">{rule.name}</TableCell>
                     <TableCell>
-                      <Badge variant="outline">{RULE_TYPE_LABEL[rule.type] ?? rule.type}</Badge>
+                      <Badge variant="outline">
+                        {t(`rules.typeLabels.${rule.type}` as 'rules.typeLabels.balance_below')}
+                      </Badge>
                     </TableCell>
                     <TableCell className="whitespace-normal text-sm text-muted-foreground">
-                      {describeRule(rule, accountName, budgetName)}
+                      {describeRule(rule, accountName, budgetName, investmentAccountName, t)}
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">{rule.channels || 'email'}</TableCell>
                     <TableCell>
                       <Badge variant={rule.is_active ? 'secondary' : 'outline'}>
-                        {rule.is_active ? 'Active' : 'Inactive'}
+                        {rule.is_active ? t('rules.statusActive') : t('rules.statusInactive')}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-end">
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon-sm" aria-label={`${rule.name} actions`}>
+                          <Button variant="ghost" size="icon-sm" aria-label={t('rules.actionsFor', { name: rule.name })}>
                             <HugeiconsIcon icon={MoreVerticalIcon} strokeWidth={2} />
                           </Button>
                         </DropdownMenuTrigger>
@@ -558,14 +608,14 @@ export function NotificationsPage() {
                           <DropdownMenuGroup>
                             <DropdownMenuItem onClick={() => handleEditRule(rule)}>
                               <HugeiconsIcon icon={PencilEdit02Icon} strokeWidth={2} data-icon="inline-start" />
-                              Edit
+                              {t('actions.edit')}
                             </DropdownMenuItem>
                           </DropdownMenuGroup>
                           <DropdownMenuSeparator />
                           <DropdownMenuGroup>
                             <DropdownMenuItem variant="destructive" onClick={() => void handleDeleteRule(rule)}>
                               <HugeiconsIcon icon={Delete02Icon} strokeWidth={2} data-icon="inline-start" />
-                              Delete
+                              {t('actions.delete')}
                             </DropdownMenuItem>
                           </DropdownMenuGroup>
                         </DropdownMenuContent>

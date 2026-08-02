@@ -4,7 +4,7 @@ from datetime import date, datetime, timedelta
 
 from sqlalchemy import func
 
-from app.models import Account, BankConnection, Budget, Transaction
+from app.models import Account, Budget, Transaction, PortfolioPosition, BankConnection
 from app.models.recurring_expense import RecurringExpense
 from app.models.debt import Debt
 from app.models.notification import NotificationRule, NotificationLog, PushSubscription
@@ -182,6 +182,76 @@ def bank_consent_expiring(db, user, today, warn_days):
     return out
 
 
+def _portfolio_return_pct(db, account_id: int) -> float | None:
+    positions = db.query(PortfolioPosition).filter(PortfolioPosition.account_id == account_id).all()
+    cost_basis = sum((p.avg_price or 0) * p.quantity for p in positions if p.avg_price is not None)
+    market_value = sum(p.market_value for p in positions)
+    if not cost_basis:
+        return None
+    return (market_value - cost_basis) / cost_basis * 100
+
+
+def investment_return_breaches(db, user):
+    out = []
+    rules = db.query(NotificationRule).filter(
+        NotificationRule.user_id == user.id, NotificationRule.is_active == True,
+        NotificationRule.type == "investment_return_below",
+    ).all()
+    for rule in rules:
+        if rule.target_id is None:
+            continue
+        acc = db.query(Account).filter(
+            Account.id == rule.target_id, Account.user_id == user.id,
+            Account.provider.isnot(None),
+        ).first()
+        if not acc:
+            continue
+        return_pct = _portfolio_return_pct(db, acc.id)
+        if return_pct is None:
+            continue
+        threshold = float(rule.threshold or 0)
+        if return_pct < threshold:
+            out.append(Notification(
+                dedupe_key=f"investment_return:{rule.id}:{date.today().isoformat()}",
+                type="investment_return_below",
+                title=f"Portfolio return alert: {acc.name}",
+                body=f"{acc.name} return is {return_pct:.1f}% (below {threshold:.1f}%).",
+                channels=_parse_channels(rule.channels),
+                meta={"account_name": acc.name, "return_pct": return_pct, "threshold": threshold}))
+    return out
+
+
+def investment_scheduled_due(db, user, rule, now):
+    if rule.type != "investment_scheduled":
+        return None
+    last = rule.last_fired_at
+    due = last is None
+    if not due and rule.schedule_kind == "every_n_days":
+        due = now - last >= timedelta(days=rule.schedule_value or 7)
+    elif not due and rule.schedule_kind == "weekly":
+        due = now - last >= timedelta(days=7)
+    elif not due and rule.schedule_kind == "monthly":
+        due = now - last >= timedelta(days=30)
+    if not due or rule.target_id is None:
+        return None
+    acc = db.query(Account).filter(
+        Account.id == rule.target_id, Account.user_id == user.id,
+        Account.provider.isnot(None),
+    ).first()
+    if not acc:
+        return None
+    return_pct = _portfolio_return_pct(db, acc.id)
+    body = f"{acc.name} is worth {acc.currency} {acc.balance:.2f}"
+    body += f", overall return {return_pct:.1f}%." if return_pct is not None else "."
+    return Notification(
+        dedupe_key=f"rule:{rule.id}:{now.date().isoformat()}",
+        type="investment_scheduled",
+        title=f"{acc.name} portfolio summary",
+        body=body,
+        channels=_parse_channels(rule.channels),
+        meta={"account_name": acc.name, "balance": float(acc.balance or 0), "return_pct": return_pct})
+
+
 def budget_breaches(db, user, today):
     out = []
     rules = db.query(NotificationRule).filter(
@@ -301,6 +371,8 @@ _NOTIF_URLS = {
     "balance_below": "/accounts",
     "budget_percent": "/budgets",
     "scheduled_report": "/reports",
+    "investment_return_below": "/investments",
+    "investment_scheduled": "/investments",
 }
 
 

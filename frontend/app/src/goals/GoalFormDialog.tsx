@@ -1,4 +1,5 @@
-import { useEffect } from 'react'
+import { useEffect, useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -15,28 +16,31 @@ import { Dialog } from '../ui/Dialog'
 import { Select } from '../ui/Select'
 import { useCreateGoal, useUpdateGoal } from './useGoals'
 import {
-  CATEGORY_OPTIONS,
+  CATEGORY_VALUES,
   CURRENCY_OPTIONS,
   ICON_OPTIONS,
   NONE_CATEGORY,
+  categoryLabel,
 } from './goalMeta'
 import type { Goal } from './goalsApi'
 import { cn } from '@/lib/utils'
 import { formatCurrency } from '../lib/format'
 
-const goalSchema = z.object({
-  name: z.string().min(1, 'Goal name is required').max(200),
-  description: z.string().max(1000).optional(),
-  target_amount: z.number().positive('Target amount must be greater than 0'),
-  currency: z.enum(['EUR', 'USD', 'GBP']),
-  category: z.string(),
-  target_date: z.string().optional(),
-  icon: z.string(),
-  color: z.string(),
-  is_primary: z.boolean(),
-})
+function createGoalSchema(t: (key: string) => string) {
+  return z.object({
+    name: z.string().min(1, t('form.validation.nameRequired')).max(200),
+    description: z.string().max(1000).optional(),
+    target_amount: z.number().positive(t('form.validation.targetAmountPositive')),
+    currency: z.enum(['EUR', 'USD', 'GBP']),
+    category: z.string(),
+    target_date: z.string().optional(),
+    icon: z.string(),
+    color: z.string(),
+    is_primary: z.boolean(),
+  })
+}
 
-type GoalForm = z.infer<typeof goalSchema>
+type GoalForm = z.infer<ReturnType<typeof createGoalSchema>>
 
 interface GoalFormDialogProps {
   open: boolean
@@ -45,6 +49,8 @@ interface GoalFormDialogProps {
 }
 
 export function GoalFormDialog({ open, onOpenChange, goal }: GoalFormDialogProps) {
+  const { t } = useTranslation(['goals', 'common'])
+  const goalSchema = useMemo(() => createGoalSchema(t), [t])
   const isEdit = !!goal
   const createGoal = useCreateGoal()
   const updateGoal = useUpdateGoal()
@@ -120,27 +126,27 @@ export function GoalFormDialog({ open, onOpenChange, goal }: GoalFormDialogProps
     try {
       if (isEdit && goal) {
         await updateGoal.mutateAsync({ id: goal.id, input })
-        toast.success('Goal updated')
+        toast.success(t('form.toasts.updated'))
       } else {
         await createGoal.mutateAsync(input)
-        toast.success('Goal created')
+        toast.success(t('form.toasts.created'))
       }
       onOpenChange(false)
     } catch {
-      toast.error(isEdit ? 'Failed to update goal' : 'Failed to create goal')
+      toast.error(isEdit ? t('form.toasts.updateFailed') : t('form.toasts.createFailed'))
     }
   })
 
   const isPending = isSubmitting || createGoal.isPending || updateGoal.isPending
   const categoryOptions = [
-    { value: NONE_CATEGORY, label: 'Select category' },
-    ...CATEGORY_OPTIONS.map((o) => ({ value: o.value, label: o.label })),
+    { value: NONE_CATEGORY, label: t('form.category.selectPlaceholder') },
+    ...CATEGORY_VALUES.map((value) => ({ value, label: categoryLabel(value, t) })),
   ]
 
   return (
     <Dialog
       open={open}
-      title={isEdit ? 'Edit goal' : 'Create goal'}
+      title={isEdit ? t('form.titleEdit') : t('form.titleCreate')}
       onOpenChange={onOpenChange}
       className="sm:max-w-xl"
     >
@@ -167,10 +173,10 @@ export function GoalFormDialog({ open, onOpenChange, goal }: GoalFormDialogProps
             </div>
             <div className="min-w-0">
               <p className="text-sm text-primary-foreground/80">
-                {isEdit ? 'Updating' : 'New savings target'}
+                {isEdit ? t('form.updating') : t('form.newTarget')}
               </p>
               <p className="font-heading text-lg font-semibold truncate">
-                {preview.name.trim() || 'Untitled goal'}
+                {preview.name.trim() || t('form.untitledGoal')}
               </p>
               <p className="text-sm tabular-nums text-primary-foreground/90">
                 {formatCurrency(Number(preview.target_amount) || 0, preview.currency)}
@@ -181,11 +187,11 @@ export function GoalFormDialog({ open, onOpenChange, goal }: GoalFormDialogProps
 
         <div className="flex flex-col gap-2">
           <Label htmlFor="goal-name">
-            Goal name <span className="text-destructive">*</span>
+            {t('form.name.label')} <span className="text-destructive">*</span>
           </Label>
           <Input
             id="goal-name"
-            placeholder="e.g. Emergency fund"
+            placeholder={t('form.name.placeholder')}
             aria-invalid={!!errors.name}
             disabled={isPending}
             {...register('name')}
@@ -194,11 +200,11 @@ export function GoalFormDialog({ open, onOpenChange, goal }: GoalFormDialogProps
         </div>
 
         <div className="flex flex-col gap-2">
-          <Label htmlFor="goal-description">Description</Label>
+          <Label htmlFor="goal-description">{t('form.description.label')}</Label>
           <Textarea
             id="goal-description"
             rows={2}
-            placeholder="Optional notes"
+            placeholder={t('form.description.placeholder')}
             disabled={isPending}
             {...register('description')}
           />
@@ -207,7 +213,7 @@ export function GoalFormDialog({ open, onOpenChange, goal }: GoalFormDialogProps
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="flex flex-col gap-2">
             <Label htmlFor="goal-target">
-              Target amount <span className="text-destructive">*</span>
+              {t('form.targetAmount.label')} <span className="text-destructive">*</span>
             </Label>
             <Input
               id="goal-target"
@@ -223,7 +229,7 @@ export function GoalFormDialog({ open, onOpenChange, goal }: GoalFormDialogProps
             )}
           </div>
           <div className="flex flex-col gap-2">
-            <Label>Currency</Label>
+            <Label>{t('form.currency.label')}</Label>
             <Controller
               name="currency"
               control={control}
@@ -232,7 +238,7 @@ export function GoalFormDialog({ open, onOpenChange, goal }: GoalFormDialogProps
                   value={field.value}
                   onValueChange={field.onChange}
                   options={[...CURRENCY_OPTIONS]}
-                  placeholder="Currency"
+                  placeholder={t('form.currency.label')}
                 />
               )}
             />
@@ -241,7 +247,7 @@ export function GoalFormDialog({ open, onOpenChange, goal }: GoalFormDialogProps
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="flex flex-col gap-2">
-            <Label>Category</Label>
+            <Label>{t('form.category.label')}</Label>
             <Controller
               name="category"
               control={control}
@@ -250,13 +256,13 @@ export function GoalFormDialog({ open, onOpenChange, goal }: GoalFormDialogProps
                   value={field.value}
                   onValueChange={field.onChange}
                   options={categoryOptions}
-                  placeholder="Select category"
+                  placeholder={t('form.category.placeholder')}
                 />
               )}
             />
           </div>
           <div className="flex flex-col gap-2">
-            <Label htmlFor="goal-target-date">Target date</Label>
+            <Label htmlFor="goal-target-date">{t('form.targetDate.label')}</Label>
             <Input
               id="goal-target-date"
               type="date"
@@ -268,7 +274,7 @@ export function GoalFormDialog({ open, onOpenChange, goal }: GoalFormDialogProps
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="flex flex-col gap-2">
-            <Label>Icon</Label>
+            <Label>{t('form.icon.label')}</Label>
             <Controller
               name="icon"
               control={control}
@@ -278,15 +284,15 @@ export function GoalFormDialog({ open, onOpenChange, goal }: GoalFormDialogProps
                   onValueChange={field.onChange}
                   options={ICON_OPTIONS.map((o) => ({
                     value: o.value,
-                    label: `${o.value} ${o.label}`,
+                    label: `${o.value} ${t(o.labelKey)}`,
                   }))}
-                  placeholder="Icon"
+                  placeholder={t('form.icon.placeholder')}
                 />
               )}
             />
           </div>
           <div className="flex flex-col gap-2">
-            <Label htmlFor="goal-color">Color</Label>
+            <Label htmlFor="goal-color">{t('form.color.label')}</Label>
             <Input
               id="goal-color"
               type="color"
@@ -307,7 +313,7 @@ export function GoalFormDialog({ open, onOpenChange, goal }: GoalFormDialogProps
                 onCheckedChange={(checked) => field.onChange(checked === true)}
                 disabled={isPending}
               />
-              <span className="text-sm">Set as primary goal</span>
+              <span className="text-sm">{t('form.setAsPrimary')}</span>
             </label>
           )}
         />
@@ -320,10 +326,10 @@ export function GoalFormDialog({ open, onOpenChange, goal }: GoalFormDialogProps
             disabled={isPending}
             onClick={() => onOpenChange(false)}
           >
-            Cancel
+            {t('form.cancel')}
           </Button>
           <Button type="submit" disabled={isPending}>
-            {isEdit ? 'Save changes' : 'Save goal'}
+            {isEdit ? t('form.saveChanges') : t('form.saveGoal')}
           </Button>
         </div>
       </form>

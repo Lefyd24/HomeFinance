@@ -1,28 +1,38 @@
+import type { TFunction } from 'i18next'
 import type { Goal } from './goalsApi'
 
-export const CATEGORY_OPTIONS = [
-  { value: 'emergency_fund', label: 'Emergency Fund' },
-  { value: 'vacation', label: 'Vacation' },
-  { value: 'car', label: 'Car Purchase' },
-  { value: 'home', label: 'Home Purchase' },
-  { value: 'education', label: 'Education' },
-  { value: 'retirement', label: 'Retirement' },
-  { value: 'other', label: 'Other' },
+export const CATEGORY_VALUES = [
+  'emergency_fund',
+  'vacation',
+  'car',
+  'home',
+  'education',
+  'retirement',
+  'other',
 ] as const
 
-export const CATEGORY_LABELS: Record<string, string> = Object.fromEntries(
-  CATEGORY_OPTIONS.map((o) => [o.value, o.label]),
-)
+const CATEGORY_I18N_KEYS: Record<string, string> = {
+  emergency_fund: 'categories.emergencyFund',
+  vacation: 'categories.vacation',
+  car: 'categories.car',
+  home: 'categories.home',
+  education: 'categories.education',
+  retirement: 'categories.retirement',
+  other: 'categories.other',
+}
+
+/** @deprecated Use categoryLabel with t from goals namespace */
+export const CATEGORY_OPTIONS = CATEGORY_VALUES.map((value) => ({ value, label: value }))
 
 export const ICON_OPTIONS = [
-  { value: '🎯', label: 'Target' },
-  { value: '💰', label: 'Money' },
-  { value: '🏠', label: 'Home' },
-  { value: '🚗', label: 'Car' },
-  { value: '✈️', label: 'Travel' },
-  { value: '🎓', label: 'Education' },
-  { value: '🏥', label: 'Health' },
-  { value: '🎁', label: 'Gift' },
+  { value: '🎯', labelKey: 'icons.target' },
+  { value: '💰', labelKey: 'icons.money' },
+  { value: '🏠', labelKey: 'icons.home' },
+  { value: '🚗', labelKey: 'icons.car' },
+  { value: '✈️', labelKey: 'icons.travel' },
+  { value: '🎓', labelKey: 'icons.education' },
+  { value: '🏥', labelKey: 'icons.health' },
+  { value: '🎁', labelKey: 'icons.gift' },
 ] as const
 
 export const CURRENCY_OPTIONS = [
@@ -33,9 +43,13 @@ export const CURRENCY_OPTIONS = [
 
 export const NONE_CATEGORY = '__none__'
 
-export function categoryLabel(category: string | null | undefined): string {
-  if (!category) return 'General'
-  return CATEGORY_LABELS[category] ?? category
+export function categoryLabel(
+  category: string | null | undefined,
+  t: TFunction<'goals'>,
+): string {
+  if (!category) return t('categories.general')
+  const key = CATEGORY_I18N_KEYS[category]
+  return key ? t(key as 'categories.general') : category
 }
 
 export function goalPercentage(goal: Goal): number {

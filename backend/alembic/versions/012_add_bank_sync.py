@@ -2,8 +2,8 @@
 
 Enable Banking (PSD2) account sync. See app/services/bank_sync_service.py.
 
-Revision ID: 010
-Revises: 009
+Revision ID: 012
+Revises: 011
 Create Date: 2026-08-02
 
 """
@@ -11,8 +11,8 @@ Create Date: 2026-08-02
 import sqlalchemy as sa
 from alembic import op
 
-revision = "010"
-down_revision = "009"
+revision = "012"
+down_revision = "011"
 branch_labels = None
 depends_on = None
 
@@ -57,8 +57,11 @@ def upgrade():
         "accounts",
         sa.Column("is_linked", sa.Boolean(), nullable=False, server_default="0"),
     )
-    op.add_column("accounts", sa.Column("last_synced_at", sa.DateTime(), nullable=True))
     op.add_column("accounts", sa.Column("sync_status", sa.String(20), nullable=True))
+    # NOTE: accounts.last_synced_at is deliberately NOT added here — migration
+    # 010 (investment accounts) already adds it. The column is shared by both
+    # sync mechanisms; see the comment on Account.last_synced_at. Adding it again
+    # would fail with "duplicate column name".
 
     # No FK constraint on accounts.bank_connection_id: SQLite cannot add one via
     # ALTER TABLE, so it would need a full batch table rebuild for a nullable
@@ -81,7 +84,7 @@ def downgrade():
     op.drop_column("transactions", "external_id")
 
     op.drop_column("accounts", "sync_status")
-    op.drop_column("accounts", "last_synced_at")
+    # last_synced_at is owned by migration 010 — not dropped here.
     op.drop_column("accounts", "is_linked")
     op.drop_column("accounts", "external_account_id")
     op.drop_column("accounts", "bank_connection_id")

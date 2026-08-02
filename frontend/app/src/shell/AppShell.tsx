@@ -1,5 +1,6 @@
 import { Fragment, useMemo, useState, type ComponentProps, type ReactNode } from 'react'
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { useQuery } from '@tanstack/react-query'
 import { HugeiconsIcon } from '@hugeicons/react'
 import {
@@ -22,6 +23,7 @@ import {
 } from './NavItems'
 import { TransactionFormDialog } from '../transactions/TransactionFormDialog'
 import { ThemeToggle } from '@/components/ThemeToggle'
+import { LanguageToggle } from '@/components/LanguageToggle'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import {
@@ -73,6 +75,7 @@ function userInitials(name: string | null | undefined, email: string | undefined
 }
 
 function BrandMark({ compact = false }: { compact?: boolean }) {
+  const { t } = useTranslation('nav')
   return (
     <div className={cn('flex items-center gap-2.5 min-w-0', compact && 'justify-center')}>
       <img
@@ -85,8 +88,8 @@ function BrandMark({ compact = false }: { compact?: boolean }) {
       />
       {!compact && (
         <div className="min-w-0 flex flex-col">
-          <span className="font-heading font-bold text-sm tracking-tight truncate">Home Finance</span>
-          <span className="text-[10px] uppercase tracking-[0.14em] text-muted-foreground">Personal</span>
+          <span className="font-heading font-bold text-sm tracking-tight truncate">{t('brand.name')}</span>
+          <span className="text-[10px] uppercase tracking-[0.14em] text-muted-foreground">{t('brand.tagline')}</span>
         </div>
       )}
     </div>
@@ -104,11 +107,13 @@ function NavItemLink({
   onNavigate?: () => void
   className?: string
 }) {
+  const { t } = useTranslation('nav')
+  const label = t(item.labelKey)
   const link = (
     <NavLink
       to={item.to}
       onClick={onNavigate}
-      title={collapsed ? item.label : undefined}
+      title={collapsed ? label : undefined}
       className={({ isActive }) =>
         cn(
           'group/nav relative flex items-center rounded-lg text-sm font-medium',
@@ -148,7 +153,7 @@ function NavItemLink({
                 : 'text-muted-foreground group-hover/nav:text-sidebar-accent-foreground',
             )}
           />
-          {!collapsed && <span className="truncate">{item.label}</span>}
+          {!collapsed && <span className="truncate">{label}</span>}
         </>
       )}
     </NavLink>
@@ -160,7 +165,7 @@ function NavItemLink({
     <Tooltip>
       <TooltipTrigger asChild>{link}</TooltipTrigger>
       <TooltipContent side="right" align="center">
-        {item.label}
+        {label}
       </TooltipContent>
     </Tooltip>
   )
@@ -180,6 +185,7 @@ function NavItemGroup({
   collapsed?: boolean
   onNavigate?: () => void
 }) {
+  const { t } = useTranslation('nav')
   const location = useLocation()
   const children = item.children ?? []
   const childActive = children.some((child) => location.pathname.startsWith(child.to))
@@ -217,7 +223,7 @@ function NavItemGroup({
               childActive ? 'text-sidebar-primary' : 'text-muted-foreground',
             )}
           />
-          <span className="truncate">{item.label}</span>
+          <span className="truncate">{t(item.labelKey)}</span>
           <HugeiconsIcon
             icon={ArrowDown01Icon}
             strokeWidth={2}
@@ -263,16 +269,16 @@ function NavEntry({
   )
 }
 
-function relativeTime(iso: string): string {
+function relativeTime(iso: string, t: (key: string, options?: Record<string, unknown>) => string): string {
   const then = new Date(iso).getTime()
   if (Number.isNaN(then)) return ''
   const minutes = Math.round((Date.now() - then) / 60_000)
-  if (minutes < 1) return 'Just now'
-  if (minutes < 60) return `${minutes}m ago`
+  if (minutes < 1) return t('notificationsPanel.time.justNow')
+  if (minutes < 60) return t('notificationsPanel.time.minutesAgo', { count: minutes })
   const hours = Math.round(minutes / 60)
-  if (hours < 24) return `${hours}h ago`
+  if (hours < 24) return t('notificationsPanel.time.hoursAgo', { count: hours })
   const days = Math.round(hours / 24)
-  if (days < 7) return `${days}d ago`
+  if (days < 7) return t('notificationsPanel.time.daysAgo', { count: days })
   return new Date(iso).toLocaleDateString()
 }
 
@@ -281,6 +287,7 @@ function relativeTime(iso: string): string {
  * not a destination. The badge counts what landed in the last day.
  */
 function NotificationsMenu() {
+  const { t } = useTranslation('nav')
   const { data, isLoading, dataUpdatedAt } = useQuery({
     queryKey: ['notifications', 'log'],
     queryFn: getNotificationLog,
@@ -304,7 +311,11 @@ function NotificationsMenu() {
           variant="ghost"
           size="icon-sm"
           className="relative size-9"
-          aria-label={recent > 0 ? `Notifications, ${recent} in the last day` : 'Notifications'}
+          aria-label={
+            recent > 0
+              ? t('notificationsPanel.ariaLabelWithCount', { count: recent })
+              : t('notificationsPanel.ariaLabel')
+          }
         >
           <HugeiconsIcon icon={Notification03Icon} strokeWidth={2} />
           {recent > 0 && (
@@ -322,9 +333,11 @@ function NotificationsMenu() {
         className="w-[min(22rem,calc(100vw-1.5rem))] overflow-hidden p-0"
       >
         <div className="flex items-center justify-between gap-2 border-b border-border px-3 py-2.5">
-          <p className="text-sm font-semibold">Notifications</p>
+          <p className="text-sm font-semibold">{t('notificationsPanel.title')}</p>
           <span className="text-xs text-muted-foreground">
-            {recent > 0 ? `${recent} in the last day` : 'Nothing new'}
+            {recent > 0
+              ? t('notificationsPanel.inLastDay', { count: recent })
+              : t('notificationsPanel.nothingNew')}
           </span>
         </div>
 
@@ -335,9 +348,9 @@ function NotificationsMenu() {
           </div>
         ) : entries.length === 0 ? (
           <div className="px-3 py-8 text-center">
-            <p className="text-sm text-muted-foreground">No alerts yet.</p>
+            <p className="text-sm text-muted-foreground">{t('notificationsPanel.empty')}</p>
             <p className="mt-1 text-xs text-muted-foreground">
-              Budget and bill rules post here when they fire.
+              {t('notificationsPanel.emptyHint')}
             </p>
           </div>
         ) : (
@@ -356,7 +369,7 @@ function NotificationsMenu() {
                         <ItemDescription className="line-clamp-2">{entry.body}</ItemDescription>
                       )}
                       <p className="mt-0.5 text-[0.7rem] text-muted-foreground">
-                        {relativeTime(entry.created_at)}
+                        {relativeTime(entry.created_at, t)}
                       </p>
                     </ItemContent>
                   </Item>
@@ -377,9 +390,10 @@ function UserMenu({
   align?: 'start' | 'center' | 'end'
   side?: 'top' | 'bottom' | 'left' | 'right'
 }) {
+  const { t } = useTranslation('nav')
   const { user, logout } = useAuth()
   const initials = userInitials(user?.full_name, user?.email)
-  const displayName = user?.full_name?.trim() || user?.email || 'Account'
+  const displayName = user?.full_name?.trim() || user?.email || t('userMenu.defaultAccountName')
 
   return (
     <DropdownMenu>
@@ -387,7 +401,7 @@ function UserMenu({
         <Button
           variant="ghost"
           className="size-9 rounded-full p-0"
-          aria-label="Account menu"
+          aria-label={t('userMenu.accountMenu')}
         >
           <Avatar size="sm">
             <AvatarFallback className="bg-primary/15 text-primary font-semibold">
@@ -410,17 +424,17 @@ function UserMenu({
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
           <DropdownMenuItem asChild>
-            <NavLink to="/notifications">Notifications</NavLink>
+            <NavLink to="/notifications">{t('items.notifications')}</NavLink>
           </DropdownMenuItem>
           <DropdownMenuItem asChild>
-            <NavLink to="/connections">Bank connections</NavLink>
+            <NavLink to="/connections">{t('userMenu.bankConnections')}</NavLink>
           </DropdownMenuItem>
           <DropdownMenuItem asChild>
-            <NavLink to="/api-keys">API Keys</NavLink>
+            <NavLink to="/api-keys">{t('userMenu.apiKeys')}</NavLink>
           </DropdownMenuItem>
           {user?.is_admin && (
             <DropdownMenuItem asChild>
-              <NavLink to="/admin">Admin</NavLink>
+              <NavLink to="/admin">{t('userMenu.admin')}</NavLink>
             </DropdownMenuItem>
           )}
         </DropdownMenuGroup>
@@ -431,7 +445,7 @@ function UserMenu({
             onClick={() => void logout()}
           >
             <HugeiconsIcon icon={Logout01Icon} strokeWidth={2} />
-            Log out
+            {t('common:logout')}
           </DropdownMenuItem>
         </DropdownMenuGroup>
       </DropdownMenuContent>
@@ -446,6 +460,7 @@ function DesktopSidebar({
   collapsed: boolean
   onToggle: () => void
 }) {
+  const { t } = useTranslation('nav')
   return (
     <aside
       className={cn(
@@ -468,7 +483,7 @@ function DesktopSidebar({
             size="icon-sm"
             className="ms-auto text-muted-foreground"
             onClick={onToggle}
-            aria-label="Collapse sidebar"
+            aria-label={t('sidebar.collapse')}
           >
             <HugeiconsIcon icon={SidebarLeftIcon} strokeWidth={2} />
           </Button>
@@ -484,7 +499,7 @@ function DesktopSidebar({
         >
           {NAV_GROUPS.map((group) => (
             <div
-              key={group.label}
+              key={group.groupKey}
               className={cn(
                 'flex flex-col gap-1',
                 collapsed && 'w-full items-center',
@@ -492,10 +507,10 @@ function DesktopSidebar({
             >
               {!collapsed && (
                 <p className="px-2.5 pb-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                  {group.label}
+                  {t(group.groupKey)}
                 </p>
               )}
-              {collapsed && group.label !== 'Overview' && (
+              {collapsed && group.groupKey !== 'groups.overview' && (
                 <Separator className="my-1 w-6 bg-sidebar-border" />
               )}
               {group.items.map((item) => (
@@ -514,12 +529,12 @@ function DesktopSidebar({
                 variant="ghost"
                 size="icon-sm"
                 onClick={onToggle}
-                aria-label="Expand sidebar"
+                aria-label={t('sidebar.expand')}
               >
                 <HugeiconsIcon icon={SidebarLeftIcon} strokeWidth={2} className="rtl:rotate-180" />
               </Button>
             </TooltipTrigger>
-            <TooltipContent side="right">Expand</TooltipContent>
+            <TooltipContent side="right">{t('sidebar.expandTooltip')}</TooltipContent>
           </Tooltip>
         </div>
       )}
@@ -531,6 +546,7 @@ function NavActions() {
   return (
     <div className="ms-auto flex items-center gap-1">
       <NotificationsMenu />
+      <LanguageToggle />
       <ThemeToggle />
       <UserMenu align="end" side="bottom" />
     </div>
@@ -538,6 +554,7 @@ function NavActions() {
 }
 
 function QuickAddTransactionFab() {
+  const { t } = useTranslation('nav')
   const [open, setOpen] = useState(false)
 
   return (
@@ -552,12 +569,12 @@ function QuickAddTransactionFab() {
               'lg:bottom-12 lg:end-6',
             )}
             onClick={() => setOpen(true)}
-            aria-label="Add transaction"
+            aria-label={t('quickAdd')}
           >
             <HugeiconsIcon icon={DashboardCircleAddIcon} strokeWidth={2} />
           </Button>
         </TooltipTrigger>
-        <TooltipContent side="left">Add transaction</TooltipContent>
+        <TooltipContent side="left">{t('quickAdd')}</TooltipContent>
       </Tooltip>
       <TransactionFormDialog open={open} onOpenChange={setOpen} />
     </>
@@ -565,6 +582,7 @@ function QuickAddTransactionFab() {
 }
 
 function MobileTopBar() {
+  const { t } = useTranslation('nav')
   const location = useLocation()
   const current = ALL_NAV_ITEMS.find((item) => location.pathname.startsWith(item.to))
 
@@ -575,9 +593,9 @@ function MobileTopBar() {
     <header className="glass-bar lg:hidden sticky top-0 z-30 shrink-0 border-b border-border pt-[env(safe-area-inset-top)]">
       <div className="flex h-14 items-center gap-3 px-3">
         <div className="min-w-0 flex-1">
-          <p className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">Home Finance</p>
+          <p className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">{t('brand.name')}</p>
           <h1 className="font-heading text-sm font-semibold tracking-tight truncate">
-            {current?.label ?? 'Workspace'}
+            {current ? t(current.labelKey) : t('workspace')}
           </h1>
         </div>
         <NavActions />
@@ -586,10 +604,8 @@ function MobileTopBar() {
   )
 }
 
-function dockLabel(label: string) {
-  if (label === 'Transactions') return 'Txns'
-  if (label === 'Dashboard') return 'Home'
-  return label
+function dockLabel(item: NavItem, t: (key: string) => string) {
+  return t(item.dockLabelKey ?? item.labelKey)
 }
 
 function DockItemShell({
@@ -644,6 +660,7 @@ function MoreSheet({
   open: boolean
   onOpenChange: (open: boolean) => void
 }) {
+  const { t } = useTranslation('nav')
   const { logout } = useAuth()
 
   return (
@@ -654,25 +671,33 @@ function MoreSheet({
        * disclosure group (Advice) scrolls it instead of pushing Log out out of the
        * sheet and over the dock — which is exactly what a plain content-height
        * column used to do. min-h-0 is what lets the ScrollArea actually shrink.
+       *
+       * `h-[78dvh]` (not `max-h-*`) is load-bearing: an auto-height flex column
+       * only hugs its content, so `flex-1` on the nav has no free space to grow
+       * into and a max-height alone never gets a chance to clip anything. A
+       * definite height gives the nav a real box to fill and the ScrollArea
+       * viewport (percentage-sized against it) something concrete to resolve
+       * against — otherwise it silently falls back to its content's natural
+       * height and bleeds out past Log out with no scrollbar.
        */}
       <SheetContent
         side="bottom"
         showCloseButton={false}
-        className="flex max-h-[78dvh] flex-col gap-0 overflow-hidden rounded-t-3xl border-border/80 p-0"
+        className="flex h-[78dvh] flex-col gap-0 overflow-hidden rounded-t-3xl border-border/80 p-0"
       >
         <div className="mx-auto mt-3 mb-1 h-1 w-10 shrink-0 rounded-full bg-muted-foreground/25" />
         <SheetHeader className="shrink-0 gap-1 pb-2 pt-1">
-          <SheetTitle className="tracking-tight">More</SheetTitle>
+          <SheetTitle className="tracking-tight">{t('more')}</SheetTitle>
           <SheetDescription className="text-xs">
-            Planning, insights, and account tools
+            {t('moreSheet.description')}
           </SheetDescription>
         </SheetHeader>
         <ScrollArea className="min-h-0 flex-1">
           <nav className="flex flex-col gap-4 px-3 pb-3">
             {MORE_NAV_GROUPS.map((group) => (
-              <div key={group.label} className="flex flex-col gap-1">
+              <div key={group.groupKey} className="flex flex-col gap-1">
                 <p className="px-2.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                  {group.label}
+                  {t(group.groupKey)}
                 </p>
                 {group.items.map((item) => (
                   <NavEntry
@@ -696,7 +721,7 @@ function MoreSheet({
             }}
           >
             <HugeiconsIcon icon={Logout01Icon} strokeWidth={2} data-icon="inline-start" />
-            Log out
+            {t('common:logout')}
           </Button>
         </div>
       </SheetContent>
@@ -711,6 +736,7 @@ function MobileBottomNav({
   moreOpen: boolean
   onMoreToggle: () => void
 }) {
+  const { t } = useTranslation('nav')
   const location = useLocation()
   const secondaryActive = useMemo(
     () => SECONDARY_NAV_ITEMS.some((item) => location.pathname.startsWith(item.to)),
@@ -720,7 +746,7 @@ function MobileBottomNav({
 
   return (
     <nav
-      aria-label="Primary"
+      aria-label={t('primaryNav')}
       className="pointer-events-none fixed inset-x-0 bottom-0 z-40 px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] lg:hidden"
     >
       <div
@@ -729,11 +755,11 @@ function MobileBottomNav({
           'glass-panel rounded-2xl',
         )}
       >
-        {PRIMARY_NAV_ITEMS.map(({ label, to, icon }) => (
+        {PRIMARY_NAV_ITEMS.map((item) => (
           <NavLink
-            key={to}
-            to={to}
-            aria-label={label}
+            key={item.to}
+            to={item.to}
+            aria-label={t(item.labelKey)}
             className={cn(
               'group/dock flex min-h-11 flex-1 flex-col items-center justify-center gap-0.5 rounded-xl px-1',
               'transition-[color,transform] duration-150 ease-out',
@@ -745,7 +771,7 @@ function MobileBottomNav({
               <>
                 <DockIconWell active={isActive}>
                   <HugeiconsIcon
-                    icon={icon}
+                    icon={item.icon}
                     strokeWidth={isActive ? 2.25 : 1.75}
                     className="size-5"
                   />
@@ -756,7 +782,7 @@ function MobileBottomNav({
                     isActive ? 'text-primary' : 'text-muted-foreground group-hover/dock:text-foreground',
                   )}
                 >
-                  {dockLabel(label)}
+                  {dockLabel(item, t)}
                 </span>
               </>
             )}
@@ -768,7 +794,7 @@ function MobileBottomNav({
         <DockItemShell
           active={moreActive}
           onClick={onMoreToggle}
-          aria-label="More navigation"
+          aria-label={t('moreNavigationAria')}
           aria-expanded={moreOpen}
           aria-haspopup="dialog"
         >
@@ -785,7 +811,7 @@ function MobileBottomNav({
               moreActive ? 'text-primary' : 'text-muted-foreground group-hover/dock:text-foreground',
             )}
           >
-            More
+            {t('more')}
           </span>
         </DockItemShell>
       </div>
@@ -794,15 +820,16 @@ function MobileBottomNav({
 }
 
 function DesktopTopBar() {
+  const { t } = useTranslation('nav')
   const location = useLocation()
   const current = ALL_NAV_ITEMS.find((item) => location.pathname.startsWith(item.to))
 
   return (
     <header className="shell-topbar glass-bar hidden lg:flex sticky top-0 z-20 h-14 shrink-0 items-center gap-3 px-4">
       <div className="min-w-0">
-        <p className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">Workspace</p>
+        <p className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">{t('workspace')}</p>
         <h1 className="font-heading text-sm font-semibold tracking-tight truncate">
-          {current?.label ?? 'Home Finance'}
+          {current ? t(current.labelKey) : t('brand.name')}
         </h1>
       </div>
       <NavActions />
@@ -811,9 +838,10 @@ function DesktopTopBar() {
 }
 
 function DesktopFooter() {
+  const { t } = useTranslation('nav')
   return (
     <footer className="shell-footer glass-bar hidden lg:flex h-10 shrink-0 items-center justify-between gap-3 px-4 text-[11px] text-muted-foreground">
-      <span className="truncate">Home Finance</span>
+      <span className="truncate">{t('brand.name')}</span>
       <span className="tabular-nums shrink-0">© {new Date().getFullYear()}</span>
     </footer>
   )

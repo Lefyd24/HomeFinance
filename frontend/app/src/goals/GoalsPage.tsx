@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { HugeiconsIcon } from '@hugeicons/react'
 import {
@@ -48,6 +49,7 @@ import { EmptyState } from '@/ui/EmptyState'
 type FilterTab = 'active' | 'completed' | 'all'
 
 export function GoalsPage() {
+  const { t } = useTranslation(['goals', 'common'])
   const { data: goals = [], isLoading } = useGoals()
   const deleteGoal = useDeleteGoal()
   const { confirm, confirmDialog } = useConfirm()
@@ -106,38 +108,38 @@ export function GoalsPage() {
 
   const handleDelete = async (goal: Goal) => {
     const ok = await confirm({
-      title: `Delete ${goal.name}?`,
-      description: 'The goal and its progress history are removed. This cannot be undone.',
-      confirmLabel: 'Delete goal',
+      title: t('page.deleteDialog.title', { name: goal.name }),
+      description: t('page.deleteDialog.description'),
+      confirmLabel: t('page.deleteDialog.confirmLabel'),
     })
     if (!ok) return
     try {
       await deleteGoal.mutateAsync(goal.id)
-      toast.success('Goal deleted')
+      toast.success(t('page.toasts.deleted'))
       if (detailsGoal?.id === goal.id) setDetailsGoal(null)
     } catch {
-      toast.error('Failed to delete goal')
+      toast.error(t('page.toasts.deleteFailed'))
     }
   }
 
   const handleMarkComplete = async (goal: Goal) => {
     try {
       await updateGoal.mutateAsync({ id: goal.id, input: { status: 'completed' } })
-      toast.success('Goal marked complete')
+      toast.success(t('page.toasts.markedComplete'))
     } catch {
-      toast.error('Failed to update goal')
+      toast.error(t('page.toasts.updateFailed'))
     }
   }
 
   return (
     <PageContainer wide>
       <PageHeader
-        title="Goals"
-        description="Chase targets with a clear finish line — contribute, track, and celebrate."
+        title={t('page.title')}
+        description={t('page.description')}
         action={
           <Button size="sm" onClick={openCreate}>
             <HugeiconsIcon icon={Add01Icon} strokeWidth={2} data-icon="inline-start" />
-            <PageHeaderActionLabel>Add goal</PageHeaderActionLabel>
+            <PageHeaderActionLabel>{t('page.addGoal')}</PageHeaderActionLabel>
           </Button>
         }
       />
@@ -147,12 +149,12 @@ export function GoalsPage() {
       ) : goals.length === 0 ? (
         <EmptyState
           icon={<HugeiconsIcon icon={TargetIcon} strokeWidth={2} />}
-          title="No goals yet"
-          description="Create your first financial goal to start tracking progress toward a target."
+          title={t('page.empty.title')}
+          description={t('page.empty.description')}
           action={
             <Button size="sm" onClick={openCreate}>
               <HugeiconsIcon icon={Add01Icon} strokeWidth={2} data-icon="inline-start" />
-              Create first goal
+              {t('page.createFirstGoal')}
             </Button>
           }
         />
@@ -173,26 +175,26 @@ export function GoalsPage() {
 
           <div className="flex flex-col gap-4">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <h2 className="font-heading text-lg font-semibold tracking-tight">Your goals</h2>
+              <h2 className="font-heading text-lg font-semibold tracking-tight">{t('page.yourGoals')}</h2>
               <Tabs
                 value={filter}
                 onValueChange={(v) => setFilter(v as FilterTab)}
               >
                 <TabsList>
-                  <TabsTrigger value="active">Active</TabsTrigger>
-                  <TabsTrigger value="completed">Completed</TabsTrigger>
-                  <TabsTrigger value="all">All</TabsTrigger>
+                  <TabsTrigger value="active">{t('page.tabs.active')}</TabsTrigger>
+                  <TabsTrigger value="completed">{t('page.tabs.completed')}</TabsTrigger>
+                  <TabsTrigger value="all">{t('page.tabs.all')}</TabsTrigger>
                 </TabsList>
               </Tabs>
             </div>
 
             {filtered.length === 0 ? (
               <p className="text-sm text-muted-foreground py-8 text-center">
-                No {filter === 'all' ? '' : filter} goals in this view.
+                {t(`page.noGoalsInView.${filter}`)}
               </p>
             ) : secondary.length === 0 && primary ? (
               <p className="text-sm text-muted-foreground py-2">
-                Spotlight goal above is your only {filter === 'all' ? '' : `${filter} `}goal.
+                {t(`page.onlyGoalInView.${filter}`)}
               </p>
             ) : (
               <ul className="flex flex-col gap-2">
@@ -254,27 +256,31 @@ function JourneyStrip({
     count: number
   }
 }) {
+  const { t } = useTranslation('goals')
   const clamped = Math.min(Math.max(journey.overall, 0), 100)
   return (
     <section
-      aria-label="Savings journey"
+      aria-label={t('journey.ariaLabel')}
       className="rounded-2xl border bg-gradient-to-br from-primary/10 via-background to-muted/40 p-5 sm:p-6"
     >
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div className="min-w-0">
           <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-            Savings journey
+            {t('journey.title')}
           </p>
           <p className="mt-1 font-heading text-2xl sm:text-3xl font-bold tracking-tight tabular-nums">
             {clamped.toFixed(0)}%
             <span className="ms-2 text-base font-medium text-muted-foreground">
-              of {formatCurrency(journey.totalTarget)} targeted
+              {t('journey.ofTargeted', { amount: formatCurrency(journey.totalTarget) })}
             </span>
           </p>
           <p className="mt-1 text-sm text-muted-foreground">
-            {formatCurrency(journey.totalSaved)} saved across {journey.count} goal
-            {journey.count === 1 ? '' : 's'} · {journey.active} active · {journey.completed}{' '}
-            completed
+            {t('journey.summary', {
+              count: journey.count,
+              saved: formatCurrency(journey.totalSaved),
+              active: journey.active,
+              completed: journey.completed,
+            })}
           </p>
         </div>
         <ProgressRing value={clamped} size={72} strokeWidth={7}>
@@ -301,6 +307,7 @@ function PrimaryGoalHero({
   onDelete: () => void
   onMarkComplete: () => void
 }) {
+  const { t } = useTranslation('goals')
   const percentage = goalPercentage(goal)
   const clamped = Math.min(Math.max(percentage, 0), 100)
   const complete = isGoalComplete(goal)
@@ -308,7 +315,7 @@ function PrimaryGoalHero({
 
   return (
     <section
-      aria-label={`Primary goal: ${goal.name}`}
+      aria-label={t('hero.primaryGoalAria', { name: goal.name })}
       className={cn(
         'glass-panel relative overflow-hidden rounded-xl border',
         complete ? 'border-success/40 bg-success/5' : 'border-primary/25',
@@ -344,16 +351,16 @@ function PrimaryGoalHero({
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-2">
                 <Badge variant="outline" className="text-xs">
-                  Spotlight
+                  {t('hero.spotlight')}
                 </Badge>
-                {goal.is_primary && <Badge className="text-xs">Primary</Badge>}
+                {goal.is_primary && <Badge className="text-xs">{t('hero.primary')}</Badge>}
                 {complete && (
                   <Badge variant="secondary" className="text-xs">
-                    Completed
+                    {t('hero.completed')}
                   </Badge>
                 )}
                 <Badge variant="outline" className="text-xs capitalize">
-                  {categoryLabel(goal.category)}
+                  {categoryLabel(goal.category, t)}
                 </Badge>
               </div>
               <h2 className="mt-2 font-heading text-2xl sm:text-3xl font-bold tracking-tight truncate">
@@ -383,9 +390,9 @@ function PrimaryGoalHero({
               {formatCurrency(goal.current_amount, goal.currency)}
             </p>
             <p className="text-sm text-muted-foreground tabular-nums">
-              of {formatCurrency(goal.target_amount, goal.currency)}
+              {t('hero.ofTarget', { amount: formatCurrency(goal.target_amount, goal.currency) })}
               {!complete && remaining > 0 && (
-                <> · {formatCurrency(remaining, goal.currency)} to go</>
+                <> · {t('hero.toGo', { amount: formatCurrency(remaining, goal.currency) })}</>
               )}
             </p>
           </div>
@@ -395,20 +402,19 @@ function PrimaryGoalHero({
             goal.target_date &&
             !complete && (
               <p className="rounded-xl border border-primary/20 bg-primary/5 px-3 py-2 text-sm">
-                Save{' '}
-                <span className="font-semibold tabular-nums">
-                  {formatCurrency(goal.monthly_contribution_needed, goal.currency)}
-                </span>
-                /month to arrive by {formatDate(goal.target_date)}
+                {t('hero.saveToArrive', {
+                  amount: formatCurrency(goal.monthly_contribution_needed, goal.currency),
+                  date: formatDate(goal.target_date),
+                })}
               </p>
             )}
 
           {goal.target_date && (
             <p className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
               <HugeiconsIcon icon={Calendar03Icon} strokeWidth={2} />
-              Target {formatDate(goal.target_date)}
+              {t('hero.targetDate', { date: formatDate(goal.target_date) })}
               {goal.days_remaining != null && goal.days_remaining > 0 && (
-                <> · {goal.days_remaining} days left</>
+                <> · {t('hero.daysLeft', { count: goal.days_remaining })}</>
               )}
             </p>
           )}
@@ -417,7 +423,7 @@ function PrimaryGoalHero({
             {!complete && (
               <Button onClick={onContribute}>
                 <HugeiconsIcon icon={MoneyReceive01Icon} strokeWidth={2} data-icon="inline-start" />
-                Contribute
+                {t('hero.contribute')}
               </Button>
             )}
             <Button variant="outline" onClick={onDetails}>
@@ -426,11 +432,11 @@ function PrimaryGoalHero({
                 strokeWidth={2}
                 data-icon="inline-start"
               />
-              Details
+              {t('hero.details')}
             </Button>
             <Button variant="ghost" onClick={onEdit}>
               <HugeiconsIcon icon={PencilEdit02Icon} strokeWidth={2} data-icon="inline-start" />
-              Edit
+              {t('hero.edit')}
             </Button>
           </div>
         </div>
@@ -454,6 +460,7 @@ function GoalListRow({
   onDelete: () => void
   onMarkComplete: () => void
 }) {
+  const { t } = useTranslation('goals')
   const percentage = goalPercentage(goal)
   const clamped = Math.min(Math.max(percentage, 0), 100)
   const complete = isGoalComplete(goal)
@@ -487,15 +494,15 @@ function GoalListRow({
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
             <p className="font-medium truncate">{goal.name}</p>
-            {goal.is_primary && <Badge className="text-[10px]">Primary</Badge>}
+            {goal.is_primary && <Badge className="text-[10px]">{t('list.primary')}</Badge>}
             {complete && (
               <Badge variant="secondary" className="text-[10px]">
-                Done
+                {t('list.done')}
               </Badge>
             )}
           </div>
           <p className="mt-0.5 text-xs text-muted-foreground">
-            {categoryLabel(goal.category)}
+            {categoryLabel(goal.category, t)}
             {goal.target_date ? ` · ${formatDate(goal.target_date)}` : ''}
           </p>
           <div className="mt-2 flex items-center gap-3">
@@ -524,11 +531,11 @@ function GoalListRow({
             {formatCurrency(goal.current_amount, goal.currency)}
           </p>
           <p className="text-xs text-muted-foreground tabular-nums">
-            of {formatCurrency(goal.target_amount, goal.currency)}
+            {t('hero.ofTarget', { amount: formatCurrency(goal.target_amount, goal.currency) })}
             {!complete && remaining > 0 && (
               <span className="hidden md:inline">
                 {' '}
-                · {formatCurrency(remaining, goal.currency)} left
+                · {t('list.left', { amount: formatCurrency(remaining, goal.currency) })}
               </span>
             )}
           </p>
@@ -538,7 +545,7 @@ function GoalListRow({
           {!complete && (
             <Button size="sm" variant="outline" onClick={onContribute}>
               <HugeiconsIcon icon={MoneyReceive01Icon} strokeWidth={2} data-icon="inline-start" />
-              <span className="hidden sm:inline">Contribute</span>
+              <span className="hidden sm:inline">{t('list.contribute')}</span>
             </Button>
           )}
           <GoalActionsMenu
@@ -570,12 +577,13 @@ function GoalActionsMenu({
   onDelete: () => void
   onMarkComplete: () => void
 }) {
+  const { t } = useTranslation(['goals', 'common'])
   const complete = isGoalComplete(goal)
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon-sm" aria-label={`${goal.name} actions`}>
+        <Button variant="ghost" size="icon-sm" aria-label={t('list.actionsFor', { name: goal.name })}>
           <HugeiconsIcon icon={MoreVerticalIcon} strokeWidth={2} />
         </Button>
       </DropdownMenuTrigger>
@@ -584,21 +592,21 @@ function GoalActionsMenu({
           {!complete && (
             <DropdownMenuItem onClick={onContribute}>
               <HugeiconsIcon icon={MoneyReceive01Icon} strokeWidth={2} />
-              Contribute
+              {t('list.menu.contribute')}
             </DropdownMenuItem>
           )}
           <DropdownMenuItem onClick={onDetails}>
             <HugeiconsIcon icon={InformationCircleIcon} strokeWidth={2} />
-            Details
+            {t('list.menu.details')}
           </DropdownMenuItem>
           <DropdownMenuItem onClick={onEdit}>
             <HugeiconsIcon icon={PencilEdit02Icon} strokeWidth={2} />
-            Edit
+            {t('list.menu.edit')}
           </DropdownMenuItem>
           {!complete && (
             <DropdownMenuItem onClick={onMarkComplete}>
               <HugeiconsIcon icon={CheckmarkCircle02Icon} strokeWidth={2} />
-              Mark complete
+              {t('list.menu.markComplete')}
             </DropdownMenuItem>
           )}
         </DropdownMenuGroup>
@@ -606,7 +614,7 @@ function GoalActionsMenu({
         <DropdownMenuGroup>
           <DropdownMenuItem variant="destructive" onClick={onDelete}>
             <HugeiconsIcon icon={Delete02Icon} strokeWidth={2} />
-            Delete
+            {t('list.menu.delete')}
           </DropdownMenuItem>
         </DropdownMenuGroup>
       </DropdownMenuContent>

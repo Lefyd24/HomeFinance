@@ -1,0 +1,165 @@
+{
+  "page": {
+    "title": "Transactions",
+    "description": "Every euro in, out, and moved between your accounts.",
+    "actions": {
+      "import": "Import",
+      "add": "Add transaction"
+    },
+    "count_one": "{{count}} transaction",
+    "count_other": "{{count}} transactions",
+    "empty": {
+      "title": "Nothing recorded yet",
+      "description": "Add a transaction by hand, or bring in a bank export from the Import page.",
+      "addAction": "Add transaction",
+      "importAction": "Import a bank export",
+      "filteredMessage": "No transactions match these filters. Try widening the period or clearing a chip above.",
+      "noneMessage": "No transactions yet"
+    },
+    "footer": {
+      "onThisPage": "On this page",
+      "in": "In",
+      "out": "Out",
+      "net": "Net"
+    },
+    "deleteConfirm": {
+      "title": "Delete this transaction?",
+      "description": "“{{description}}” will be removed from your ledger. Balances recalculate immediately and this cannot be undone.",
+      "confirmLabel": "Delete transaction"
+    },
+    "toast": {
+      "deleted": "Transaction deleted",
+      "deleteError": "Could not delete the transaction. Try again."
+    }
+  },
+  "datePresets": {
+    "thisMonth": "This month",
+    "lastMonth": "Last month",
+    "last90Days": "Last 90 days",
+    "thisYear": "This year"
+  },
+  "filterBar": {
+    "search": {
+      "placeholder": "Search descriptions…",
+      "ariaLabel": "Search transactions",
+      "clear": "Clear search"
+    },
+    "typeTabs": {
+      "all": "All",
+      "income": "In",
+      "expense": "Out",
+      "transfer": "Moved"
+    },
+    "period": {
+      "label": "Period",
+      "from": "From",
+      "to": "To",
+      "clear": "Clear period",
+      "rangeSeparator": "–",
+      "fromPrefix": "From {{date}}",
+      "untilPrefix": "Until {{date}}"
+    },
+    "account": {
+      "label": "Account",
+      "allLabel": "All accounts",
+      "searchPlaceholder": "Find an account…"
+    },
+    "category": {
+      "label": "Category",
+      "allLabel": "All categories",
+      "searchPlaceholder": "Find a category…"
+    },
+    "nothingMatches": "Nothing matches that.",
+    "removeFilter": "Remove filter",
+    "chips": {
+      "matching": "Matching",
+      "type": "Type",
+      "account": "Account",
+      "category": "Category"
+    },
+    "resultCount_one": "{{count}} match",
+    "resultCount_other": "{{count}} matches",
+    "filtering": "Filtering…",
+    "inPeriod": "in {{period}}",
+    "clearAll": "Clear all"
+  },
+  "form": {
+    "title": {
+      "add": "Add transaction",
+      "edit": "Edit transaction"
+    },
+    "description": {
+      "transfer": "Move money between two of your own accounts. It affects both balances and neither budget.",
+      "income": "Record money arriving in an account.",
+      "expense": "Record money leaving an account, against a spending category."
+    },
+    "fields": {
+      "direction": "Direction",
+      "expense": "Expense",
+      "income": "Income",
+      "transfer": "Transfer",
+      "amount": "Amount",
+      "currency": "EUR",
+      "amountPlaceholder": "0,00",
+      "description": "Description",
+      "descriptionPlaceholder": "What was it for?",
+      "account": "Account",
+      "fromAccount": "From account",
+      "toAccount": "To account",
+      "accountPlaceholder": "Choose an account",
+      "destinationPlaceholder": "Choose a destination",
+      "category": "Category",
+      "categoryPlaceholder": "Choose a category",
+      "date": "Date",
+      "notes": "Notes",
+      "notesPlaceholder": "Anything worth remembering later"
+    },
+    "actions": {
+      "save": "Save changes",
+      "add": "Add transaction"
+    },
+    "toast": {
+      "updated": "Transaction updated",
+      "created": "Transaction created",
+      "updateError": "Failed to update transaction",
+      "createError": "Failed to create transaction"
+    }
+  },
+  "detail": {
+    "flowTitle": {
+      "in": "Money in",
+      "out": "Money out",
+      "move": "Moved between accounts"
+    },
+    "rows": {
+      "route": "Route",
+      "account": "Account",
+      "category": "Category",
+      "paysDown": "Pays down",
+      "source": "Source",
+      "imported": "Imported",
+      "importedFrom": "Imported from {{file}}",
+      "notes": "Notes"
+    }
+  },
+  "columns": {
+    "date": "Date",
+    "description": "Description",
+    "category": "Category",
+    "account": "Account",
+    "amount": "Amount",
+    "betweenAccounts": "Between accounts",
+    "actions": "Actions",
+    "actionsFor": "Actions for {{description}}",
+    "flowLabel": {
+      "in": "Income",
+      "out": "Expense",
+      "move": "Transfer"
+    },
+    "debtPrefix": "Debt · {{name}}",
+    "imported": "Imported",
+    "menu": {
+      "view": "View details"
+    }
+  }
+}

@@ -1,0 +1,74 @@
+{
+  "title": "Dashboard",
+  "subtitle": "This month at a glance.",
+  "panel": {
+    "viewAll": "View all"
+  },
+  "summary": {
+    "ariaLabel": "This month",
+    "totalBalance": "Total balance",
+    "accountsCount_one": "across {{count}} account",
+    "accountsCount_other": "across {{count}} accounts",
+    "incomeThisMonth": "In this month",
+    "expensesThisMonth": "Out this month",
+    "netSaved": "Net saved"
+  },
+  "accounts": {
+    "title": "Accounts",
+    "hint": "",
+    "empty": "No accounts yet. Add one on the Accounts page."
+  },
+  "due": {
+    "title": "Due in 30 days",
+    "hintEmpty": "Nothing scheduled",
+    "hintSummary": "{{amount}} across {{count}}",
+    "empty": "Nothing due in the next 30 days.",
+    "overdue": "Overdue",
+    "dueToday": "Due today",
+    "inDays_one": "In {{count}} day",
+    "inDays_other": "In {{count}} days",
+    "types": {
+      "debt": "debt",
+      "recurring": "recurring"
+    }
+  },
+  "spending": {
+    "title": "Spending by category",
+    "reportsLink": "Reports",
+    "hintSummary_one": "{{amount}} across {{count}} category",
+    "hintSummary_other": "{{amount}} across {{count}} categories",
+    "mostOn": " · most on {{category}}"
+  },
+  "spendingChart": {
+    "noData": "No spending data for this period."
+  },
+  "budgets": {
+    "title": "Budgets",
+    "hint": "",
+    "empty": "No budgets yet."
+  },
+  "recent": {
+    "title": "Recent activity",
+    "hint": "Your latest six entries",
+    "empty": "Nothing recorded yet."
+  },
+  "goals": {
+    "title": "Goals",
+    "hint": "Progress toward your targets",
+    "empty": "No active goals.",
+    "progressAmount": "{{current}} of {{target}}",
+    "targetDate": " · by {{date}}"
+  },
+  "cashflowChart": {
+    "legend": {
+      "income": "Income",
+      "expenses": "Expenses",
+      "netWorth": "Net Worth"
+    },
+    "yAxis": {
+      "cashflow": "Cashflow",
+      "netWorth": "Net Worth"
+    },
+    "noData": "No cashflow data for this period."
+  }
+}

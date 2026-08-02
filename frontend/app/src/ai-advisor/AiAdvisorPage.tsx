@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useSearchParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { getChatStatus } from './aiChatApi'
 import { ChatWidget } from './ChatWidget'
 import { useAiChat } from './useAiChat'
 
 export function AiAdvisorPage() {
+  const { t } = useTranslation('advisor')
   const [searchParams, setSearchParams] = useSearchParams()
   const { turns, isStreaming, send, stop, clear, retry } = useAiChat()
 
@@ -46,7 +48,7 @@ export function AiAdvisorPage() {
         onRetry={retry}
         onClear={turns.length > 0 ? clear : undefined}
         disabled={statusLoading || unavailable}
-        disabledReason="AI chat is not configured on this server. Set DEEPSEEK_API_KEY on the backend to turn it on."
+        disabledReason={t('aiAdvisor.unavailableReason')}
         initialPrompt={initialPrompt}
       />
     </div>

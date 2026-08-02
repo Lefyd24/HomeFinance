@@ -1,0 +1,74 @@
+{
+  "title": "Πίνακας ελέγχου",
+  "subtitle": "Μια ματιά στον μήνα σας.",
+  "panel": {
+    "viewAll": "Προβολή όλων"
+  },
+  "summary": {
+    "ariaLabel": "Αυτός ο μήνας",
+    "totalBalance": "ΣΥΝΟΛΙΚΟ ΥΠΟΛΟΙΠΟ",
+    "accountsCount_one": "σε {{count}} λογαριασμό",
+    "accountsCount_other": "σε {{count}} λογαριασμούς",
+    "incomeThisMonth": "ΕΣΟΔΑ ΑΥΤΟ ΤΟ ΜΗΝΑ",
+    "expensesThisMonth": "ΕΞΟΔΑ ΑΥΤΟ ΤΟ ΜΗΝΑ",
+    "netSaved": "ΚΑΘΑΡΟ"
+  },
+  "accounts": {
+    "title": "Λογαριασμοί",
+    "hint": "",
+    "empty": "Δεν υπάρχουν ακόμη λογαριασμοί. Προσθέστε έναν στη σελίδα Λογαριασμοί."
+  },
+  "due": {
+    "title": "Πληρωμές σε 30 ημέρες",
+    "hintEmpty": "Δεν έχει προγραμματιστεί τίποτα",
+    "hintSummary": "{{amount}} σε {{count}}",
+    "empty": "Καμία πληρωμή τις επόμενες 30 ημέρες.",
+    "overdue": "Εκπρόθεσμο",
+    "dueToday": "Λήγει σήμερα",
+    "inDays_one": "Σε {{count}} ημέρα",
+    "inDays_other": "Σε {{count}} ημέρες",
+    "types": {
+      "debt": "χρέος",
+      "recurring": "επαναλαμβανόμενο"
+    }
+  },
+  "spending": {
+    "title": "Έξοδα ανά κατηγορία",
+    "reportsLink": "Αναφορές",
+    "hintSummary_one": "{{amount}} σε {{count}} κατηγορία",
+    "hintSummary_other": "{{amount}} σε {{count}} κατηγορίες",
+    "mostOn": " · κυρίως σε {{category}}"
+  },
+  "spendingChart": {
+    "noData": "Δεν υπάρχουν δεδομένα εξόδων για αυτήν την περίοδο."
+  },
+  "budgets": {
+    "title": "Προϋπολογισμοί",
+    "hint": "",
+    "empty": "Δεν υπάρχουν ακόμη προϋπολογισμοί."
+  },
+  "recent": {
+    "title": "Πρόσφατη δραστηριότητα",
+    "hint": "Οι τελευταίες σας έξι καταχωρήσεις",
+    "empty": "Δεν έχει καταγραφεί τίποτα ακόμη."
+  },
+  "goals": {
+    "title": "Στόχοι",
+    "hint": "Πρόοδος προς τους στόχους σας",
+    "empty": "Δεν υπάρχουν ενεργοί στόχοι.",
+    "progressAmount": "{{current}} από {{target}}",
+    "targetDate": " · έως {{date}}"
+  },
+  "cashflowChart": {
+    "legend": {
+      "income": "Έσοδα",
+      "expenses": "Έξοδα",
+      "netWorth": "Καθαρή αξία"
+    },
+    "yAxis": {
+      "cashflow": "Ταμειακή ροή",
+      "netWorth": "Καθαρή αξία"
+    },
+    "noData": "Δεν υπάρχουν δεδομένα ταμειακής ροής για αυτήν την περίοδο."
+  }
+}

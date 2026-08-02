@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { HugeiconsIcon } from '@hugeicons/react'
 import {
@@ -44,6 +45,7 @@ function isLiability(type: AccountType) {
 }
 
 export function AccountsPage() {
+  const { t } = useTranslation('accounts')
   const { data: accounts = [], isLoading } = useAccounts()
   const deleteAccount = useDeleteAccount()
   const { confirm, confirmDialog } = useConfirm()
@@ -92,30 +94,29 @@ export function AccountsPage() {
 
   const handleDelete = async (account: Account) => {
     const ok = await confirm({
-      title: `Delete ${account.name}?`,
-      description:
-        'Transactions recorded against this account are removed with it. This cannot be undone.',
-      confirmLabel: 'Delete account',
+      title: t('deleteDialog.title', { name: account.name }),
+      description: t('deleteDialog.description'),
+      confirmLabel: t('deleteDialog.confirmLabel'),
     })
     if (!ok) return
     try {
       await deleteAccount.mutateAsync(account.id)
-      toast.success('Account deleted')
+      toast.success(t('toasts.deleted'))
     } catch {
-      toast.error('Could not delete the account. Try again.')
+      toast.error(t('toasts.deleteFailed'))
     }
   }
 
   return (
     <PageContainer wide className="flex flex-col gap-6">
       <PageHeader
-        title="Accounts"
-        description="Where your money sits, and how much of it sits where."
+        title={t('page.title')}
+        description={t('page.description')}
         className="mb-0"
         action={
           <Button size="sm" onClick={handleAdd}>
             <HugeiconsIcon icon={Add01Icon} strokeWidth={2} data-icon="inline-start" />
-            <PageHeaderActionLabel>Add account</PageHeaderActionLabel>
+            <PageHeaderActionLabel>{t('page.addAccount')}</PageHeaderActionLabel>
           </Button>
         }
       />
@@ -135,15 +136,13 @@ export function AccountsPage() {
             <EmptyMedia variant="icon">
               <HugeiconsIcon icon={Wallet01Icon} strokeWidth={2} />
             </EmptyMedia>
-            <EmptyTitle>No accounts yet</EmptyTitle>
-            <EmptyDescription>
-              Add your first account to start tracking balances and linking transactions.
-            </EmptyDescription>
+            <EmptyTitle>{t('empty.title')}</EmptyTitle>
+            <EmptyDescription>{t('empty.description')}</EmptyDescription>
           </EmptyHeader>
           <EmptyContent>
             <Button size="sm" onClick={handleAdd}>
               <HugeiconsIcon icon={Add01Icon} strokeWidth={2} data-icon="inline-start" />
-              Add account
+              {t('page.addAccount')}
             </Button>
           </EmptyContent>
         </Empty>
@@ -153,7 +152,7 @@ export function AccountsPage() {
 
           <div className="flex flex-col gap-7">
             {groups.map((group) => {
-              const meta = getAccountTypeMeta(group.type)
+              const meta = getAccountTypeMeta(group.type, t)
               const groupTotal = group.accounts.reduce((sum, a) => sum + (a.balance ?? 0), 0)
               return (
                 <section key={group.type} className="flex flex-col gap-3">
@@ -213,28 +212,29 @@ function AllocationBand({
     allocation: Array<{ type: AccountType; amount: number }>
   }
 }) {
+  const { t } = useTranslation('accounts')
   const total = Math.max(summary.held, 0.01)
 
   return (
-    <section aria-label="Balance allocation" className="flex flex-col gap-3 pb-5">
+    <section aria-label={t('allocationLabel')} className="flex flex-col gap-3 pb-5">
       <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2">
         <div className="flex min-w-0 flex-wrap items-baseline gap-x-3 gap-y-1">
           <span className="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-            Total held
+            {t('summary.totalHeld')}
           </span>
           <span className="font-heading text-2xl font-semibold tabular-nums tracking-tight sm:text-3xl">
             {formatCurrency(summary.held)}
           </span>
         </div>
         <dl className="flex flex-wrap items-baseline gap-x-4 gap-y-1 text-sm">
-          <InlineStat label="Liquid" value={formatCurrency(summary.liquid)} />
+          <InlineStat label={t('summary.liquid')} value={formatCurrency(summary.liquid)} />
           <InlineStat
-            label="Credit"
+            label={t('summary.credit')}
             value={formatCurrency(summary.owed)}
             tone={summary.owed > 0 ? 'out' : 'plain'}
           />
           <InlineStat
-            label="Net"
+            label={t('summary.net')}
             value={formatCurrency(summary.net)}
             tone={summary.net >= 0 ? 'in' : 'out'}
           />
@@ -247,15 +247,15 @@ function AllocationBand({
             {summary.allocation.map((slice) => (
               <div
                 key={slice.type}
-                className={cn('h-full', getAccountTypeMeta(slice.type).fill)}
+                className={cn('h-full', getAccountTypeMeta(slice.type, t).fill)}
                 style={{ width: `${(slice.amount / total) * 100}%` }}
-                title={`${getAccountTypeMeta(slice.type).label}: ${formatCurrency(slice.amount)}`}
+                title={`${getAccountTypeMeta(slice.type, t).label}: ${formatCurrency(slice.amount)}`}
               />
             ))}
           </div>
           <div className="flex flex-wrap gap-x-4 gap-y-1">
             {summary.allocation.map((slice) => {
-              const meta = getAccountTypeMeta(slice.type)
+              const meta = getAccountTypeMeta(slice.type, t)
               return (
                 <span key={slice.type} className="flex items-center gap-1.5 text-[0.7rem]">
                   <span className={cn('size-1.5 rounded-full', meta.fill)} aria-hidden />
@@ -310,7 +310,8 @@ function AccountCard({
   onEdit: (account: Account) => void
   onDelete: (account: Account) => void
 }) {
-  const meta = getAccountTypeMeta(account.type)
+  const { t } = useTranslation('accounts')
+  const meta = getAccountTypeMeta(account.type, t)
   const balance = account.balance ?? 0
   const liability = isLiability(account.type)
   const share = shareOf > 0 && !liability ? Math.max(balance, 0) / shareOf : 0
@@ -322,7 +323,7 @@ function AccountCard({
       <div className="flex flex-1 flex-col gap-2 p-3.5">
         <div className="flex items-center gap-2.5">
           <AccountIcon
-            icon={account.icon}
+            icon={account.icon ?? (account.provider === 'freedom24' ? 'freedom24.svg' : null)}
             type={account.type}
             className="size-10 rounded-lg shadow-[inset_0_1px_0_0_rgba(255,255,255,0.7)] ring-1 ring-white/45 dark:ring-white/12"
             imageClassName="size-7"
@@ -337,10 +338,16 @@ function AccountCard({
               <span className="text-[0.65rem] font-medium tabular-nums text-muted-foreground">
                 {account.currency}
               </span>
+              {account.provider && (
+                <>
+                  <span className="text-[0.65rem] text-muted-foreground/80">·</span>
+                  <span className="text-[0.65rem] font-medium text-flow-move">{t('card.synced')}</span>
+                </>
+              )}
               {!account.is_active && (
                 <>
                   <span className="text-[0.65rem] text-muted-foreground/80">·</span>
-                  <span className="text-[0.65rem] text-muted-foreground">Inactive</span>
+                  <span className="text-[0.65rem] text-muted-foreground">{t('card.inactive')}</span>
                 </>
               )}
               {account.is_linked && (
@@ -350,11 +357,13 @@ function AccountCard({
                     className="text-[0.65rem] font-medium text-flow-in"
                     title={
                       account.last_synced_at
-                        ? `Last synced ${new Date(account.last_synced_at).toLocaleString()}`
-                        : 'Not synced yet'
+                        ? t('card.lastSyncedAt', {
+                            when: new Date(account.last_synced_at).toLocaleString(),
+                          })
+                        : t('card.neverSynced')
                     }
                   >
-                    Bank-synced
+                    {t('card.bankSynced')}
                   </span>
                 </>
               )}
@@ -366,7 +375,7 @@ function AccountCard({
                 variant="ghost"
                 size="icon-sm"
                 className="-mr-1 size-7 shrink-0 opacity-70"
-                aria-label="Account actions"
+                aria-label={t('card.actionsLabel')}
               >
                 <HugeiconsIcon icon={MoreVerticalIcon} strokeWidth={2} className="size-4" />
               </Button>
@@ -375,20 +384,20 @@ function AccountCard({
               <DropdownMenuGroup>
                 <DropdownMenuItem onClick={() => onEdit(account)}>
                   <HugeiconsIcon icon={PencilEdit02Icon} strokeWidth={2} />
-                  Edit
+                  {t('card.edit')}
                 </DropdownMenuItem>
                 {account.is_linked && (
                   <DropdownMenuItem asChild>
                     <Link to="/connections">
                       <HugeiconsIcon icon={ArrowDataTransferHorizontalIcon} strokeWidth={2} />
-                      Manage connection
+                      {t('card.manageConnection')}
                     </Link>
                   </DropdownMenuItem>
                 )}
                 <DropdownMenuItem asChild>
                   <Link to={`/transactions?account_id=${account.id}`}>
                     <HugeiconsIcon icon={ArrowDataTransferHorizontalIcon} strokeWidth={2} />
-                    Transactions
+                    {t('card.transactions')}
                   </Link>
                 </DropdownMenuItem>
               </DropdownMenuGroup>
@@ -402,7 +411,7 @@ function AccountCard({
                   onClick={() => onDelete(account)}
                 >
                   <HugeiconsIcon icon={Delete02Icon} strokeWidth={2} />
-                  {account.is_linked ? 'Delete (disconnect first)' : 'Delete'}
+                  {account.is_linked ? t('card.deleteLinked') : t('card.delete')}
                 </DropdownMenuItem>
               </DropdownMenuGroup>
             </DropdownMenuContent>
@@ -412,7 +421,7 @@ function AccountCard({
         <div className="flex items-end justify-between gap-2">
           <div className="min-w-0">
             <p className="text-[0.6rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-              {liability ? 'Outstanding' : 'Balance'}
+              {liability ? t('card.outstanding') : t('card.balance')}
             </p>
             <p
               className={cn(
@@ -425,7 +434,7 @@ function AccountCard({
           </div>
           {!liability && shareOf > 0 && (
             <span className="shrink-0 text-[0.65rem] font-medium tabular-nums text-muted-foreground">
-              {sharePct}% held
+              {t('card.sharePct', { percent: sharePct })}
             </span>
           )}
         </div>
@@ -449,7 +458,7 @@ function AccountCard({
             to={`/transactions?account_id=${account.id}`}
             className="shrink-0 text-[0.65rem] font-medium text-muted-foreground transition-colors hover:text-foreground"
           >
-            Transactions
+            {t('card.transactions')}
           </Link>
         </div>
       </div>

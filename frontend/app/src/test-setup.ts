@@ -1,4 +1,13 @@
 import '@testing-library/jest-dom/vitest'
+import { beforeAll } from 'vitest'
+import i18n from './i18n/config'
+
+beforeAll(async () => {
+  if (typeof localStorage !== 'undefined') {
+    localStorage.removeItem('pf-language')
+  }
+  await i18n.changeLanguage('en')
+})
 
 // Radix Select / Popover measure elements via ResizeObserver (missing in jsdom).
 if (typeof globalThis.ResizeObserver === 'undefined') {

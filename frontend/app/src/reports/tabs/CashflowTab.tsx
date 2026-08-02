@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
+import { useTranslation } from 'react-i18next'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { cn } from '@/lib/utils'
 import { Chart, ChartFrame } from '../ChartFrame'
@@ -18,6 +19,7 @@ export function CashflowTab({
   cashflow: CashflowReport | undefined
   cashflowLoading: boolean
 }) {
+  const { t } = useTranslation('reports')
   const theme = useChartTheme()
 
   const { data: balances, isLoading: balancesLoading } = useQuery({
@@ -33,6 +35,9 @@ export function CashflowTab({
       return { label, income, expenses, net: income - expenses }
     })
   }, [cashflow])
+
+  const changeInBalanceLabel = t('series.changeInBalance')
+  const totalLabel = t('series.total')
 
   /**
    * A waterfall, not another pair of bars. The overview already shows the two
@@ -63,17 +68,21 @@ export function CashflowTab({
           const index = params[0]?.dataIndex ?? 0
           const row = rows[index]
           const cumulative = rows.slice(0, index + 1).reduce((sum, item) => sum + item.net, 0)
+          const flowLabel =
+            row.net >= 0
+              ? t('cashflow.waterfall.tooltipAdded', { amount: formatCurrency(Math.abs(row.net)) })
+              : t('cashflow.waterfall.tooltipDrewDown', { amount: formatCurrency(Math.abs(row.net)) })
           return [
-            `<strong>${formatPeriodLabel(row.label)}</strong>`,
-            `${row.net >= 0 ? 'Added' : 'Drew down'} ${formatCurrency(Math.abs(row.net))}`,
-            `<span style="opacity:.7">Running total ${formatCurrency(cumulative)}</span>`,
+            `<strong>${formatPeriodLabel(row.label, t)}</strong>`,
+            flowLabel,
+            `<span style="opacity:.7">${t('cashflow.waterfall.tooltipRunningTotal', { amount: formatCurrency(cumulative) })}</span>`,
           ].join('<br/>')
         },
       },
       grid: { left: 4, right: 8, top: 16, bottom: 8, containLabel: true },
       xAxis: {
         type: 'category' as const,
-        data: rows.map((row) => formatPeriodLabel(row.label)),
+        data: rows.map((row) => formatPeriodLabel(row.label, t)),
         ...baseAxisStyle(theme),
         splitLine: { show: false },
       },
@@ -93,7 +102,7 @@ export function CashflowTab({
           data: bases,
         },
         {
-          name: 'Change in balance',
+          name: changeInBalanceLabel,
           type: 'bar' as const,
           stack: 'waterfall',
           ...seriesHoverSafe,
@@ -108,7 +117,7 @@ export function CashflowTab({
         },
       ],
     }
-  }, [rows, theme])
+  }, [rows, theme, t, changeInBalanceLabel])
 
   /**
    * Balance history is one line per account plus a Total. The Total is the
@@ -169,7 +178,7 @@ export function CashflowTab({
         ...(total
           ? [
               {
-                name: 'Total',
+                name: totalLabel,
                 type: 'line' as const,
                 ...seriesHoverSafe,
                 data: total.data,
@@ -184,54 +193,54 @@ export function CashflowTab({
           : []),
       ],
     }
-  }, [balances, theme])
+  }, [balances, theme, totalLabel])
 
   return (
     <div className="flex flex-col gap-4">
       <ChartFrame
-        title="What each month did to your balance"
-        hint="Each bar starts where the last one ended, so the steps trace your running total."
+        title={t('cashflow.waterfall.title')}
+        hint={t('cashflow.waterfall.hint')}
         loading={cashflowLoading}
         isEmpty={!waterfallOption}
-        emptyMessage="No transactions in this range."
+        emptyMessage={t('cashflow.waterfall.empty')}
         height={320}
       >
         {waterfallOption && <Chart option={waterfallOption} height={320} />}
       </ChartFrame>
 
       <ChartFrame
-        title="Balance history"
-        hint="Daily running balance per account. Total is the thick line."
+        title={t('cashflow.balanceHistory.title')}
+        hint={t('cashflow.balanceHistory.hint')}
         loading={balancesLoading}
         isEmpty={!balanceOption}
-        emptyMessage="No active accounts match this filter."
+        emptyMessage={t('cashflow.balanceHistory.empty')}
         height={320}
       >
         {balanceOption && <Chart option={balanceOption} height={320} />}
       </ChartFrame>
 
       <ChartFrame
-        title="Period by period"
-        hint="The same numbers as a table, for when you need the exact figure."
+        title={t('cashflow.table.title')}
+        hint={t('cashflow.table.hint')}
         loading={cashflowLoading}
         isEmpty={rows.length === 0}
-        emptyMessage="No transactions in this range."
+        emptyMessage={t('cashflow.table.empty')}
         height={200}
       >
         <div className="overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Period</TableHead>
-                <TableHead className="text-end">Money in</TableHead>
-                <TableHead className="text-end">Money out</TableHead>
-                <TableHead className="text-end">Net</TableHead>
+                <TableHead>{t('cashflow.table.period')}</TableHead>
+                <TableHead className="text-end">{t('cashflow.table.moneyIn')}</TableHead>
+                <TableHead className="text-end">{t('cashflow.table.moneyOut')}</TableHead>
+                <TableHead className="text-end">{t('cashflow.table.net')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {rows.map((row) => (
                 <TableRow key={row.label}>
-                  <TableCell className="font-medium">{formatPeriodLabel(row.label)}</TableCell>
+                  <TableCell className="font-medium">{formatPeriodLabel(row.label, t)}</TableCell>
                   <TableCell className="text-end tabular-nums">{formatCurrency(row.income)}</TableCell>
                   <TableCell className="text-end tabular-nums">{formatCurrency(row.expenses)}</TableCell>
                   <TableCell

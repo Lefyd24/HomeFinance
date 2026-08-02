@@ -13,6 +13,11 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 # This only affects the app's global engine — the isolated per-test `db`
 # fixture below uses its own in-memory engine and is unaffected.
 os.environ.setdefault("DATABASE_URL", "sqlite://")
+# The investment-sync scheduler job fires immediately on startup (see
+# app/services/scheduler.py) and makes real HTTP calls to the broker API —
+# tests use fake credentials, so that job must not run here or it hangs/
+# errors against the real network on every test that spins up a TestClient.
+os.environ.setdefault("INVESTMENT_SYNC_ENABLED", "false")
 
 import pytest
 from sqlalchemy import create_engine

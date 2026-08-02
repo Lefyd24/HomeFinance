@@ -6,6 +6,12 @@ from app.models.debt import Debt, DebtPayment
 from app.models.goal import FinancialGoal, GoalTransaction
 from app.models.import_batch import ImportBatch
 from app.models.invite_code import InviteCode
+from app.models.investment import (
+    InvestmentCredential,
+    PortfolioPosition,
+    PortfolioSnapshot,
+    InvestmentTransaction,
+)
 from app.models.notification import (
     NotificationLog,
     NotificationRule,
@@ -30,6 +36,10 @@ __all__ = [
     "GoalTransaction",
     "ImportBatch",
     "InviteCode",
+    "InvestmentCredential",
+    "PortfolioPosition",
+    "PortfolioSnapshot",
+    "InvestmentTransaction",
     "NotificationLog",
     "NotificationRule",
     "NotificationSettings",

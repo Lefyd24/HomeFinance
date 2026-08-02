@@ -27,8 +27,16 @@ class Account(Base):
     bank_connection_id = Column(Integer, ForeignKey("bank_connections.id"), nullable=True)
     external_account_id = Column(String(255), nullable=True)  # Enable Banking account UID
     is_linked = Column(Boolean, nullable=False, default=False)
+    sync_status = Column(String(20), nullable=True)  # ok | error | rate_limited | never
+
+    # Non-null only for accounts synced from an external brokerage (e.g. "freedom24").
+    # Manual accounts leave this null; see app/services/investment_sync_service.py.
+    provider = Column(String(50), nullable=True)
+
+    # Shared by both sync mechanisms — brokerage sync (investment_sync_service)
+    # and bank sync (bank_sync_service) each stamp it. Declared once: an account
+    # is synced from at most one external source, so there is no contention.
     last_synced_at = Column(DateTime, nullable=True)
-    sync_status = Column(String(20), nullable=True)  # ok | error | never
 
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -38,3 +46,15 @@ class Account(Base):
     bank_connection = relationship("BankConnection", back_populates="accounts")
     transactions = relationship("Transaction", back_populates="account", foreign_keys="Transaction.account_id", cascade="all, delete-orphan")
     outgoing_transfers = relationship("Transaction", foreign_keys="Transaction.destination_account_id", viewonly=True)
+    investment_credential = relationship(
+        "InvestmentCredential", back_populates="account", uselist=False, cascade="all, delete-orphan"
+    )
+    portfolio_positions = relationship(
+        "PortfolioPosition", back_populates="account", cascade="all, delete-orphan"
+    )
+    portfolio_snapshots = relationship(
+        "PortfolioSnapshot", back_populates="account", cascade="all, delete-orphan"
+    )
+    investment_transactions = relationship(
+        "InvestmentTransaction", back_populates="account", cascade="all, delete-orphan"
+    )

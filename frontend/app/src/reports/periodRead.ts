@@ -4,6 +4,7 @@
  * Charts show what happened; this says it. Kept as a pure function so the
  * wording can be tested without rendering anything.
  */
+import type { TFunction } from 'i18next'
 import { formatCurrency } from '../lib/format'
 
 export interface PeriodTotals {
@@ -50,6 +51,7 @@ export interface PeriodRead {
 export function buildRead(
   current: PeriodTotals,
   previous: PeriodTotals | null,
+  t: TFunction<'reports'>,
   currency = 'EUR',
 ): PeriodRead {
   const net = current.income - current.expenses
@@ -58,29 +60,36 @@ export function buildRead(
 
   if (current.income === 0 && current.expenses === 0) {
     return {
-      headline: 'No activity recorded in this range.',
-      detail: 'Widen the date range, or clear a filter, to see something here.',
+      headline: t('read.noActivityHeadline'),
+      detail: t('read.noActivityDetail'),
       tone: 'neutral',
     }
   }
 
   const headline =
     net >= 0
-      ? `You kept ${money(net)} of the ${money(current.income)} that came in.`
-      : `You spent ${money(net)} more than you brought in.`
+      ? t('read.keptHeadline', { net: money(net), income: money(current.income) })
+      : t('read.overspentHeadline', { net: money(net) })
 
   const parts: string[] = []
 
   if (rate !== null) {
-    parts.push(`That is a ${rate.toFixed(0)}% savings rate`)
+    parts.push(t('read.savingsRateDetail', { rate: rate.toFixed(0) }))
   }
 
   if (previous) {
     const spendChange = percentChange(current.expenses, previous.expenses)
     if (spendChange !== null && Math.abs(spendChange) >= 1) {
-      const direction = spendChange > 0 ? 'up' : 'down'
-      const clause = `spending is ${direction} ${Math.abs(spendChange).toFixed(0)}% on the period before`
-      parts.push(parts.length ? `and ${clause}` : `Your ${clause}`)
+      const pct = Math.abs(spendChange).toFixed(0)
+      const clause =
+        spendChange > 0
+          ? parts.length
+            ? t('read.spendingUpJoined', { pct })
+            : t('read.yourSpendingUp', { pct })
+          : parts.length
+            ? t('read.spendingDownJoined', { pct })
+            : t('read.yourSpendingDown', { pct })
+      parts.push(clause)
     }
   }
 
@@ -96,13 +105,21 @@ export function buildRead(
  * they are looking at. Written as a person would ask it, with the window
  * spelled out so the model does not have to guess what "this period" means.
  */
-export function advisorPrompt(startDate: string, endDate: string, tab: string): string {
-  const focus: Record<string, string> = {
-    overview: 'what stands out about my finances',
-    cashflow: 'how my cash flow moved and whether the trend is healthy',
-    spending: 'where my spending went and what I could cut',
-    budgets: 'which budgets I am at risk of blowing',
-    debt: 'which debt I should attack first and why',
-  }
-  return `Looking at ${startDate} to ${endDate}, tell me ${focus[tab] ?? focus.overview}. Use my actual transactions.`
+const ADVISOR_FOCUS_KEYS = {
+  overview: 'advisorPrompt.focus.overview',
+  cashflow: 'advisorPrompt.focus.cashflow',
+  spending: 'advisorPrompt.focus.spending',
+  budgets: 'advisorPrompt.focus.budgets',
+  debt: 'advisorPrompt.focus.debt',
+} as const
+
+export function advisorPrompt(
+  startDate: string,
+  endDate: string,
+  tab: string,
+  t: TFunction<'reports'>,
+): string {
+  const focusKey = tab in ADVISOR_FOCUS_KEYS ? (tab as keyof typeof ADVISOR_FOCUS_KEYS) : 'overview'
+  const focus = t(ADVISOR_FOCUS_KEYS[focusKey])
+  return t('advisorPrompt.template', { start: startDate, end: endDate, focus })
 }

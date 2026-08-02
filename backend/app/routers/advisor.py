@@ -18,6 +18,7 @@ from app.utils.security import get_current_user_authenticated as get_current_use
 from app.models import User
 from app.services.advisor_service import (
     InvestmentCalculator,
+    SelfSustainingCalculator,
     LoanCalculator,
     EmergencyFundCalculator,
     NetWorthTracker,
@@ -30,6 +31,8 @@ from app.schemas.advisor import (
     RetirementProjectionResponse,
     ScenarioComparisonRequest,
     ScenarioComparisonResponse,
+    SelfSustainingRequest,
+    SelfSustainingResponse,
     LoanAmortizationRequest,
     LoanAmortizationResponse,
     EarlyPayoffRequest,
@@ -126,6 +129,33 @@ def compare_investment_scenarios(
     
     scenarios_dict = [s.model_dump() for s in request.scenarios]
     result = InvestmentCalculator.compare_scenarios(scenarios_dict)
+    return result
+
+
+@router.post("/investment/self-sustaining", response_model=SelfSustainingResponse)
+def calculate_self_sustaining_portfolio(
+    request: SelfSustainingRequest,
+    current_user: User = Depends(get_current_user)
+):
+    """Calculate the target capital for a self-sustaining portfolio.
+
+    Finds the balance at which monthly interest alone covers a fixed monthly
+    withdrawal — so the portfolio no longer depletes — along with how many
+    months/years of contributions it takes to reach that balance.
+    """
+    result = SelfSustainingCalculator.calculate(
+        initial_investment=request.initial_investment,
+        monthly_contribution=request.monthly_contribution,
+        annual_rate=request.annual_rate,
+        monthly_withdrawal=request.monthly_withdrawal
+    )
+
+    if 'error' in result:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=result['error']
+        )
+
     return result
 
 
@@ -342,7 +372,8 @@ def get_available_tools(
                 'endpoints': [
                     '/advisor/investment/calculate',
                     '/advisor/investment/retirement',
-                    '/advisor/investment/compare'
+                    '/advisor/investment/compare',
+                    '/advisor/investment/self-sustaining'
                 ]
             },
             {

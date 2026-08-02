@@ -18,8 +18,11 @@ export interface Account {
    */
   is_linked: boolean
   bank_connection_id: number | null
-  last_synced_at: string | null
   sync_status: string | null
+  /** Set only for accounts synced from an external brokerage (e.g. "freedom24"). */
+  provider: string | null
+  /** Stamped by whichever sync owns this account — brokerage or bank. */
+  last_synced_at: string | null
   created_at: string
   updated_at: string
 }

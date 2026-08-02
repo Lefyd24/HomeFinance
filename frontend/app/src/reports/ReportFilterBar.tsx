@@ -1,4 +1,5 @@
 import { CalendarRange, Check, ChevronDown, Tags, Wallet, X } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -16,8 +17,11 @@ import { RANGE_PRESETS, type ReportFilters } from './useReportFilters'
 // needs to come back somewhere else.
 
 export function ReportFilterBar({ filters }: { filters: ReportFilters }) {
+  const { t } = useTranslation('reports')
   const { data: accounts } = useAccounts()
   const { data: categories } = useCategories()
+
+  const rangeLabel = (key: (typeof RANGE_PRESETS)[number]['key']) => t(`filters.range.${key}`)
 
   return (
     // Pinned to the top of the page scroller with its own opaque chrome. It was
@@ -35,7 +39,7 @@ export function ReportFilterBar({ filters }: { filters: ReportFilters }) {
                 buys all three filters a single row with their labels intact. */}
             <Button variant="ghost" size="sm">
               <CalendarRange data-icon="inline-start" className="max-sm:hidden" />
-              {RANGE_PRESETS.find((preset) => preset.key === filters.range)?.label}
+              {rangeLabel(filters.range)}
               <ChevronDown data-icon="inline-end" className="max-sm:hidden" />
             </Button>
           </PopoverTrigger>
@@ -51,7 +55,7 @@ export function ReportFilterBar({ filters }: { filters: ReportFilters }) {
                     filters.range === preset.key && 'font-semibold',
                   )}
                 >
-                  {preset.label}
+                  {rangeLabel(preset.key)}
                   {filters.range === preset.key && <Check className="size-4" />}
                 </button>
               ))}
@@ -62,14 +66,14 @@ export function ReportFilterBar({ filters }: { filters: ReportFilters }) {
                 <div className="flex items-center gap-2 p-2">
                   <Input
                     type="date"
-                    aria-label="Start date"
+                    aria-label={t('filters.startDateAria')}
                     value={filters.startDate}
                     max={filters.endDate}
                     onChange={(event) => filters.setCustomDates(event.target.value, filters.endDate)}
                   />
                   <Input
                     type="date"
-                    aria-label="End date"
+                    aria-label={t('filters.endDateAria')}
                     value={filters.endDate}
                     min={filters.startDate}
                     onChange={(event) => filters.setCustomDates(filters.startDate, event.target.value)}
@@ -82,29 +86,31 @@ export function ReportFilterBar({ filters }: { filters: ReportFilters }) {
 
         <MultiSelect
           icon={Wallet}
-          label="Accounts"
+          label={t('filters.accounts')}
           options={(accounts ?? []).map((account) => ({ id: account.id, name: account.name }))}
           selected={filters.accountIds}
           onToggle={filters.toggleAccount}
           onClear={filters.clearAccounts}
-          emptyLabel="No accounts yet"
+          emptyLabel={t('filters.noAccounts')}
+          clearLabel={t('filters.clear')}
         />
 
         <MultiSelect
           icon={Tags}
-          label="Categories"
+          label={t('filters.categories')}
           options={(categories ?? []).map((category) => ({ id: category.id, name: category.name }))}
           selected={filters.categoryIds}
           onToggle={filters.toggleCategory}
           onClear={filters.clearCategories}
-          emptyLabel="No categories yet"
+          emptyLabel={t('filters.noCategories')}
+          clearLabel={t('filters.clear')}
         />
         </div>
 
         {filters.hasDimensionFilters && (
           <Button variant="ghost" size="sm" className="shrink-0" onClick={filters.reset}>
             <X data-icon="inline-start" />
-            <span className="sr-only sm:not-sr-only">Clear filters</span>
+            <span className="sr-only sm:not-sr-only">{t('filters.clearFilters')}</span>
           </Button>
         )}
 
@@ -126,6 +132,7 @@ function MultiSelect({
   onToggle,
   onClear,
   emptyLabel,
+  clearLabel,
 }: {
   icon: typeof Wallet
   label: string
@@ -134,6 +141,7 @@ function MultiSelect({
   onToggle: (id: number) => void
   onClear: () => void
   emptyLabel: string
+  clearLabel: string
 }) {
   return (
     <Popover>
@@ -154,7 +162,7 @@ function MultiSelect({
           <span className="text-xs font-semibold text-muted-foreground">{label}</span>
           {selected.length > 0 && (
             <Button variant="ghost" size="sm" onClick={onClear}>
-              Clear
+              {clearLabel}
             </Button>
           )}
         </div>

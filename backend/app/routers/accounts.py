@@ -93,6 +93,22 @@ def update_account(
 
     update_data = account_data.model_dump(exclude_unset=True)
 
+    if account.provider:
+        # Balance/type/currency are set by the brokerage sync, not the user —
+        # see app/services/investment_sync_service.py. Name/icon/description
+        # stay editable here.
+        locked_fields = {"balance", "type", "currency"} & update_data.keys()
+        if locked_fields:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=(
+                    f"{', '.join(sorted(locked_fields))} is managed by the "
+                    f"{account.provider} sync and can't be edited here — "
+                    "use the Investments page instead."
+                ),
+            )
+
+
     # A linked account's balance, currency and type mirror the bank and are
     # overwritten on every sync — accepting an edit here would silently discard
     # it. Cosmetic fields (name, description, icon, is_active) stay editable.

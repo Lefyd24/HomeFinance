@@ -1,326 +1,653 @@
 import { useMemo, useState } from 'react'
+
+import { useTranslation } from 'react-i18next'
+
 import { toast } from 'sonner'
+
 import { HugeiconsIcon } from '@hugeicons/react'
+
 import {
+
   MoreVerticalIcon,
+
   PencilEdit02Icon,
+
   Delete02Icon,
+
   Add01Icon,
+
   MoneyReceive01Icon,
+
   ShoppingCartIcon,
+
   ArrowUpDownIcon,
+
 } from '@hugeicons/core-free-icons'
+
 import { Button } from '@/components/ui/button'
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+
 import { Badge } from '@/components/ui/badge'
+
 import { Skeleton } from '@/components/ui/skeleton'
+
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+
 import {
+
   DropdownMenu,
+
   DropdownMenuContent,
+
   DropdownMenuGroup,
+
   DropdownMenuItem,
+
   DropdownMenuTrigger,
+
 } from '@/components/ui/dropdown-menu'
+
 import {
+
   Empty,
+
   EmptyDescription,
+
   EmptyHeader,
+
   EmptyMedia,
+
   EmptyTitle,
+
 } from '@/components/ui/empty'
+
 import { PageContainer } from '@/ui/PageContainer'
+
 import { PageHeader, PageHeaderActionLabel } from '@/ui/PageHeader'
+
 import { ViewSelect } from '@/ui/ViewSelect'
+
 import { useConfirm } from '@/ui/useConfirm'
+
 import { StatStrip, StatCard } from '@/ui/StatStrip'
+
 import { useCategories, useDeleteCategory } from './useCategories'
+
 import { CategoryFormDialog } from './CategoryFormDialog'
+
 import { CategoryIcon } from './categoryIcons'
+
 import { cn } from '@/lib/utils'
+
 import type { Category, CategoryType } from './categoriesApi'
 
+
+
 const TYPE_META: Record<
+
   CategoryType,
-  { label: string; description: string; icon: typeof MoneyReceive01Icon; accent: string }
+
+  { labelKey: string; descriptionKey: string; icon: typeof MoneyReceive01Icon; accent: string }
+
 > = {
+
   income: {
-    label: 'Income',
-    description: 'Money coming in',
+
+    labelKey: 'types.income.label',
+
+    descriptionKey: 'types.income.description',
+
     icon: MoneyReceive01Icon,
+
     accent: 'border-success/40 bg-success/10',
+
   },
+
   expense: {
-    label: 'Expense',
-    description: 'Everyday spending',
+
+    labelKey: 'types.expense.label',
+
+    descriptionKey: 'types.expense.description',
+
     icon: ShoppingCartIcon,
+
     accent: 'border-destructive/40 bg-destructive/10',
+
   },
+
   transfer: {
-    label: 'Transfer',
-    description: 'Between accounts',
+
+    labelKey: 'types.transfer.label',
+
+    descriptionKey: 'types.transfer.description',
+
     icon: ArrowUpDownIcon,
+
     accent: 'border-primary/40 bg-primary/10',
+
   },
+
 }
 
+
+
 export function CategoriesPage() {
+
+  const { t } = useTranslation('categories')
+
   const { data: categories = [], isLoading } = useCategories()
+
   const deleteMutation = useDeleteCategory()
+
   const { confirm, confirmDialog } = useConfirm()
 
+
+
   const [formOpen, setFormOpen] = useState(false)
+
   const [editingCategory, setEditingCategory] = useState<Category | null>(null)
+
   const [activeTab, setActiveTab] = useState<'all' | CategoryType>('all')
 
+
+
   const incomeCategories = categories.filter((cat) => cat.type === 'income')
+
   const expenseCategories = categories.filter((cat) => cat.type === 'expense')
+
   const transferCategories = categories.filter((cat) => cat.type === 'transfer')
+
   const customCategories = categories.filter((cat) => !cat.is_system)
 
+
+
   const visibleCategories = useMemo(() => {
+
     if (activeTab === 'all') return categories
+
     return categories.filter((cat) => cat.type === activeTab)
+
   }, [activeTab, categories])
 
+
+
   const handleAdd = () => {
+
     setEditingCategory(null)
+
     setFormOpen(true)
+
   }
+
+
 
   const handleEdit = (category: Category) => {
+
     setEditingCategory(category)
+
     setFormOpen(true)
+
   }
 
+
+
   const handleDelete = async (category: Category) => {
+
     if (category.is_system) {
-      toast.error('System categories cannot be deleted')
+
+      toast.error(t('toasts.systemDeleteError'))
+
       return
+
     }
 
+
+
     const confirmed = await confirm({
-      title: `Delete ${category.name}?`,
-      description:
-        'Transactions filed under it become uncategorised and will need reassigning.',
-      confirmLabel: 'Delete category',
+
+      title: t('deleteDialog.title', { name: category.name }),
+
+      description: t('deleteDialog.description'),
+
+      confirmLabel: t('deleteDialog.confirmLabel'),
+
     })
+
+
 
     if (!confirmed) return
 
+
+
     try {
+
       await deleteMutation.mutateAsync(category.id)
-      toast.success('Category deleted')
+
+      toast.success(t('toasts.deleted'))
+
     } catch {
-      toast.error('Failed to delete category')
+
+      toast.error(t('toasts.deleteError'))
+
     }
+
   }
 
+
+
   return (
+
     <PageContainer wide>
+
       <PageHeader
-        title="Categories"
-        description="Organize your transactions with colorful, icon-backed labels"
+
+        title={t('page.title')}
+
+        description={t('page.description')}
+
         action={
+
           <Button onClick={handleAdd} size="sm">
+
             <HugeiconsIcon icon={Add01Icon} strokeWidth={2} data-icon="inline-start" />
-            <PageHeaderActionLabel>Add</PageHeaderActionLabel>
+
+            <PageHeaderActionLabel>{t('page.addButton')}</PageHeaderActionLabel>
+
           </Button>
+
         }
+
       />
+
+
 
       {isLoading ? (
+
         <>
+
           <StatStrip className="mb-6">
-            <StatCard label="Total" value={<Skeleton className="h-8 w-16" />} />
-            <StatCard label="Income" value={<Skeleton className="h-8 w-16" />} />
-            <StatCard label="Expense" value={<Skeleton className="h-8 w-16" />} />
-            <StatCard label="Custom" value={<Skeleton className="h-8 w-16" />} />
+
+            <StatCard label={t('stats.total')} value={<Skeleton className="h-8 w-16" />} />
+
+            <StatCard label={t('stats.income')} value={<Skeleton className="h-8 w-16" />} />
+
+            <StatCard label={t('stats.expense')} value={<Skeleton className="h-8 w-16" />} />
+
+            <StatCard label={t('stats.custom')} value={<Skeleton className="h-8 w-16" />} />
+
           </StatStrip>
+
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+
             {Array.from({ length: 10 }).map((_, i) => (
+
               <Skeleton key={i} className="h-28 w-full rounded-xl" />
+
             ))}
+
           </div>
+
         </>
+
       ) : (
+
         <>
+
           <StatStrip className="mb-6">
-            <StatCard label="Total" value={categories.length} />
-            <StatCard label="Income" value={incomeCategories.length} tone="success" />
-            <StatCard label="Expense" value={expenseCategories.length} tone="destructive" />
-            <StatCard label="Custom" value={customCategories.length} />
+
+            <StatCard label={t('stats.total')} value={categories.length} />
+
+            <StatCard label={t('stats.income')} value={incomeCategories.length} tone="success" />
+
+            <StatCard label={t('stats.expense')} value={expenseCategories.length} tone="destructive" />
+
+            <StatCard label={t('stats.custom')} value={customCategories.length} />
+
           </StatStrip>
+
+
 
           <Tabs
+
             value={activeTab}
+
             onValueChange={(value) => setActiveTab(value as 'all' | CategoryType)}
+
             className="flex flex-col gap-4"
+
           >
-            {/* Phones get a dropdown; four labelled, counted tabs will not share
-                a phone-width row without overflowing. Counts come along in the
-                dropdown, where there is room for them. */}
+
             <ViewSelect
-              label="Category type"
+
+              label={t('tabs.typeLabel')}
+
               value={activeTab}
+
               onValueChange={(value) => setActiveTab(value as 'all' | CategoryType)}
+
               options={[
-                { value: 'all', label: `All (${categories.length})` },
-                { value: 'income', label: `Income (${incomeCategories.length})` },
-                { value: 'expense', label: `Expense (${expenseCategories.length})` },
-                { value: 'transfer', label: `Transfer (${transferCategories.length})` },
+
+                { value: 'all', label: t('tabs.all', { count: categories.length }) },
+
+                { value: 'income', label: t('tabs.income', { count: incomeCategories.length }) },
+
+                { value: 'expense', label: t('tabs.expense', { count: expenseCategories.length }) },
+
+                { value: 'transfer', label: t('tabs.transfer', { count: transferCategories.length }) },
+
               ]}
+
               className="sm:hidden"
+
             />
 
-            <TabsList variant="line" fullWidth className="max-sm:hidden">
-              <TabsTrigger value="all">All ({categories.length})</TabsTrigger>
-              <TabsTrigger value="income">Income ({incomeCategories.length})</TabsTrigger>
-              <TabsTrigger value="expense">Expense ({expenseCategories.length})</TabsTrigger>
-              <TabsTrigger value="transfer">Transfer ({transferCategories.length})</TabsTrigger>
+
+
+            <TabsList className="max-sm:hidden">
+              <TabsTrigger value="all" className="group">
+                {t('tabs.all', { count: '' }).replace(/\(\)/g, '').trim()}
+                <Badge variant="outline" className="ms-1.5 text-[10px] font-mono tabular-nums group-data-[state=active]:bg-white/20 group-data-[state=active]:text-primary-foreground group-data-[state=active]:border-primary-foreground/30">
+                  {categories.length}
+                </Badge>
+              </TabsTrigger>
+              <TabsTrigger value="income" className="group">
+                {t('tabs.income', { count: '' }).replace(/\(\)/g, '').trim()}
+                <Badge className="ms-1.5 text-[10px] font-mono tabular-nums bg-success/12 text-success border-success/25 group-data-[state=active]:bg-white/20 group-data-[state=active]:text-primary-foreground group-data-[state=active]:border-primary-foreground/30">
+                  {incomeCategories.length}
+                </Badge>
+              </TabsTrigger>
+              <TabsTrigger value="expense" className="group">
+                {t('tabs.expense', { count: '' }).replace(/\(\)/g, '').trim()}
+                <Badge className="ms-1.5 text-[10px] font-mono tabular-nums bg-destructive/12 text-destructive border-destructive/25 group-data-[state=active]:bg-white/20 group-data-[state=active]:text-primary-foreground group-data-[state=active]:border-primary-foreground/30">
+                  {expenseCategories.length}
+                </Badge>
+              </TabsTrigger>
+              <TabsTrigger value="transfer" className="group">
+                {t('tabs.transfer', { count: '' }).replace(/\(\)/g, '').trim()}
+                <Badge className="ms-1.5 text-[10px] font-mono tabular-nums bg-primary/12 text-primary border-primary/25 group-data-[state=active]:bg-white/20 group-data-[state=active]:text-primary-foreground group-data-[state=active]:border-primary-foreground/30">
+                  {transferCategories.length}
+                </Badge>
+              </TabsTrigger>
             </TabsList>
 
+
+
             <TabsContent value={activeTab} className="mt-0">
+
               {visibleCategories.length === 0 ? (
+
                 <Empty className="border border-dashed py-12">
+
                   <EmptyHeader>
+
                     <EmptyMedia variant="icon">
+
                       <HugeiconsIcon icon={TYPE_META.expense.icon} strokeWidth={2} />
+
                     </EmptyMedia>
-                    <EmptyTitle>No categories here</EmptyTitle>
-                    <EmptyDescription>Create a category to start organizing transactions.</EmptyDescription>
+
+                    <EmptyTitle>{t('empty.title')}</EmptyTitle>
+
+                    <EmptyDescription>{t('empty.description')}</EmptyDescription>
+
                   </EmptyHeader>
+
                 </Empty>
+
               ) : (
+
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+
                   {visibleCategories.map((category) => (
+
                     <CategoryTile
+
                       key={category.id}
+
                       category={category}
+
                       onEdit={handleEdit}
+
                       onDelete={handleDelete}
+
                     />
+
                   ))}
+
                 </div>
+
               )}
+
             </TabsContent>
+
           </Tabs>
 
+
+
           {activeTab === 'all' && (
+
             <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4">
+
               {(Object.keys(TYPE_META) as CategoryType[]).map((type) => {
+
                 const meta = TYPE_META[type]
+
                 const count =
+
                   type === 'income'
+
                     ? incomeCategories.length
+
                     : type === 'expense'
+
                       ? expenseCategories.length
+
                       : transferCategories.length
+
                 return (
+
                   <Card key={type} className={cn('border', meta.accent)}>
+
                     <CardHeader>
+
                       <div className="flex items-center gap-2">
+
                         <HugeiconsIcon icon={meta.icon} strokeWidth={2} />
-                        <CardTitle>{meta.label}</CardTitle>
+
+                        <CardTitle>{t(meta.labelKey)}</CardTitle>
+
                       </div>
-                      <CardDescription>{meta.description}</CardDescription>
+
+                      <CardDescription>{t(meta.descriptionKey)}</CardDescription>
+
                     </CardHeader>
+
                     <CardContent>
+
                       <p className="text-3xl font-heading font-bold tabular-nums">{count}</p>
+
                     </CardContent>
+
                   </Card>
+
                 )
+
               })}
+
             </div>
+
           )}
+
         </>
+
       )}
+
+
 
       <CategoryFormDialog open={formOpen} onOpenChange={setFormOpen} category={editingCategory} />
+
       {confirmDialog}
+
     </PageContainer>
+
   )
+
 }
+
+
 
 interface CategoryTileProps {
+
   category: Category
+
   onEdit: (category: Category) => void
+
   onDelete: (category: Category) => void
+
 }
 
+
+
 function CategoryTile({ category, onEdit, onDelete }: CategoryTileProps) {
+
+  const { t } = useTranslation('categories')
+
+
+
   return (
+
     <Card
+
       size="sm"
+
       className="group relative overflow-hidden transition-colors hover:bg-muted/40"
+
       style={{ borderColor: `${category.color}55` }}
+
     >
+
       <div
+
         className="absolute inset-x-0 top-0 h-1"
+
         style={{ backgroundColor: category.color }}
+
         aria-hidden
+
       />
-      {/*
-       * The whole tile is the tap target. The kebab menu below is revealed on
-       * hover, which a touch device never fires — so on a phone there was no way
-       * at all to open a category. A sibling overlay rather than a wrapping
-       * button: a menu trigger cannot legally nest inside a button, and it would
-       * swallow the tap. CardContent is pointer-events-none so clicks fall
-       * through to this; the kebab opts back in.
-       */}
+
       <button
+
         type="button"
+
         onClick={() => onEdit(category)}
-        aria-label={`${category.is_system ? 'View' : 'Edit'} ${category.name}`}
+
+        aria-label={
+
+          category.is_system
+
+            ? t('tile.viewAria', { name: category.name })
+
+            : t('tile.editAria', { name: category.name })
+
+        }
+
         className="absolute inset-0 rounded-[inherit] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+
       />
-      {/* Sibling of the overlay, not a child of CardContent: it stays anchored to
-          the card's own corner, and always visible on touch where there is no
-          hover to reveal it. */}
+
       {!category.is_system && (
+
         <DropdownMenu>
+
           <DropdownMenuTrigger asChild>
+
             <Button
+
               variant="ghost"
+
               size="icon"
+
               className="absolute end-1.5 top-2.5 z-10 transition-opacity sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100"
-              aria-label={`Actions for ${category.name}`}
+
+              aria-label={t('tile.actionsAria', { name: category.name })}
+
             >
+
               <HugeiconsIcon icon={MoreVerticalIcon} strokeWidth={2} />
+
             </Button>
+
           </DropdownMenuTrigger>
+
           <DropdownMenuContent align="end">
+
             <DropdownMenuGroup>
+
               <DropdownMenuItem onClick={() => onEdit(category)}>
+
                 <HugeiconsIcon icon={PencilEdit02Icon} strokeWidth={2} />
-                Edit
+
+                {t('tile.edit')}
+
               </DropdownMenuItem>
+
               <DropdownMenuItem variant="destructive" onClick={() => onDelete(category)}>
+
                 <HugeiconsIcon icon={Delete02Icon} strokeWidth={2} />
-                Delete
+
+                {t('tile.delete')}
+
               </DropdownMenuItem>
+
             </DropdownMenuGroup>
+
           </DropdownMenuContent>
+
         </DropdownMenu>
+
       )}
+
       <CardContent className="pointer-events-none flex flex-col items-center gap-3 pt-4 text-center">
+
         <CategoryIcon icon={category.icon} color={category.color} className="size-12" size={24} />
+
         <div className="min-w-0 w-full">
+
           <p className="font-medium text-sm truncate" title={category.name}>
+
             {category.name}
+
           </p>
+
           <div className="mt-1.5 flex items-center justify-center gap-1.5 flex-wrap">
+
             <Badge variant="outline" className="text-[10px] capitalize">
-              {category.type}
+
+              {t(`form.types.${category.type}`)}
+
             </Badge>
+
             {category.is_system && (
+
               <Badge variant="secondary" className="text-[10px]">
-                System
+
+                {t('tile.system')}
+
               </Badge>
+
             )}
+
           </div>
+
         </div>
+
       </CardContent>
+
     </Card>
+
   )
+
 }
+

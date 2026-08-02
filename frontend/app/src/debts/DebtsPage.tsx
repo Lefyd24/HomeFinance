@@ -27,6 +27,7 @@ import {
   Wallet01Icon,
 } from '@hugeicons/core-free-icons'
 import { toast } from 'sonner'
+import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
@@ -67,26 +68,27 @@ import type { Debt, DebtType, PayoffComparison } from './debtsApi'
 
 const TYPE_META: Record<
   DebtType,
-  { label: string; icon: typeof CreditCardIcon }
+  { labelKey: string; icon: typeof CreditCardIcon }
 > = {
-  credit_card: { label: 'Credit Card', icon: CreditCardIcon },
-  personal_loan: { label: 'Personal Loan', icon: Money01Icon },
-  student_loan: { label: 'Student Loan', icon: StudentCardIcon },
-  mortgage: { label: 'Mortgage', icon: Home01Icon },
-  car_loan: { label: 'Car Loan', icon: Car01Icon },
-  informal: { label: 'Informal', icon: UserIcon },
-  utilities: { label: 'Utilities', icon: FlashIcon },
-  subscription: { label: 'Subscription', icon: RepeatIcon },
-  medical: { label: 'Medical', icon: Hospital01Icon },
-  tax: { label: 'Tax', icon: TaxesIcon },
-  legal: { label: 'Legal', icon: JusticeScale01Icon },
-  other: { label: 'Other', icon: File01Icon },
-  custom: { label: 'Custom', icon: Invoice01Icon },
+  credit_card: { labelKey: 'types.creditCard', icon: CreditCardIcon },
+  personal_loan: { labelKey: 'types.personalLoan', icon: Money01Icon },
+  student_loan: { labelKey: 'types.studentLoan', icon: StudentCardIcon },
+  mortgage: { labelKey: 'types.mortgage', icon: Home01Icon },
+  car_loan: { labelKey: 'types.carLoan', icon: Car01Icon },
+  informal: { labelKey: 'types.informal', icon: UserIcon },
+  utilities: { labelKey: 'types.utilities', icon: FlashIcon },
+  subscription: { labelKey: 'types.subscription', icon: RepeatIcon },
+  medical: { labelKey: 'types.medical', icon: Hospital01Icon },
+  tax: { labelKey: 'types.tax', icon: TaxesIcon },
+  legal: { labelKey: 'types.legal', icon: JusticeScale01Icon },
+  other: { labelKey: 'types.other', icon: File01Icon },
+  custom: { labelKey: 'types.custom', icon: Invoice01Icon },
 }
 
-function debtTypeLabel(debt: Debt): string {
-  if (debt.type === 'custom') return debt.custom_type?.trim() || 'Custom'
-  return TYPE_META[debt.type]?.label ?? debt.type
+function debtTypeLabel(debt: Debt, t: (key: string) => string): string {
+  if (debt.type === 'custom') return debt.custom_type?.trim() || t('types.custom')
+  const meta = TYPE_META[debt.type]
+  return meta ? t(meta.labelKey) : debt.type
 }
 
 function payoffPercent(debt: Debt): number {
@@ -147,11 +149,12 @@ function PayoffBar({
   remaining: number
   interest: number
 }) {
+  const { t } = useTranslation('debts')
   const total = Math.max(paid + remaining + interest, 0.01)
   const segments = [
-    { key: 'paid', value: paid, className: 'bg-success', label: 'Paid off' },
-    { key: 'remaining', value: remaining, className: 'bg-primary', label: 'Still owed' },
-    { key: 'interest', value: interest, className: 'bg-warning', label: 'Interest ahead' },
+    { key: 'paid', value: paid, className: 'bg-success', label: t('payoffBar.paidOff') },
+    { key: 'remaining', value: remaining, className: 'bg-primary', label: t('payoffBar.stillOwed') },
+    { key: 'interest', value: interest, className: 'bg-warning', label: t('payoffBar.interestAhead') },
   ].filter((s) => s.value > 0)
 
   return (
@@ -159,7 +162,11 @@ function PayoffBar({
       <div
         className="flex h-2.5 w-full overflow-hidden rounded-full bg-muted"
         role="img"
-        aria-label={`${formatCurrency(paid)} paid, ${formatCurrency(remaining)} still owed, ${formatCurrency(interest)} interest ahead`}
+        aria-label={t('payoffBar.ariaLabel', {
+          paid: formatCurrency(paid),
+          remaining: formatCurrency(remaining),
+          interest: formatCurrency(interest),
+        })}
       >
         {segments.map((segment) => (
           <div
@@ -219,6 +226,7 @@ function ProgressDial({ percent, label }: { percent: number; label: string }) {
 }
 
 export function DebtsPage() {
+  const { t } = useTranslation('debts')
   const { data: debts = [], isLoading } = useDebts()
   const { data: summary } = useDebtSummary()
   const deleteDebt = useDeleteDebt()
@@ -282,26 +290,25 @@ export function DebtsPage() {
 
   const handleDelete = async (debt: Debt) => {
     const ok = await confirm({
-      title: `Delete ${debt.creditor || debt.name}?`,
-      description:
-        'The debt and every payment recorded against it are removed. Linked transactions stay in your ledger.',
-      confirmLabel: 'Delete debt',
+      title: t('page.deleteDialog.title', { name: debt.creditor || debt.name }),
+      description: t('page.deleteDialog.description'),
+      confirmLabel: t('page.deleteDialog.confirmLabel'),
     })
     if (!ok) return
     try {
       await deleteDebt.mutateAsync(debt.id)
-      toast.success('Debt deleted')
+      toast.success(t('page.toasts.deleted'))
       setDetailOpen(false)
     } catch {
-      toast.error('Could not delete the debt. Try again.')
+      toast.error(t('page.toasts.deleteFailed'))
     }
   }
 
   return (
     <PageContainer wide>
       <PageHeader
-        title="Debts"
-        description="Tap a debt to see the interest math, payment schedule, and linked transactions."
+        title={t('page.title')}
+        description={t('page.description')}
         action={
           <>
             <Button
@@ -311,11 +318,11 @@ export function DebtsPage() {
               disabled={active.length === 0}
             >
               <HugeiconsIcon icon={AnalyticsUpIcon} strokeWidth={2} data-icon="inline-start" />
-              <PageHeaderActionLabel>Payoff strategies</PageHeaderActionLabel>
+              <PageHeaderActionLabel>{t('page.payoffStrategies')}</PageHeaderActionLabel>
             </Button>
             <Button size="sm" onClick={openCreate}>
               <HugeiconsIcon icon={Add01Icon} strokeWidth={2} data-icon="inline-start" />
-              <PageHeaderActionLabel>Add debt</PageHeaderActionLabel>
+              <PageHeaderActionLabel>{t('page.addDebt')}</PageHeaderActionLabel>
             </Button>
           </>
         }
@@ -336,15 +343,15 @@ export function DebtsPage() {
             <EmptyMedia variant="icon">
               <HugeiconsIcon icon={BankIcon} strokeWidth={2} />
             </EmptyMedia>
-            <EmptyTitle>No debts tracked yet</EmptyTitle>
+            <EmptyTitle>{t('page.empty.title')}</EmptyTitle>
             <EmptyDescription>
-              Add a loan or card with APR and minimum payment to project interest and payoff.
+              {t('page.empty.description')}
             </EmptyDescription>
           </EmptyHeader>
           <EmptyContent>
             <Button size="sm" onClick={openCreate}>
               <HugeiconsIcon icon={Add01Icon} strokeWidth={2} data-icon="inline-start" />
-              Add first debt
+              {t('page.addFirstDebt')}
             </Button>
           </EmptyContent>
         </Empty>
@@ -355,7 +362,7 @@ export function DebtsPage() {
             <div className="flex flex-wrap items-center justify-between gap-6">
               <div>
                 <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                  Total owed
+                  {t('page.totalOwed')}
                 </p>
                 <p className="mt-1 font-heading text-2xl font-bold tabular-nums tracking-tight sm:text-3xl">
                   {formatCurrency(
@@ -365,11 +372,11 @@ export function DebtsPage() {
                   )}
                 </p>
               </div>
-              <ProgressDial percent={summary?.overall_progress_percentage ?? 0} label="overall payoff" />
+              <ProgressDial percent={summary?.overall_progress_percentage ?? 0} label={t('page.overallPayoff')} />
               <div className="flex flex-wrap gap-x-8 gap-y-2 sm:ms-auto">
                 <div>
                   <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                    Min. monthly
+                    {t('page.minMonthly')}
                   </p>
                   <p className="mt-1 text-lg font-semibold tabular-nums">
                     {formatCurrency(summary?.total_minimum_payments ?? 0)}
@@ -377,7 +384,7 @@ export function DebtsPage() {
                 </div>
                 <div>
                   <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                    Proj. interest
+                    {t('page.projInterest')}
                   </p>
                   <p className="mt-1 text-lg font-semibold tabular-nums text-destructive">
                     {formatCurrency(summary?.total_projected_interest ?? 0)}
@@ -390,7 +397,7 @@ export function DebtsPage() {
           {/* Active debt tiles */}
           {active.length === 0 ? (
             <p className="rounded-xl border border-dashed border-border py-10 text-center text-sm text-muted-foreground">
-              Every tracked debt is paid off.
+              {t('page.allPaidOff')}
             </p>
           ) : (
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
@@ -410,7 +417,7 @@ export function DebtsPage() {
                 >
                   <span className="flex items-center gap-2 font-medium">
                     <HugeiconsIcon icon={CheckmarkCircle02Icon} strokeWidth={2} className="text-success" />
-                    Paid off · {paid.length}
+                    {t('page.paidOffCount', { count: paid.length })}
                   </span>
                   <HugeiconsIcon
                     icon={ArrowDown01Icon}
@@ -455,6 +462,7 @@ export function DebtsPage() {
  * due each period — nothing else competes for attention here.
  */
 function DebtTile({ debt, onOpen }: { debt: Debt; onOpen: () => void }) {
+  const { t } = useTranslation('debts')
   const meta = TYPE_META[debt.type] ?? TYPE_META.other
   const apr = aprPercent(debt.interest_rate)
   const tone = debtTone(debt)
@@ -480,13 +488,13 @@ function DebtTile({ debt, onOpen }: { debt: Debt; onOpen: () => void }) {
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-semibold sm:text-base">{debt.creditor || debt.name}</p>
           <p className="truncate text-xs text-muted-foreground">
-            {debtTypeLabel(debt)}
-            {apr != null ? ` · ${apr.toFixed(2)}% APR` : ''}
+            {debtTypeLabel(debt, t)}
+            {apr != null ? t('tile.aprSuffix', { apr: apr.toFixed(2) }) : ''}
           </p>
         </div>
         {debt.is_paid_off && (
           <Badge className="shrink-0 bg-success/15 text-[10px] text-success ring-1 ring-success/25">
-            Cleared
+            {t('tile.cleared')}
           </Badge>
         )}
       </div>
@@ -500,7 +508,9 @@ function DebtTile({ debt, onOpen }: { debt: Debt; onOpen: () => void }) {
         >
           {formatCurrency(debt.current_balance)}
         </p>
-        <p className="text-xs text-muted-foreground">of {formatCurrency(debt.original_balance)} original</p>
+        <p className="text-xs text-muted-foreground">
+          {t('tile.ofOriginal', { amount: formatCurrency(debt.original_balance) })}
+        </p>
       </div>
 
       <div className="mt-2.5 px-4 sm:px-5">
@@ -514,7 +524,7 @@ function DebtTile({ debt, onOpen }: { debt: Debt; onOpen: () => void }) {
 
       <div className="mt-3 flex items-center justify-between gap-2 border-t border-border px-4 py-3 sm:px-5">
         <span className="text-xs text-muted-foreground">
-          {debt.is_paid_off ? 'Paid off' : 'Min. payment'}
+          {debt.is_paid_off ? t('tile.paidOff') : t('tile.minPayment')}
         </span>
         <span className="text-sm font-semibold tabular-nums">
           {debt.is_paid_off
@@ -528,6 +538,24 @@ function DebtTile({ debt, onOpen }: { debt: Debt; onOpen: () => void }) {
       </div>
     </button>
   )
+}
+
+function recurrencePaymentHint(
+  debt: Debt,
+  t: (key: string, options?: Record<string, unknown>) => string,
+): string {
+  if (!debt.recurrence_unit) return t('detail.interestAndPayoff.setOneToUnlock')
+  const unitKey = debt.recurrence_unit
+  const singularKey = unitKey.replace(/s$/, '')
+  if ((debt.recurrence_interval ?? 1) === 1) {
+    return t('detail.interestAndPayoff.everyUnit', {
+      unit: t(`detail.interestAndPayoff.recurrenceUnits.${singularKey}`),
+    })
+  }
+  return t('detail.interestAndPayoff.everyIntervalUnit', {
+    interval: debt.recurrence_interval,
+    unit: t(`detail.interestAndPayoff.recurrenceUnits.${unitKey}`),
+  })
 }
 
 function DebtDetailDialog({
@@ -547,6 +575,7 @@ function DebtDetailDialog({
   onPayment: () => void
   onOpenPayments: () => void
 }) {
+  const { t } = useTranslation('debts')
   if (!debt) {
     return <Dialog open={false} title="" onOpenChange={onOpenChange}>{null}</Dialog>
   }
@@ -565,7 +594,7 @@ function DebtDetailDialog({
       open={open}
       onOpenChange={onOpenChange}
       title={debt.creditor || debt.name}
-      description={`${debtTypeLabel(debt)}${debt.creditor ? ` · ${debt.name}` : ''}`}
+      description={`${debtTypeLabel(debt, t)}${debt.creditor ? ` · ${debt.name}` : ''}`}
       icon={meta.icon}
       tone={debt.is_paid_off ? 'primary' : TONE_DIALOG[tone]}
       className="sm:max-w-lg"
@@ -574,16 +603,16 @@ function DebtDetailDialog({
           {!debt.is_paid_off && (
             <Button size="sm" onClick={onPayment}>
               <HugeiconsIcon icon={Wallet01Icon} strokeWidth={2} data-icon="inline-start" />
-              Add payment
+              {t('detail.addPayment')}
             </Button>
           )}
           <Button size="sm" variant="outline" onClick={onOpenPayments}>
             <HugeiconsIcon icon={TransactionIcon} strokeWidth={2} data-icon="inline-start" />
-            Payments
+            {t('detail.payments')}
           </Button>
           <Button size="sm" variant="outline" onClick={onEdit}>
             <HugeiconsIcon icon={Edit02Icon} strokeWidth={2} data-icon="inline-start" />
-            Edit
+            {t('detail.edit')}
           </Button>
           <Button
             size="sm"
@@ -592,7 +621,7 @@ function DebtDetailDialog({
             onClick={onDelete}
           >
             <HugeiconsIcon icon={Delete02Icon} strokeWidth={2} data-icon="inline-start" />
-            Delete
+            {t('detail.delete')}
           </Button>
         </div>
       }
@@ -601,27 +630,29 @@ function DebtDetailDialog({
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
             <p className="text-[0.65rem] font-semibold uppercase tracking-wider text-muted-foreground">
-              {apr != null ? 'Amount due, interest included' : 'Current balance'}
+              {apr != null ? t('detail.amountDueInterestIncluded') : t('detail.currentBalance')}
             </p>
             <p className="mt-1 font-heading text-3xl font-bold tabular-nums tracking-tight">
               {formatCurrency(displayDue)}
             </p>
             <p className="mt-1 text-xs text-muted-foreground">
-              of {formatCurrency(debt.original_balance)} original
+              {t('detail.ofOriginal', { amount: formatCurrency(debt.original_balance) })}
             </p>
           </div>
           <div className="flex items-center gap-2">
             {debt.is_paid_off ? (
               <Badge className="bg-success/15 text-success ring-1 ring-success/25">
                 <HugeiconsIcon icon={CheckmarkCircle02Icon} strokeWidth={2} data-icon="inline-start" />
-                Cleared
+                {t('detail.cleared')}
               </Badge>
             ) : (
               <Badge variant="secondary" className="tabular-nums">
-                {Math.round(percentage)}% paid off
+                {t('detail.percentPaidOff', { percent: Math.round(percentage) })}
               </Badge>
             )}
-            {debt.priority > 0 && <Badge variant="outline">Priority P{debt.priority}</Badge>}
+            {debt.priority > 0 && (
+              <Badge variant="outline">{t('detail.priority', { priority: debt.priority })}</Badge>
+            )}
           </div>
         </div>
 
@@ -633,52 +664,44 @@ function DebtDetailDialog({
 
         <div>
           <div className="mb-3">
-            <h3 className="text-sm font-semibold">Interest & payoff</h3>
-            <p className="text-xs text-muted-foreground">
-              Projected from the APR and minimum payment, assuming you pay the minimum only.
-            </p>
+            <h3 className="text-sm font-semibold">{t('detail.interestAndPayoff.title')}</h3>
+            <p className="text-xs text-muted-foreground">{t('detail.interestAndPayoff.description')}</p>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <CalcCell
-              label="APR"
+              label={t('detail.interestAndPayoff.apr')}
               value={apr != null ? `${apr.toFixed(2)}%` : '—'}
               icon={PercentCircleIcon}
-              hint="Compounded monthly"
+              hint={t('detail.interestAndPayoff.aprHint')}
               tone="primary"
             />
             <CalcCell
-              label="Min. payment"
+              label={t('detail.interestAndPayoff.minPayment')}
               value={
                 debt.minimum_payment != null && debt.minimum_payment > 0
                   ? formatCurrency(debt.minimum_payment)
                   : '—'
               }
               icon={Wallet01Icon}
-              hint={
-                debt.recurrence_unit
-                  ? (debt.recurrence_interval ?? 1) === 1
-                    ? `Every ${debt.recurrence_unit.replace(/s$/, '')}`
-                    : `Every ${debt.recurrence_interval} ${debt.recurrence_unit}`
-                  : 'Set one to unlock projections'
-              }
+              hint={recurrencePaymentHint(debt, t)}
               tone="primary"
             />
             <CalcCell
-              label="Months to payoff"
+              label={t('detail.interestAndPayoff.monthsToPayoff')}
               value={debt.months_to_payoff != null ? String(debt.months_to_payoff) : '—'}
               icon={Calendar03Icon}
               hint={
                 debt.payoff_date
-                  ? `Est. ${formatDate(debt.payoff_date)}`
-                  : 'Needs an APR and a minimum payment'
+                  ? t('detail.interestAndPayoff.estDate', { date: formatDate(debt.payoff_date) })
+                  : t('detail.interestAndPayoff.needsAprAndMinPayment')
               }
               tone="success"
             />
             <CalcCell
-              label="Total interest"
+              label={t('detail.interestAndPayoff.totalInterest')}
               value={debt.total_interest != null ? formatCurrency(debt.total_interest) : '—'}
               icon={AnalyticsUpIcon}
-              hint="What the minimum-only path costs you"
+              hint={t('detail.interestAndPayoff.totalInterestHint')}
               tone="warning"
             />
           </div>
@@ -687,18 +710,22 @@ function DebtDetailDialog({
         <Separator />
 
         <div className="grid grid-cols-1 gap-3 text-sm sm:grid-cols-2">
-          <DetailRow label="Opened" value={debt.opened_date ? formatDate(debt.opened_date) : '—'} />
-          <DetailRow label="Maturity" value={debt.maturity_date ? formatDate(debt.maturity_date) : '—'} />
+          <DetailRow label={t('detail.opened')} value={debt.opened_date ? formatDate(debt.opened_date) : '—'} />
+          <DetailRow label={t('detail.maturity')} value={debt.maturity_date ? formatDate(debt.maturity_date) : '—'} />
           <DetailRow
-            label="Next payment"
+            label={t('detail.nextPayment')}
             value={debt.next_payment_date ? formatDate(debt.next_payment_date) : '—'}
           />
           <DetailRow
-            label="Schedule day"
-            value={debt.recurrence_day_of_month != null ? `Day ${debt.recurrence_day_of_month}` : '—'}
+            label={t('detail.scheduleDay')}
+            value={
+              debt.recurrence_day_of_month != null
+                ? t('detail.day', { day: debt.recurrence_day_of_month })
+                : '—'
+            }
           />
           {debt.is_paid_off && debt.paid_off_date && (
-            <DetailRow label="Cleared on" value={formatDate(debt.paid_off_date)} />
+            <DetailRow label={t('detail.clearedOn')} value={formatDate(debt.paid_off_date)} />
           )}
         </div>
 
@@ -707,7 +734,7 @@ function DebtDetailDialog({
             <Separator />
             <div>
               <p className="mb-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                Notes
+                {t('detail.notes')}
               </p>
               <p className="whitespace-pre-wrap text-sm text-foreground">{debt.notes}</p>
             </div>
@@ -773,17 +800,18 @@ function DebtPaymentsSheet({
   open: boolean
   onOpenChange: (open: boolean) => void
 }) {
+  const { t } = useTranslation('debts')
   const { data: payments = [], isLoading } = useDebtPayments(debt?.id ?? null, open)
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="right" className="w-full sm:max-w-md flex flex-col gap-0 p-0" showCloseButton>
         <SheetHeader className="border-b border-border px-5 py-4">
-          <SheetTitle>Payments & transactions</SheetTitle>
+          <SheetTitle>{t('paymentsSheet.title')}</SheetTitle>
           <SheetDescription>
             {debt
-              ? `Payment history for ${debt.name}. Linked transaction IDs appear when a payment created or attached a ledger entry.`
-              : 'Select a debt to view payments.'}
+              ? t('paymentsSheet.descriptionWithDebt', { name: debt.name })
+              : t('paymentsSheet.descriptionNoDebt')}
           </SheetDescription>
         </SheetHeader>
         <ScrollArea className="flex-1">
@@ -795,10 +823,8 @@ function DebtPaymentsSheet({
             ) : payments.length === 0 ? (
               <Empty className="py-10">
                 <EmptyHeader>
-                  <EmptyTitle>No payments yet</EmptyTitle>
-                  <EmptyDescription>
-                    Record a payment to reduce the balance and optionally create a transaction.
-                  </EmptyDescription>
+                  <EmptyTitle>{t('paymentsSheet.empty.title')}</EmptyTitle>
+                  <EmptyDescription>{t('paymentsSheet.empty.description')}</EmptyDescription>
                 </EmptyHeader>
               </Empty>
             ) : (
@@ -808,7 +834,7 @@ function DebtPaymentsSheet({
                   className="rounded-lg border border-border bg-muted/20 p-3 flex items-start justify-between gap-3"
                 >
                   <div className="min-w-0">
-                    <p className="font-medium text-sm">Payment</p>
+                    <p className="font-medium text-sm">{t('paymentsSheet.payment')}</p>
                     {payment.notes && (
                       <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">
                         {payment.notes}
@@ -817,18 +843,22 @@ function DebtPaymentsSheet({
                     <p className="text-xs text-muted-foreground mt-1 tabular-nums">
                       {formatDate(payment.payment_date)}
                       {payment.transaction_id != null && (
-                        <> · Txn #{payment.transaction_id}</>
+                        <> · {t('paymentsSheet.transactionHash', { id: payment.transaction_id })}</>
                       )}
                     </p>
                     {(payment.principal_amount != null || payment.interest_amount != null) && (
                       <p className="text-xs text-muted-foreground mt-0.5 tabular-nums">
                         {payment.principal_amount != null &&
-                          `Principal ${formatCurrency(payment.principal_amount)}`}
+                          t('paymentsSheet.principal', {
+                            amount: formatCurrency(payment.principal_amount),
+                          })}
                         {payment.principal_amount != null &&
                           payment.interest_amount != null &&
                           ' · '}
                         {payment.interest_amount != null &&
-                          `Interest ${formatCurrency(payment.interest_amount)}`}
+                          t('paymentsSheet.interest', {
+                            amount: formatCurrency(payment.interest_amount),
+                          })}
                       </p>
                     )}
                   </div>
@@ -852,12 +882,13 @@ function PayoffStrategiesDialog({
   open: boolean
   onOpenChange: (open: boolean) => void
 }) {
+  const { t } = useTranslation('debts')
   const { data, isLoading, isError, error } = usePayoffComparison(open)
 
   return (
     <Dialog
       open={open}
-      title="Payoff strategy comparison"
+      title={t('strategies.title')}
       onOpenChange={onOpenChange}
       className="sm:max-w-3xl"
     >
@@ -871,7 +902,7 @@ function PayoffStrategiesDialog({
         </div>
       ) : isError ? (
         <p className="text-sm text-destructive">
-          {(error as Error)?.message || 'Could not load payoff strategies.'}
+          {(error as Error)?.message || t('strategies.loadError')}
         </p>
       ) : data ? (
         <StrategyComparison comparison={data} />
@@ -881,12 +912,17 @@ function PayoffStrategiesDialog({
 }
 
 function StrategyComparison({ comparison }: { comparison: PayoffComparison }) {
+  const { t } = useTranslation('debts')
   const { snowball, avalanche, recommended_strategy, savings_difference, months_difference } =
     comparison
   const schedule =
     recommended_strategy === 'snowball'
       ? snowball.payoff_schedule
       : avalanche.payoff_schedule
+  const recommendedName =
+    recommended_strategy === 'avalanche'
+      ? t('strategies.debtAvalanche')
+      : t('strategies.debtSnowball')
 
   return (
     <div className="flex flex-col gap-5">
@@ -898,44 +934,45 @@ function StrategyComparison({ comparison }: { comparison: PayoffComparison }) {
             : 'border-primary/30 bg-primary/10',
         )}
       >
-        <p className="font-semibold">
-          Recommended: {recommended_strategy === 'avalanche' ? 'Debt Avalanche' : 'Debt Snowball'}
-        </p>
+        <p className="font-semibold">{t('strategies.recommended', { strategy: recommendedName })}</p>
         <p className="text-sm text-muted-foreground mt-1">
           {recommended_strategy === 'avalanche'
-            ? `Save ${formatCurrency(savings_difference)} in interest and finish ${months_difference} month(s) sooner.`
-            : 'Pay smallest balances first for quick wins while staying motivated.'}
+            ? t('strategies.recommendAvalanche', {
+                amount: formatCurrency(savings_difference),
+                months: months_difference,
+              })
+            : t('strategies.recommendSnowball')}
         </p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         <StrategyCard
-          title="Debt Snowball"
-          subtitle="Lowest balance first"
+          title={t('strategies.debtSnowball')}
+          subtitle={t('strategies.snowballSubtitle')}
           strategy={snowball}
           recommended={recommended_strategy === 'snowball'}
         />
         <StrategyCard
-          title="Debt Avalanche"
-          subtitle="Highest APR first"
+          title={t('strategies.debtAvalanche')}
+          subtitle={t('strategies.avalancheSubtitle')}
           strategy={avalanche}
           recommended={recommended_strategy === 'avalanche'}
         />
       </div>
 
       <div>
-        <h4 className="font-semibold mb-2">Payoff schedule preview</h4>
+        <h4 className="font-semibold mb-2">{t('strategies.scheduleTitle')}</h4>
         <p className="text-xs text-muted-foreground mb-3">
-          First months of the {recommended_strategy} plan
+          {t('strategies.scheduleSubtitle', { strategy: recommendedName })}
         </p>
         <div className="overflow-x-auto rounded-lg border border-border">
           <table className="w-full text-sm">
             <thead className="bg-muted/40 text-muted-foreground">
               <tr>
-                <th className="text-start font-medium px-3 py-2">Month</th>
-                <th className="text-start font-medium px-3 py-2">Debt</th>
-                <th className="text-end font-medium px-3 py-2">Payment</th>
-                <th className="text-end font-medium px-3 py-2">Remaining</th>
+                <th className="text-start font-medium px-3 py-2">{t('strategies.table.month')}</th>
+                <th className="text-start font-medium px-3 py-2">{t('strategies.table.debt')}</th>
+                <th className="text-end font-medium px-3 py-2">{t('strategies.table.payment')}</th>
+                <th className="text-end font-medium px-3 py-2">{t('strategies.table.remaining')}</th>
               </tr>
             </thead>
             <tbody>
@@ -970,6 +1007,7 @@ function StrategyCard({
   strategy: PayoffComparison['snowball']
   recommended: boolean
 }) {
+  const { t } = useTranslation('debts')
   return (
     <div
       className={cn(
@@ -982,21 +1020,21 @@ function StrategyCard({
           <p className="font-semibold">{title}</p>
           <p className="text-xs text-muted-foreground">{subtitle}</p>
         </div>
-        {recommended && <Badge>Recommended</Badge>}
+        {recommended && <Badge>{t('strategies.recommendedBadge')}</Badge>}
       </div>
       <div className="flex flex-col gap-1.5 text-sm">
         <div className="flex justify-between gap-2">
-          <span className="text-muted-foreground">Total months</span>
+          <span className="text-muted-foreground">{t('strategies.totalMonths')}</span>
           <span className="font-semibold tabular-nums">{strategy.total_months}</span>
         </div>
         <div className="flex justify-between gap-2">
-          <span className="text-muted-foreground">Total interest</span>
+          <span className="text-muted-foreground">{t('strategies.totalInterest')}</span>
           <span className="font-semibold tabular-nums">
             {formatCurrency(strategy.total_interest_paid)}
           </span>
         </div>
         <div className="flex justify-between gap-2">
-          <span className="text-muted-foreground">Total payments</span>
+          <span className="text-muted-foreground">{t('strategies.totalPayments')}</span>
           <span className="font-semibold tabular-nums">
             {formatCurrency(strategy.total_payments)}
           </span>

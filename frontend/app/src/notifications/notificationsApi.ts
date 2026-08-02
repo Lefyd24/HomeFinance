@@ -43,7 +43,12 @@ export interface NotificationSettingsUpdate {
   smtp_password?: string
 }
 
-export type NotificationRuleType = 'balance_below' | 'budget_percent' | 'scheduled_report'
+export type NotificationRuleType =
+  | 'balance_below'
+  | 'budget_percent'
+  | 'scheduled_report'
+  | 'investment_return_below'
+  | 'investment_scheduled'
 export type ScheduleKind = 'every_n_days' | 'weekly' | 'monthly'
 export type ReportType = 'spending' | 'cashflow' | 'income'
 

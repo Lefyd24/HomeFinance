@@ -19,6 +19,7 @@ interface SelectProps {
   options: SelectOption[]
   placeholder: string
   triggerClassName?: string
+  disabled?: boolean
 }
 
 export function Select({
@@ -27,9 +28,10 @@ export function Select({
   options,
   placeholder,
   triggerClassName,
+  disabled,
 }: SelectProps) {
   return (
-    <ShadcnSelect value={value} onValueChange={onValueChange}>
+    <ShadcnSelect value={value} onValueChange={onValueChange} disabled={disabled}>
       <SelectTrigger className={cn('w-full', triggerClassName)}>
         <SelectValue placeholder={placeholder} />
       </SelectTrigger>

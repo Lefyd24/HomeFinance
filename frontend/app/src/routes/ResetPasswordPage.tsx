@@ -3,6 +3,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import * as authApi from '../auth/authApi'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -12,6 +13,7 @@ const schema = z.object({ password: z.string().min(8, 'Password must be at least
 type Form = z.infer<typeof schema>
 
 export function ResetPasswordPage() {
+  const { t } = useTranslation('auth')
   const [searchParams] = useSearchParams()
   const token = searchParams.get('token') ?? ''
   const navigate = useNavigate()
@@ -28,16 +30,16 @@ export function ResetPasswordPage() {
       await authApi.resetPassword(token, data.password)
       navigate('/login')
     } catch {
-      setServerError('This reset link is invalid or has expired.')
+      setServerError(t('resetPassword.serverError'))
     }
   })
 
   return (
     <div className="min-h-screen flex items-center justify-center p-6 bg-background">
       <form onSubmit={onSubmit} className="w-full max-w-sm flex flex-col gap-4" noValidate>
-        <h2 className="text-2xl font-bold text-foreground">Choose a new password</h2>
+        <h2 className="text-2xl font-bold text-foreground">{t('resetPassword.heading')}</h2>
         <div className="space-y-2">
-          <Label htmlFor="password">New password</Label>
+          <Label htmlFor="password">{t('resetPassword.passwordLabel')}</Label>
           <Input id="password" type="password" {...register('password')} />
           {errors.password && <p className="text-destructive text-sm">{errors.password.message}</p>}
         </div>
@@ -47,7 +49,7 @@ export function ResetPasswordPage() {
           </div>
         )}
         <Button type="submit" className="w-full" disabled={isSubmitting}>
-          Reset password
+          {t('resetPassword.submit')}
         </Button>
       </form>
     </div>

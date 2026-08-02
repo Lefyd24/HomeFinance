@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
+import { useTranslation } from 'react-i18next'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { ViewSelect } from '../ui/ViewSelect'
 import { PageContainer } from '../ui/PageContainer'
@@ -14,16 +15,16 @@ import { SpendingTab } from './tabs/SpendingTab'
 import { BudgetsTab } from './tabs/BudgetsTab'
 import { DebtTab } from './tabs/DebtTab'
 
-const TABS = [
-  { key: 'overview', label: 'Overview' },
-  { key: 'cashflow', label: 'Cash flow' },
-  { key: 'spending', label: 'Spending' },
-  { key: 'budgets', label: 'Budgets' },
-  { key: 'debt', label: 'Debt' },
-] as const
+const TAB_KEYS = ['overview', 'cashflow', 'spending', 'budgets', 'debt'] as const
 
 export function ReportsPage() {
+  const { t } = useTranslation('reports')
   const filters = useReportFilters()
+
+  const tabs = TAB_KEYS.map((key) => ({
+    key,
+    label: t(`tabs.${key}`),
+  }))
 
   const { data: cashflow, isLoading: cashflowLoading } = useQuery({
     queryKey: ['reports', 'cashflow', filters.params],
@@ -40,11 +41,7 @@ export function ReportsPage() {
     <PageContainer wide className="pt-0">
       <ReportFilterBar filters={filters} />
 
-      <PageHeader
-        title="Reports"
-        description="Pick a window, then read what happened in it."
-        className="mb-5"
-      />
+      <PageHeader title={t('page.title')} description={t('page.description')} className="mb-5" />
 
       <div className="flex flex-col gap-5">
         <PeriodReadBand
@@ -60,17 +57,17 @@ export function ReportsPage() {
               shrinking past legibility — a Select shows the current one in full
               and puts the rest one tap away. */}
           <ViewSelect
-            label="Report"
+            label={t('viewSelect.report')}
             value={filters.tab}
             onValueChange={filters.setTab}
-            options={TABS.map((tab) => ({ value: tab.key, label: tab.label }))}
+            options={tabs.map((tab) => ({ value: tab.key, label: tab.label }))}
             className="mb-4 sm:hidden"
           />
 
           {/* No min-w-0 on the triggers: it let the flex line shrink them past
               their label width, which is what made these collide. */}
           <TabsList fullWidth className="mb-4 max-sm:hidden">
-            {TABS.map((tab) => (
+            {tabs.map((tab) => (
               <TabsTrigger key={tab.key} value={tab.key} className="flex-1">
                 {tab.label}
               </TabsTrigger>

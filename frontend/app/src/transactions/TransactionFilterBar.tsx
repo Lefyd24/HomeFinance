@@ -1,4 +1,5 @@
 import { useMemo, useState, type ReactNode } from 'react'
+import { useTranslation } from 'react-i18next'
 import { HugeiconsIcon } from '@hugeicons/react'
 import type { IconSvgElement } from '@hugeicons/react'
 import {
@@ -110,6 +111,7 @@ function OptionPicker({
   searchPlaceholder: string
   allLabel: string
 }) {
+  const { t } = useTranslation('transactions')
   const [open, setOpen] = useState(false)
   const selected = options.find((o) => o.value === value)
 
@@ -129,7 +131,7 @@ function OptionPicker({
         <Command>
           <CommandInput placeholder={searchPlaceholder} />
           <CommandList>
-            <CommandEmpty>Nothing matches that.</CommandEmpty>
+            <CommandEmpty>{t('filterBar.nothingMatches')}</CommandEmpty>
             <CommandGroup>
               <CommandItem
                 value={allLabel}
@@ -179,6 +181,7 @@ function DateRangePicker({
   presets: DatePreset[]
   onChange: (range: { start_date?: string; end_date?: string }) => void
 }) {
+  const { t } = useTranslation('transactions')
   const [open, setOpen] = useState(false)
 
   const summary = useMemo(() => {
@@ -186,11 +189,12 @@ function DateRangePicker({
       (p) => p.range.start_date === startDate && p.range.end_date === endDate,
     )
     if (matched) return matched.label
-    if (startDate && endDate) return `${formatDate(startDate)} – ${formatDate(endDate)}`
-    if (startDate) return `From ${formatDate(startDate)}`
-    if (endDate) return `Until ${formatDate(endDate)}`
+    if (startDate && endDate)
+      return `${formatDate(startDate)} ${t('filterBar.period.rangeSeparator')} ${formatDate(endDate)}`
+    if (startDate) return t('filterBar.period.fromPrefix', { date: formatDate(startDate) })
+    if (endDate) return t('filterBar.period.untilPrefix', { date: formatDate(endDate) })
     return undefined
-  }, [startDate, endDate, presets])
+  }, [startDate, endDate, presets, t])
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -198,7 +202,7 @@ function DateRangePicker({
         <div className="min-w-0 [&>button]:w-full">
           <PickerButton
             icon={Calendar03Icon}
-            label="Period"
+            label={t('filterBar.period.label')}
             value={summary}
             active={Boolean(summary)}
           />
@@ -228,7 +232,7 @@ function DateRangePicker({
           <Separator />
           <div className="grid grid-cols-2 gap-2">
             <label className="flex flex-col gap-1 text-xs text-muted-foreground">
-              From
+              {t('filterBar.period.from')}
               <Input
                 type="date"
                 value={startDate ?? ''}
@@ -236,7 +240,7 @@ function DateRangePicker({
               />
             </label>
             <label className="flex flex-col gap-1 text-xs text-muted-foreground">
-              To
+              {t('filterBar.period.to')}
               <Input
                 type="date"
                 value={endDate ?? ''}
@@ -252,7 +256,7 @@ function DateRangePicker({
               setOpen(false)
             }}
           >
-            Clear period
+            {t('filterBar.period.clear')}
           </Button>
         </div>
       </PopoverContent>
@@ -261,6 +265,7 @@ function DateRangePicker({
 }
 
 function FilterChip({ children, onRemove }: { children: ReactNode; onRemove: () => void }) {
+  const { t } = useTranslation('transactions')
   return (
     <span className="inline-flex items-center gap-1 rounded-full border border-border bg-muted/60 py-0.5 ps-2.5 pe-1 text-xs">
       {children}
@@ -270,7 +275,7 @@ function FilterChip({ children, onRemove }: { children: ReactNode; onRemove: () 
         className="rounded-full p-0.5 text-muted-foreground transition-colors hover:bg-background hover:text-foreground"
       >
         <HugeiconsIcon icon={Cancel01Icon} strokeWidth={2} className="size-3" />
-        <span className="sr-only">Remove filter</span>
+        <span className="sr-only">{t('filterBar.removeFilter')}</span>
       </button>
     </span>
   )
@@ -289,32 +294,35 @@ export interface TransactionFilterBarProps {
   isLoading?: boolean
 }
 
-const TYPE_TABS: Array<{
-  value: string
-  label: string
-  icon?: IconSvgElement
-  onClass: string
-}> = [
-  { value: 'all', label: 'All', onClass: 'data-[state=on]:text-foreground' },
-  {
-    value: 'income',
-    label: 'In',
-    icon: ArrowDownLeft01Icon,
-    onClass: 'data-[state=on]:text-flow-in',
-  },
-  {
-    value: 'expense',
-    label: 'Out',
-    icon: ArrowUpRight01Icon,
-    onClass: 'data-[state=on]:text-flow-out',
-  },
-  {
-    value: 'transfer',
-    label: 'Moved',
-    icon: Exchange01Icon,
-    onClass: 'data-[state=on]:text-flow-move',
-  },
-]
+function buildTypeTabs(
+  t: (key: string) => string,
+): Array<{ value: string; label: string; icon?: IconSvgElement; onClass: string }> {
+  return [
+    {
+      value: 'all',
+      label: t('filterBar.typeTabs.all'),
+      onClass: 'data-[state=on]:text-foreground',
+    },
+    {
+      value: 'income',
+      label: t('filterBar.typeTabs.income'),
+      icon: ArrowDownLeft01Icon,
+      onClass: 'data-[state=on]:text-flow-in',
+    },
+    {
+      value: 'expense',
+      label: t('filterBar.typeTabs.expense'),
+      icon: ArrowUpRight01Icon,
+      onClass: 'data-[state=on]:text-flow-out',
+    },
+    {
+      value: 'transfer',
+      label: t('filterBar.typeTabs.transfer'),
+      icon: Exchange01Icon,
+      onClass: 'data-[state=on]:text-flow-move',
+    },
+  ]
+}
 
 /**
  * One toolbar line for the controls, one line for what is currently applied.
@@ -333,6 +341,8 @@ export function TransactionFilterBar({
   resultCount,
   isLoading,
 }: TransactionFilterBarProps) {
+  const { t } = useTranslation('transactions')
+  const typeTabs = useMemo(() => buildTypeTabs(t), [t])
   const set = (patch: Partial<TransactionFilters>) =>
     onFiltersChange((prev) => ({ ...prev, ...patch, page: 1 }))
 
@@ -348,7 +358,8 @@ export function TransactionFilterBar({
       key: 'search',
       node: (
         <>
-          <span className="text-muted-foreground">Matching</span> “{searchInput}”
+          <span className="text-muted-foreground">{t('filterBar.chips.matching')}</span> “
+          {searchInput}”
         </>
       ),
       remove: () => onSearchInputChange(''),
@@ -359,8 +370,8 @@ export function TransactionFilterBar({
       key: 'type',
       node: (
         <>
-          <span className="text-muted-foreground">Type</span>{' '}
-          {TYPE_TABS.find((t) => t.value === filters.type)?.label}
+          <span className="text-muted-foreground">{t('filterBar.chips.type')}</span>{' '}
+          {typeTabs.find((tab) => tab.value === filters.type)?.label}
         </>
       ),
       remove: () => set({ type: undefined }),
@@ -371,7 +382,8 @@ export function TransactionFilterBar({
       key: 'account',
       node: (
         <>
-          <span className="text-muted-foreground">Account</span> {selectedAccount.label}
+          <span className="text-muted-foreground">{t('filterBar.chips.account')}</span>{' '}
+          {selectedAccount.label}
         </>
       ),
       remove: () => set({ account_id: undefined }),
@@ -389,7 +401,8 @@ export function TransactionFilterBar({
               aria-hidden
             />
           )}
-          <span className="text-muted-foreground">Category</span> {selectedCategory.label}
+          <span className="text-muted-foreground">{t('filterBar.chips.category')}</span>{' '}
+          {selectedCategory.label}
         </>
       ),
       remove: () => set({ category_id: undefined }),
@@ -404,10 +417,10 @@ export function TransactionFilterBar({
             <HugeiconsIcon icon={Search01Icon} strokeWidth={2} />
           </InputGroupAddon>
           <InputGroupInput
-            placeholder="Search descriptions…"
+            placeholder={t('filterBar.search.placeholder')}
             value={searchInput}
             onChange={(e) => onSearchInputChange(e.target.value)}
-            aria-label="Search transactions"
+            aria-label={t('filterBar.search.ariaLabel')}
           />
           {searchInput && (
             <InputGroupAddon align="inline-end">
@@ -417,7 +430,7 @@ export function TransactionFilterBar({
                 onClick={() => onSearchInputChange('')}
               >
                 <HugeiconsIcon icon={Cancel01Icon} strokeWidth={2} />
-                <span className="sr-only">Clear search</span>
+                <span className="sr-only">{t('filterBar.search.clear')}</span>
               </InputGroupButton>
             </InputGroupAddon>
           )}
@@ -432,7 +445,7 @@ export function TransactionFilterBar({
           }
           className="h-9 shrink-0 border border-border bg-muted/60 p-0.5"
         >
-          {TYPE_TABS.map((tab) => (
+          {typeTabs.map((tab) => (
             <ToggleGroupItem
               key={tab.value}
               value={tab.value}
@@ -459,18 +472,18 @@ export function TransactionFilterBar({
           />
           <OptionPicker
             icon={BankIcon}
-            label="Account"
-            allLabel="All accounts"
-            searchPlaceholder="Find an account…"
+            label={t('filterBar.account.label')}
+            allLabel={t('filterBar.account.allLabel')}
+            searchPlaceholder={t('filterBar.account.searchPlaceholder')}
             options={accounts}
             value={filters.account_id ? String(filters.account_id) : undefined}
             onChange={(value) => set({ account_id: value ? Number(value) : undefined })}
           />
           <OptionPicker
             icon={Tag01Icon}
-            label="Category"
-            allLabel="All categories"
-            searchPlaceholder="Find a category…"
+            label={t('filterBar.category.label')}
+            allLabel={t('filterBar.category.allLabel')}
+            searchPlaceholder={t('filterBar.category.searchPlaceholder')}
             options={categories}
             value={filters.category_id ? String(filters.category_id) : undefined}
             onChange={(value) => set({ category_id: value ? Number(value) : undefined })}
@@ -482,9 +495,9 @@ export function TransactionFilterBar({
         <div className="flex flex-wrap items-center gap-2 border-t border-border pt-3">
           <span className="text-xs text-muted-foreground">
             {isLoading
-              ? 'Filtering…'
-              : `${resultCount ?? 0} match${resultCount === 1 ? '' : 'es'}`}
-            {periodLabel ? ` in ${periodLabel.toLowerCase()}` : ''}
+              ? t('filterBar.filtering')
+              : t('filterBar.resultCount', { count: resultCount ?? 0 })}
+            {periodLabel ? ` ${t('filterBar.inPeriod', { period: periodLabel.toLowerCase() })}` : ''}
           </span>
           {chips.map((chip) => (
             <FilterChip key={chip.key} onRemove={chip.remove}>
@@ -492,7 +505,7 @@ export function TransactionFilterBar({
             </FilterChip>
           ))}
           <Button variant="ghost" size="sm" className="h-7 ms-auto" onClick={onClearAll}>
-            Clear all
+            {t('filterBar.clearAll')}
           </Button>
         </div>
       )}

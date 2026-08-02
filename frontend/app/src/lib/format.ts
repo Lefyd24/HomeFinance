@@ -1,23 +1,54 @@
-const formatters = new Map<string, Intl.NumberFormat>()
+const currencyFormatters = new Map<string, Intl.NumberFormat>()
+const currencySupport = new Map<string, boolean>()
 
-function getFormatter(currency: string): Intl.NumberFormat {
-  const key = currency.toUpperCase()
-  let formatter = formatters.get(key)
+const decimalFormatter = new Intl.NumberFormat('de-DE', {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+})
+
+function normalizeCurrencySpacing(value: string): string {
+  // Intl uses a narrow/no-break space before the symbol; normalize to a regular space.
+  return value.replace(/\u00a0|\u202f/g, ' ')
+}
+
+function isSupportedCurrency(currency: string): boolean {
+  const cached = currencySupport.get(currency)
+  if (cached !== undefined) return cached
+
+  let supported = false
+  if (/^[A-Z]{3}$/.test(currency)) {
+    try {
+      new Intl.NumberFormat('de-DE', { style: 'currency', currency })
+      supported = true
+    } catch {
+      supported = false
+    }
+  }
+
+  currencySupport.set(currency, supported)
+  return supported
+}
+
+function getCurrencyFormatter(currency: string): Intl.NumberFormat {
+  let formatter = currencyFormatters.get(currency)
   if (!formatter) {
     formatter = new Intl.NumberFormat('de-DE', {
       style: 'currency',
-      currency: key,
+      currency,
       currencyDisplay: 'symbol',
     })
-    formatters.set(key, formatter)
+    currencyFormatters.set(currency, formatter)
   }
   return formatter
 }
 
 /** German/EU style: `1.200,00 €` (symbol after the amount). */
 export function formatCurrency(amount: number, currency = 'EUR'): string {
-  // Intl uses a narrow/no-break space before the symbol; normalize to a regular space.
-  return getFormatter(currency).format(amount).replace(/\u00a0|\u202f/g, ' ')
+  const key = (currency.trim() || 'EUR').toUpperCase()
+  if (!isSupportedCurrency(key)) {
+    return normalizeCurrencySpacing(`${decimalFormatter.format(amount)} ${key}`)
+  }
+  return normalizeCurrencySpacing(getCurrencyFormatter(key).format(amount))
 }
 
 export function formatDate(value: string | Date, options?: Intl.DateTimeFormatOptions): string {

@@ -1,0 +1,196 @@
+{
+  "categories": {
+    "emergencyFund": "Emergency Fund",
+    "vacation": "Vacation",
+    "car": "Car Purchase",
+    "home": "Home Purchase",
+    "education": "Education",
+    "retirement": "Retirement",
+    "other": "Other",
+    "general": "General"
+  },
+  "icons": {
+    "target": "Target",
+    "money": "Money",
+    "home": "Home",
+    "car": "Car",
+    "travel": "Travel",
+    "education": "Education",
+    "health": "Health",
+    "gift": "Gift"
+  },
+  "page": {
+    "title": "Goals",
+    "description": "Chase targets with a clear finish line — contribute, track, and celebrate.",
+    "addGoal": "Add goal",
+    "createFirstGoal": "Create first goal",
+    "yourGoals": "Your goals",
+    "tabs": {
+      "active": "Active",
+      "completed": "Completed",
+      "all": "All"
+    },
+    "empty": {
+      "title": "No goals yet",
+      "description": "Create your first financial goal to start tracking progress toward a target."
+    },
+    "noGoalsInView": {
+      "all": "No goals in this view.",
+      "active": "No active goals in this view.",
+      "completed": "No completed goals in this view."
+    },
+    "onlyGoalInView": {
+      "all": "Spotlight goal above is your only goal.",
+      "active": "Spotlight goal above is your only active goal.",
+      "completed": "Spotlight goal above is your only completed goal."
+    },
+    "toasts": {
+      "deleted": "Goal deleted",
+      "deleteFailed": "Failed to delete goal",
+      "markedComplete": "Goal marked complete",
+      "updateFailed": "Failed to update goal"
+    },
+    "deleteDialog": {
+      "title": "Delete {{name}}?",
+      "description": "The goal and its progress history are removed. This cannot be undone.",
+      "confirmLabel": "Delete goal"
+    }
+  },
+  "journey": {
+    "ariaLabel": "Savings journey",
+    "title": "Savings journey",
+    "ofTargeted": "of {{amount}} targeted",
+    "summary_one": "{{saved}} saved across {{count}} goal · {{active}} active · {{completed}} completed",
+    "summary_other": "{{saved}} saved across {{count}} goals · {{active}} active · {{completed}} completed"
+  },
+  "hero": {
+    "primaryGoalAria": "Primary goal: {{name}}",
+    "spotlight": "Spotlight",
+    "primary": "Primary",
+    "completed": "Completed",
+    "ofTarget": "of {{amount}}",
+    "toGo": "{{amount}} to go",
+    "saveToArrive": "Save {{amount}}/month to arrive by {{date}}",
+    "targetDate": "Target {{date}}",
+    "daysLeft": "{{count}} days left",
+    "contribute": "Contribute",
+    "details": "Details",
+    "edit": "Edit"
+  },
+  "list": {
+    "primary": "Primary",
+    "done": "Done",
+    "left": "{{amount}} left",
+    "contribute": "Contribute",
+    "actionsFor": "{{name}} actions",
+    "menu": {
+      "contribute": "Contribute",
+      "details": "Details",
+      "edit": "Edit",
+      "markComplete": "Mark complete",
+      "delete": "Delete"
+    }
+  },
+  "form": {
+    "titleEdit": "Edit goal",
+    "titleCreate": "Create goal",
+    "updating": "Updating",
+    "newTarget": "New savings target",
+    "untitledGoal": "Untitled goal",
+    "name": {
+      "label": "Goal name",
+      "placeholder": "e.g. Emergency fund"
+    },
+    "description": {
+      "label": "Description",
+      "placeholder": "Optional notes"
+    },
+    "targetAmount": {
+      "label": "Target amount"
+    },
+    "currency": {
+      "label": "Currency"
+    },
+    "category": {
+      "label": "Category",
+      "placeholder": "Select category",
+      "selectPlaceholder": "Select category"
+    },
+    "targetDate": {
+      "label": "Target date"
+    },
+    "icon": {
+      "label": "Icon",
+      "placeholder": "Icon"
+    },
+    "color": {
+      "label": "Color"
+    },
+    "setAsPrimary": "Set as primary goal",
+    "cancel": "Cancel",
+    "saveChanges": "Save changes",
+    "saveGoal": "Save goal",
+    "toasts": {
+      "updated": "Goal updated",
+      "created": "Goal created",
+      "updateFailed": "Failed to update goal",
+      "createFailed": "Failed to create goal"
+    },
+    "validation": {
+      "nameRequired": "Goal name is required",
+      "targetAmountPositive": "Target amount must be greater than 0"
+    }
+  },
+  "contribute": {
+    "title": "Add contribution",
+    "descriptionWithGoal": "{{name}} · {{amount}} remaining",
+    "descriptionNoGoal": "Contribute toward a goal",
+    "amount": {
+      "label": "Amount"
+    },
+    "type": {
+      "label": "Type",
+      "contribution": "Contribution (add to goal)",
+      "withdrawal": "Withdrawal (remove from goal)"
+    },
+    "description": {
+      "label": "Description",
+      "placeholder": "e.g. Monthly savings"
+    },
+    "date": {
+      "label": "Date"
+    },
+    "submitWithdrawal": "Record withdrawal",
+    "submitContribution": "Add contribution",
+    "toasts": {
+      "contributionAdded": "Contribution added",
+      "withdrawalRecorded": "Withdrawal recorded",
+      "failed": "Failed to add transaction"
+    },
+    "validation": {
+      "amountPositive": "Amount must be greater than 0",
+      "dateRequired": "Date is required"
+    }
+  },
+  "details": {
+    "primary": "Primary",
+    "completed": "Completed",
+    "complete": "complete",
+    "saved": "Saved",
+    "target": "Target",
+    "remaining": "Remaining",
+    "targetDate": "Target date",
+    "daysLeft": "Days left",
+    "saveToReach": "Save {{amount}}/month to reach by {{date}}",
+    "onTrack": "On track",
+    "behindPace": "Behind pace",
+    "avgPerMonth": "avg {{amount}}/mo",
+    "recentActivity": "Recent activity",
+    "noContributions": "No contributions yet",
+    "contribution": "Contribution",
+    "withdrawal": "Withdrawal",
+    "contribute": "Contribute",
+    "edit": "Edit",
+    "close": "Close"
+  }
+}

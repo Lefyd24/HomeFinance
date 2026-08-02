@@ -29,13 +29,13 @@ interface ColumnHandlers {
   onDelete: (transaction: Transaction) => void
 }
 
+type Translate = (key: string, options?: Record<string, unknown>) => string
+
 const FLOW_ICON = {
   in: ArrowDownLeft01Icon,
   out: ArrowUpRight01Icon,
   move: Exchange01Icon,
 } as const
-
-const FLOW_LABEL = { in: 'Income', out: 'Expense', move: 'Transfer' } as const
 
 function splitDate(iso: string) {
   const date = new Date(iso)
@@ -46,11 +46,20 @@ function splitDate(iso: string) {
   }
 }
 
-export function createColumns(handlers: ColumnHandlers): ColumnDef<Transaction>[] {
+export function createColumns(
+  handlers: ColumnHandlers,
+  t: Translate,
+): ColumnDef<Transaction>[] {
+  const FLOW_LABEL = {
+    in: t('columns.flowLabel.in'),
+    out: t('columns.flowLabel.out'),
+    move: t('columns.flowLabel.move'),
+  } as const
+
   return [
     {
       accessorKey: 'date',
-      header: ({ column }) => <DataTableColumnHeader column={column} title="Date" />,
+      header: ({ column }) => <DataTableColumnHeader column={column} title={t('columns.date')} />,
       cell: ({ row }) => {
         const { day, weekday } = splitDate(row.original.date)
         return (
@@ -61,31 +70,40 @@ export function createColumns(handlers: ColumnHandlers): ColumnDef<Transaction>[
         )
       },
       enableSorting: true,
-      meta: { cellClassName: 'w-24 ps-4' },
+      meta: {
+        cellClassName: 'hidden sm:table-cell w-24 ps-4',
+        headerClassName: 'hidden sm:table-cell',
+      },
     },
     {
       accessorKey: 'description',
-      header: ({ column }) => <DataTableColumnHeader column={column} title="Description" />,
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title={t('columns.description')} />
+      ),
       cell: ({ row }) => {
         const { description, notes, type, is_imported, debt_name } = row.original
         const flow = flowOfType(type)
         return (
-          <div className="flex min-w-0 items-center gap-2.5">
+          <div className="flex min-w-0 items-center gap-2 sm:gap-2.5">
             <span
               title={FLOW_LABEL[flow]}
               aria-label={FLOW_LABEL[flow]}
               className={cn(
-                'flex size-7 shrink-0 items-center justify-center rounded-md border',
+                'flex size-6 shrink-0 items-center justify-center rounded-md border sm:size-7',
                 flowSurface[flow],
               )}
             >
-              <HugeiconsIcon icon={FLOW_ICON[flow]} strokeWidth={2} className="size-3.5" />
+              <HugeiconsIcon icon={FLOW_ICON[flow]} strokeWidth={2} className="size-3 sm:size-3.5" />
             </span>
             <div className="flex min-w-0 flex-col gap-0.5">
               <span className="truncate text-sm font-medium">{description}</span>
               {(notes || debt_name || is_imported) && (
                 <span className="truncate text-xs text-muted-foreground">
-                  {[debt_name && `Debt · ${debt_name}`, notes, is_imported && 'Imported']
+                  {[
+                    debt_name && t('columns.debtPrefix', { name: debt_name }),
+                    notes,
+                    is_imported && t('columns.imported'),
+                  ]
                     .filter(Boolean)
                     .join(' · ')}
                 </span>
@@ -94,22 +112,27 @@ export function createColumns(handlers: ColumnHandlers): ColumnDef<Transaction>[
           </div>
         )
       },
-      meta: { cellClassName: 'max-w-[22rem]' },
+      meta: { cellClassName: 'max-w-[9.5rem] sm:max-w-[22rem]' },
     },
     {
       accessorKey: 'category_name',
-      header: ({ column }) => <DataTableColumnHeader column={column} title="Category" />,
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title={t('columns.category')} />
+      ),
       cell: ({ row }) => {
         const { category_name, category_color, type } = row.original
         if (type === 'transfer') {
-          return <span className="text-xs text-muted-foreground">Between accounts</span>
+          return (
+            <span className="text-xs text-muted-foreground">{t('columns.betweenAccounts')}</span>
+          )
         }
         return <CategoryChip name={category_name} color={category_color} />
       },
+      meta: { cellClassName: 'hidden sm:table-cell', headerClassName: 'hidden sm:table-cell' },
     },
     {
       accessorKey: 'account_name',
-      header: ({ column }) => <DataTableColumnHeader column={column} title="Account" />,
+      header: ({ column }) => <DataTableColumnHeader column={column} title={t('columns.account')} />,
       cell: ({ row }) => {
         const { account_name, destination_account_name, type } = row.original
         if (type === 'transfer' && destination_account_name) {
@@ -127,26 +150,33 @@ export function createColumns(handlers: ColumnHandlers): ColumnDef<Transaction>[
         }
         return <span className="truncate text-sm text-muted-foreground">{account_name}</span>
       },
+      meta: { cellClassName: 'hidden sm:table-cell', headerClassName: 'hidden sm:table-cell' },
     },
     {
       accessorKey: 'amount',
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Amount" className="justify-end" />
+        <DataTableColumnHeader column={column} title={t('columns.amount')} className="justify-end" />
       ),
       cell: ({ row }) => {
-        const { amount, type } = row.original
+        const { amount, type, date } = row.original
+        const { day } = splitDate(date)
         return (
-          <div className="text-end">
+          <div className="flex flex-col items-end gap-0.5">
             <Amount value={amount} flow={flowOfType(type)} className="text-sm font-semibold" />
+            {/* Mobile only — the date column is hidden below `sm`, so it rides
+                along here instead of disappearing. */}
+            <span className="text-[0.7rem] tabular-nums text-muted-foreground sm:hidden">
+              {day}
+            </span>
           </div>
         )
       },
       enableSorting: true,
-      meta: { cellClassName: 'text-end', headerClassName: 'text-end' },
+      meta: { cellClassName: 'text-end pe-3 sm:pe-4', headerClassName: 'text-end' },
     },
     {
       id: 'actions',
-      header: () => <span className="sr-only">Actions</span>,
+      header: () => <span className="sr-only">{t('columns.actions')}</span>,
       cell: ({ row }) => {
         const transaction = row.original
         return (
@@ -159,32 +189,37 @@ export function createColumns(handlers: ColumnHandlers): ColumnDef<Transaction>[
                 onClick={(e) => e.stopPropagation()}
               >
                 <HugeiconsIcon icon={MoreVerticalIcon} strokeWidth={2} />
-                <span className="sr-only">Actions for {transaction.description}</span>
+                <span className="sr-only">
+                  {t('columns.actionsFor', { description: transaction.description })}
+                </span>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuGroup>
                 <DropdownMenuItem onClick={() => handlers.onView(transaction)}>
                   <HugeiconsIcon icon={ViewIcon} strokeWidth={2} />
-                  View details
+                  {t('columns.menu.view')}
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => handlers.onEdit(transaction)}>
                   <HugeiconsIcon icon={PencilEdit02Icon} strokeWidth={2} />
-                  Edit
+                  {t('common:actions.edit')}
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   variant="destructive"
                   onClick={() => handlers.onDelete(transaction)}
                 >
                   <HugeiconsIcon icon={Delete02Icon} strokeWidth={2} />
-                  Delete
+                  {t('common:actions.delete')}
                 </DropdownMenuItem>
               </DropdownMenuGroup>
             </DropdownMenuContent>
           </DropdownMenu>
         )
       },
-      meta: { cellClassName: 'w-12 pe-3' },
+      meta: {
+        cellClassName: 'hidden w-12 pe-3 sm:table-cell',
+        headerClassName: 'hidden sm:table-cell',
+      },
     },
   ]
 }

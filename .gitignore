@@ -10,6 +10,7 @@ node_modules/
 .venv
 .env
 skills-lock.json
+.vscode/
 
 # Claude
 .claude/

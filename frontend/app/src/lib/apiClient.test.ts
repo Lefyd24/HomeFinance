@@ -50,10 +50,34 @@ describe('apiFetch', () => {
   it('throws on a non-ok response', async () => {
     vi.stubGlobal(
       'fetch',
-      vi.fn().mockResolvedValue({ ok: false, status: 401, statusText: 'Unauthorized' }),
+      vi.fn().mockResolvedValue({
+        ok: false,
+        status: 401,
+        statusText: 'Unauthorized',
+        json: () => Promise.reject(new Error('no body')),
+      }),
     )
 
     await expect(apiFetch('/accounts/')).rejects.toThrow('API request failed: 401 Unauthorized')
+  })
+
+  it('prefers FastAPI detail and exposes status on ApiError', async () => {
+    const { ApiError } = await import('./apiClient')
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: false,
+        status: 404,
+        statusText: 'Not Found',
+        json: () => Promise.resolve({ detail: 'No company data for symbol: ZZZ' }),
+      }),
+    )
+
+    await expect(apiFetch('/investments/company/ZZZ')).rejects.toMatchObject({
+      name: 'ApiError',
+      status: 404,
+      message: 'No company data for symbol: ZZZ',
+    } satisfies Partial<InstanceType<typeof ApiError>>)
   })
 
   it('returns undefined for a 204 No Content response', async () => {

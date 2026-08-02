@@ -37,6 +37,7 @@ describe('AccountsPage', () => {
         bank_connection_id: null,
         last_synced_at: null,
         sync_status: null,
+        provider: null,
         created_at: '',
         updated_at: '',
       },
@@ -67,6 +68,7 @@ describe('AccountsPage', () => {
       bank_connection_id: null,
       last_synced_at: null,
       sync_status: null,
+      provider: null,
       created_at: '',
       updated_at: '',
     })

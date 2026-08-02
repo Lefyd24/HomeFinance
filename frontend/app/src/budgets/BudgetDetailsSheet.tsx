@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { ArrowLeft01Icon, ArrowRight01Icon } from '@hugeicons/core-free-icons'
 import { Button } from '@/components/ui/button'
@@ -34,10 +35,10 @@ import { cn } from '@/lib/utils'
 import { useBudgetSummary } from './useBudgets'
 import type { Budget, BudgetSummaryPeriod } from './budgetsApi'
 
-function periodSuffix(period: Budget['period']): string {
-  if (period === 'monthly') return '/month'
-  if (period === 'yearly') return '/year'
-  return ''
+function periodSuffixKey(period: Budget['period']): 'perMonth' | 'perYear' | null {
+  if (period === 'monthly') return 'perMonth'
+  if (period === 'yearly') return 'perYear'
+  return null
 }
 
 function isCurrentPeriod(period: BudgetSummaryPeriod): boolean {
@@ -45,10 +46,12 @@ function isCurrentPeriod(period: BudgetSummaryPeriod): boolean {
   return today >= period.period_start.slice(0, 10) && today <= period.period_end.slice(0, 10)
 }
 
-function periodStatus(period: BudgetSummaryPeriod): { label: string; variant: 'destructive' | 'secondary' | 'outline' } | null {
-  if (period.percentage > 100) return { label: 'Over', variant: 'destructive' }
-  if (period.percentage > 90) return { label: 'Almost', variant: 'secondary' }
-  if (period.spent === 0) return { label: 'No spending', variant: 'outline' }
+function periodStatusKey(
+  period: BudgetSummaryPeriod,
+): { labelKey: string; variant: 'destructive' | 'secondary' | 'outline' } | null {
+  if (period.percentage > 100) return { labelKey: 'statusOver', variant: 'destructive' }
+  if (period.percentage > 90) return { labelKey: 'statusAlmost', variant: 'secondary' }
+  if (period.spent === 0) return { labelKey: 'statusNoSpending', variant: 'outline' }
   return null
 }
 
@@ -59,6 +62,7 @@ interface BudgetDetailsSheetProps {
 }
 
 export function BudgetDetailsSheet({ budget, open, onOpenChange }: BudgetDetailsSheetProps) {
+  const { t } = useTranslation('budgets')
   const [year, setYear] = useState(() => new Date().getFullYear())
   const [openPeriods, setOpenPeriods] = useState<string[]>([])
 
@@ -89,9 +93,9 @@ export function BudgetDetailsSheet({ budget, open, onOpenChange }: BudgetDetails
         showCloseButton
       >
         <SheetHeader className="border-b border-border px-4 py-4 sm:px-6">
-          <SheetTitle>{budget?.name ?? 'Budget Details'}</SheetTitle>
+          <SheetTitle>{budget?.name ?? t('details.titleFallback')}</SheetTitle>
           <SheetDescription>
-            Period-by-period usage for {year}, including linked expense transactions.
+            {t('details.description', { year })}
           </SheetDescription>
         </SheetHeader>
 
@@ -101,7 +105,7 @@ export function BudgetDetailsSheet({ budget, open, onOpenChange }: BudgetDetails
             variant="ghost"
             size="sm"
             onClick={() => setYear((y) => y - 1)}
-            aria-label={`Previous year ${year - 1}`}
+            aria-label={t('details.prevYearAria', { year: year - 1 })}
           >
             <HugeiconsIcon icon={ArrowLeft01Icon} strokeWidth={2} data-icon="inline-start" />
             <span className="hidden sm:inline">{year - 1}</span>
@@ -112,7 +116,7 @@ export function BudgetDetailsSheet({ budget, open, onOpenChange }: BudgetDetails
             variant="ghost"
             size="sm"
             onClick={() => setYear((y) => y + 1)}
-            aria-label={`Next year ${year + 1}`}
+            aria-label={t('details.nextYearAria', { year: year + 1 })}
           >
             <span className="hidden sm:inline">{year + 1}</span>
             <HugeiconsIcon icon={ArrowRight01Icon} strokeWidth={2} data-icon="inline-end" />
@@ -128,22 +132,26 @@ export function BudgetDetailsSheet({ budget, open, onOpenChange }: BudgetDetails
                 <Skeleton className="h-16 w-full rounded-xl" />
               </div>
             ) : !summary || !yearTotal ? (
-              <p className="py-8 text-center text-sm text-muted-foreground">Unable to load budget details.</p>
+              <p className="py-8 text-center text-sm text-muted-foreground">{t('details.unableToLoad')}</p>
             ) : (
               <>
                 <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
                   <MetricTile
-                    label={`Budget ${periodSuffix(summary.budget.period)}`}
+                    label={t('details.budgetPeriod', {
+                      suffix: periodSuffixKey(summary.budget.period)
+                        ? t(`details.${periodSuffixKey(summary.budget.period)}`)
+                        : '',
+                    })}
                     value={formatCurrency(summary.budget.amount)}
                   />
-                  <MetricTile label="Year Budget" value={formatCurrency(yearTotal.budget_amount)} />
+                  <MetricTile label={t('details.yearBudget')} value={formatCurrency(yearTotal.budget_amount)} />
                   <MetricTile
-                    label="Year Spent"
+                    label={t('details.yearSpent')}
                     value={formatCurrency(yearTotal.spent)}
                     valueClassName="text-destructive"
                   />
                   <MetricTile
-                    label="Year Remaining"
+                    label={t('details.yearRemaining')}
                     value={`${yearTotal.remaining < 0 ? '−' : ''}${formatCurrency(Math.abs(yearTotal.remaining))}`}
                     valueClassName={yearTotal.remaining < 0 ? 'text-destructive' : 'text-success'}
                   />
@@ -151,7 +159,7 @@ export function BudgetDetailsSheet({ budget, open, onOpenChange }: BudgetDetails
 
                 <div className="flex flex-col gap-2">
                   <div className="flex items-center justify-between text-xs text-muted-foreground">
-                    <span>Year usage</span>
+                    <span>{t('details.yearUsage')}</span>
                     <span className="tabular-nums">{yearTotal.percentage}%</span>
                   </div>
                   <ProgressBar
@@ -163,7 +171,7 @@ export function BudgetDetailsSheet({ budget, open, onOpenChange }: BudgetDetails
                 <Separator />
 
                 {summary.periods.length === 0 ? (
-                  <p className="py-8 text-center text-sm text-muted-foreground">No data for this year</p>
+                  <p className="py-8 text-center text-sm text-muted-foreground">{t('details.noDataForYear')}</p>
                 ) : (
                   <Accordion
                     type="multiple"
@@ -173,7 +181,7 @@ export function BudgetDetailsSheet({ budget, open, onOpenChange }: BudgetDetails
                   >
                     {summary.periods.map((period) => {
                       const current = isCurrentPeriod(period)
-                      const status = periodStatus(period)
+                      const status = periodStatusKey(period)
                       return (
                         <AccordionItem
                           key={period.label}
@@ -192,12 +200,12 @@ export function BudgetDetailsSheet({ budget, open, onOpenChange }: BudgetDetails
                                   </span>
                                   {current && (
                                     <Badge variant="default" className="shrink-0 text-[10px]">
-                                      Current
+                                      {t('details.current')}
                                     </Badge>
                                   )}
                                   {status && (
                                     <Badge variant={status.variant} className="shrink-0 text-[10px]">
-                                      {status.label}
+                                      {t(`details.${status.labelKey}`)}
                                     </Badge>
                                   )}
                                 </div>
@@ -225,7 +233,7 @@ export function BudgetDetailsSheet({ budget, open, onOpenChange }: BudgetDetails
                             <div className="border-t border-border px-2 pb-3 pt-2 sm:px-4">
                               {period.transactions.length === 0 ? (
                                 <p className="py-2 text-sm text-muted-foreground">
-                                  No transactions in this period
+                                  {t('details.noTransactions')}
                                 </p>
                               ) : (
                                 <>
@@ -233,11 +241,11 @@ export function BudgetDetailsSheet({ budget, open, onOpenChange }: BudgetDetails
                                     <Table>
                                       <TableHeader>
                                         <TableRow>
-                                          <TableHead>Date</TableHead>
-                                          <TableHead>Description</TableHead>
-                                          <TableHead className="hidden sm:table-cell">Category</TableHead>
-                                          <TableHead className="hidden md:table-cell">Account</TableHead>
-                                          <TableHead className="text-end">Amount</TableHead>
+                                          <TableHead>{t('details.table.date')}</TableHead>
+                                          <TableHead>{t('details.table.description')}</TableHead>
+                                          <TableHead className="hidden sm:table-cell">{t('details.table.category')}</TableHead>
+                                          <TableHead className="hidden md:table-cell">{t('details.table.account')}</TableHead>
+                                          <TableHead className="text-end">{t('details.table.amount')}</TableHead>
                                         </TableRow>
                                       </TableHeader>
                                       <TableBody>
@@ -252,13 +260,13 @@ export function BudgetDetailsSheet({ budget, open, onOpenChange }: BudgetDetails
                                               </div>
                                               <div className="mt-0.5 sm:hidden">
                                                 <Badge variant="outline" className="text-[10px]">
-                                                  {tx.category_name ?? 'Uncategorized'}
+                                                  {tx.category_name ?? t('details.table.uncategorized')}
                                                 </Badge>
                                               </div>
                                             </TableCell>
                                             <TableCell className="hidden sm:table-cell">
                                               <Badge variant="outline" className="text-[10px]">
-                                                {tx.category_name ?? 'Uncategorized'}
+                                                {tx.category_name ?? t('details.table.uncategorized')}
                                               </Badge>
                                             </TableCell>
                                             <TableCell className="hidden md:table-cell text-xs text-muted-foreground">
@@ -273,11 +281,10 @@ export function BudgetDetailsSheet({ budget, open, onOpenChange }: BudgetDetails
                                       <TableFooter>
                                         <TableRow>
                                           <TableCell colSpan={2} className="sm:hidden text-xs">
-                                            Total ({period.transactions.length})
+                                            {t('details.totalMobile', { count: period.transactions.length })}
                                           </TableCell>
                                           <TableCell colSpan={3} className="hidden sm:table-cell text-xs">
-                                            Total ({period.transactions.length} transaction
-                                            {period.transactions.length === 1 ? '' : 's'})
+                                            {t('details.totalDesktop', { count: period.transactions.length })}
                                           </TableCell>
                                           <TableCell className="hidden md:table-cell" />
                                           <TableCell className="text-end tabular-nums text-destructive">
@@ -289,7 +296,7 @@ export function BudgetDetailsSheet({ budget, open, onOpenChange }: BudgetDetails
                                   </div>
                                   <div className="mt-2 flex items-center justify-between gap-2 border-t border-border pt-2 text-xs">
                                     <span className="text-muted-foreground">
-                                      {Math.round(period.percentage)}% of budget used
+                                      {t('details.percentUsed', { percent: Math.round(period.percentage) })}
                                     </span>
                                     <span
                                       className={cn(
@@ -299,7 +306,7 @@ export function BudgetDetailsSheet({ budget, open, onOpenChange }: BudgetDetails
                                     >
                                       {period.remaining < 0 ? '−' : ''}
                                       {formatCurrency(Math.abs(period.remaining))}{' '}
-                                      {period.remaining < 0 ? 'over' : 'left'}
+                                      {period.remaining < 0 ? t('details.over') : t('details.left')}
                                     </span>
                                   </div>
                                 </>

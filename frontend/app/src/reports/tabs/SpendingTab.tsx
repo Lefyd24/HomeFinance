@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
+import { useTranslation } from 'react-i18next'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { cn } from '@/lib/utils'
 import { Chart, ChartFrame } from '../ChartFrame'
@@ -10,6 +11,7 @@ import { formatPeriodLabel } from '../periodLabels'
 import type { ReportFilters } from '../useReportFilters'
 
 export function SpendingTab({ filters }: { filters: ReportFilters }) {
+  const { t } = useTranslation('reports')
   const theme = useChartTheme()
 
   const { data: breakdown, isLoading: breakdownLoading } = useQuery({
@@ -45,7 +47,7 @@ export function SpendingTab({ filters }: { filters: ReportFilters }) {
       ? [
           ...head,
           {
-            name: `Other (${tail.length})`,
+            name: t('series.otherCount', { count: tail.length }),
             amount: tail.reduce((sum, row) => sum + row.amount, 0),
             count: tail.reduce((sum, row) => sum + row.count, 0),
           },
@@ -61,7 +63,10 @@ export function SpendingTab({ filters }: { filters: ReportFilters }) {
           [
             `<strong>${params.name}</strong>`,
             formatCurrency(params.value),
-            `<span style="opacity:.7">${((params.value / total) * 100).toFixed(1)}% of spend · ${params.data.count} transactions</span>`,
+            `<span style="opacity:.7">${t('spending.byCategory.tooltipShare', {
+              pct: ((params.value / total) * 100).toFixed(1),
+              count: params.data.count,
+            })}</span>`,
           ].join('<br/>'),
       },
       series: [
@@ -94,7 +99,7 @@ export function SpendingTab({ filters }: { filters: ReportFilters }) {
         },
       ],
     }
-  }, [breakdown, theme])
+  }, [breakdown, theme, t])
 
   const merchantOption = useMemo(() => {
     if (!merchants || merchants.labels.length === 0) return null
@@ -158,17 +163,21 @@ export function SpendingTab({ filters }: { filters: ReportFilters }) {
         ...tooltipStyle(theme),
         formatter: (params: Array<{ dataIndex: number }>) => {
           const point = points[params[0]?.dataIndex ?? 0]
+          const arrow = point.change >= 0 ? '▲' : '▼'
           return [
-            `<strong>${formatPeriodLabel(point.label)}</strong>`,
-            `${formatCurrency(point.amount)} spent`,
-            `<span style="opacity:.7">${point.change >= 0 ? '▲' : '▼'} ${Math.abs(point.change).toFixed(1)}% on the month before</span>`,
+            `<strong>${formatPeriodLabel(point.label, t)}</strong>`,
+            t('spending.mom.tooltipSpent', { amount: formatCurrency(point.amount) }),
+            `<span style="opacity:.7">${t('spending.mom.tooltipChange', {
+              arrow,
+              pct: Math.abs(point.change).toFixed(1),
+            })}</span>`,
           ].join('<br/>')
         },
       },
       grid: { left: 4, right: 8, top: 16, bottom: 8, containLabel: true },
       xAxis: {
         type: 'category' as const,
-        data: points.map((point) => formatPeriodLabel(point.label)),
+        data: points.map((point) => formatPeriodLabel(point.label, t)),
         ...baseAxisStyle(theme),
         splitLine: { show: false },
       },
@@ -208,28 +217,28 @@ export function SpendingTab({ filters }: { filters: ReportFilters }) {
         },
       ],
     }
-  }, [mom, theme])
+  }, [mom, theme, t])
 
   return (
     <div className="flex flex-col gap-4">
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
         <ChartFrame
-          title="Spending by category"
-          hint="Tile area is the share of total spend."
+          title={t('spending.byCategory.title')}
+          hint={t('spending.byCategory.hint')}
           loading={breakdownLoading}
           isEmpty={!treemapOption}
-          emptyMessage="No categorised expenses in this range."
+          emptyMessage={t('spending.byCategory.empty')}
           height={340}
         >
           {treemapOption && <Chart option={treemapOption} height={340} />}
         </ChartFrame>
 
         <ChartFrame
-          title="Top 10 payees"
-          hint="Grouped by the description on each transaction."
+          title={t('spending.merchants.title')}
+          hint={t('spending.merchants.hint')}
           loading={merchantsLoading}
           isEmpty={!merchantOption}
-          emptyMessage="No expenses in this range."
+          emptyMessage={t('spending.merchants.empty')}
           height={340}
         >
           {merchantOption && <Chart option={merchantOption} height={340} />}
@@ -239,11 +248,11 @@ export function SpendingTab({ filters }: { filters: ReportFilters }) {
       <WeekdayRhythm data={weekday} loading={weekdayLoading} />
 
       <ChartFrame
-        title="Month-on-month change"
-        hint="How each month's spend compares with the one before it."
+        title={t('spending.mom.title')}
+        hint={t('spending.mom.hint')}
         loading={momLoading}
         isEmpty={!momOption}
-        emptyMessage="Needs at least two months of expenses to compare."
+        emptyMessage={t('spending.mom.empty')}
         height={260}
       >
         {momOption && <Chart option={momOption} height={260} />}
@@ -265,35 +274,41 @@ function WeekdayRhythm({
   data: { weekdays: string[]; data: number[] } | undefined
   loading: boolean
 }) {
+  const { t } = useTranslation('reports')
   const theme = useChartTheme()
   const values = data?.data ?? []
   const total = values.reduce((sum, value) => sum + value, 0)
   const max = Math.max(...values, 0)
   const peakIndex = values.indexOf(max)
-  const peakDay = data?.weekdays[peakIndex]
+  const peakDayKey = data?.weekdays[peakIndex]
+  const peakDay = peakDayKey ? t(`weekdays.${peakDayKey}` as 'weekdays.Mon') : undefined
 
   return (
     <ChartFrame
-      title="Your week"
+      title={t('spending.weekday.title')}
       hint={
         peakDay && total > 0
-          ? `${peakDay} is your heaviest day — ${((max / total) * 100).toFixed(0)}% of everything you spent in this range.`
-          : 'Spend split across the days of the week.'
+          ? t('spending.weekday.hintPeak', {
+              day: peakDay,
+              pct: ((max / total) * 100).toFixed(0),
+            })
+          : t('spending.weekday.hintDefault')
       }
       loading={loading}
       isEmpty={total === 0}
-      emptyMessage="No expenses in this range."
+      emptyMessage={t('spending.weekday.empty')}
       height={110}
     >
       <div className="grid grid-cols-7 gap-1.5 sm:gap-2">
-        {(data?.weekdays ?? []).map((day, index) => {
+        {(data?.weekdays ?? []).map((dayKey, index) => {
           const value = values[index] ?? 0
+          const dayLabel = t(`weekdays.${dayKey}` as 'weekdays.Mon')
           // Five discrete steps of one hue: darker means more money out.
           const step = max > 0 ? Math.min(4, Math.floor((value / max) * 5)) : 0
           const isPeak = index === peakIndex && value > 0
 
           return (
-            <Tooltip key={day}>
+            <Tooltip key={dayKey}>
               <TooltipTrigger asChild>
                 <div
                   className={cn(
@@ -309,7 +324,7 @@ function WeekdayRhythm({
                     className="text-xs font-semibold"
                     style={{ color: value > 0 && step >= 3 ? '#ffffff' : theme.ink }}
                   >
-                    {day}
+                    {dayLabel}
                   </span>
                   <span
                     className="text-[11px] tabular-nums"
@@ -320,7 +335,7 @@ function WeekdayRhythm({
                 </div>
               </TooltipTrigger>
               <TooltipContent>
-                {day}: {formatCurrency(value)}
+                {t('spending.weekday.tooltip', { day: dayLabel, amount: formatCurrency(value) })}
               </TooltipContent>
             </Tooltip>
           )

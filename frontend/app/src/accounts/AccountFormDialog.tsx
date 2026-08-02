@@ -3,6 +3,7 @@ import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { toast } from 'sonner'
+import { useTranslation } from 'react-i18next'
 import { Wallet01Icon } from '@hugeicons/core-free-icons'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -28,20 +29,6 @@ const accountSchema = z.object({
 
 type AccountForm = z.infer<typeof accountSchema>
 
-const ACCOUNT_TYPE_OPTIONS = [
-  { value: 'checking', label: 'Checking' },
-  { value: 'savings', label: 'Savings' },
-  { value: 'credit', label: 'Credit Card' },
-  { value: 'cash', label: 'Cash' },
-  { value: 'investment', label: 'Investment' },
-]
-
-const CURRENCY_OPTIONS = [
-  { value: 'EUR', label: 'EUR — Euro' },
-  { value: 'USD', label: 'USD — US Dollar' },
-  { value: 'GBP', label: 'GBP — British Pound' },
-]
-
 interface AccountFormDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -49,9 +36,25 @@ interface AccountFormDialogProps {
 }
 
 export function AccountFormDialog({ open, onOpenChange, account }: AccountFormDialogProps) {
+  const { t } = useTranslation('accounts')
   const isEdit = !!account
+  const isProviderSynced = !!account?.provider
   const createAccount = useCreateAccount()
   const updateAccount = useUpdateAccount()
+
+  const ACCOUNT_TYPE_OPTIONS = [
+    { value: 'checking', label: t('form.typeOptions.checking') },
+    { value: 'savings', label: t('form.typeOptions.savings') },
+    { value: 'credit', label: t('form.typeOptions.credit') },
+    { value: 'cash', label: t('form.typeOptions.cash') },
+    { value: 'investment', label: t('form.typeOptions.investment') },
+  ]
+
+  const CURRENCY_OPTIONS = [
+    { value: 'EUR', label: t('form.currencyOptions.eur') },
+    { value: 'USD', label: t('form.currencyOptions.usd') },
+    { value: 'GBP', label: t('form.currencyOptions.gbp') },
+  ]
 
   const {
     register,
@@ -100,37 +103,45 @@ export function AccountFormDialog({ open, onOpenChange, account }: AccountFormDi
   const preview = watch()
 
   const onSubmit = handleSubmit(async (data) => {
-    const input = {
+    const common = {
       name: data.name.trim(),
-      type: data.type,
-      currency: data.currency,
-      balance: data.balance,
       description: data.description?.trim() || undefined,
       icon: data.icon || undefined,
     }
 
     try {
       if (isEdit && account) {
+        // Balance/type/currency are set by the brokerage sync for provider-linked
+        // accounts (see backend/app/routers/accounts.py) — sending them (even
+        // unchanged) is rejected, so they're only included for manual accounts.
+        const input = isProviderSynced
+          ? common
+          : { ...common, type: data.type, currency: data.currency, balance: data.balance }
         await updateAccount.mutateAsync({ id: account.id, input })
-        toast.success('Account updated')
+        toast.success(t('toasts.updated'))
       } else {
-        await createAccount.mutateAsync(input)
-        toast.success('Account created')
+        await createAccount.mutateAsync({
+          ...common,
+          type: data.type,
+          currency: data.currency,
+          balance: data.balance,
+        })
+        toast.success(t('toasts.created'))
       }
       onOpenChange(false)
     } catch {
-      toast.error(isEdit ? 'Failed to update account' : 'Failed to create account')
+      toast.error(isEdit ? t('toasts.updateFailed') : t('toasts.createFailed'))
     }
   })
 
   const isPending = isSubmitting || createAccount.isPending || updateAccount.isPending
-  const typeMeta = getAccountTypeMeta(preview.type)
+  const typeMeta = getAccountTypeMeta(preview.type, t)
 
   return (
     <Dialog
       open={open}
-      title={isEdit ? 'Edit account' : 'Add an account'}
-      description="The card below is exactly how it will look on the Accounts page."
+      title={isEdit ? t('form.titleEdit') : t('form.titleAdd')}
+      description={t('form.description')}
       icon={Wallet01Icon}
       tone="primary"
       onOpenChange={onOpenChange}
@@ -143,10 +154,10 @@ export function AccountFormDialog({ open, onOpenChange, account }: AccountFormDi
             onClick={() => onOpenChange(false)}
             disabled={isPending}
           >
-            Cancel
+            {t('common:actions.cancel')}
           </Button>
           <Button type="submit" form="account-form" disabled={isPending}>
-            {isPending ? 'Saving…' : isEdit ? 'Save changes' : 'Create account'}
+            {isPending ? t('form.saving') : isEdit ? t('form.saveChanges') : t('form.createAccount')}
           </Button>
         </>
       }
@@ -164,7 +175,7 @@ export function AccountFormDialog({ open, onOpenChange, account }: AccountFormDi
             />
             <div className="min-w-0 flex-1">
               <p className="truncate text-base font-semibold">
-                {preview.name.trim() || 'New account'}
+                {preview.name.trim() || t('form.newAccountPreview')}
               </p>
               <p className="text-xs text-muted-foreground">
                 {typeMeta.label} · {preview.currency}
@@ -177,14 +188,20 @@ export function AccountFormDialog({ open, onOpenChange, account }: AccountFormDi
         </div>
 
         <div className="flex flex-col gap-2">
-          <Label htmlFor="name">Account name</Label>
-          <Input id="name" placeholder="e.g., Eurobank Checking" {...register('name')} />
+          <Label htmlFor="name">{t('form.nameLabel')}</Label>
+          <Input id="name" placeholder={t('form.namePlaceholder')} {...register('name')} />
           {errors.name && <p className="text-destructive text-sm">{errors.name.message}</p>}
         </div>
 
+        {isProviderSynced && (
+          <p className="rounded-lg border border-border bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
+            {t('form.providerSyncedNote', { provider: account?.provider })}
+          </p>
+        )}
+
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="flex flex-col gap-2">
-            <Label>Account type</Label>
+            <Label>{t('form.typeLabel')}</Label>
             <Controller
               control={control}
               name="type"
@@ -193,13 +210,14 @@ export function AccountFormDialog({ open, onOpenChange, account }: AccountFormDi
                   value={field.value}
                   onValueChange={field.onChange}
                   options={ACCOUNT_TYPE_OPTIONS}
-                  placeholder="Choose a type"
+                  placeholder={t('form.typePlaceholder')}
+                  disabled={isProviderSynced}
                 />
               )}
             />
           </div>
           <div className="flex flex-col gap-2">
-            <Label>Currency</Label>
+            <Label>{t('form.currencyLabel')}</Label>
             <Controller
               control={control}
               name="currency"
@@ -208,7 +226,8 @@ export function AccountFormDialog({ open, onOpenChange, account }: AccountFormDi
                   value={field.value}
                   onValueChange={field.onChange}
                   options={CURRENCY_OPTIONS}
-                  placeholder="Currency"
+                  placeholder={t('form.currencyPlaceholder')}
+                  disabled={isProviderSynced}
                 />
               )}
             />
@@ -216,16 +235,14 @@ export function AccountFormDialog({ open, onOpenChange, account }: AccountFormDi
         </div>
 
         <div className="flex flex-col gap-2">
-          <Label htmlFor="balance">Current balance</Label>
-          <Input id="balance" type="number" step="0.01" {...register('balance')} />
-          <p className="text-xs text-muted-foreground">
-            Use a negative value for credit cards with outstanding balance.
-          </p>
+          <Label htmlFor="balance">{t('form.balanceLabel')}</Label>
+          <Input id="balance" type="number" step="0.01" disabled={isProviderSynced} {...register('balance')} />
+          <p className="text-xs text-muted-foreground">{t('form.balanceHint')}</p>
           {errors.balance && <p className="text-destructive text-sm">{errors.balance.message}</p>}
         </div>
 
         <div className="flex flex-col gap-2">
-          <Label>Account icon</Label>
+          <Label>{t('form.iconLabel')}</Label>
           <Controller
             control={control}
             name="icon"
@@ -243,7 +260,7 @@ export function AccountFormDialog({ open, onOpenChange, account }: AccountFormDi
                     )}
                   >
                     <AccountIcon icon={null} type={preview.type} className="size-11" />
-                    <span className="text-[10px] font-medium">Default</span>
+                    <span className="text-[10px] font-medium">{t('form.iconDefault')}</span>
                   </button>
                   {BANK_ICONS.map((bank) => {
                     const selected = field.value === bank.value
@@ -276,10 +293,10 @@ export function AccountFormDialog({ open, onOpenChange, account }: AccountFormDi
         </div>
 
         <div className="flex flex-col gap-2">
-          <Label htmlFor="description">Description</Label>
+          <Label htmlFor="description">{t('form.descriptionLabel')}</Label>
           <Textarea
             id="description"
-            placeholder="Optional notes about this account"
+            placeholder={t('form.descriptionPlaceholder')}
             rows={3}
             {...register('description')}
           />

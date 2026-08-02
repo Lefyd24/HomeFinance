@@ -199,6 +199,110 @@ class InvestmentCalculator:
         }
 
 
+class SelfSustainingCalculator:
+    """Calculate the capital required for a portfolio to sustain indefinite monthly withdrawals."""
+
+    MAX_MONTHS = 1200  # 100 years — a practical ceiling for the search
+
+    @staticmethod
+    def calculate(
+        initial_investment: float,
+        monthly_contribution: float,
+        annual_rate: float,
+        monthly_withdrawal: float,
+    ) -> Dict[str, Any]:
+        """Find the target capital, and months/years needed, for a self-sustaining portfolio.
+
+        A portfolio is "self-sustaining" once its monthly interest alone covers the
+        desired monthly withdrawal, so the balance no longer needs to shrink to fund it:
+
+            target_capital * monthly_rate >= monthly_withdrawal
+            target_capital = monthly_withdrawal / monthly_rate
+
+        The initial investment and monthly contributions are then compounded monthly
+        until the balance reaches that target.
+        """
+        monthly_rate = annual_rate / 12
+
+        if monthly_rate <= 0:
+            return {'error': 'Annual interest rate must be greater than 0% for a portfolio to sustain withdrawals indefinitely.'}
+
+        if monthly_withdrawal <= 0:
+            return {'error': 'Monthly withdrawal target must be greater than 0.'}
+
+        target_capital = monthly_withdrawal / monthly_rate
+
+        balance = initial_investment
+        yearly_breakdown = []
+        months_to_goal = 0 if balance >= target_capital else None
+        running_contributions = initial_investment
+        year_start_balance = balance
+
+        month = 0
+        while month < SelfSustainingCalculator.MAX_MONTHS:
+            month += 1
+            balance = balance * (1 + monthly_rate) + monthly_contribution
+            running_contributions += monthly_contribution
+
+            if months_to_goal is None and balance >= target_capital:
+                months_to_goal = month
+
+            if month % 12 == 0:
+                year = month // 12
+                yearly_breakdown.append({
+                    'year': year,
+                    'balance': round(balance, 2),
+                    'contributions': round(running_contributions, 2),
+                    'interest_earned': round(balance - running_contributions, 2),
+                    'year_growth': round(balance - year_start_balance, 2),
+                    'target_reached': balance >= target_capital,
+                })
+                year_start_balance = balance
+
+            if months_to_goal is not None and month % 12 == 0:
+                break
+
+        if months_to_goal is None:
+            return {
+                'error': (
+                    f'Target capital of {target_capital:,.2f} was not reached within '
+                    f'{SelfSustainingCalculator.MAX_MONTHS // 12} years with these inputs. '
+                    'Try a higher monthly contribution or annual return.'
+                )
+            }
+
+        years_to_goal = months_to_goal / 12
+        total_contributions = initial_investment + monthly_contribution * months_to_goal
+        total_interest_earned = target_capital - total_contributions
+
+        # Demonstrate sustainability: simulate 12 months of withdrawals once the goal is hit.
+        sustainability_check = []
+        sustain_balance = target_capital
+        for withdrawal_month in range(1, 13):
+            sustain_balance = sustain_balance * (1 + monthly_rate) - monthly_withdrawal
+            sustainability_check.append({
+                'month': withdrawal_month,
+                'balance': round(sustain_balance, 2),
+            })
+
+        return {
+            'target_capital': round(target_capital, 2),
+            'months_to_goal': months_to_goal,
+            'years_to_goal': round(years_to_goal, 2),
+            'monthly_interest_at_goal': round(target_capital * monthly_rate, 2),
+            'total_contributions': round(total_contributions, 2),
+            'total_interest_earned': round(total_interest_earned, 2),
+            'parameters': {
+                'initial_investment': initial_investment,
+                'monthly_contribution': monthly_contribution,
+                'annual_rate': annual_rate * 100,
+                'monthly_withdrawal': monthly_withdrawal,
+            },
+            'yearly_breakdown': yearly_breakdown,
+            'sustainability_check': sustainability_check,
+        }
+
+
 class LoanCalculator:
     """Loan and mortgage calculations."""
     

@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
 import ReactECharts from 'echarts-for-react'
+import { useTranslation } from 'react-i18next'
 import type { CashflowReport, NetWorthReport } from './reportsApi'
 import { baseAxisStyle, compactNumber, seriesHoverSafe, tooltipStyle, useChartTheme } from '../reports/chartTheme'
 
@@ -9,12 +10,16 @@ interface CashflowChartProps {
 }
 
 export function CashflowChart({ cashflow, netWorth }: CashflowChartProps) {
+  const { t } = useTranslation('dashboard')
   const theme = useChartTheme()
 
   const option = useMemo(() => {
     if (!cashflow || cashflow.labels.length === 0) return null
 
     const netWorthData = netWorth?.data ?? []
+    const incomeLabel = t('cashflowChart.legend.income')
+    const expensesLabel = t('cashflowChart.legend.expenses')
+    const netWorthLabel = t('cashflowChart.legend.netWorth')
 
     return {
       tooltip: {
@@ -23,7 +28,7 @@ export function CashflowChart({ cashflow, netWorth }: CashflowChartProps) {
         ...tooltipStyle(theme),
       },
       legend: {
-        data: ['Income', 'Expenses', 'Net Worth'],
+        data: [incomeLabel, expensesLabel, netWorthLabel],
         bottom: 0,
         textStyle: { color: theme.muted, fontSize: 11 },
       },
@@ -43,7 +48,7 @@ export function CashflowChart({ cashflow, netWorth }: CashflowChartProps) {
       yAxis: [
         {
           type: 'value' as const,
-          name: 'Cashflow',
+          name: t('cashflowChart.yAxis.cashflow'),
           nameTextStyle: { color: theme.muted, fontSize: 11 },
           ...baseAxisStyle(theme),
           axisLine: { show: false },
@@ -51,7 +56,7 @@ export function CashflowChart({ cashflow, netWorth }: CashflowChartProps) {
         },
         {
           type: 'value' as const,
-          name: 'Net Worth',
+          name: t('cashflowChart.yAxis.netWorth'),
           nameTextStyle: { color: theme.muted, fontSize: 11 },
           ...baseAxisStyle(theme),
           axisLine: { show: false },
@@ -60,21 +65,21 @@ export function CashflowChart({ cashflow, netWorth }: CashflowChartProps) {
       ],
       series: [
         {
-          name: 'Income',
+          name: incomeLabel,
           type: 'bar' as const,
           ...seriesHoverSafe,
           data: cashflow.income,
           itemStyle: { color: theme.positive },
         },
         {
-          name: 'Expenses',
+          name: expensesLabel,
           type: 'bar' as const,
           ...seriesHoverSafe,
           data: cashflow.expenses,
           itemStyle: { color: theme.negative },
         },
         {
-          name: 'Net Worth',
+          name: netWorthLabel,
           type: 'line' as const,
           ...seriesHoverSafe,
           yAxisIndex: 1,
@@ -85,10 +90,10 @@ export function CashflowChart({ cashflow, netWorth }: CashflowChartProps) {
         },
       ],
     }
-  }, [cashflow, netWorth, theme])
+  }, [cashflow, netWorth, theme, t])
 
   if (!option) {
-    return <p className="text-muted-foreground text-sm">No cashflow data for this period.</p>
+    return <p className="text-muted-foreground text-sm">{t('cashflowChart.noData')}</p>
   }
 
   return (

@@ -1,5 +1,6 @@
 import { useMemo, useState, useEffect } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import {
   useReactTable,
   getCoreRowModel,
@@ -41,7 +42,10 @@ const iso = (date: Date) =>
     date.getDate(),
   ).padStart(2, '0')}`
 
-function buildDatePresets(now = new Date()): DatePreset[] {
+function buildDatePresets(
+  t: (key: string) => string,
+  now = new Date(),
+): DatePreset[] {
   const y = now.getFullYear()
   const m = now.getMonth()
   const lastMonthEnd = new Date(y, m, 0)
@@ -49,20 +53,24 @@ function buildDatePresets(now = new Date()): DatePreset[] {
   ninetyDaysAgo.setDate(now.getDate() - 89)
 
   return [
-    { label: 'This month', range: currentMonthRange(now) },
+    { label: t('datePresets.thisMonth'), range: currentMonthRange(now) },
     {
-      label: 'Last month',
+      label: t('datePresets.lastMonth'),
       range: { start_date: iso(new Date(y, m - 1, 1)), end_date: iso(lastMonthEnd) },
     },
-    { label: 'Last 90 days', range: { start_date: iso(ninetyDaysAgo), end_date: iso(now) } },
-    { label: 'This year', range: { start_date: iso(new Date(y, 0, 1)), end_date: iso(now) } },
+    {
+      label: t('datePresets.last90Days'),
+      range: { start_date: iso(ninetyDaysAgo), end_date: iso(now) },
+    },
+    { label: t('datePresets.thisYear'), range: { start_date: iso(new Date(y, 0, 1)), end_date: iso(now) } },
   ]
 }
 
 export function TransactionsPage() {
+  const { t } = useTranslation('transactions')
   const [searchParams] = useSearchParams()
   const accountFromUrl = searchParams.get('account_id')
-  const datePresets = useMemo(() => buildDatePresets(), [])
+  const datePresets = useMemo(() => buildDatePresets(t), [t])
 
   const [filters, setFilters] = useState<TransactionFilters>(() => ({
     ...currentMonthRange(),
@@ -113,28 +121,31 @@ export function TransactionsPage() {
 
   const handleDelete = async (transaction: Transaction) => {
     const ok = await confirm({
-      title: 'Delete this transaction?',
-      description: `“${transaction.description}” will be removed from your ledger. Balances recalculate immediately and this cannot be undone.`,
-      confirmLabel: 'Delete transaction',
+      title: t('page.deleteConfirm.title'),
+      description: t('page.deleteConfirm.description', { description: transaction.description }),
+      confirmLabel: t('page.deleteConfirm.confirmLabel'),
     })
     if (!ok) return
     try {
       await deleteTransaction.mutateAsync(transaction.id)
-      toast.success('Transaction deleted')
+      toast.success(t('page.toast.deleted'))
     } catch {
-      toast.error('Could not delete the transaction. Try again.')
+      toast.error(t('page.toast.deleteError'))
     }
   }
 
   const columns = useMemo(
     () =>
-      createColumns({
-        onView: handleView,
-        onEdit: handleEdit,
-        onDelete: handleDelete,
-      }),
+      createColumns(
+        {
+          onView: handleView,
+          onEdit: handleEdit,
+          onDelete: handleDelete,
+        },
+        t,
+      ),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [],
+    [t],
   )
 
   const pageCount = transactionData
@@ -210,20 +221,20 @@ export function TransactionsPage() {
   return (
     <PageContainer wide className="flex flex-col gap-4">
       <PageHeader
-        title="Transactions"
-        description="Every euro in, out, and moved between your accounts."
+        title={t('page.title')}
+        description={t('page.description')}
         className="mb-2"
         action={
           <>
             <Button variant="outline" asChild>
               <Link to="/import">
                 <HugeiconsIcon icon={FileImportIcon} strokeWidth={2} data-icon="inline-start" />
-                <PageHeaderActionLabel>Import</PageHeaderActionLabel>
+                <PageHeaderActionLabel>{t('page.actions.import')}</PageHeaderActionLabel>
               </Link>
             </Button>
             <Button onClick={() => setAddDialogOpen(true)}>
               <HugeiconsIcon icon={Add01Icon} strokeWidth={2} data-icon="inline-start" />
-              <PageHeaderActionLabel>Add transaction</PageHeaderActionLabel>
+              <PageHeaderActionLabel>{t('page.actions.add')}</PageHeaderActionLabel>
             </Button>
           </>
         }
@@ -247,7 +258,7 @@ export function TransactionsPage() {
           {isLoading ? (
             <Skeleton className="h-5 w-32" />
           ) : (
-            `${transactionData?.total ?? 0} transaction${transactionData?.total === 1 ? '' : 's'}`
+            t('page.count', { count: transactionData?.total ?? 0 })
           )}
         </div>
         <DataTableViewOptions table={table} />
@@ -266,21 +277,19 @@ export function TransactionsPage() {
             <EmptyMedia variant="icon">
               <HugeiconsIcon icon={Invoice01Icon} strokeWidth={2} />
             </EmptyMedia>
-            <EmptyTitle>Nothing recorded yet</EmptyTitle>
-            <EmptyDescription>
-              Add a transaction by hand, or bring in a bank export from the Import page.
-            </EmptyDescription>
+            <EmptyTitle>{t('page.empty.title')}</EmptyTitle>
+            <EmptyDescription>{t('page.empty.description')}</EmptyDescription>
           </EmptyHeader>
           <EmptyContent>
             <div className="flex flex-wrap items-center justify-center gap-2">
               <Button onClick={() => setAddDialogOpen(true)}>
                 <HugeiconsIcon icon={Add01Icon} strokeWidth={2} data-icon="inline-start" />
-                Add transaction
+                {t('page.empty.addAction')}
               </Button>
               <Button variant="outline" asChild>
                 <Link to="/import">
                   <HugeiconsIcon icon={FileImportIcon} strokeWidth={2} data-icon="inline-start" />
-                  Import a bank export
+                  {t('page.empty.importAction')}
                 </Link>
               </Button>
             </div>
@@ -297,22 +306,22 @@ export function TransactionsPage() {
             getRowClassName={(row) => flowRail[flowOfType(row.original.type)]}
             emptyMessage={
               hasActiveFilters
-                ? 'No transactions match these filters. Try widening the period or clearing a chip above.'
-                : 'No transactions yet'
+                ? t('page.empty.filteredMessage')
+                : t('page.empty.noneMessage')
             }
             footer={
               <div className="flex flex-wrap items-center gap-x-6 gap-y-1 px-4 py-2.5 text-xs">
-                <span className="text-muted-foreground">On this page</span>
+                <span className="text-muted-foreground">{t('page.footer.onThisPage')}</span>
                 <span className="flex items-center gap-1.5">
-                  <span className="text-muted-foreground">In</span>
+                  <span className="text-muted-foreground">{t('page.footer.in')}</span>
                   <Amount value={pageTotals.in} flow="in" />
                 </span>
                 <span className="flex items-center gap-1.5">
-                  <span className="text-muted-foreground">Out</span>
+                  <span className="text-muted-foreground">{t('page.footer.out')}</span>
                   <Amount value={pageTotals.out} flow="out" />
                 </span>
                 <span className="flex items-center gap-1.5">
-                  <span className="text-muted-foreground">Net</span>
+                  <span className="text-muted-foreground">{t('page.footer.net')}</span>
                   <Amount
                     value={Math.abs(pageTotals.in - pageTotals.out)}
                     flow={pageTotals.in - pageTotals.out >= 0 ? 'in' : 'out'}
