@@ -173,19 +173,36 @@ def preview_transactions(
             status_code=status.HTTP_404_NOT_FOUND, detail="Import batch not found"
         )
 
+    from app.services import rule_service
+
+    rules = rule_service.load_rules(db, current_user.id)
     # Get parsed transactions from batch
     transactions = []
     if batch.parsed_data:
         for i, tx in enumerate(batch.parsed_data):
+            amount = abs(float(tx.get("amount") or 0))
+            tx_type = "income" if float(tx.get("amount") or 0) > 0 else "expense"
+            suggested = rule_service.categorise(
+                db,
+                current_user.id,
+                {
+                    "description": tx.get("description") or "",
+                    "amount": amount,
+                    "type": tx_type,
+                    "category_id": None,
+                },
+                rules=rules,
+                record_stats=False,
+            )
             transactions.append(
                 {
                     "id": i + 1,
                     "date": tx.get("date", ""),
                     "description": tx.get("description", ""),
                     "amount": tx.get("amount", 0),
-                    "suggested_category": None,
+                    "suggested_category": suggested,
                     "is_duplicate": False,
-                    "category_id": None,
+                    "category_id": suggested,
                 }
             )
 
@@ -227,22 +244,37 @@ def auto_categorize_preview(
             status_code=status.HTTP_404_NOT_FOUND, detail="Import batch not found"
         )
 
-    # Get user's categories
-    categories = db.query(Category).filter(Category.user_id == current_user.id).all()
+    from app.services import rule_service
 
-    # Simple keyword matching for auto-categorization
-    keyword_map = {
-        "grocery": ["Groceries", "Food"],
-        "supermarket": ["Groceries", "Food"],
-        "restaurant": ["Food"],
-        "fuel": ["Transportation"],
-        "gas": ["Transportation"],
-        "salary": ["Salary"],
-        "rent": ["Housing"],
-        "electric": ["Utilities"],
+    rules = rule_service.load_rules(db, current_user.id)
+    assigned = 0
+    suggestions: list[dict] = []
+    parsed = batch.parsed_data or []
+    for i, tx in enumerate(parsed):
+        amount = abs(float(tx.get("amount") or 0))
+        tx_type = "income" if float(tx.get("amount") or 0) > 0 else "expense"
+        category_id = rule_service.categorise(
+            db,
+            current_user.id,
+            {
+                "description": tx.get("description") or "",
+                "amount": amount,
+                "type": tx_type,
+                "account_id": None,
+                "category_id": None,
+            },
+            rules=rules,
+            record_stats=False,
+        )
+        if category_id is not None:
+            assigned += 1
+            suggestions.append({"row": i + 1, "category_id": category_id})
+
+    return {
+        "message": "Auto-categorization completed",
+        "categories_assigned": assigned,
+        "suggestions": suggestions,
     }
-
-    return {"message": "Auto-categorization completed", "categories_assigned": 0}
 
 
 @router.post("/confirm")
@@ -299,11 +331,27 @@ def confirm_import(
             elif not isinstance(tx_date, datetime):
                 tx_date = datetime.now()
 
+            category_id = tx_data.get("category_id")
+            if category_id is None:
+                from app.services import rule_service
+
+                category_id = rule_service.categorise(
+                    db,
+                    current_user.id,
+                    {
+                        "description": tx_data["description"],
+                        "amount": amount,
+                        "type": tx_type,
+                        "account_id": request.account_id,
+                        "category_id": None,
+                    },
+                )
+
             # Create transaction
             transaction = Transaction(
                 user_id=current_user.id,
                 account_id=request.account_id,
-                category_id=tx_data.get("category_id"),
+                category_id=category_id,
                 amount=amount,
                 type=tx_type,
                 description=tx_data["description"],

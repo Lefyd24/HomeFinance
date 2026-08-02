@@ -26,6 +26,7 @@ import { AiAdvisorPage } from './ai-advisor/AiAdvisorPage'
 import { NotificationsPage } from './notifications/NotificationsPage'
 import { ApiKeysPage } from './account-settings/ApiKeysPage'
 import { BankSyncPage } from './bank-sync/BankSyncPage'
+import { RulesPage } from './rules/RulesPage'
 import { PrivacyPage } from './legal/PrivacyPage'
 import { TermsPage } from './legal/TermsPage'
 import { AdminPage } from './admin/AdminPage'
@@ -71,6 +72,7 @@ function App() {
           <Route path="/ai-advisor" element={<AiAdvisorPage />} />
           <Route path="/notifications" element={<NotificationsPage />} />
           <Route path="/connections" element={<BankSyncPage />} />
+          <Route path="/rules" element={<RulesPage />} />
           <Route path="/api-keys" element={<ApiKeysPage />} />
           <Route path="/admin" element={<AdminPage />} />
         </Route>

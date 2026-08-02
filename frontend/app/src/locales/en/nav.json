@@ -48,6 +48,7 @@
   "userMenu": {
     "accountMenu": "Account menu",
     "bankConnections": "Bank connections",
+    "rules": "Categorisation rules",
     "apiKeys": "API Keys",
     "admin": "Admin",
     "defaultAccountName": "Account"

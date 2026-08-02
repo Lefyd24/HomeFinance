@@ -200,10 +200,16 @@ def create_transaction(
                 status_code=status.HTTP_404_NOT_FOUND, detail="Category not found"
             )
 
-    # Create transaction
-    db_transaction = Transaction(
-        user_id=current_user.id, **transaction_data.model_dump()
-    )
+    # Create transaction — auto-categorise only when the caller left category blank
+    payload = transaction_data.model_dump()
+    if payload.get("category_id") is None:
+        from app.services import rule_service
+
+        suggested = rule_service.categorise(db, current_user.id, payload)
+        if suggested is not None:
+            payload["category_id"] = suggested
+
+    db_transaction = Transaction(user_id=current_user.id, **payload)
     db.add(db_transaction)
 
     # Update account balance(s) with proper rounding

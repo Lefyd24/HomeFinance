@@ -48,6 +48,7 @@
   "userMenu": {
     "accountMenu": "Μενού λογαριασμού",
     "bankConnections": "Συνδέσεις τραπεζών",
+    "rules": "Κανόνες κατηγοριοποίησης",
     "apiKeys": "Κλειδιά API",
     "admin": "Διαχείριση",
     "defaultAccountName": "Λογαριασμός"

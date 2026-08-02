@@ -354,6 +354,17 @@ def sync_account(db: Session, account: Account) -> dict[str, Any]:
     booked = [row for row in rows if not row["is_pending"]]
     pending = [row for row in rows if row["is_pending"]]
 
+    # Categorise before insert so new rows land with a category. Rules are
+    # loaded once for the whole batch — per-row loads would thrash SQLite on a
+    # first sync of a year of history.
+    from app.services import rule_service
+
+    rules = rule_service.load_rules(db, account.user_id)
+    for row in booked + pending:
+        category_id = rule_service.categorise(db, account.user_id, row, rules=rules)
+        if category_id is not None:
+            row["category_id"] = category_id
+
     inserted = _write_transactions(db, account, booked)
     pending_count = 0
     if settings.EB_INCLUDE_PENDING:

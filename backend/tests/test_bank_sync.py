@@ -298,6 +298,41 @@ def test_incremental_sync_uses_default_strategy(monkeypatch, db, linked_account)
     assert calls == ["default"]
 
 
+def test_sync_applies_categorisation_rules_to_new_rows(monkeypatch, db, seed_user, linked_account):
+    from app.models.category_rule import CategoryRule, CategoryRuleCondition
+    from tests.factories import make_category
+
+    cat = make_category(db, seed_user, name="Groceries")
+    rule = CategoryRule(
+        user_id=seed_user.id,
+        name="Supermarkets",
+        category_id=cat.id,
+        match_type="all",
+        priority=10,
+        is_active=True,
+    )
+    db.add(rule)
+    db.flush()
+    db.add(
+        CategoryRuleCondition(
+            rule_id=rule.id,
+            field="description",
+            operator="contains",
+            value="SKLAVENITIS",
+        )
+    )
+    db.commit()
+
+    monkeypatch.setattr(eb, "get_transactions", lambda *a, **k: [raw_tx()])
+    monkeypatch.setattr(eb, "get_balances", lambda uid: [])
+
+    svc.sync_account(db, linked_account)
+    db.commit()
+
+    tx = db.query(Transaction).filter_by(user_id=seed_user.id).one()
+    assert tx.category_id == cat.id
+
+
 def test_window_narrows_when_the_bank_rejects_the_period(monkeypatch, linked_account):
     """Reproduces the production failure: reject the wide window, accept 90 days."""
     attempts = []

@@ -15,6 +15,8 @@ from app.models import (
     User,
     Account,
     Category,
+    CategoryRule,
+    CategoryRuleCondition,
     Transaction,
     Budget,
     BudgetCategory,

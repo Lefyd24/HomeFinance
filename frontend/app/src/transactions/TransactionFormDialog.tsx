@@ -15,6 +15,11 @@ import {
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
+import { Checkbox } from '@/components/ui/checkbox'
+import {
+  Collapsible,
+  CollapsibleContent,
+} from '@/components/ui/collapsible'
 import {
   Field,
   FieldError,
@@ -32,6 +37,7 @@ import { Dialog } from '../ui/Dialog'
 import { Select } from '../ui/Select'
 import { useAccounts } from '../accounts/useAccounts'
 import { useCategories } from '../categories/useCategories'
+import { useCreateRule } from '../rules/useRules'
 import { useCreateTransaction, useSplitTransaction, useUpdateTransaction } from './useTransactions'
 import type { Transaction, TransactionType } from './transactionsApi'
 
@@ -88,10 +94,14 @@ export function TransactionFormDialog({
   transaction,
 }: TransactionFormDialogProps) {
   const { t } = useTranslation('transactions')
+  const { t: tRules } = useTranslation('rules')
   const createTransaction = useCreateTransaction()
   const updateTransaction = useUpdateTransaction()
+  const createRule = useCreateRule()
   const { data: accounts = [] } = useAccounts()
   const { data: categories = [] } = useCategories()
+  const [createRuleFromTx, setCreateRuleFromTx] = useState(false)
+  const [ruleNeedle, setRuleNeedle] = useState('')
 
   const {
     register,
@@ -165,6 +175,8 @@ export function TransactionFormDialog({
     if (open) {
       setSplitting(false)
       setSplitParts([])
+      setCreateRuleFromTx(false)
+      setRuleNeedle(transaction?.description ?? '')
     }
   }, [open, transaction, reset])
 
@@ -227,6 +239,32 @@ export function TransactionFormDialog({
         await createTransaction.mutateAsync(input)
         toast.success(t('form.toast.created'))
       }
+
+      // Rule creation is best-effort: a failure must not undo the saved transaction.
+      if (
+        createRuleFromTx &&
+        !isTransfer &&
+        editable.category_id != null &&
+        ruleNeedle.trim()
+      ) {
+        try {
+          await createRule.mutateAsync({
+            name: ruleNeedle.trim().slice(0, 80),
+            category_id: editable.category_id,
+            match_type: 'all',
+            conditions: [
+              {
+                field: 'description',
+                operator: 'contains',
+                value: ruleNeedle.trim(),
+              },
+            ],
+          })
+        } catch {
+          toast.error(tRules('toast.ruleFromTxFailed'))
+        }
+      }
+
       onOpenChange(false)
     } catch {
       toast.error(transaction ? t('form.toast.updateError') : t('form.toast.createError'))
@@ -460,6 +498,53 @@ export function TransactionFormDialog({
               </Field>
             )}
           </div>
+
+          {!isTransfer && (
+            <Collapsible
+              open={createRuleFromTx}
+              onOpenChange={(open) => {
+                setCreateRuleFromTx(open)
+                if (open && !ruleNeedle) {
+                  setRuleNeedle(watch('description') || '')
+                }
+              }}
+            >
+              <div className="rounded-lg border border-border/60 px-3 py-2">
+                <label className="flex cursor-pointer items-start gap-2 text-sm">
+                  <Checkbox
+                    checked={createRuleFromTx}
+                    onCheckedChange={(v) => {
+                      const next = Boolean(v)
+                      setCreateRuleFromTx(next)
+                      if (next && !ruleNeedle) {
+                        setRuleNeedle(watch('description') || '')
+                      }
+                    }}
+                    className="mt-0.5"
+                  />
+                  <span>
+                    <span className="font-medium">{tRules('fromTransaction.checkbox')}</span>
+                    <span className="block text-xs text-muted-foreground mt-0.5">
+                      {tRules('fromTransaction.hint')}
+                    </span>
+                  </span>
+                </label>
+                <CollapsibleContent className="pt-3">
+                  <Field>
+                    <FieldLabel htmlFor="rule-needle">
+                      {tRules('fromTransaction.containsLabel')}
+                    </FieldLabel>
+                    <Input
+                      id="rule-needle"
+                      value={ruleNeedle}
+                      onChange={(e) => setRuleNeedle(e.target.value)}
+                      placeholder={watch('description') || t('form.fields.descriptionPlaceholder')}
+                    />
+                  </Field>
+                </CollapsibleContent>
+              </div>
+            </Collapsible>
+          )}
 
           <Field data-invalid={errors.date ? true : undefined}>
             <FieldLabel htmlFor="date">{t('form.fields.date')}</FieldLabel>

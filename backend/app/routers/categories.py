@@ -176,10 +176,31 @@ def delete_category(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Cannot delete system categories"
         )
-    
+
+    from app.models.category_rule import CategoryRule
+
+    referencing = (
+        db.query(CategoryRule)
+        .filter(
+            CategoryRule.user_id == current_user.id,
+            CategoryRule.category_id == category_id,
+        )
+        .all()
+    )
+    if referencing:
+        names = ", ".join(r.name for r in referencing[:5])
+        more = f" (+{len(referencing) - 5} more)" if len(referencing) > 5 else ""
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=(
+                f"Cannot delete category while categorisation rules reference it: "
+                f"{names}{more}. Delete or reassign those rules first."
+            ),
+        )
+
     db.delete(category)
     db.commit()
-    
+
     return {"message": "Category deleted successfully"}
 
 

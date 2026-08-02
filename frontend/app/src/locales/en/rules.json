@@ -1,0 +1,102 @@
+{
+  "title": "Categorisation rules",
+  "description": "Automatically assign categories to matching transactions.",
+  "actions": {
+    "add": "Add rule",
+    "applyAll": "Apply all now",
+    "apply": "Apply to past",
+    "edit": "Edit",
+    "delete": "Delete",
+    "preview": "Preview matches"
+  },
+  "empty": {
+    "title": "No categorisation rules yet",
+    "description": "Create a rule once — matching transactions get categorised on sync and import.",
+    "cta": "Create your first rule"
+  },
+  "list": {
+    "active": "Active",
+    "inactive": "Paused",
+    "applied": "Applied {{count}} times",
+    "neverApplied": "Not applied yet",
+    "arrow": "→"
+  },
+  "summary": {
+    "contains": "Description contains “{{value}}”",
+    "not_contains": "Description does not contain “{{value}}”",
+    "equals": "{{field}} equals “{{value}}”",
+    "starts_with": "Description starts with “{{value}}”",
+    "ends_with": "Description ends with “{{value}}”",
+    "regex": "Description matches /{{value}}/",
+    "eq": "{{field}} = {{value}}",
+    "lt": "{{field}} < {{value}}",
+    "lte": "{{field}} ≤ {{value}}",
+    "gt": "{{field}} > {{value}}",
+    "gte": "{{field}} ≥ {{value}}",
+    "between": "{{field}} between {{value}} and {{valueTo}}",
+    "not_eq": "{{field}} ≠ {{value}}",
+    "and": " and ",
+    "or": " or ",
+    "fields": {
+      "description": "Description",
+      "amount": "Amount",
+      "account_id": "Account",
+      "type": "Type",
+      "counterparty": "Counterparty"
+    }
+  },
+  "form": {
+    "titleCreate": "New categorisation rule",
+    "titleEdit": "Edit categorisation rule",
+    "name": "Name",
+    "namePlaceholder": "e.g. Supermarkets",
+    "category": "Assign category",
+    "matchType": "Match",
+    "matchAll": "All conditions (AND)",
+    "matchAny": "Any condition (OR)",
+    "active": "Rule is active",
+    "conditions": "Conditions",
+    "addCondition": "Add condition",
+    "removeCondition": "Remove",
+    "field": "Field",
+    "operator": "Operator",
+    "value": "Value",
+    "valueTo": "To",
+    "applyToExisting": "Also apply to past uncategorised transactions",
+    "includeCategorised": "Also recategorise already-categorised transactions",
+    "previewCount": "Matches {{count}} existing transactions",
+    "previewSample": "Sample matches",
+    "save": "Save rule",
+    "validation": {
+      "nameRequired": "Name is required",
+      "categoryRequired": "Category is required",
+      "conditionRequired": "At least one condition is required",
+      "valueRequired": "Value is required"
+    }
+  },
+  "apply": {
+    "title": "Apply rule to past transactions",
+    "description": "“{{name}}” will categorise matching transactions that currently have no category.",
+    "includeCategorised": "Also overwrite transactions that already have a category",
+    "confirm": "Apply now",
+    "success": "Updated {{count}} transactions",
+    "none": "No matching transactions to update",
+    "applyAllTitle": "Apply all active rules",
+    "applyAllDescription": "Every active rule will run against uncategorised transactions, in priority order."
+  },
+  "toast": {
+    "created": "Rule created",
+    "updated": "Rule updated",
+    "deleted": "Rule deleted",
+    "createError": "Could not create rule",
+    "updateError": "Could not update rule",
+    "deleteError": "Could not delete rule",
+    "applyError": "Could not apply rule",
+    "ruleFromTxFailed": "Transaction saved, but the rule could not be created"
+  },
+  "fromTransaction": {
+    "checkbox": "Also create a rule from this transaction",
+    "hint": "Future matching transactions will get this category automatically.",
+    "containsLabel": "Description contains"
+  }
+}

@@ -24,6 +24,7 @@ from app.routers import (
     notifications,
     recurring_expenses,
     reports,
+    rules,
     transactions,
 )
 from app.services.scheduler import shutdown_scheduler, start_scheduler
@@ -120,15 +121,24 @@ if _cors_origins:
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
     """Handle validation errors and log them for debugging."""
+    # Pydantic may put exception objects in error ctx (e.g. ValueError from a
+    # custom validator); those are not JSON-serializable, so stringify them.
+    errors = []
+    for err in exc.errors():
+        item = dict(err)
+        ctx = item.get("ctx")
+        if isinstance(ctx, dict) and "error" in ctx:
+            item["ctx"] = {**ctx, "error": str(ctx["error"])}
+        errors.append(item)
     logging.getLogger("app").warning(
         "Validation error",
         extra={
             "request_url": str(request.url),
             "request_method": request.method,
-            "validation_errors": exc.errors(),
+            "validation_errors": errors,
         },
     )
-    return JSONResponse(status_code=422, content={"detail": exc.errors()})
+    return JSONResponse(status_code=422, content={"detail": errors})
 
 
 # Global exception handler
@@ -192,6 +202,7 @@ app.include_router(recurring_expenses.router, prefix="/api")
 app.include_router(investments.router, prefix="/api")
 app.include_router(documents.router, prefix="/api")
 app.include_router(notifications.router, prefix="/api")
+app.include_router(rules.router, prefix="/api")
 app.include_router(ai_chat.router, prefix="/api")
 app.include_router(bank_sync.router, prefix="/api")
 

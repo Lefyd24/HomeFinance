@@ -2,6 +2,7 @@ from app.models.account import Account
 from app.models.bank_connection import BankConnection
 from app.models.budget import Budget, BudgetCategory
 from app.models.category import Category
+from app.models.category_rule import CategoryRule, CategoryRuleCondition
 from app.models.debt import Debt, DebtPayment
 from app.models.goal import FinancialGoal, GoalTransaction
 from app.models.import_batch import ImportBatch
@@ -30,6 +31,8 @@ __all__ = [
     "Budget",
     "BudgetCategory",
     "Category",
+    "CategoryRule",
+    "CategoryRuleCondition",
     "Debt",
     "DebtPayment",
     "FinancialGoal",
