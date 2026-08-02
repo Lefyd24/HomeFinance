@@ -22,6 +22,8 @@ import { AiAdvisorPage } from './ai-advisor/AiAdvisorPage'
 import { NotificationsPage } from './notifications/NotificationsPage'
 import { ApiKeysPage } from './account-settings/ApiKeysPage'
 import { BankSyncPage } from './bank-sync/BankSyncPage'
+import { PrivacyPage } from './legal/PrivacyPage'
+import { TermsPage } from './legal/TermsPage'
 import { AdminPage } from './admin/AdminPage'
 
 function App() {
@@ -37,6 +39,12 @@ function App() {
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
       <Route path="/reset-password" element={<ResetPasswordPage />} />
       <Route path="/verify-email" element={<VerifyEmailPage />} />
+
+      {/* Public by necessity: Enable Banking, the banks' consent screens and the
+          data-sharing-consents portal link here for people with no account on
+          this instance. Behind RequireAuth these would be dead links. */}
+      <Route path="/privacy" element={<PrivacyPage />} />
+      <Route path="/terms" element={<TermsPage />} />
 
       <Route element={<RequireAuth />}>
         <Route element={<AppShell />}>
