@@ -144,6 +144,31 @@ export function recordRecurringPayment(
   })
 }
 
+export type RecurringPaymentUpdate = Partial<
+  Pick<RecurringPaymentInput, 'amount' | 'payment_date' | 'notes'>
+>
+
+export function updateRecurringPayment(
+  expenseId: number,
+  paymentId: number,
+  input: RecurringPaymentUpdate,
+): Promise<RecurringPayment> {
+  return apiFetch<RecurringPayment>(`/recurring-expenses/${expenseId}/payments/${paymentId}`, {
+    method: 'PUT',
+    body: JSON.stringify(input),
+  })
+}
+
+export function deleteRecurringPayment(
+  expenseId: number,
+  paymentId: number,
+): Promise<{ message: string }> {
+  return apiFetch<{ message: string }>(
+    `/recurring-expenses/${expenseId}/payments/${paymentId}`,
+    { method: 'DELETE' },
+  )
+}
+
 export function getLinkedTransactions(
   id: number,
   skip = 0,

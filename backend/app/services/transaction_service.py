@@ -1,10 +1,26 @@
+import calendar
+from datetime import date, timedelta
 from typing import List, Optional
-from sqlalchemy.orm import Session
+
 from sqlalchemy import func
-from datetime import date
+from sqlalchemy.orm import Session
 
 from app.models import Transaction, Account, Category, Debt, DebtPayment
+from app.models.recurring_expense import RecurringExpense, RecurringExpensePayment
 from app.schemas import TransactionCreate, TransactionUpdate
+
+
+def _rewind_due_date(current: date, interval: int, unit: str) -> date:
+    """Undo one advance of a recurring expense due date."""
+    if unit == "days":
+        return current - timedelta(days=interval)
+    if unit == "weeks":
+        return current - timedelta(weeks=interval)
+    month = current.month - 1 - interval
+    year = current.year + month // 12
+    month = month % 12 + 1
+    day = min(current.day, calendar.monthrange(year, month)[1])
+    return date(year, month, day)
 
 
 class TransactionService:
@@ -267,8 +283,19 @@ class TransactionService:
         return transaction
     
     @staticmethod
-    def delete_transaction(db: Session, transaction: Transaction) -> None:
-        """Delete a transaction and adjust account balance(s)."""
+    def delete_transaction(
+        db: Session,
+        transaction: Transaction,
+        *,
+        affect_linked: bool = False,
+    ) -> None:
+        """Delete a transaction and adjust account balance(s).
+
+        Linked debt / recurring payments are never modified by default — only
+        the FK is cleared so the ledger row can go away. Pass
+        ``affect_linked=True`` to also reverse payment progress (debt balance
+        up / recurring due date rewound, and the payment rows deleted).
+        """
         # Adjust account balance with proper rounding
         account = db.query(Account).filter(Account.id == transaction.account_id).first()
         if account:
@@ -284,27 +311,52 @@ class TransactionService:
                         Account.id == transaction.destination_account_id
                     ).first()
                     if destination_account:
-                        destination_account.balance = round(destination_account.balance - transaction.amount, 2)
-        
-        # Check if transaction is linked to a debt payment and reverse it
-        debt_payment = db.query(DebtPayment).filter(
-            DebtPayment.transaction_id == transaction.id
-        ).first()
-        
+                        destination_account.balance = round(
+                            destination_account.balance - transaction.amount, 2
+                        )
+
+        debt_payment = (
+            db.query(DebtPayment)
+            .filter(DebtPayment.transaction_id == transaction.id)
+            .first()
+        )
         if debt_payment:
-            # Get the associated debt
-            debt = db.query(Debt).filter(Debt.id == debt_payment.debt_id).first()
-            if debt:
-                # Increase the debt balance by the payment amount (reverse the payment)
-                debt.current_balance = round(debt.current_balance + debt_payment.amount, 2)
-                # If debt was marked as paid off, unmark it
-                if debt.is_paid_off and debt.current_balance > 0:
-                    debt.is_paid_off = False
-                    debt.paid_off_date = None
-            
-            # Delete the debt payment record
-            db.delete(debt_payment)
-        
+            if affect_linked:
+                debt = db.query(Debt).filter(Debt.id == debt_payment.debt_id).first()
+                if debt:
+                    debt.current_balance = round(
+                        debt.current_balance + debt_payment.amount, 2
+                    )
+                    if debt.is_paid_off and debt.current_balance > 0:
+                        debt.is_paid_off = False
+                        debt.paid_off_date = None
+                        debt.is_active = True
+                db.delete(debt_payment)
+            else:
+                debt_payment.transaction_id = None
+
+        recurring_payment = (
+            db.query(RecurringExpensePayment)
+            .filter(RecurringExpensePayment.transaction_id == transaction.id)
+            .first()
+        )
+        if recurring_payment:
+            if affect_linked:
+                expense = (
+                    db.query(RecurringExpense)
+                    .filter(RecurringExpense.id == recurring_payment.recurring_expense_id)
+                    .first()
+                )
+                if expense:
+                    expense.next_due_date = _rewind_due_date(
+                        expense.next_due_date,
+                        expense.recurrence_interval,
+                        expense.recurrence_unit,
+                    )
+                db.delete(recurring_payment)
+            else:
+                recurring_payment.transaction_id = None
+
         db.delete(transaction)
         db.commit()
     

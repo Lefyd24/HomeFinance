@@ -81,7 +81,15 @@ export function createColumns(
         <DataTableColumnHeader column={column} title={t('columns.description')} />
       ),
       cell: ({ row }) => {
-        const { description, notes, type, is_imported, is_pending, debt_name } = row.original
+        const {
+          description,
+          notes,
+          type,
+          is_imported,
+          is_pending,
+          debt_name,
+          recurring_expense_name,
+        } = row.original
         const flow = flowOfType(type)
         return (
           <div className="flex min-w-0 items-center gap-2 sm:gap-2.5">
@@ -109,10 +117,12 @@ export function createColumns(
                   </span>
                 )}
               </div>
-              {(notes || debt_name || is_imported) && (
+              {(notes || debt_name || recurring_expense_name || is_imported) && (
                 <span className="truncate text-xs text-muted-foreground">
                   {[
                     debt_name && t('columns.debtPrefix', { name: debt_name }),
+                    recurring_expense_name &&
+                      t('columns.recurringPrefix', { name: recurring_expense_name }),
                     notes,
                     is_imported && t('columns.imported'),
                   ]

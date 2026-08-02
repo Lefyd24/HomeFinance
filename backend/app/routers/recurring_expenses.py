@@ -14,9 +14,11 @@ from app.schemas.recurring_expense import (
     RecurringExpenseUpdate,
     RecurringExpenseResponse,
     RecurringExpensePaymentCreate,
+    RecurringExpensePaymentUpdate,
     RecurringExpensePaymentResponse,
     UpcomingRecurringExpense,
 )
+from app.services.transaction_service import _rewind_due_date
 from app.utils.security import get_current_user_authenticated as get_current_user
 
 router = APIRouter(prefix="/recurring-expenses", tags=["Recurring Expenses"])
@@ -181,6 +183,71 @@ def record_payment(
     db.commit()
     db.refresh(payment)
     return payment
+
+
+@router.put("/{expense_id}/payments/{payment_id}", response_model=RecurringExpensePaymentResponse)
+def update_payment(
+    expense_id: int,
+    payment_id: int,
+    data: RecurringExpensePaymentUpdate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Update a payment record without touching any linked transaction."""
+    expense = db.query(RecurringExpense).filter(
+        RecurringExpense.id == expense_id,
+        RecurringExpense.user_id == current_user.id,
+    ).first()
+    if not expense:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Recurring expense not found")
+
+    payment = db.query(RecurringExpensePayment).filter(
+        RecurringExpensePayment.id == payment_id,
+        RecurringExpensePayment.recurring_expense_id == expense_id,
+        RecurringExpensePayment.user_id == current_user.id,
+    ).first()
+    if not payment:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Payment not found")
+
+    for key, value in data.model_dump(exclude_unset=True).items():
+        setattr(payment, key, value)
+
+    db.commit()
+    db.refresh(payment)
+    return payment
+
+
+@router.delete("/{expense_id}/payments/{payment_id}")
+def delete_payment(
+    expense_id: int,
+    payment_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Delete a payment and rewind next_due_date. Linked transactions stay put."""
+    expense = db.query(RecurringExpense).filter(
+        RecurringExpense.id == expense_id,
+        RecurringExpense.user_id == current_user.id,
+    ).first()
+    if not expense:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Recurring expense not found")
+
+    payment = db.query(RecurringExpensePayment).filter(
+        RecurringExpensePayment.id == payment_id,
+        RecurringExpensePayment.recurring_expense_id == expense_id,
+        RecurringExpensePayment.user_id == current_user.id,
+    ).first()
+    if not payment:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Payment not found")
+
+    expense.next_due_date = _rewind_due_date(
+        expense.next_due_date,
+        expense.recurrence_interval,
+        expense.recurrence_unit,
+    )
+    db.delete(payment)
+    db.commit()
+    return {"message": "Payment deleted successfully"}
 
 
 @router.get("/{expense_id}/transactions")

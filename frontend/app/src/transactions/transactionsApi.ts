@@ -21,7 +21,11 @@ export interface Transaction {
   import_batch_id: string | null
   source_file: string | null
   debt_payment_id?: number | null
+  debt_id?: number | null
   debt_name?: string | null
+  recurring_payment_id?: number | null
+  recurring_expense_id?: number | null
+  recurring_expense_name?: string | null
   created_at: string
   updated_at: string
   account_name?: string | null
@@ -92,8 +96,16 @@ export function updateTransaction(id: number, input: Partial<TransactionInput>):
   })
 }
 
-export function deleteTransaction(id: number): Promise<void> {
-  return apiFetch<void>(`/transactions/${id}`, { method: 'DELETE' })
+export function deleteTransaction(
+  id: number,
+  options: { affectLinked?: boolean } = {},
+): Promise<void> {
+  const qs = options.affectLinked ? '?affect_linked=true' : '?affect_linked=false'
+  return apiFetch<void>(`/transactions/${id}${qs}`, { method: 'DELETE' })
+}
+
+export function isLinkedPayment(transaction: Transaction): boolean {
+  return Boolean(transaction.debt_payment_id || transaction.recurring_payment_id)
 }
 
 export interface TransactionSplitPart {

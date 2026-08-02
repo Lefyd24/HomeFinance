@@ -142,6 +142,12 @@ export function TransactionDetailDialog({
             </Row>
           )}
 
+          {transaction.recurring_payment_id && transaction.recurring_expense_name && (
+            <Row label={t('detail.rows.recurringPayment')}>
+              <Badge variant="secondary">{transaction.recurring_expense_name}</Badge>
+            </Row>
+          )}
+
           {transaction.is_imported && (
             <Row label={t('detail.rows.source')}>
               <span className="text-muted-foreground">

@@ -55,7 +55,10 @@ class TransactionResponse(TransactionBase):
     debt_payment_id: Optional[int] = None
     debt_id: Optional[int] = None
     debt_name: Optional[str] = None
-    
+    recurring_payment_id: Optional[int] = None
+    recurring_expense_id: Optional[int] = None
+    recurring_expense_name: Optional[str] = None
+
     class Config:
         from_attributes = True
 

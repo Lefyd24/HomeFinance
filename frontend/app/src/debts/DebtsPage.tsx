@@ -60,11 +60,12 @@ import {
   useDebtSummary,
   useDebts,
   useDeleteDebt,
+  useDeleteDebtPayment,
   usePayoffComparison,
 } from './useDebts'
 import { DebtFormDialog } from './DebtFormDialog'
 import { DebtPaymentDialog } from './DebtPaymentDialog'
-import type { Debt, DebtType, PayoffComparison } from './debtsApi'
+import type { Debt, DebtPayment, DebtType, PayoffComparison } from './debtsApi'
 
 const TYPE_META: Record<
   DebtType,
@@ -802,76 +803,128 @@ function DebtPaymentsSheet({
 }) {
   const { t } = useTranslation('debts')
   const { data: payments = [], isLoading } = useDebtPayments(debt?.id ?? null, open)
+  const deletePayment = useDeleteDebtPayment()
+  const { confirm, confirmDialog } = useConfirm()
+  const [editingPayment, setEditingPayment] = useState<DebtPayment | null>(null)
+
+  async function handleDeletePayment(payment: DebtPayment) {
+    if (!debt) return
+    const ok = await confirm({
+      title: t('paymentsSheet.deleteConfirm.title'),
+      description: t('paymentsSheet.deleteConfirm.description'),
+      confirmLabel: t('paymentsSheet.deleteConfirm.confirmLabel'),
+    })
+    if (!ok) return
+    try {
+      await deletePayment.mutateAsync({ debtId: debt.id, paymentId: payment.id })
+      toast.success(t('paymentsSheet.toasts.deleted'))
+    } catch {
+      toast.error(t('paymentsSheet.toasts.deleteFailed'))
+    }
+  }
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="w-full sm:max-w-md flex flex-col gap-0 p-0" showCloseButton>
-        <SheetHeader className="border-b border-border px-5 py-4">
-          <SheetTitle>{t('paymentsSheet.title')}</SheetTitle>
-          <SheetDescription>
-            {debt
-              ? t('paymentsSheet.descriptionWithDebt', { name: debt.name })
-              : t('paymentsSheet.descriptionNoDebt')}
-          </SheetDescription>
-        </SheetHeader>
-        <ScrollArea className="flex-1">
-          <div className="flex flex-col gap-2 p-4">
-            {isLoading ? (
-              Array.from({ length: 4 }).map((_, i) => (
-                <Skeleton key={i} className="h-16 w-full rounded-lg" />
-              ))
-            ) : payments.length === 0 ? (
-              <Empty className="py-10">
-                <EmptyHeader>
-                  <EmptyTitle>{t('paymentsSheet.empty.title')}</EmptyTitle>
-                  <EmptyDescription>{t('paymentsSheet.empty.description')}</EmptyDescription>
-                </EmptyHeader>
-              </Empty>
-            ) : (
-              payments.map((payment) => (
-                <div
-                  key={payment.id}
-                  className="rounded-lg border border-border bg-muted/20 p-3 flex items-start justify-between gap-3"
-                >
-                  <div className="min-w-0">
-                    <p className="font-medium text-sm">{t('paymentsSheet.payment')}</p>
-                    {payment.notes && (
-                      <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">
-                        {payment.notes}
-                      </p>
-                    )}
-                    <p className="text-xs text-muted-foreground mt-1 tabular-nums">
-                      {formatDate(payment.payment_date)}
-                      {payment.transaction_id != null && (
-                        <> · {t('paymentsSheet.transactionHash', { id: payment.transaction_id })}</>
+    <>
+      <Sheet open={open} onOpenChange={onOpenChange}>
+        <SheetContent side="right" className="w-full sm:max-w-md flex flex-col gap-0 p-0" showCloseButton>
+          <SheetHeader className="border-b border-border px-5 py-4">
+            <SheetTitle>{t('paymentsSheet.title')}</SheetTitle>
+            <SheetDescription>
+              {debt
+                ? t('paymentsSheet.descriptionWithDebt', { name: debt.name })
+                : t('paymentsSheet.descriptionNoDebt')}
+            </SheetDescription>
+          </SheetHeader>
+          <ScrollArea className="flex-1">
+            <div className="flex flex-col gap-2 p-4">
+              {isLoading ? (
+                Array.from({ length: 4 }).map((_, i) => (
+                  <Skeleton key={i} className="h-16 w-full rounded-lg" />
+                ))
+              ) : payments.length === 0 ? (
+                <Empty className="py-10">
+                  <EmptyHeader>
+                    <EmptyTitle>{t('paymentsSheet.empty.title')}</EmptyTitle>
+                    <EmptyDescription>{t('paymentsSheet.empty.description')}</EmptyDescription>
+                  </EmptyHeader>
+                </Empty>
+              ) : (
+                payments.map((payment) => (
+                  <div
+                    key={payment.id}
+                    className="rounded-lg border border-border bg-muted/20 p-3 flex items-start justify-between gap-3"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <p className="font-medium text-sm">{t('paymentsSheet.payment')}</p>
+                      {payment.notes && (
+                        <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">
+                          {payment.notes}
+                        </p>
                       )}
-                    </p>
-                    {(payment.principal_amount != null || payment.interest_amount != null) && (
-                      <p className="text-xs text-muted-foreground mt-0.5 tabular-nums">
-                        {payment.principal_amount != null &&
-                          t('paymentsSheet.principal', {
-                            amount: formatCurrency(payment.principal_amount),
-                          })}
-                        {payment.principal_amount != null &&
-                          payment.interest_amount != null &&
-                          ' · '}
-                        {payment.interest_amount != null &&
-                          t('paymentsSheet.interest', {
-                            amount: formatCurrency(payment.interest_amount),
-                          })}
+                      <p className="text-xs text-muted-foreground mt-1 tabular-nums">
+                        {formatDate(payment.payment_date)}
+                        {payment.transaction_id != null && (
+                          <> · {t('paymentsSheet.transactionHash', { id: payment.transaction_id })}</>
+                        )}
                       </p>
-                    )}
+                      {(payment.principal_amount != null || payment.interest_amount != null) && (
+                        <p className="text-xs text-muted-foreground mt-0.5 tabular-nums">
+                          {payment.principal_amount != null &&
+                            t('paymentsSheet.principal', {
+                              amount: formatCurrency(payment.principal_amount),
+                            })}
+                          {payment.principal_amount != null &&
+                            payment.interest_amount != null &&
+                            ' · '}
+                          {payment.interest_amount != null &&
+                            t('paymentsSheet.interest', {
+                              amount: formatCurrency(payment.interest_amount),
+                            })}
+                        </p>
+                      )}
+                      <div className="mt-2 flex flex-wrap gap-1">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setEditingPayment(payment)}
+                        >
+                          <HugeiconsIcon icon={Edit02Icon} strokeWidth={2} data-icon="inline-start" />
+                          {t('paymentsSheet.edit')}
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="text-destructive"
+                          onClick={() => void handleDeletePayment(payment)}
+                        >
+                          <HugeiconsIcon icon={Delete02Icon} strokeWidth={2} data-icon="inline-start" />
+                          {t('paymentsSheet.delete')}
+                        </Button>
+                      </div>
+                    </div>
+                    <p className="font-bold tabular-nums text-success shrink-0">
+                      −{formatCurrency(payment.amount)}
+                    </p>
                   </div>
-                  <p className="font-bold tabular-nums text-success shrink-0">
-                    −{formatCurrency(payment.amount)}
-                  </p>
-                </div>
-              ))
-            )}
-          </div>
-        </ScrollArea>
-      </SheetContent>
-    </Sheet>
+                ))
+              )}
+            </div>
+          </ScrollArea>
+        </SheetContent>
+      </Sheet>
+
+      <DebtPaymentDialog
+        open={editingPayment != null}
+        onOpenChange={(next) => {
+          if (!next) setEditingPayment(null)
+        }}
+        debt={debt}
+        payment={editingPayment}
+      />
+      {confirmDialog}
+    </>
   )
 }
 

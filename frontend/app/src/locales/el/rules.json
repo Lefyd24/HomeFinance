@@ -21,6 +21,15 @@
     "neverApplied": "Δεν έχει εφαρμοστεί ακόμα",
     "arrow": "→"
   },
+  "table": {
+    "name": "Κανόνας",
+    "category": "Κατηγορία",
+    "applied": "Χρήση",
+    "active": "Ενεργός",
+    "actions": "Ενέργειες",
+    "searchPlaceholder": "Αναζήτηση κανόνων…",
+    "noMatches": "Κανένας κανόνας δεν ταιριάζει."
+  },
   "summary": {
     "contains": "Η περιγραφή περιέχει «{{value}}»",
     "not_contains": "Η περιγραφή δεν περιέχει «{{value}}»",

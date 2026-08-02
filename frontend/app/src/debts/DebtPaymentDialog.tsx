@@ -12,8 +12,8 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Dialog } from '../ui/Dialog'
 import { Select } from '../ui/Select'
 import { useAccounts } from '../accounts/useAccounts'
-import { useAddDebtPayment } from './useDebts'
-import type { Debt } from './debtsApi'
+import { useAddDebtPayment, useUpdateDebtPayment } from './useDebts'
+import type { Debt, DebtPayment } from './debtsApi'
 
 const NONE = '__none__'
 
@@ -40,15 +40,20 @@ export function DebtPaymentDialog({
   open,
   onOpenChange,
   debt,
+  payment = null,
 }: {
   open: boolean
   onOpenChange: (open: boolean) => void
   debt: Debt | null
+  /** When set, edits this payment without touching any linked transaction. */
+  payment?: DebtPayment | null
 }) {
   const { t } = useTranslation('debts')
   const paymentSchema = useMemo(() => createPaymentSchema(t), [t])
   const addPayment = useAddDebtPayment()
+  const updatePayment = useUpdateDebtPayment()
   const { data: accounts = [] } = useAccounts()
+  const isEdit = payment != null
 
   const {
     register,
@@ -71,6 +76,18 @@ export function DebtPaymentDialog({
 
   useEffect(() => {
     if (!open || !debt) return
+    if (payment) {
+      reset({
+        amount: payment.amount,
+        principal_amount: payment.principal_amount ?? '',
+        interest_amount: payment.interest_amount ?? '',
+        payment_date: payment.payment_date.slice(0, 10),
+        account_id: NONE,
+        create_transaction: false,
+        notes: payment.notes ?? '',
+      })
+      return
+    }
     reset({
       amount: debt.minimum_payment && debt.minimum_payment > 0 ? debt.minimum_payment : 0,
       principal_amount: '',
@@ -80,7 +97,7 @@ export function DebtPaymentDialog({
       create_transaction: true,
       notes: '',
     })
-  }, [open, debt, reset])
+  }, [open, debt, payment, reset])
 
   const accountOptions = [
     { value: NONE, label: t('paymentDialog.account.none') },
@@ -90,36 +107,55 @@ export function DebtPaymentDialog({
   const onSubmit = handleSubmit(async (data) => {
     if (!debt) return
     try {
-      await addPayment.mutateAsync({
-        debtId: debt.id,
-        input: {
-          amount: data.amount,
-          payment_date: data.payment_date,
-          principal_amount: emptyToNull(data.principal_amount),
-          interest_amount: emptyToNull(data.interest_amount),
-          notes: data.notes?.trim() || null,
-          account_id:
-            data.account_id && data.account_id !== NONE ? Number(data.account_id) : null,
-          create_transaction: data.create_transaction,
-        },
-      })
-      toast.success(t('paymentDialog.toasts.recorded'))
+      if (isEdit && payment) {
+        await updatePayment.mutateAsync({
+          debtId: debt.id,
+          paymentId: payment.id,
+          input: {
+            amount: data.amount,
+            payment_date: data.payment_date,
+            principal_amount: emptyToNull(data.principal_amount),
+            interest_amount: emptyToNull(data.interest_amount),
+            notes: data.notes?.trim() || null,
+          },
+        })
+        toast.success(t('paymentDialog.toasts.updated'))
+      } else {
+        await addPayment.mutateAsync({
+          debtId: debt.id,
+          input: {
+            amount: data.amount,
+            payment_date: data.payment_date,
+            principal_amount: emptyToNull(data.principal_amount),
+            interest_amount: emptyToNull(data.interest_amount),
+            notes: data.notes?.trim() || null,
+            account_id:
+              data.account_id && data.account_id !== NONE ? Number(data.account_id) : null,
+            create_transaction: data.create_transaction,
+          },
+        })
+        toast.success(t('paymentDialog.toasts.recorded'))
+      }
       onOpenChange(false)
     } catch {
-      toast.error(t('paymentDialog.toasts.failed'))
+      toast.error(
+        isEdit ? t('paymentDialog.toasts.updateFailed') : t('paymentDialog.toasts.failed'),
+      )
     }
   })
 
-  const isPending = isSubmitting || addPayment.isPending
+  const isPending = isSubmitting || addPayment.isPending || updatePayment.isPending
 
   return (
     <Dialog
       open={open}
-      title={t('paymentDialog.title')}
+      title={isEdit ? t('paymentDialog.titleEdit') : t('paymentDialog.title')}
       description={
-        debt
-          ? t('paymentDialog.descriptionWithDebt', { name: debt.creditor || debt.name })
-          : t('paymentDialog.descriptionNoDebt')
+        isEdit
+          ? t('paymentDialog.descriptionEdit')
+          : debt
+            ? t('paymentDialog.descriptionWithDebt', { name: debt.creditor || debt.name })
+            : t('paymentDialog.descriptionNoDebt')
       }
       icon={Wallet01Icon}
       tone="in"
@@ -136,7 +172,11 @@ export function DebtPaymentDialog({
             {t('paymentDialog.cancel')}
           </Button>
           <Button type="submit" form="debt-payment-form" disabled={isPending || !debt}>
-            {isPending ? t('paymentDialog.saving') : t('paymentDialog.recordPayment')}
+            {isPending
+              ? t('paymentDialog.saving')
+              : isEdit
+                ? t('paymentDialog.saveChanges')
+                : t('paymentDialog.recordPayment')}
           </Button>
         </>
       }
@@ -193,36 +233,44 @@ export function DebtPaymentDialog({
           )}
         </div>
 
-        <div className="flex flex-col gap-2">
-          <Label>{t('paymentDialog.account.label')}</Label>
-          <Controller
-            control={control}
-            name="account_id"
-            render={({ field }) => (
-              <Select
-                value={field.value || NONE}
-                onValueChange={field.onChange}
-                options={accountOptions}
-                placeholder={t('paymentDialog.account.placeholder')}
+        {!isEdit && (
+          <>
+            <div className="flex flex-col gap-2">
+              <Label>{t('paymentDialog.account.label')}</Label>
+              <Controller
+                control={control}
+                name="account_id"
+                render={({ field }) => (
+                  <Select
+                    value={field.value || NONE}
+                    onValueChange={field.onChange}
+                    options={accountOptions}
+                    placeholder={t('paymentDialog.account.placeholder')}
+                  />
+                )}
               />
-            )}
-          />
-          <p className="text-xs text-muted-foreground">{t('paymentDialog.account.hint')}</p>
-        </div>
+              <p className="text-xs text-muted-foreground">{t('paymentDialog.account.hint')}</p>
+            </div>
 
-        <label className="flex items-center gap-3 cursor-pointer">
-          <Controller
-            control={control}
-            name="create_transaction"
-            render={({ field }) => (
-              <Checkbox
-                checked={field.value}
-                onCheckedChange={(checked) => field.onChange(checked === true)}
+            <label className="flex items-center gap-3 cursor-pointer">
+              <Controller
+                control={control}
+                name="create_transaction"
+                render={({ field }) => (
+                  <Checkbox
+                    checked={field.value}
+                    onCheckedChange={(checked) => field.onChange(checked === true)}
+                  />
+                )}
               />
-            )}
-          />
-          <span className="text-sm font-medium">{t('paymentDialog.createTransaction')}</span>
-        </label>
+              <span className="text-sm font-medium">{t('paymentDialog.createTransaction')}</span>
+            </label>
+          </>
+        )}
+
+        {isEdit && (
+          <p className="text-xs text-muted-foreground">{t('paymentDialog.editLeavesTransaction')}</p>
+        )}
 
         <div className="flex flex-col gap-2">
           <Label htmlFor="payment-notes">{t('paymentDialog.notes.label')}</Label>

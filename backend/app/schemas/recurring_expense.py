@@ -55,6 +55,14 @@ class RecurringExpensePaymentCreate(BaseModel):
     notes: Optional[str] = None
 
 
+class RecurringExpensePaymentUpdate(BaseModel):
+    """Update a payment record only — never touches a linked transaction."""
+
+    amount: Optional[float] = Field(None, gt=0)
+    payment_date: Optional[date] = None
+    notes: Optional[str] = None
+
+
 class RecurringExpensePaymentResponse(BaseModel):
     id: int
     recurring_expense_id: int

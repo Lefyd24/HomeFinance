@@ -110,6 +110,16 @@ class DebtPaymentCreate(BaseModel):
     create_transaction: bool = True  # Whether to create a transaction record
 
 
+class DebtPaymentUpdate(BaseModel):
+    """Update a payment record only — never touches a linked transaction."""
+
+    amount: Optional[float] = Field(None, gt=0)
+    payment_date: Optional[date] = None
+    principal_amount: Optional[float] = None
+    interest_amount: Optional[float] = None
+    notes: Optional[str] = None
+
+
 class DebtPaymentResponse(DebtPaymentBase):
     id: int
     debt_id: int

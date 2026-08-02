@@ -17,6 +17,7 @@ from app.schemas import (
     TransactionSplitRequest,
 )
 from app.models import User, Transaction, Account, Category, DebtPayment
+from app.models.recurring_expense import RecurringExpensePayment
 
 router = APIRouter(prefix="/transactions", tags=["Transactions"])
 
@@ -30,6 +31,11 @@ def _serialize_transaction(db: Session, tx: Transaction) -> dict:
     """
     debt_payment = (
         db.query(DebtPayment).filter(DebtPayment.transaction_id == tx.id).first()
+    )
+    recurring_payment = (
+        db.query(RecurringExpensePayment)
+        .filter(RecurringExpensePayment.transaction_id == tx.id)
+        .first()
     )
     return {
         "id": tx.id,
@@ -59,6 +65,15 @@ def _serialize_transaction(db: Session, tx: Transaction) -> dict:
         "debt_id": debt_payment.debt_id if debt_payment else None,
         "debt_name": (
             debt_payment.debt.name if debt_payment and debt_payment.debt else None
+        ),
+        "recurring_payment_id": recurring_payment.id if recurring_payment else None,
+        "recurring_expense_id": (
+            recurring_payment.recurring_expense_id if recurring_payment else None
+        ),
+        "recurring_expense_name": (
+            recurring_payment.recurring_expense.name
+            if recurring_payment and recurring_payment.recurring_expense
+            else None
         ),
     }
 
@@ -244,10 +259,13 @@ def create_transaction(
         db_transaction.category.color if db_transaction.category else None
     )
 
-    # Initialize debt payment fields (will be populated if linked later)
+    # Initialize link fields (populated if linked later in the same request flow)
     result["debt_payment_id"] = None
     result["debt_id"] = None
     result["debt_name"] = None
+    result["recurring_payment_id"] = None
+    result["recurring_expense_id"] = None
+    result["recurring_expense_name"] = None
 
     return result
 
@@ -371,7 +389,7 @@ def get_transaction(
         transaction.category.color if transaction.category else None
     )
 
-    # Check if transaction has a linked debt payment
+    # Check if transaction has a linked debt / recurring payment
     debt_payment = (
         db.query(DebtPayment)
         .filter(DebtPayment.transaction_id == transaction.id)
@@ -381,6 +399,22 @@ def get_transaction(
     result["debt_id"] = debt_payment.debt_id if debt_payment else None
     result["debt_name"] = (
         debt_payment.debt.name if debt_payment and debt_payment.debt else None
+    )
+    recurring_payment = (
+        db.query(RecurringExpensePayment)
+        .filter(RecurringExpensePayment.transaction_id == transaction.id)
+        .first()
+    )
+    result["recurring_payment_id"] = (
+        recurring_payment.id if recurring_payment else None
+    )
+    result["recurring_expense_id"] = (
+        recurring_payment.recurring_expense_id if recurring_payment else None
+    )
+    result["recurring_expense_name"] = (
+        recurring_payment.recurring_expense.name
+        if recurring_payment and recurring_payment.recurring_expense
+        else None
     )
 
     return result
@@ -491,7 +525,7 @@ def update_transaction(
         updated_transaction.category.color if updated_transaction.category else None
     )
 
-    # Check if transaction has a linked debt payment
+    # Check if transaction has a linked debt / recurring payment
     debt_payment = (
         db.query(DebtPayment)
         .filter(DebtPayment.transaction_id == updated_transaction.id)
@@ -502,6 +536,22 @@ def update_transaction(
     result["debt_name"] = (
         debt_payment.debt.name if debt_payment and debt_payment.debt else None
     )
+    recurring_payment = (
+        db.query(RecurringExpensePayment)
+        .filter(RecurringExpensePayment.transaction_id == updated_transaction.id)
+        .first()
+    )
+    result["recurring_payment_id"] = (
+        recurring_payment.id if recurring_payment else None
+    )
+    result["recurring_expense_id"] = (
+        recurring_payment.recurring_expense_id if recurring_payment else None
+    )
+    result["recurring_expense_name"] = (
+        recurring_payment.recurring_expense.name
+        if recurring_payment and recurring_payment.recurring_expense
+        else None
+    )
 
     return result
 
@@ -509,6 +559,13 @@ def update_transaction(
 @router.delete("/{transaction_id}")
 def delete_transaction(
     transaction_id: int,
+    affect_linked: bool = Query(
+        False,
+        description=(
+            "When true, also reverse linked debt/recurring payment progress. "
+            "When false (default), only unlink those payments and delete the transaction."
+        ),
+    ),
     current_user: User = Depends(get_current_user_authenticated),
     db: Session = Depends(get_db),
 ):
@@ -530,8 +587,9 @@ def delete_transaction(
 
     linked_accounts.reject_synced_delete(transaction)
 
-    # Use service to delete with proper balance handling
-    TransactionService.delete_transaction(db, transaction)
+    TransactionService.delete_transaction(
+        db, transaction, affect_linked=affect_linked
+    )
 
     return {"message": "Transaction deleted successfully"}
 

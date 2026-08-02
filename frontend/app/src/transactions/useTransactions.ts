@@ -39,8 +39,18 @@ export function useUpdateTransaction() {
 export function useDeleteTransaction() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (id: number) => transactionsApi.deleteTransaction(id),
-    onSuccess: () => invalidateFinanceQueries(queryClient),
+    mutationFn: ({
+      id,
+      affectLinked = false,
+    }: {
+      id: number
+      affectLinked?: boolean
+    }) => transactionsApi.deleteTransaction(id, { affectLinked }),
+    onSuccess: () => {
+      invalidateFinanceQueries(queryClient)
+      queryClient.invalidateQueries({ queryKey: queryKeys.debts })
+      queryClient.invalidateQueries({ queryKey: ['recurring-expenses'] })
+    },
   })
 }
 

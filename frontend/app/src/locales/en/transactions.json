@@ -27,6 +27,18 @@
       "description": "“{{description}}” will be removed from your ledger. Balances recalculate immediately and this cannot be undone.",
       "confirmLabel": "Delete transaction"
     },
+    "deleteLinkedConfirm": {
+      "title": "This transaction is linked",
+      "descriptionDebt": "It’s recorded as a payment on “{{name}}”.",
+      "descriptionRecurring": "It’s recorded as a payment for “{{name}}”.",
+      "descriptionBoth": "It’s linked to debt “{{debt}}” and recurring expense “{{recurring}}”.",
+      "question": "Should deleting it also undo that payment progress?",
+      "keepProgress": "Delete transaction only",
+      "keepProgressHint": "Keeps the debt/recurring payment; only removes the ledger row.",
+      "undoProgress": "Also undo payment progress",
+      "undoProgressHint": "Reverses the debt balance or rewinds the recurring due date and removes the payment record.",
+      "cancel": "Cancel"
+    },
     "toast": {
       "deleted": "Transaction deleted",
       "deleteError": "Could not delete the transaction. Try again."
@@ -122,7 +134,23 @@
       "updated": "Transaction updated",
       "created": "Transaction created",
       "updateError": "Failed to update transaction",
-      "createError": "Failed to create transaction"
+      "createError": "Failed to create transaction",
+      "debtLinked": "Debt payment recorded",
+      "debtLinkFailed": "Transaction saved, but the debt payment could not be linked",
+      "recurringLinked": "Recurring expense payment recorded",
+      "recurringLinkFailed": "Transaction saved, but the recurring expense link failed"
+    },
+    "links": {
+      "debt": "This is a debt payment",
+      "debtHint": "Records a payment against the selected debt without creating a second transaction.",
+      "debtSelect": "Select debt",
+      "debtPlaceholder": "Choose a debt…",
+      "debtAlreadyLinked": "Already linked to {{name}}",
+      "recurring": "Link to recurring expense",
+      "recurringHint": "Marks this as a payment for the selected bill or subscription.",
+      "recurringSelect": "Select recurring expense",
+      "recurringPlaceholder": "Choose a recurring expense…",
+      "recurringAlreadyLinked": "Already linked to {{name}}"
     },
     "split": {
       "start": "Break this transaction",
@@ -151,6 +179,7 @@
       "account": "Account",
       "category": "Category",
       "paysDown": "Pays down",
+      "recurringPayment": "Recurring payment",
       "source": "Source",
       "imported": "Imported",
       "importedFrom": "Imported from {{file}}",
@@ -172,6 +201,7 @@
       "move": "Transfer"
     },
     "debtPrefix": "Debt · {{name}}",
+    "recurringPrefix": "Recurring · {{name}}",
     "imported": "Imported",
     "menu": {
       "view": "View details"

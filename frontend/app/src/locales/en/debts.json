@@ -97,7 +97,7 @@
   },
   "paymentsSheet": {
     "title": "Payments & transactions",
-    "descriptionWithDebt": "Payment history for {{name}}. Linked transaction IDs appear when a payment created or attached a ledger entry.",
+    "descriptionWithDebt": "Payment history for {{name}}. Editing or deleting a payment updates the debt only — linked ledger transactions stay as they are.",
     "descriptionNoDebt": "Select a debt to view payments.",
     "empty": {
       "title": "No payments yet",
@@ -106,7 +106,18 @@
     "payment": "Payment",
     "transactionHash": "Txn #{{id}}",
     "principal": "Principal {{amount}}",
-    "interest": "Interest {{amount}}"
+    "interest": "Interest {{amount}}",
+    "edit": "Edit",
+    "delete": "Delete",
+    "deleteConfirm": {
+      "title": "Delete this payment?",
+      "description": "The debt balance goes back up by this amount. Any linked transaction in your ledger is left alone.",
+      "confirmLabel": "Delete payment"
+    },
+    "toasts": {
+      "deleted": "Payment deleted",
+      "deleteFailed": "Could not delete the payment"
+    }
   },
   "strategies": {
     "title": "Payoff strategy comparison",
@@ -245,11 +256,15 @@
   },
   "paymentDialog": {
     "title": "Record a payment",
+    "titleEdit": "Edit payment",
     "descriptionWithDebt": "Reduces the balance on {{name}}. Split principal and interest if your statement shows them separately.",
     "descriptionNoDebt": "Reduces the balance on this debt.",
+    "descriptionEdit": "Updates this payment’s effect on the debt. A linked ledger transaction is never changed here.",
+    "editLeavesTransaction": "Any linked transaction stays in your ledger unchanged.",
     "cancel": "Cancel",
     "saving": "Saving…",
     "recordPayment": "Record payment",
+    "saveChanges": "Save changes",
     "amount": {
       "label": "Payment amount"
     },
@@ -277,7 +292,9 @@
     },
     "toasts": {
       "recorded": "Payment recorded",
-      "failed": "Failed to add payment"
+      "updated": "Payment updated",
+      "failed": "Failed to add payment",
+      "updateFailed": "Failed to update payment"
     },
     "validation": {
       "amountRequired": "Payment amount is required",

@@ -37,7 +37,9 @@ import { Dialog } from '../ui/Dialog'
 import { Select } from '../ui/Select'
 import { useAccounts } from '../accounts/useAccounts'
 import { useCategories } from '../categories/useCategories'
+import { useAddDebtPayment, useDebts } from '../debts/useDebts'
 import { useCreateRule } from '../rules/useRules'
+import { useRecordRecurringPayment, useRecurringExpenses } from '../recurring/useRecurring'
 import { useCreateTransaction, useSplitTransaction, useUpdateTransaction } from './useTransactions'
 import type { Transaction, TransactionType } from './transactionsApi'
 
@@ -98,10 +100,18 @@ export function TransactionFormDialog({
   const createTransaction = useCreateTransaction()
   const updateTransaction = useUpdateTransaction()
   const createRule = useCreateRule()
+  const addDebtPayment = useAddDebtPayment()
+  const recordRecurringPayment = useRecordRecurringPayment()
   const { data: accounts = [] } = useAccounts()
   const { data: categories = [] } = useCategories()
+  const { data: debts = [] } = useDebts(true)
+  const { data: recurringExpenses = [] } = useRecurringExpenses()
   const [createRuleFromTx, setCreateRuleFromTx] = useState(false)
   const [ruleNeedle, setRuleNeedle] = useState('')
+  const [linkToDebt, setLinkToDebt] = useState(false)
+  const [debtId, setDebtId] = useState('')
+  const [linkToRecurring, setLinkToRecurring] = useState(false)
+  const [recurringId, setRecurringId] = useState('')
 
   const {
     register,
@@ -177,6 +187,14 @@ export function TransactionFormDialog({
       setSplitParts([])
       setCreateRuleFromTx(false)
       setRuleNeedle(transaction?.description ?? '')
+      const alreadyDebtLinked = Boolean(transaction?.debt_payment_id)
+      setLinkToDebt(alreadyDebtLinked)
+      setDebtId(transaction?.debt_id ? String(transaction.debt_id) : '')
+      const alreadyRecurringLinked = Boolean(transaction?.recurring_payment_id)
+      setLinkToRecurring(alreadyRecurringLinked)
+      setRecurringId(
+        transaction?.recurring_expense_id ? String(transaction.recurring_expense_id) : '',
+      )
     }
   }, [open, transaction, reset])
 
@@ -211,6 +229,7 @@ export function TransactionFormDialog({
     try {
       // Ensure date has time component
       const dateValue = data.date.includes('T') ? data.date : `${data.date}T12:00:00`
+      const paymentDate = dateValue.slice(0, 10)
 
       // Fields the user may always change.
       const editable = {
@@ -229,6 +248,10 @@ export function TransactionFormDialog({
         date: dateValue,
       }
 
+      let savedId = transaction?.id ?? null
+      const alreadyDebtLinked = Boolean(transaction?.debt_payment_id)
+      const alreadyRecurringLinked = Boolean(transaction?.recurring_payment_id)
+
       if (transaction) {
         await updateTransaction.mutateAsync({
           id: transaction.id,
@@ -236,8 +259,60 @@ export function TransactionFormDialog({
         })
         toast.success(t('form.toast.updated'))
       } else {
-        await createTransaction.mutateAsync(input)
+        const created = await createTransaction.mutateAsync(input)
+        savedId = created.id
         toast.success(t('form.toast.created'))
+      }
+
+      // Debt / recurring links are best-effort after the transaction is saved.
+      if (
+        savedId != null &&
+        !isTransfer &&
+        data.type === 'expense' &&
+        linkToDebt &&
+        debtId &&
+        !alreadyDebtLinked
+      ) {
+        try {
+          await addDebtPayment.mutateAsync({
+            debtId: Number(debtId),
+            input: {
+              amount: data.amount,
+              payment_date: paymentDate,
+              notes: data.notes || `Payment from transaction: ${data.description}`,
+              account_id: Number(data.account_id),
+              transaction_id: savedId,
+              create_transaction: false,
+            },
+          })
+          toast.success(t('form.toast.debtLinked'))
+        } catch {
+          toast.error(t('form.toast.debtLinkFailed'))
+        }
+      }
+
+      if (
+        savedId != null &&
+        !isTransfer &&
+        data.type === 'expense' &&
+        linkToRecurring &&
+        recurringId &&
+        !alreadyRecurringLinked
+      ) {
+        try {
+          await recordRecurringPayment.mutateAsync({
+            id: Number(recurringId),
+            input: {
+              amount: data.amount,
+              payment_date: paymentDate,
+              transaction_id: savedId,
+              notes: data.notes || null,
+            },
+          })
+          toast.success(t('form.toast.recurringLinked'))
+        } catch {
+          toast.error(t('form.toast.recurringLinkFailed'))
+        }
       }
 
       // Rule creation is best-effort: a failure must not undo the saved transaction.
@@ -282,6 +357,21 @@ export function TransactionFormDialog({
       value: String(cat.id),
       label: cat.name,
     }))
+
+  const activeDebts = debts.filter((d) => d.is_active && !d.is_paid_off)
+  const activeRecurring = recurringExpenses.filter((r) => r.is_active)
+  const alreadyDebtLinked = Boolean(transaction?.debt_payment_id)
+  const alreadyRecurringLinked = Boolean(transaction?.recurring_payment_id)
+  const showLinkSection = !isTransfer && selectedType === 'expense'
+
+  const debtOptions = activeDebts.map((d) => ({
+    value: String(d.id),
+    label: d.name,
+  }))
+  const recurringOptions = activeRecurring.map((r) => ({
+    value: String(r.id),
+    label: r.name,
+  }))
 
   const flow = selectedType === 'income' ? 'in' : selectedType === 'transfer' ? 'move' : 'out'
   const formId = 'transaction-form'
@@ -544,6 +634,86 @@ export function TransactionFormDialog({
                 </CollapsibleContent>
               </div>
             </Collapsible>
+          )}
+
+          {showLinkSection && activeDebts.length > 0 && (
+            <div className="flex flex-col gap-2 rounded-lg border border-border/60 px-3 py-2">
+              {alreadyDebtLinked ? (
+                <p className="text-sm text-muted-foreground">
+                  {t('form.links.debtAlreadyLinked', {
+                    name: transaction?.debt_name || `#${transaction?.debt_id}`,
+                  })}
+                </p>
+              ) : (
+                <>
+                  <label className="flex cursor-pointer items-start gap-2 text-sm">
+                    <Checkbox
+                      checked={linkToDebt}
+                      onCheckedChange={(v) => setLinkToDebt(Boolean(v))}
+                      className="mt-0.5"
+                    />
+                    <span>
+                      <span className="font-medium">{t('form.links.debt')}</span>
+                      <span className="mt-0.5 block text-xs text-muted-foreground">
+                        {t('form.links.debtHint')}
+                      </span>
+                    </span>
+                  </label>
+                  {linkToDebt && (
+                    <Field>
+                      <FieldLabel>{t('form.links.debtSelect')}</FieldLabel>
+                      <Select
+                        value={debtId}
+                        onValueChange={setDebtId}
+                        options={debtOptions}
+                        placeholder={t('form.links.debtPlaceholder')}
+                      />
+                    </Field>
+                  )}
+                </>
+              )}
+            </div>
+          )}
+
+          {showLinkSection && activeRecurring.length > 0 && (
+            <div className="flex flex-col gap-2 rounded-lg border border-border/60 px-3 py-2">
+              {alreadyRecurringLinked ? (
+                <p className="text-sm text-muted-foreground">
+                  {t('form.links.recurringAlreadyLinked', {
+                    name:
+                      transaction?.recurring_expense_name ||
+                      `#${transaction?.recurring_expense_id}`,
+                  })}
+                </p>
+              ) : (
+                <>
+                  <label className="flex cursor-pointer items-start gap-2 text-sm">
+                    <Checkbox
+                      checked={linkToRecurring}
+                      onCheckedChange={(v) => setLinkToRecurring(Boolean(v))}
+                      className="mt-0.5"
+                    />
+                    <span>
+                      <span className="font-medium">{t('form.links.recurring')}</span>
+                      <span className="mt-0.5 block text-xs text-muted-foreground">
+                        {t('form.links.recurringHint')}
+                      </span>
+                    </span>
+                  </label>
+                  {linkToRecurring && (
+                    <Field>
+                      <FieldLabel>{t('form.links.recurringSelect')}</FieldLabel>
+                      <Select
+                        value={recurringId}
+                        onValueChange={setRecurringId}
+                        options={recurringOptions}
+                        placeholder={t('form.links.recurringPlaceholder')}
+                      />
+                    </Field>
+                  )}
+                </>
+              )}
+            </div>
           )}
 
           <Field data-invalid={errors.date ? true : undefined}>

@@ -12,6 +12,7 @@ from app.schemas.debt import (
     DebtUpdate,
     DebtResponse,
     DebtPaymentCreate,
+    DebtPaymentUpdate,
     DebtPaymentResponse,
     DebtSummary,
     PayoffComparison,
@@ -428,6 +429,92 @@ def get_payments(
     ).order_by(DebtPayment.payment_date.desc()).limit(limit).all()
     
     return payments
+
+
+@router.put("/{debt_id}/payments/{payment_id}", response_model=DebtPaymentResponse)
+def update_payment(
+    debt_id: int,
+    payment_id: int,
+    payment_data: DebtPaymentUpdate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Update a debt payment without touching any linked transaction."""
+    debt = db.query(Debt).filter(
+        Debt.id == debt_id,
+        Debt.user_id == current_user.id,
+    ).first()
+    if not debt:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Debt not found")
+
+    payment = db.query(DebtPayment).filter(
+        DebtPayment.id == payment_id,
+        DebtPayment.debt_id == debt_id,
+        DebtPayment.user_id == current_user.id,
+    ).first()
+    if not payment:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Payment not found")
+
+    data = payment_data.model_dump(exclude_unset=True)
+    old_amount = payment.amount
+    if "amount" in data and data["amount"] is not None:
+        delta = data["amount"] - old_amount
+        debt.current_balance = round(debt.current_balance - delta, 2)
+        if debt.current_balance < 0:
+            debt.current_balance = 0
+        if debt.current_balance <= 0:
+            debt.current_balance = 0
+            debt.is_paid_off = True
+            debt.paid_off_date = date.today()
+            debt.is_active = False
+        elif debt.is_paid_off and debt.current_balance > 0:
+            debt.is_paid_off = False
+            debt.paid_off_date = None
+            debt.is_active = True
+
+    for key, value in data.items():
+        setattr(payment, key, value)
+
+    db.commit()
+    db.refresh(payment)
+    return payment
+
+
+@router.delete("/{debt_id}/payments/{payment_id}")
+def delete_payment(
+    debt_id: int,
+    payment_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Delete a debt payment and reverse its effect on the debt balance.
+
+    Any linked ledger transaction is left untouched.
+    """
+    debt = db.query(Debt).filter(
+        Debt.id == debt_id,
+        Debt.user_id == current_user.id,
+    ).first()
+    if not debt:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Debt not found")
+
+    payment = db.query(DebtPayment).filter(
+        DebtPayment.id == payment_id,
+        DebtPayment.debt_id == debt_id,
+        DebtPayment.user_id == current_user.id,
+    ).first()
+    if not payment:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Payment not found")
+
+    debt.current_balance = round(debt.current_balance + payment.amount, 2)
+    if debt.is_paid_off and debt.current_balance > 0:
+        debt.is_paid_off = False
+        debt.paid_off_date = None
+        debt.is_active = True
+
+    db.delete(payment)
+    db.commit()
+    return {"message": "Payment deleted successfully"}
 
 
 @router.get("/strategies/compare", response_model=PayoffComparison)

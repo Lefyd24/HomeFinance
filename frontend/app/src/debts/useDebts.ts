@@ -68,6 +68,42 @@ export function useAddDebtPayment() {
       queryClient.invalidateQueries({
         queryKey: [...queryKeys.debts, variables.debtId, 'payments'],
       })
+      queryClient.invalidateQueries({ queryKey: ['transactions'] })
+    },
+  })
+}
+
+export function useUpdateDebtPayment() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({
+      debtId,
+      paymentId,
+      input,
+    }: {
+      debtId: number
+      paymentId: number
+      input: debtsApi.DebtPaymentUpdateInput
+    }) => debtsApi.updateDebtPayment(debtId, paymentId, input),
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.debts })
+      queryClient.invalidateQueries({
+        queryKey: [...queryKeys.debts, variables.debtId, 'payments'],
+      })
+    },
+  })
+}
+
+export function useDeleteDebtPayment() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ debtId, paymentId }: { debtId: number; paymentId: number }) =>
+      debtsApi.deleteDebtPayment(debtId, paymentId),
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.debts })
+      queryClient.invalidateQueries({
+        queryKey: [...queryKeys.debts, variables.debtId, 'payments'],
+      })
     },
   })
 }

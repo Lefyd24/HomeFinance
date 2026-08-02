@@ -202,6 +202,30 @@ export function addDebtPayment(debtId: number, input: DebtPaymentInput): Promise
   })
 }
 
+export type DebtPaymentUpdateInput = Partial<
+  Pick<DebtPaymentInput, 'amount' | 'payment_date' | 'principal_amount' | 'interest_amount' | 'notes'>
+>
+
+export function updateDebtPayment(
+  debtId: number,
+  paymentId: number,
+  input: DebtPaymentUpdateInput,
+): Promise<DebtPayment> {
+  return apiFetch<DebtPayment>(`/debts/${debtId}/payments/${paymentId}`, {
+    method: 'PUT',
+    body: JSON.stringify(input),
+  })
+}
+
+export function deleteDebtPayment(
+  debtId: number,
+  paymentId: number,
+): Promise<{ message: string }> {
+  return apiFetch<{ message: string }>(`/debts/${debtId}/payments/${paymentId}`, {
+    method: 'DELETE',
+  })
+}
+
 export function comparePayoffStrategies(extraPayment = 0): Promise<PayoffComparison> {
   return apiFetch<PayoffComparison>(
     `/debts/strategies/compare?extra_payment=${extraPayment}`,

@@ -61,7 +61,33 @@
     "table": {
       "date": "Date",
       "description": "Description",
-      "amount": "Amount"
+      "amount": "Amount",
+      "actions": "Payment actions"
+    },
+    "paymentOnly": "Payment record only"
+  },
+  "paymentEdit": {
+    "title": "Edit payment",
+    "description": "Update this payment record. The linked ledger transaction is left unchanged.",
+    "amount": "Amount (€)",
+    "date": "Payment date",
+    "notes": "Notes",
+    "save": "Save changes",
+    "leavesTransaction": "Any linked transaction on the Transactions page is not modified.",
+    "validation": {
+      "amountRequired": "Amount must be greater than 0",
+      "dateRequired": "Payment date is required"
+    },
+    "toasts": {
+      "updated": "Payment updated",
+      "failed": "Could not update payment",
+      "deleted": "Payment removed",
+      "deleteFailed": "Could not remove payment"
+    },
+    "deleteConfirm": {
+      "title": "Remove this payment?",
+      "description": "Removes the payment from this recurring item and rewinds its due date. Any linked transaction stays in your ledger.",
+      "confirmLabel": "Remove payment"
     }
   },
   "actions": {

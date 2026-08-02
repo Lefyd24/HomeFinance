@@ -57,13 +57,15 @@ import { useAccounts } from '../accounts/useAccounts'
 import { useCategories } from '../categories/useCategories'
 import {
   useDeleteRecurringExpense,
+  useDeleteRecurringPayment,
   useLinkedTransactions,
   useRecurringExpenses,
   useSetRecurringActive,
 } from './useRecurring'
 import { RecurringFormDialog } from './RecurringFormDialog'
 import { MarkPaidDialog } from './MarkPaidDialog'
-import type { RecurringExpense } from './recurringApi'
+import { RecurringPaymentEditDialog } from './RecurringPaymentEditDialog'
+import type { LinkedTransactionRow, RecurringExpense } from './recurringApi'
 import {
   cadenceLabel,
   daysUntilDue,
@@ -94,6 +96,7 @@ export function RecurringPage() {
   const { data: accounts = [] } = useAccounts()
   const { data: categories = [] } = useCategories()
   const deleteRecurring = useDeleteRecurringExpense()
+  const deletePayment = useDeleteRecurringPayment()
   const setActive = useSetRecurringActive()
   const { confirm, confirmDialog } = useConfirm()
 
@@ -102,6 +105,7 @@ export function RecurringPage() {
   const [payOpen, setPayOpen] = useState(false)
   const [paying, setPaying] = useState<RecurringExpense | null>(null)
   const [detailId, setDetailId] = useState<number | null>(null)
+  const [editingPayment, setEditingPayment] = useState<LinkedTransactionRow | null>(null)
   const [view, setView] = useState<View>('all')
 
   const categoryById = useMemo(() => new Map(categories.map((c) => [c.id, c])), [categories])
@@ -194,6 +198,22 @@ export function RecurringPage() {
       if (detailId === expense.id) setDetailId(null)
     } catch {
       toast.error(t('toast.deleteError'))
+    }
+  }
+
+  const handleDeletePayment = async (row: LinkedTransactionRow) => {
+    if (detailId == null) return
+    const ok = await confirm({
+      title: t('paymentEdit.deleteConfirm.title'),
+      description: t('paymentEdit.deleteConfirm.description'),
+      confirmLabel: t('paymentEdit.deleteConfirm.confirmLabel'),
+    })
+    if (!ok) return
+    try {
+      await deletePayment.mutateAsync({ expenseId: detailId, paymentId: row.payment_id })
+      toast.success(t('paymentEdit.toasts.deleted'))
+    } catch {
+      toast.error(t('paymentEdit.toasts.deleteFailed'))
     }
   }
 
@@ -396,6 +416,9 @@ export function RecurringPage() {
                         <TableHead>{t('detail.table.date')}</TableHead>
                         <TableHead>{t('detail.table.description')}</TableHead>
                         <TableHead className="text-end">{t('detail.table.amount')}</TableHead>
+                        <TableHead className="w-10">
+                          <span className="sr-only">{t('detail.table.actions')}</span>
+                        </TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -422,10 +445,44 @@ export function RecurringPage() {
                                   color={row.category_color}
                                 />
                               )}
+                              {!row.transaction_id && (
+                                <span className="text-xs text-muted-foreground">
+                                  {t('detail.paymentOnly')}
+                                </span>
+                              )}
                             </div>
                           </TableCell>
                           <TableCell className="whitespace-nowrap text-end font-semibold tabular-nums">
                             {formatCurrency(row.amount)}
+                          </TableCell>
+                          <TableCell className="text-end">
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="icon-sm"
+                                  aria-label={t('detail.table.actions')}
+                                >
+                                  <HugeiconsIcon icon={MoreVerticalIcon} strokeWidth={2} />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuGroup>
+                                  <DropdownMenuItem onClick={() => setEditingPayment(row)}>
+                                    <HugeiconsIcon icon={PencilEdit02Icon} strokeWidth={2} />
+                                    {t('common:actions.edit')}
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem
+                                    variant="destructive"
+                                    onClick={() => void handleDeletePayment(row)}
+                                  >
+                                    <HugeiconsIcon icon={Delete02Icon} strokeWidth={2} />
+                                    {t('common:actions.delete')}
+                                  </DropdownMenuItem>
+                                </DropdownMenuGroup>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
                           </TableCell>
                         </TableRow>
                       ))}
@@ -472,6 +529,14 @@ export function RecurringPage() {
           if (!open) setPaying(null)
         }}
         expense={paying}
+      />
+      <RecurringPaymentEditDialog
+        open={editingPayment != null}
+        onOpenChange={(open) => {
+          if (!open) setEditingPayment(null)
+        }}
+        expenseId={detailId}
+        payment={editingPayment}
       />
       {confirmDialog}
     </PageContainer>

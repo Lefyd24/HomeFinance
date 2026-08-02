@@ -21,6 +21,15 @@
     "neverApplied": "Not applied yet",
     "arrow": "→"
   },
+  "table": {
+    "name": "Rule",
+    "category": "Category",
+    "applied": "Usage",
+    "active": "Active",
+    "actions": "Actions",
+    "searchPlaceholder": "Search rules…",
+    "noMatches": "No rules match that search."
+  },
   "summary": {
     "contains": "Description contains “{{value}}”",
     "not_contains": "Description does not contain “{{value}}”",

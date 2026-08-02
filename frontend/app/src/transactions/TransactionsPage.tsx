@@ -20,6 +20,16 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from '@/components/ui/empty'
+import {
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogMedia,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 import { DataTable } from '@/components/data-table/data-table'
 import { DataTablePagination } from '@/components/data-table/data-table-pagination'
 import { DataTableViewOptions } from '@/components/data-table/data-table-view-options'
@@ -35,7 +45,8 @@ import { TransactionFilterBar, type DatePreset } from './TransactionFilterBar'
 import { TransactionFormDialog } from './TransactionFormDialog'
 import { TransactionDetailDialog } from './TransactionDetailDialog'
 import { currentMonthRange } from '../lib/format'
-import type { Transaction, TransactionFilters } from './transactionsApi'
+import { isLinkedPayment, type Transaction, type TransactionFilters } from './transactionsApi'
+import { Alert01Icon } from '@hugeicons/core-free-icons'
 
 const iso = (date: Date) =>
   `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(
@@ -95,6 +106,7 @@ export function TransactionsPage() {
   const [editDialogOpen, setEditDialogOpen] = useState(false)
   const [detailDialogOpen, setDetailDialogOpen] = useState(false)
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null)
+  const [linkedDeleteTarget, setLinkedDeleteTarget] = useState<Transaction | null>(null)
 
   const { data: transactionData, isLoading } = useTransactions(filters)
   const { data: accounts = [] } = useAccounts()
@@ -119,6 +131,15 @@ export function TransactionsPage() {
     setEditDialogOpen(true)
   }
 
+  async function performDelete(transaction: Transaction, affectLinked: boolean) {
+    try {
+      await deleteTransaction.mutateAsync({ id: transaction.id, affectLinked })
+      toast.success(t('page.toast.deleted'))
+    } catch {
+      toast.error(t('page.toast.deleteError'))
+    }
+  }
+
   const handleDelete = async (transaction: Transaction) => {
     const ok = await confirm({
       title: t('page.deleteConfirm.title'),
@@ -126,12 +147,39 @@ export function TransactionsPage() {
       confirmLabel: t('page.deleteConfirm.confirmLabel'),
     })
     if (!ok) return
-    try {
-      await deleteTransaction.mutateAsync(transaction.id)
-      toast.success(t('page.toast.deleted'))
-    } catch {
-      toast.error(t('page.toast.deleteError'))
+
+    if (isLinkedPayment(transaction)) {
+      setLinkedDeleteTarget(transaction)
+      return
     }
+
+    await performDelete(transaction, false)
+  }
+
+  async function confirmLinkedDelete(affectLinked: boolean) {
+    if (!linkedDeleteTarget) return
+    const target = linkedDeleteTarget
+    setLinkedDeleteTarget(null)
+    await performDelete(target, affectLinked)
+  }
+
+  function linkedDeleteDescription(tx: Transaction): string {
+    const hasDebt = Boolean(tx.debt_payment_id)
+    const hasRecurring = Boolean(tx.recurring_payment_id)
+    if (hasDebt && hasRecurring) {
+      return t('page.deleteLinkedConfirm.descriptionBoth', {
+        debt: tx.debt_name || `#${tx.debt_id}`,
+        recurring: tx.recurring_expense_name || `#${tx.recurring_expense_id}`,
+      })
+    }
+    if (hasDebt) {
+      return t('page.deleteLinkedConfirm.descriptionDebt', {
+        name: tx.debt_name || `#${tx.debt_id}`,
+      })
+    }
+    return t('page.deleteLinkedConfirm.descriptionRecurring', {
+      name: tx.recurring_expense_name || `#${tx.recurring_expense_id}`,
+    })
   }
 
   const columns = useMemo(
@@ -352,6 +400,56 @@ export function TransactionsPage() {
         onEdit={handleEdit}
         onDelete={handleDelete}
       />
+
+      <AlertDialog
+        open={linkedDeleteTarget != null}
+        onOpenChange={(open) => !open && setLinkedDeleteTarget(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogMedia className="bg-warning/15 text-warning">
+              <HugeiconsIcon icon={Alert01Icon} strokeWidth={2} />
+            </AlertDialogMedia>
+            <AlertDialogTitle>{t('page.deleteLinkedConfirm.title')}</AlertDialogTitle>
+            <AlertDialogDescription className="flex flex-col gap-2">
+              {linkedDeleteTarget && <span>{linkedDeleteDescription(linkedDeleteTarget)}</span>}
+              <span>{t('page.deleteLinkedConfirm.question')}</span>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex-col gap-2 sm:flex-col">
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full"
+              onClick={() => void confirmLinkedDelete(false)}
+            >
+              <span className="flex flex-col items-start gap-0.5 text-left">
+                <span>{t('page.deleteLinkedConfirm.keepProgress')}</span>
+                <span className="text-xs font-normal text-muted-foreground">
+                  {t('page.deleteLinkedConfirm.keepProgressHint')}
+                </span>
+              </span>
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              className="w-full"
+              onClick={() => void confirmLinkedDelete(true)}
+            >
+              <span className="flex flex-col items-start gap-0.5 text-left">
+                <span>{t('page.deleteLinkedConfirm.undoProgress')}</span>
+                <span className="text-xs font-normal text-destructive-foreground/80">
+                  {t('page.deleteLinkedConfirm.undoProgressHint')}
+                </span>
+              </span>
+            </Button>
+            <AlertDialogCancel className="w-full">
+              {t('page.deleteLinkedConfirm.cancel')}
+            </AlertDialogCancel>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       {confirmDialog}
     </PageContainer>
   )
