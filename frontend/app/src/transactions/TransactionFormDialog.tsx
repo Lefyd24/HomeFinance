@@ -1,9 +1,11 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { toast } from 'sonner'
+import { SplitFields, splitRemainderCents, toCents } from './SplitFields'
+import type { SplitPartDraft } from './SplitFields'
 import { HugeiconsIcon } from '@hugeicons/react'
 import {
   ArrowDownLeft01Icon,
@@ -30,7 +32,7 @@ import { Dialog } from '../ui/Dialog'
 import { Select } from '../ui/Select'
 import { useAccounts } from '../accounts/useAccounts'
 import { useCategories } from '../categories/useCategories'
-import { useCreateTransaction, useUpdateTransaction } from './useTransactions'
+import { useCreateTransaction, useSplitTransaction, useUpdateTransaction } from './useTransactions'
 import type { Transaction, TransactionType } from './transactionsApi'
 
 const transactionSchema = z
@@ -116,6 +118,16 @@ export function TransactionFormDialog({
   const selectedType = watch('type')
   const isTransfer = selectedType === 'transfer'
 
+  // A bank-synced transaction has its amount, date, type and account fixed by
+  // the bank — the next sync would overwrite any edit. Splitting is offered
+  // instead so the money can still be spread across categories.
+  const isBankSynced = Boolean(transaction?.is_bank_synced)
+  const splitTransaction = useSplitTransaction()
+  const [splitting, setSplitting] = useState(false)
+  const [splitParts, setSplitParts] = useState<SplitPartDraft[]>([])
+  const totalCents = transaction ? Math.round(transaction.amount * 100) : 0
+  const splitBalanced = splitRemainderCents(splitParts, totalCents) === 0
+
   // Reset form when dialog opens/closes or transaction changes
   useEffect(() => {
     if (open) {
@@ -150,6 +162,10 @@ export function TransactionFormDialog({
         })
       }
     }
+    if (open) {
+      setSplitting(false)
+      setSplitParts([])
+    }
   }, [open, transaction, reset])
 
   // Clear destination/category when type changes
@@ -161,24 +177,51 @@ export function TransactionFormDialog({
     }
   }, [isTransfer, setValue])
 
+  async function handleSplit() {
+    if (!transaction) return
+    try {
+      await splitTransaction.mutateAsync({
+        id: transaction.id,
+        parts: splitParts.map((part) => ({
+          amount: toCents(part.amount) / 100,
+          category_id: part.categoryId ? Number(part.categoryId) : null,
+        })),
+      })
+      toast.success(t('form.split.done', { count: splitParts.length }))
+      onOpenChange(false)
+    } catch (err) {
+      // The API explains mismatched totals precisely — show that, not a generic error.
+      toast.error(err instanceof Error ? err.message : t('form.toast.updateError'))
+    }
+  }
+
   const onSubmit = handleSubmit(async (data) => {
     try {
       // Ensure date has time component
       const dateValue = data.date.includes('T') ? data.date : `${data.date}T12:00:00`
 
+      // Fields the user may always change.
+      const editable = {
+        category_id: !isTransfer && data.category_id ? Number(data.category_id) : null,
+        description: data.description,
+        notes: data.notes || null,
+      }
+      // Fields the bank owns on a synced row. Sending them unchanged is
+      // harmless server-side, but omitting them keeps the intent obvious.
       const input = {
+        ...editable,
         type: data.type,
         amount: data.amount,
         account_id: Number(data.account_id),
         destination_account_id: isTransfer ? Number(data.destination_account_id) : null,
-        category_id: !isTransfer && data.category_id ? Number(data.category_id) : null,
-        description: data.description,
         date: dateValue,
-        notes: data.notes || null,
       }
 
       if (transaction) {
-        await updateTransaction.mutateAsync({ id: transaction.id, input })
+        await updateTransaction.mutateAsync({
+          id: transaction.id,
+          input: isBankSynced ? editable : input,
+        })
         toast.success(t('form.toast.updated'))
       } else {
         await createTransaction.mutateAsync(input)
@@ -285,6 +328,10 @@ export function TransactionFormDialog({
                 placeholder={t('form.fields.amountPlaceholder')}
                 aria-invalid={errors.amount ? true : undefined}
                 className="text-lg font-semibold tabular-nums"
+                // Locked for synced rows: the bank owns this figure and the next
+                // sync would overwrite anything typed here.
+                readOnly={isBankSynced}
+                disabled={isBankSynced}
                 {...register('amount')}
               />
               <InputGroupAddon align="inline-end">
@@ -292,6 +339,71 @@ export function TransactionFormDialog({
               </InputGroupAddon>
             </InputGroup>
             <FieldError errors={[errors.amount]} />
+
+            {isBankSynced && !splitting && (
+              <div className="mt-1.5 flex flex-wrap items-center justify-between gap-2">
+                <span className="text-xs text-muted-foreground">
+                  {t('form.split.lockedHint')}
+                </span>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setSplitting(true)
+                    // Seed with the whole amount plus an empty row, so the user
+                    // only has to move money from the first part to the second.
+                    setSplitParts([
+                      {
+                        amount: (totalCents / 100).toFixed(2),
+                        categoryId: transaction?.category_id
+                          ? String(transaction.category_id)
+                          : '',
+                      },
+                      { amount: '', categoryId: '' },
+                    ])
+                  }}
+                >
+                  {t('form.split.start')}
+                </Button>
+              </div>
+            )}
+
+            {isBankSynced && splitting && (
+              <div className="mt-2 flex flex-col gap-2">
+                <p className="text-xs text-muted-foreground">
+                  {t('form.split.help', {
+                    total: (totalCents / 100).toFixed(2),
+                    currency: t('form.fields.currency'),
+                  })}
+                </p>
+                <SplitFields
+                  parts={splitParts}
+                  onChange={setSplitParts}
+                  totalCents={totalCents}
+                  categoryOptions={categoryOptions}
+                  currency={t('form.fields.currency')}
+                />
+                <div className="flex justify-end gap-2">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setSplitting(false)}
+                  >
+                    {t('form.split.cancel')}
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    disabled={!splitBalanced || splitTransaction.isPending}
+                    onClick={() => void handleSplit()}
+                  >
+                    {t('form.split.confirm')}
+                  </Button>
+                </div>
+              </div>
+            )}
           </Field>
 
           <Field data-invalid={errors.description ? true : undefined}>

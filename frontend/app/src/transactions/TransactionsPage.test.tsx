@@ -33,6 +33,7 @@ const sampleTransaction: transactionsApi.Transaction = {
   notes: null,
   is_imported: false,
   is_pending: false,
+  is_bank_synced: false,
   import_batch_id: null,
   source_file: null,
   created_at: '',

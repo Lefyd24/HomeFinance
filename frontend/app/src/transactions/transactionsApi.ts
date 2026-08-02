@@ -16,6 +16,8 @@ export interface Transaction {
   is_imported: boolean
   /** Not yet booked by the bank — may change or vanish on the next sync. */
   is_pending: boolean
+  /** Came from a bank sync: amount, date, type and account are locked. */
+  is_bank_synced: boolean
   import_batch_id: string | null
   source_file: string | null
   debt_payment_id?: number | null
@@ -83,7 +85,7 @@ export function createTransaction(input: TransactionInput): Promise<Transaction>
   })
 }
 
-export function updateTransaction(id: number, input: TransactionInput): Promise<Transaction> {
+export function updateTransaction(id: number, input: Partial<TransactionInput>): Promise<Transaction> {
   return apiFetch<Transaction>(`/transactions/${id}`, {
     method: 'PUT',
     body: JSON.stringify(input),
@@ -92,4 +94,27 @@ export function updateTransaction(id: number, input: TransactionInput): Promise<
 
 export function deleteTransaction(id: number): Promise<void> {
   return apiFetch<void>(`/transactions/${id}`, { method: 'DELETE' })
+}
+
+export interface TransactionSplitPart {
+  amount: number
+  category_id?: number | null
+  notes?: string | null
+  description?: string | null
+}
+
+/**
+ * Break one transaction into parts that still sum to the original amount.
+ *
+ * The backend keeps the original row (it anchors bank deduplication) and
+ * reduces it to the first part, so the returned array is [original, ...extras].
+ */
+export function splitTransaction(
+  id: number,
+  parts: TransactionSplitPart[],
+): Promise<Transaction[]> {
+  return apiFetch<Transaction[]>(`/transactions/${id}/split`, {
+    method: 'POST',
+    body: JSON.stringify({ parts }),
+  })
 }

@@ -41,6 +41,9 @@ class TransactionResponse(TransactionBase):
     # Not yet booked by the bank — shown differently and liable to change or
     # disappear on the next sync.
     is_pending: bool = False
+    # Came from a bank sync, so its amount/date/account are locked. The UI uses
+    # this to offer "break this transaction" instead of an amount field.
+    is_bank_synced: bool = False
     import_batch_id: Optional[str]
     source_file: Optional[str]
     created_at: datetime
@@ -62,6 +65,26 @@ class TransactionList(BaseModel):
     total: int
     page: int
     per_page: int
+
+
+class TransactionSplitPart(BaseModel):
+    amount: float = Field(..., gt=0)
+    category_id: Optional[int] = None
+    notes: Optional[str] = None
+    # Optional per-part label; the original description is kept when absent.
+    description: Optional[str] = Field(None, min_length=1)
+
+
+class TransactionSplitRequest(BaseModel):
+    """Break one transaction into parts that still add up to the original.
+
+    Used mainly for bank-synced rows, whose amount cannot be edited: a single
+    supermarket charge might really be groceries plus household plus a gift, and
+    this is the only way to categorise those separately without inventing
+    transactions the bank never reported.
+    """
+
+    parts: List[TransactionSplitPart] = Field(..., min_length=2)
 
 
 class BulkTransactionUpdate(BaseModel):

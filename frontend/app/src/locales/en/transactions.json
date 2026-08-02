@@ -123,6 +123,21 @@
       "created": "Transaction created",
       "updateError": "Failed to update transaction",
       "createError": "Failed to create transaction"
+    },
+    "split": {
+      "start": "Break this transaction",
+      "lockedHint": "Amount is set by your bank and can't be edited.",
+      "help": "Split the {{total}} {{currency}} across categories. The parts must add up to the original.",
+      "amount": "Amount",
+      "category": "Category",
+      "uncategorised": "Uncategorised",
+      "addPart": "Add part",
+      "remove": "Remove part",
+      "balanced": "Adds up",
+      "remaining": "{{amount}} {{currency}} left to allocate",
+      "cancel": "Cancel split",
+      "confirm": "Split transaction",
+      "done": "Split into {{count}} transactions"
     }
   },
   "detail": {

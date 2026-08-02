@@ -551,6 +551,310 @@ def test_unchanged_balance_is_not_rewritten(client, db, linked_account):
     assert linked_account.balance == 123.45
 
 
+# --- editing a synced transaction -----------------------------------------
+
+
+@pytest.fixture()
+def synced_tx(db, seed_user, linked_account):
+    tx = make_transaction(db, seed_user, linked_account, amount=60.0)
+    tx.external_id = f"{linked_account.id}:REF-1"
+    db.commit()
+    db.refresh(tx)
+    return tx
+
+
+def _full_edit_payload(tx, **overrides):
+    """What the edit form actually submits: the whole transaction, not a diff."""
+    payload = {
+        "account_id": tx.account_id,
+        "destination_account_id": tx.destination_account_id,
+        "category_id": tx.category_id,
+        "amount": tx.amount,
+        "type": tx.type,
+        "description": tx.description,
+        "date": tx.date.isoformat(),
+        "notes": tx.notes,
+    }
+    payload.update(overrides)
+    return payload
+
+
+def test_recategorising_a_synced_transaction_with_a_full_payload(client, db, seed_user, synced_tx):
+    """Resending unchanged amount/date/account_id must not be read as an edit."""
+    from tests.factories import make_category
+
+    category = make_category(db, seed_user)
+    response = client.put(
+        f"/api/transactions/{synced_tx.id}",
+        json=_full_edit_payload(synced_tx, category_id=category.id),
+    )
+    assert response.status_code == 200, response.json()
+    assert response.json()["category_id"] == category.id
+
+
+def test_editing_the_description_of_a_synced_transaction(client, synced_tx):
+    response = client.put(
+        f"/api/transactions/{synced_tx.id}",
+        json=_full_edit_payload(synced_tx, description="Weekly shop"),
+    )
+    assert response.status_code == 200, response.json()
+    assert response.json()["description"] == "Weekly shop"
+
+
+def test_changing_the_amount_of_a_synced_transaction_is_still_rejected(client, synced_tx):
+    response = client.put(
+        f"/api/transactions/{synced_tx.id}",
+        json=_full_edit_payload(synced_tx, amount=synced_tx.amount + 5),
+    )
+    assert response.status_code == 400
+    assert "amount" in response.json()["detail"]
+
+
+def test_moving_a_synced_transaction_to_another_account_is_rejected(
+    client, db, seed_user, synced_tx
+):
+    other = make_account(db, seed_user, name="Cash", type="cash")
+    response = client.put(
+        f"/api/transactions/{synced_tx.id}",
+        json=_full_edit_payload(synced_tx, account_id=other.id),
+    )
+    assert response.status_code == 400
+
+
+def test_response_exposes_pending_and_synced_flags(client, db, seed_user, linked_account):
+    """Regression: the list response was hand-built and omitted is_pending."""
+    tx = make_transaction(db, seed_user, linked_account)
+    tx.external_id = f"{linked_account.id}:P1"
+    tx.is_pending = True
+    db.commit()
+
+    item = next(
+        row for row in client.get("/api/transactions/").json()["items"] if row["id"] == tx.id
+    )
+    assert item["is_pending"] is True
+    assert item["is_bank_synced"] is True
+
+
+def test_manual_transaction_is_not_reported_as_synced(client, db, seed_user):
+    account = make_account(db, seed_user, name="Cash", type="cash")
+    tx = make_transaction(db, seed_user, account)
+    item = next(
+        row for row in client.get("/api/transactions/").json()["items"] if row["id"] == tx.id
+    )
+    assert item["is_bank_synced"] is False
+    assert item["is_pending"] is False
+
+
+# --- splitting a transaction ----------------------------------------------
+
+
+def test_split_divides_the_amount_across_parts(client, db, seed_user, synced_tx):
+    from tests.factories import make_category
+
+    groceries = make_category(db, seed_user, name="Groceries")
+    household = make_category(db, seed_user, name="Household")
+
+    response = client.post(
+        f"/api/transactions/{synced_tx.id}/split",
+        json={
+            "parts": [
+                {"amount": 40.0, "category_id": groceries.id},
+                {"amount": 20.0, "category_id": household.id},
+            ]
+        },
+    )
+    assert response.status_code == 200, response.json()
+    parts = response.json()
+    assert [p["amount"] for p in parts] == [40.0, 20.0]
+    assert [p["category_id"] for p in parts] == [groceries.id, household.id]
+
+
+def test_split_preserves_the_total(client, db, synced_tx):
+    original = synced_tx.amount
+    client.post(
+        f"/api/transactions/{synced_tx.id}/split",
+        json={"parts": [{"amount": 25.0}, {"amount": 20.0}, {"amount": 15.0}]},
+    )
+    db.expire_all()
+    total = sum(
+        t.amount
+        for t in db.query(Transaction).filter(Transaction.account_id == synced_tx.account_id)
+    )
+    assert round(total, 2) == round(original, 2)
+
+
+def test_split_keeps_description_and_date(client, db, synced_tx):
+    response = client.post(
+        f"/api/transactions/{synced_tx.id}/split",
+        json={"parts": [{"amount": 30.0}, {"amount": 30.0}]},
+    )
+    parts = response.json()
+    assert {p["description"] for p in parts} == {synced_tx.description}
+    assert len({p["date"] for p in parts}) == 1
+
+
+def test_split_reuses_the_original_row_so_dedup_still_holds(client, db, synced_tx):
+    """The original carries external_id; deleting it would re-import the charge."""
+    original_id = synced_tx.id
+    original_external = synced_tx.external_id
+
+    client.post(
+        f"/api/transactions/{synced_tx.id}/split",
+        json={"parts": [{"amount": 30.0}, {"amount": 30.0}]},
+    )
+    db.expire_all()
+
+    kept = db.get(Transaction, original_id)
+    assert kept is not None, "the original row must survive a split"
+    assert kept.external_id == original_external
+    assert kept.amount == 30.0
+
+
+def test_split_parts_get_ids_no_bank_can_produce(client, db, synced_tx):
+    client.post(
+        f"/api/transactions/{synced_tx.id}/split",
+        json={"parts": [{"amount": 30.0}, {"amount": 30.0}]},
+    )
+    db.expire_all()
+    extras = (
+        db.query(Transaction)
+        .filter(Transaction.external_id.like("%:split:%"))
+        .all()
+    )
+    assert len(extras) == 1
+    assert extras[0].external_id == f"{synced_tx.external_id}:split:1"
+
+
+def test_resyncing_after_a_split_does_not_duplicate(db, linked_account, synced_tx):
+    """The bank re-sends the original charge; dedup must still recognise it."""
+    synced_tx.amount = 30.0
+    db.add(
+        Transaction(
+            user_id=synced_tx.user_id,
+            account_id=synced_tx.account_id,
+            amount=30.0,
+            type="expense",
+            description=synced_tx.description,
+            date=synced_tx.date,
+            external_id=f"{synced_tx.external_id}:split:1",
+        )
+    )
+    db.commit()
+    before = db.query(Transaction).count()
+
+    rows = [svc.normalize_transaction(raw_tx(), linked_account)]
+    assert svc._write_transactions(db, linked_account, rows) == 0
+    db.commit()
+    assert db.query(Transaction).count() == before
+
+
+def test_split_rejects_parts_that_do_not_add_up(client, synced_tx):
+    response = client.post(
+        f"/api/transactions/{synced_tx.id}/split",
+        json={"parts": [{"amount": 10.0}, {"amount": 20.0}]},
+    )
+    assert response.status_code == 400
+    assert "add up" in response.json()["detail"]
+
+
+def test_split_requires_at_least_two_parts(client, synced_tx):
+    response = client.post(
+        f"/api/transactions/{synced_tx.id}/split",
+        json={"parts": [{"amount": 60.0}]},
+    )
+    assert response.status_code == 422
+
+
+def test_split_rejects_zero_or_negative_parts(client, synced_tx):
+    response = client.post(
+        f"/api/transactions/{synced_tx.id}/split",
+        json={"parts": [{"amount": 60.0}, {"amount": 0}]},
+    )
+    assert response.status_code == 422
+
+
+def test_split_handles_amounts_that_do_not_sum_exactly_in_floats(client, db, seed_user, linked_account):
+    """0.1 + 0.2 != 0.3 in binary floats; cents comparison must not care."""
+    tx = make_transaction(db, seed_user, linked_account, amount=0.3)
+    tx.external_id = f"{linked_account.id}:F1"
+    db.commit()
+
+    response = client.post(
+        f"/api/transactions/{tx.id}/split",
+        json={"parts": [{"amount": 0.1}, {"amount": 0.2}]},
+    )
+    assert response.status_code == 200, response.json()
+
+
+def test_split_rejects_a_transfer(client, db, seed_user):
+    source = make_account(db, seed_user, name="A", type="cash")
+    dest = make_account(db, seed_user, name="B", type="cash")
+    tx = make_transaction(db, seed_user, source, amount=50.0, type="transfer")
+    tx.destination_account_id = dest.id
+    db.commit()
+
+    response = client.post(
+        f"/api/transactions/{tx.id}/split",
+        json={"parts": [{"amount": 25.0}, {"amount": 25.0}]},
+    )
+    assert response.status_code == 400
+
+
+def test_split_rejects_a_category_from_another_user(client, db, synced_tx):
+    from tests.factories import make_category
+
+    other = User(email="thief@example.com", hashed_password="x", is_active=True)
+    db.add(other)
+    db.commit()
+    theirs = make_category(db, other, name="Theirs")
+
+    response = client.post(
+        f"/api/transactions/{synced_tx.id}/split",
+        json={"parts": [{"amount": 30.0, "category_id": theirs.id}, {"amount": 30.0}]},
+    )
+    assert response.status_code == 404
+
+
+def test_split_cannot_touch_another_users_transaction(client, db):
+    other = User(email="victim2@example.com", hashed_password="x", is_active=True)
+    db.add(other)
+    db.commit()
+    their_account = make_account(db, other, name="Theirs")
+    their_tx = make_transaction(db, other, their_account, amount=50.0)
+
+    response = client.post(
+        f"/api/transactions/{their_tx.id}/split",
+        json={"parts": [{"amount": 25.0}, {"amount": 25.0}]},
+    )
+    assert response.status_code == 404
+
+
+def test_split_leaves_the_account_balance_alone(client, db, linked_account, synced_tx):
+    linked_account.balance = 500.0
+    db.commit()
+
+    client.post(
+        f"/api/transactions/{synced_tx.id}/split",
+        json={"parts": [{"amount": 30.0}, {"amount": 30.0}]},
+    )
+    db.refresh(linked_account)
+    # The total is unchanged by construction, so the balance must not move.
+    assert linked_account.balance == 500.0
+
+
+def test_split_can_be_applied_to_a_manual_transaction(client, db, seed_user):
+    account = make_account(db, seed_user, name="Cash", type="cash")
+    tx = make_transaction(db, seed_user, account, amount=100.0)
+
+    response = client.post(
+        f"/api/transactions/{tx.id}/split",
+        json={"parts": [{"amount": 60.0}, {"amount": 40.0}]},
+    )
+    assert response.status_code == 200
+    # Manual rows have no external_id, so parts get none either.
+    assert all(p["is_bank_synced"] is False for p in response.json())
+
+
 # --- connection state -----------------------------------------------------
 
 

@@ -123,6 +123,8 @@ from app.schemas.report import (
     TrendReport,
 )
 from app.schemas.transaction import (
+    TransactionSplitPart,
+    TransactionSplitRequest,
     BulkTransactionDelete,
     BulkTransactionUpdate,
     TransactionBase,
@@ -144,6 +146,8 @@ __all__ = [
     "AccountBase",
     "AccountCreate",
     "AccountUpdate",
+    "TransactionSplitPart",
+    "TransactionSplitRequest",
     "BankConnectionResponse",
     "ConnectionStartRequest",
     "ConnectionStartResponse",

@@ -30,7 +30,7 @@ export function useCreateTransaction() {
 export function useUpdateTransaction() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: ({ id, input }: { id: number; input: TransactionInput }) =>
+    mutationFn: ({ id, input }: { id: number; input: Partial<TransactionInput> }) =>
       transactionsApi.updateTransaction(id, input),
     onSuccess: () => invalidateFinanceQueries(queryClient),
   })
@@ -40,6 +40,15 @@ export function useDeleteTransaction() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (id: number) => transactionsApi.deleteTransaction(id),
+    onSuccess: () => invalidateFinanceQueries(queryClient),
+  })
+}
+
+export function useSplitTransaction() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, parts }: { id: number; parts: transactionsApi.TransactionSplitPart[] }) =>
+      transactionsApi.splitTransaction(id, parts),
     onSuccess: () => invalidateFinanceQueries(queryClient),
   })
 }

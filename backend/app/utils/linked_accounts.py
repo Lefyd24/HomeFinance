@@ -10,6 +10,8 @@ rows would look synced without ever appearing on a statement.
 Every write path that can touch an account balance must call one of these.
 """
 
+from datetime import datetime
+
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
@@ -66,24 +68,72 @@ def is_synced(transaction: Transaction) -> bool:
     return bool(transaction.external_id)
 
 
-def reject_synced_field_edits(transaction: Transaction, update_fields: set[str]) -> None:
+def reject_synced_field_edits(transaction: Transaction, update_data: dict) -> None:
     """Block edits to bank-owned fields of a synced transaction.
 
     Categorising, annotating and renaming stay allowed — only the figures the
     bank reported are frozen, since the next sync would contradict any change.
+
+    Compares VALUES, not merely which keys are present: the edit form submits the
+    whole transaction, so rejecting on presence made a synced row impossible to
+    recategorise — the exact thing this is supposed to keep working.
     """
     if not is_synced(transaction):
         return
 
-    conflicting = BANK_OWNED_TRANSACTION_FIELDS & update_fields
+    conflicting = sorted(
+        field
+        for field in BANK_OWNED_TRANSACTION_FIELDS
+        if field in update_data and _differs(transaction, field, update_data[field])
+    )
     if conflicting:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=(
-                f"{', '.join(sorted(conflicting))} cannot be changed on a transaction "
-                "synced from your bank. You can still change its category and notes."
+                f"{', '.join(conflicting)} cannot be changed on a transaction synced "
+                "from your bank. You can still change its category, description and "
+                "notes, or use 'Break this transaction' to split the amount across "
+                "several categories."
             ),
         )
+
+
+def _differs(transaction: Transaction, field: str, new_value) -> bool:
+    """True when `new_value` is a real change to `field`.
+
+    Dates arrive as datetimes from JSON but are stored as dates, and amounts
+    round-trip through float — both need normalising before comparison or every
+    unchanged submission looks like an edit.
+    """
+    current = getattr(transaction, field)
+    if new_value is None or current is None:
+        return new_value is not current
+
+    if field == "date":
+        new_date = new_value.date() if isinstance(new_value, datetime) else new_value
+        current_date = current.date() if isinstance(current, datetime) else current
+        return new_date != current_date
+
+    if field == "amount":
+        return round(float(current), 2) != round(float(new_value), 2)
+
+    return current != new_value
+
+
+def strip_unchanged_synced_fields(transaction: Transaction, update_data: dict) -> dict:
+    """Drop bank-owned keys that are being re-sent unchanged.
+
+    Without this the unchanged values still flow into TransactionService, which
+    recomputes account balances from them — needless work, and a float that
+    round-tripped through JSON could write back a subtly different amount.
+    """
+    if not is_synced(transaction):
+        return update_data
+    return {
+        key: value
+        for key, value in update_data.items()
+        if key not in BANK_OWNED_TRANSACTION_FIELDS
+    }
 
 
 def reject_synced_delete(transaction: Transaction) -> None:
