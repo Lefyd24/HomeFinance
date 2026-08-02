@@ -27,6 +27,9 @@ logger = logging.getLogger("app.bank_sync")
 # what we import (booked transactions only); ITAV/available includes pending
 # authorisations and would disagree with the transaction list.
 _BALANCE_PREFERENCE = ("ITBD", "CLBD", "ITAV", "XPCD", "OTHR")
+# ITAV (interim available) already nets off pending authorisations, so it is the
+# figure that ties to a ledger containing them.
+_BALANCE_PREFERENCE_WITH_PENDING = ("ITAV", "ITBD", "CLBD", "XPCD", "OTHR")
 
 STATE_TTL_MINUTES = 15
 
@@ -87,6 +90,22 @@ def _description(raw: dict[str, Any]) -> str:
     return (code.get("description") or "Bank transaction")[:500]
 
 
+def _content_hash(raw: dict[str, Any], account: Account) -> str:
+    amount = raw.get("transaction_amount") or {}
+    return hashlib.sha256(
+        "|".join(
+            [
+                str(account.id),
+                str(raw.get("booking_date") or raw.get("value_date") or ""),
+                str(amount.get("amount") or ""),
+                str(amount.get("currency") or ""),
+                str(raw.get("credit_debit_indicator") or ""),
+                _description(raw),
+            ]
+        ).encode()
+    ).hexdigest()
+
+
 def build_external_id(raw: dict[str, Any], account: Account) -> str:
     """Stable dedup key, scoped to the account.
 
@@ -102,24 +121,19 @@ def build_external_id(raw: dict[str, Any], account: Account) -> str:
     same-day transactions collapse into one — but it is far better than
     duplicating every row on every sync.
     """
+    # Pending entries get their own namespace and never use entry_reference:
+    # Enable Banking documents it as supplied "only for booked transactions" in
+    # most cases, and where a pending id does exist it may change on booking.
+    # A pending row must therefore never collide with the booked row it becomes,
+    # or the booked one would be silently dropped as a duplicate.
+    if raw.get("status") == "PDNG":
+        return f"{account.id}:pending:{_content_hash(raw, account)[:40]}"
+
     entry_reference = (raw.get("entry_reference") or "").strip()
     if entry_reference:
         return f"{account.id}:{entry_reference}"
 
-    amount = raw.get("transaction_amount") or {}
-    digest = hashlib.sha256(
-        "|".join(
-            [
-                str(account.id),
-                str(raw.get("booking_date") or raw.get("value_date") or ""),
-                str(amount.get("amount") or ""),
-                str(amount.get("currency") or ""),
-                str(raw.get("credit_debit_indicator") or ""),
-                _description(raw),
-            ]
-        ).encode()
-    ).hexdigest()
-    return f"{account.id}:h:{digest[:40]}"
+    return f"{account.id}:h:{_content_hash(raw, account)[:40]}"
 
 
 def normalize_transaction(raw: dict[str, Any], account: Account) -> dict[str, Any] | None:
@@ -127,9 +141,15 @@ def normalize_transaction(raw: dict[str, Any], account: Account) -> dict[str, An
 
     Returns None for anything that must not enter the ledger.
     """
-    # Booked only. Pending (PDNG) entries mutate and disappear, and would either
-    # duplicate once booked or leave phantom rows behind. HOLD/RJCT/CNCL likewise.
-    if raw.get("status") != "BOOK":
+    # BOOK is always imported. PDNG only when the user opted in, because pending
+    # entries mutate and disappear — they are handled by wholesale replacement
+    # rather than dedup (see _replace_pending). HOLD/RJCT/CNCL/SCHD never are:
+    # they represent money that has not moved and may never move.
+    status = raw.get("status")
+    if status == "PDNG":
+        if not settings.EB_INCLUDE_PENDING:
+            return None
+    elif status != "BOOK":
         return None
 
     amount = _decimal((raw.get("transaction_amount") or {}).get("amount"))
@@ -158,11 +178,24 @@ def normalize_transaction(raw: dict[str, Any], account: Account) -> dict[str, An
         "is_imported": True,
         "source_file": f"bank-sync:{account.name}",
         "external_id": build_external_id(raw, account),
+        "is_pending": status == "PDNG",
     }
 
 
 def _pick_balance(balances: list[dict[str, Any]]) -> float | None:
-    """The bank's own balance figure, preferring booked over available."""
+    """The bank's own balance figure, matched to the transactions we import.
+
+    Which balance is "right" depends on what the ledger contains. Importing only
+    booked entries means the booked balance is the one that reconciles; once
+    pending entries are in the ledger too, the available balance is, because it
+    is the one that already reflects them. Picking the wrong one leaves the
+    account total permanently disagreeing with the sum of its transactions.
+    """
+    preference = (
+        _BALANCE_PREFERENCE_WITH_PENDING
+        if settings.EB_INCLUDE_PENDING
+        else _BALANCE_PREFERENCE
+    )
     by_type: dict[str, float] = {}
     for entry in balances or []:
         value = _decimal((entry.get("balance_amount") or {}).get("amount"))
@@ -170,7 +203,7 @@ def _pick_balance(balances: list[dict[str, Any]]) -> float | None:
             continue
         by_type[str(entry.get("balance_type") or "OTHR").upper()] = float(value)
 
-    for balance_type in _BALANCE_PREFERENCE:
+    for balance_type in preference:
         if balance_type in by_type:
             return by_type[balance_type]
     return next(iter(by_type.values()), None)
@@ -212,6 +245,38 @@ def _write_transactions(db: Session, account: Account, rows: list[dict[str, Any]
         db.add(Transaction(**row))
         inserted += 1
 
+    return inserted
+
+
+def _replace_pending(db: Session, account: Account, rows: list[dict[str, Any]]) -> int:
+    """Swap this account's pending rows for the set the bank currently reports.
+
+    Pending entries cannot be reconciled by identifier — Enable Banking supplies
+    entry_reference "only for booked transactions" in most cases, and any id a
+    bank does give may change once the entry books. Matching on it would leave
+    phantom rows behind for every pending entry that settled, was reversed, or
+    had its amount adjusted.
+
+    Deleting and re-inserting the whole set sidesteps all of that: whatever the
+    bank says is pending right now is exactly what the ledger holds. Booked rows
+    are untouched, so nothing durable is ever at risk.
+    """
+    db.query(Transaction).filter(
+        Transaction.user_id == account.user_id,
+        Transaction.account_id == account.id,
+        Transaction.is_pending.is_(True),
+    ).delete(synchronize_session=False)
+
+    seen: set[str] = set()
+    inserted = 0
+    for row in rows:
+        # The content hash can collide for two genuinely identical same-day
+        # pending entries; the unique index would reject the second.
+        if row["external_id"] in seen:
+            continue
+        seen.add(row["external_id"])
+        db.add(Transaction(**row))
+        inserted += 1
     return inserted
 
 
@@ -277,13 +342,24 @@ def sync_account(db: Session, account: Account) -> dict[str, Any]:
         # Enable Banking discover the earliest available transaction instead.
         strategy = "longest"
 
+    # One call returns both booked and pending entries — the response is not
+    # filtered by status. Splitting them here rather than making a second
+    # request matters: banks allow as few as 4 AIS calls per account per day.
     raw_transactions = _fetch_with_fallback(account, date_from, strategy)
     rows = [
         row
         for row in (normalize_transaction(raw, account) for raw in raw_transactions)
         if row is not None
     ]
-    inserted = _write_transactions(db, account, rows)
+    booked = [row for row in rows if not row["is_pending"]]
+    pending = [row for row in rows if row["is_pending"]]
+
+    inserted = _write_transactions(db, account, booked)
+    pending_count = 0
+    if settings.EB_INCLUDE_PENDING:
+        # Always run, even with an empty list: that is how entries that settled
+        # or were dropped since the last sync get cleared out.
+        pending_count = _replace_pending(db, account, pending)
 
     # The bank owns the balance of a linked account (see routers/accounts.py,
     # which blocks manual balance edits on these).
@@ -298,6 +374,7 @@ def sync_account(db: Session, account: Account) -> dict[str, Any]:
         "account_id": account.id,
         "fetched": len(raw_transactions),
         "imported": inserted,
+        "pending": pending_count,
         "balance": account.balance,
     }
 

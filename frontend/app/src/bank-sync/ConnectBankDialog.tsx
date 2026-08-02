@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Trans, useTranslation } from 'react-i18next'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { BankIcon, Search01Icon } from '@hugeicons/core-free-icons'
 import { toast } from 'sonner'
@@ -19,6 +20,7 @@ export function ConnectBankDialog({
   onOpenChange,
   country = 'GR',
 }: ConnectBankDialogProps) {
+  const { t } = useTranslation('bankSync')
   const [search, setSearch] = useState('')
   const [pending, setPending] = useState<string | null>(null)
   const { data: institutions = [], isLoading, error } = useInstitutions(country, open)
@@ -39,7 +41,7 @@ export function ConnectBankDialog({
       // run in a popup, and the return trip is a redirect back to this app.
       window.location.assign(authorization_url)
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Could not start the connection')
+      toast.error(err instanceof Error ? err.message : t('toasts.startFailed'))
       setPending(null)
     }
   }
@@ -48,8 +50,8 @@ export function ConnectBankDialog({
     <Dialog
       open={open}
       onOpenChange={onOpenChange}
-      title="Connect a bank"
-      description="You'll be sent to your bank to log in and approve access. We never see your credentials."
+      title={t('dialog.title')}
+      description={t('dialog.description')}
       icon={BankIcon}
       tone="primary"
     >
@@ -63,7 +65,7 @@ export function ConnectBankDialog({
           <Input
             value={search}
             onChange={(event) => setSearch(event.target.value)}
-            placeholder="Search banks…"
+            placeholder={t('dialog.search')}
             className="pl-9"
             autoFocus
           />
@@ -79,13 +81,13 @@ export function ConnectBankDialog({
 
         {error && (
           <p className="text-sm text-destructive">
-            {error instanceof Error ? error.message : 'Could not load the bank list.'}
+            {error instanceof Error ? error.message : t('dialog.loadFailed')}
           </p>
         )}
 
         {!isLoading && !error && matches.length === 0 && (
           <p className="text-sm text-muted-foreground">
-            No banks matched “{search}”.
+            {t('dialog.noMatches', { query: search })}
           </p>
         )}
 
@@ -113,7 +115,7 @@ export function ConnectBankDialog({
               )}
               <span className="min-w-0 flex-1 truncate text-foreground">{institution.name}</span>
               {pending === institution.name && (
-                <span className="text-xs text-muted-foreground">Redirecting…</span>
+                <span className="text-xs text-muted-foreground">{t('dialog.redirecting')}</span>
               )}
             </button>
           ))}
@@ -123,28 +125,40 @@ export function ConnectBankDialog({
             whitelisted in the Enable Banking Control Panel first. Without this
             note, a successful bank login that yields nothing reads as a bug. */}
         <p className="rounded-lg bg-muted/50 p-3 text-xs text-muted-foreground">
-          Your accounts must be linked in the Enable Banking Control Panel before they can be
-          synced here. If the connection succeeds but no accounts appear, that step is missing.
+          {t('dialog.whitelistNote')}
         </p>
 
         {/* Read-only access and the two policies, stated before the user commits
             to their bank's SCA rather than after. */}
         <p className="text-xs text-muted-foreground">
-          Access is read-only — no payment can be made. See our{' '}
-          <a href="/privacy" target="_blank" rel="noreferrer" className="underline underline-offset-4">
-            Privacy Policy
-          </a>{' '}
-          and{' '}
-          <a href="/terms" target="_blank" rel="noreferrer" className="underline underline-offset-4">
-            Terms of Service
-          </a>
-          .
+          <Trans
+            t={t}
+            i18nKey="dialog.readOnlyNote"
+            components={{
+              privacy: (
+                <a
+                  href="/privacy"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="underline underline-offset-4"
+                />
+              ),
+              terms: (
+                <a
+                  href="/terms"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="underline underline-offset-4"
+                />
+              ),
+            }}
+          />
         </p>
       </div>
 
       <div className="mt-4 flex justify-end">
         <Button variant="ghost" onClick={() => onOpenChange(false)}>
-          Cancel
+          {t('dialog.cancel')}
         </Button>
       </div>
     </Dialog>

@@ -32,6 +32,7 @@ const sampleTransaction: transactionsApi.Transaction = {
   date: '2026-07-01T12:00:00',
   notes: null,
   is_imported: false,
+  is_pending: false,
   import_batch_id: null,
   source_file: null,
   created_at: '',

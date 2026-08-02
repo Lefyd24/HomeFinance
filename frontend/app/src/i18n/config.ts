@@ -20,6 +20,7 @@ import importEn from '../locales/en/import.json'
 import notificationsEn from '../locales/en/notifications.json'
 import advisorEn from '../locales/en/advisor.json'
 import adminEn from '../locales/en/admin.json'
+import bankSyncEn from '../locales/en/bankSync.json'
 import validationEn from '../locales/en/validation.json'
 
 import commonEl from '../locales/el/common.json'
@@ -40,6 +41,7 @@ import importEl from '../locales/el/import.json'
 import notificationsEl from '../locales/el/notifications.json'
 import advisorEl from '../locales/el/advisor.json'
 import adminEl from '../locales/el/admin.json'
+import bankSyncEl from '../locales/el/bankSync.json'
 import validationEl from '../locales/el/validation.json'
 
 export const defaultNS = 'common'
@@ -64,6 +66,7 @@ export const resources = {
     notifications: notificationsEn,
     advisor: advisorEn,
     admin: adminEn,
+    bankSync: bankSyncEn,
     validation: validationEn,
   },
   el: {
@@ -85,6 +88,7 @@ export const resources = {
     notifications: notificationsEl,
     advisor: advisorEl,
     admin: adminEl,
+    bankSync: bankSyncEl,
     validation: validationEl,
   },
 } as const

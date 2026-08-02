@@ -160,6 +160,8 @@
     "imported": "Imported",
     "menu": {
       "view": "View details"
-    }
+    },
+    "pending": "Pending",
+    "pendingHint": "Not yet booked by your bank. It may change or disappear."
   }
 }

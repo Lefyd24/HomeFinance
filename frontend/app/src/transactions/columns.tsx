@@ -81,7 +81,7 @@ export function createColumns(
         <DataTableColumnHeader column={column} title={t('columns.description')} />
       ),
       cell: ({ row }) => {
-        const { description, notes, type, is_imported, debt_name } = row.original
+        const { description, notes, type, is_imported, is_pending, debt_name } = row.original
         const flow = flowOfType(type)
         return (
           <div className="flex min-w-0 items-center gap-2 sm:gap-2.5">
@@ -96,7 +96,19 @@ export function createColumns(
               <HugeiconsIcon icon={FLOW_ICON[flow]} strokeWidth={2} className="size-3 sm:size-3.5" />
             </span>
             <div className="flex min-w-0 flex-col gap-0.5">
-              <span className="truncate text-sm font-medium">{description}</span>
+              <div className="flex min-w-0 items-center gap-1.5">
+                <span className="truncate text-sm font-medium">{description}</span>
+                {/* Pending entries are replaced wholesale on every sync — flag
+                    them so a figure that later changes is not a surprise. */}
+                {is_pending && (
+                  <span
+                    title={t('columns.pendingHint')}
+                    className="shrink-0 rounded-full bg-warning/20 px-1.5 py-0.5 text-[0.6rem] font-medium uppercase tracking-wide text-warning"
+                  >
+                    {t('columns.pending')}
+                  </span>
+                )}
+              </div>
               {(notes || debt_name || is_imported) && (
                 <span className="truncate text-xs text-muted-foreground">
                   {[

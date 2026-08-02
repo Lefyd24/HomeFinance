@@ -38,6 +38,9 @@ class TransactionResponse(TransactionBase):
     id: int
     user_id: int
     is_imported: bool
+    # Not yet booked by the bank — shown differently and liable to change or
+    # disappear on the next sync.
+    is_pending: bool = False
     import_batch_id: Optional[str]
     source_file: Optional[str]
     created_at: datetime

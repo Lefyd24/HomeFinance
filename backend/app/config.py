@@ -164,6 +164,17 @@ class Settings(BaseSettings):
     EB_CONSENT_DAYS: int = 90
     # Days of history to request on the very first sync of a newly linked account.
     EB_INITIAL_HISTORY_DAYS: int = 365
+    # Also import transactions the bank has not booked yet (card authorisations,
+    # in-flight transfers). They arrive in the same response as booked ones, so
+    # this costs no extra API call.
+    #
+    # Off by default because they are ephemeral: amounts change, entries vanish,
+    # and they reappear as booked entries under a different identifier. The sync
+    # handles that by replacing the whole pending set each run — but it does mean
+    # a pending row can disappear from the ledger without the user deleting it.
+    # Turning this on also switches the account balance to the bank's *available*
+    # balance so the total still ties to the transactions shown.
+    EB_INCLUDE_PENDING: bool = False
     # Re-fetch this many days before last_sync_at on every sync: banks backdate
     # bookings, so a strict "since last sync" window silently drops transactions.
     EB_SYNC_OVERLAP_DAYS: int = 3

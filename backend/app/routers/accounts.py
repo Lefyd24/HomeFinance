@@ -93,35 +93,44 @@ def update_account(
 
     update_data = account_data.model_dump(exclude_unset=True)
 
-    if account.provider:
-        # Balance/type/currency are set by the brokerage sync, not the user —
-        # see app/services/investment_sync_service.py. Name/icon/description
-        # stay editable here.
-        locked_fields = {"balance", "type", "currency"} & update_data.keys()
-        if locked_fields:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=(
-                    f"{', '.join(sorted(locked_fields))} is managed by the "
-                    f"{account.provider} sync and can't be edited here — "
-                    "use the Investments page instead."
-                ),
-            )
+    # Balance/type/currency are owned by whichever sync feeds this account and
+    # are overwritten on every run, so an edit to them would be silently
+    # discarded. Name, icon and description stay editable.
+    #
+    # Reject only fields whose value actually CHANGES, not merely fields that
+    # appear in the payload: the edit form submits the whole account, so
+    # rejecting on presence made renaming a synced account impossible.
+    SYNC_OWNED = ("balance", "type", "currency")
+    changed = [
+        field
+        for field in SYNC_OWNED
+        if field in update_data and update_data[field] != getattr(account, field)
+    ]
 
+    if changed and account.provider:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=(
+                f"{', '.join(changed)} is managed by the {account.provider} sync "
+                "and can't be edited here — use the Investments page instead."
+            ),
+        )
 
-    # A linked account's balance, currency and type mirror the bank and are
-    # overwritten on every sync — accepting an edit here would silently discard
-    # it. Cosmetic fields (name, description, icon, is_active) stay editable.
-    if account.is_linked:
-        bank_owned = {"balance", "currency", "type"} & update_data.keys()
-        if bank_owned:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=(
-                    f"{', '.join(sorted(bank_owned))} of '{account.name}' is synced from "
-                    "your bank and cannot be edited. Disconnect the bank first."
-                ),
-            )
+    if changed and account.is_linked:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=(
+                f"{', '.join(changed)} of '{account.name}' is synced from your bank "
+                "and cannot be edited. Disconnect the bank first."
+            ),
+        )
+
+    # Drop unchanged sync-owned fields rather than re-assigning them: a float
+    # round-trip through JSON can differ in the last bit and would otherwise
+    # write a subtly wrong balance back.
+    if account.provider or account.is_linked:
+        for field in SYNC_OWNED:
+            update_data.pop(field, None)
 
     for field, value in update_data.items():
         setattr(account, field, value)

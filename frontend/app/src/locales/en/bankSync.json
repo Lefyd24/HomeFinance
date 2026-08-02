@@ -1,0 +1,69 @@
+{
+  "page": {
+    "title": "Bank connections",
+    "description": "Sync transactions straight from your bank instead of entering them by hand.",
+    "connect": "Connect a bank"
+  },
+  "empty": {
+    "title": "No banks connected",
+    "description": "Connect a bank to import transactions automatically. You can keep entering cash and other accounts by hand."
+  },
+  "status": {
+    "active": "active",
+    "pending": "pending",
+    "expired": "expired",
+    "revoked": "revoked",
+    "error": "error"
+  },
+  "connection": {
+    "lastSynced": "Last synced {{when}}",
+    "never": "never",
+    "syncNow": "Sync now",
+    "syncing": "Syncing…",
+    "disconnect": "Disconnect",
+    "expiredNotice": "This connection has expired and is no longer syncing. Reconnect the bank to resume.",
+    "expiringNotice": "Access expires in {{days}} day(s). Reconnect to keep transactions syncing.",
+    "noAccounts": "No accounts are linked to this connection. They need to be whitelisted in the Enable Banking Control Panel before they will appear here."
+  },
+  "disconnectDialog": {
+    "title": "Disconnect {{bank}}?",
+    "description": "Syncing stops and the bank consent is revoked. The accounts and their transactions are kept, and become editable again.",
+    "confirmLabel": "Disconnect"
+  },
+  "dialog": {
+    "title": "Connect a bank",
+    "description": "You'll be sent to your bank to log in and approve access. We never see your credentials.",
+    "search": "Search banks…",
+    "noMatches": "No banks matched “{{query}}”.",
+    "loadFailed": "Could not load the bank list.",
+    "redirecting": "Redirecting…",
+    "cancel": "Cancel",
+    "whitelistNote": "Your accounts must be linked in the Enable Banking Control Panel before they can be synced here. If the connection succeeds but no accounts appear, that step is missing.",
+    "readOnlyNote": "Access is read-only — no payment can be made. See our <privacy>Privacy Policy</privacy> and <terms>Terms of Service</terms>."
+  },
+  "toasts": {
+    "connected": "Bank connected",
+    "connectedWithAccounts": "Bank connected — {{count}} account(s) linked",
+    "imported": "Imported {{count}} new transaction(s)",
+    "upToDate": "Already up to date",
+    "partialFailure": "{{count}} account(s) could not be synced",
+    "syncFailed": "Sync failed",
+    "disconnected": "{{bank}} disconnected",
+    "disconnectFailed": "Could not disconnect",
+    "startFailed": "Could not start the connection"
+  },
+  "callbackErrors": {
+    "missing_state": "The bank did not send back enough information. Please try again.",
+    "invalid_state": "That connection attempt is no longer valid. Please start again.",
+    "state_expired": "The connection attempt timed out. Please try again.",
+    "state_already_used": "That connection link was already used. Start a new one.",
+    "bank_declined": "Your bank declined the request or the approval was cancelled.",
+    "session_failed": "We could not complete the connection with your bank. Please try again.",
+    "no_accounts": "Your bank approved access but returned no accounts. They likely still need to be linked in the Enable Banking Control Panel.",
+    "generic": "The bank connection could not be completed."
+  },
+  "transaction": {
+    "pending": "Pending",
+    "pendingHint": "Not yet booked by your bank. It may change or disappear."
+  }
+}

@@ -14,6 +14,8 @@ export interface Transaction {
   date: string
   notes: string | null
   is_imported: boolean
+  /** Not yet booked by the bank — may change or vanish on the next sync. */
+  is_pending: boolean
   import_batch_id: string | null
   source_file: string | null
   debt_payment_id?: number | null

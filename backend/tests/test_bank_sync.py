@@ -408,6 +408,149 @@ def test_rate_limits_are_never_retried(monkeypatch):
     assert slept == []
 
 
+# --- pending transactions -------------------------------------------------
+
+
+@pytest.fixture()
+def include_pending(monkeypatch):
+    monkeypatch.setattr(svc.settings, "EB_INCLUDE_PENDING", True)
+
+
+def test_pending_is_skipped_when_not_opted_in(linked_account, monkeypatch):
+    monkeypatch.setattr(svc.settings, "EB_INCLUDE_PENDING", False)
+    assert svc.normalize_transaction(raw_tx(status="PDNG"), linked_account) is None
+
+
+def test_pending_is_imported_and_flagged_when_opted_in(linked_account, include_pending):
+    row = svc.normalize_transaction(raw_tx(status="PDNG"), linked_account)
+    assert row is not None
+    assert row["is_pending"] is True
+
+
+def test_booked_is_never_flagged_pending(linked_account, include_pending):
+    assert svc.normalize_transaction(raw_tx(), linked_account)["is_pending"] is False
+
+
+@pytest.mark.parametrize("status", ["HOLD", "RJCT", "CNCL", "SCHD"])
+def test_non_pending_non_booked_states_stay_excluded(linked_account, include_pending, status):
+    # Money that has not moved and may never move.
+    assert svc.normalize_transaction(raw_tx(status=status), linked_account) is None
+
+
+def test_pending_external_id_cannot_collide_with_its_booked_form(linked_account, include_pending):
+    """The booked entry must not be swallowed as a duplicate of its pending self."""
+    pending = svc.build_external_id(raw_tx(status="PDNG"), linked_account)
+    booked = svc.build_external_id(raw_tx(status="BOOK"), linked_account)
+    assert pending != booked
+    assert ":pending:" in pending
+
+
+def test_pending_ignores_entry_reference(linked_account, include_pending):
+    # A pending id may change once booked, so it must not seed the dedup key.
+    a = svc.build_external_id(raw_tx(status="PDNG", entry_reference="X1"), linked_account)
+    b = svc.build_external_id(raw_tx(status="PDNG", entry_reference="X2"), linked_account)
+    assert a == b
+
+
+def test_settled_pending_row_is_removed_on_next_sync(db, linked_account, include_pending):
+    """A pending entry that books must not linger alongside its booked twin."""
+    first = [svc.normalize_transaction(raw_tx(status="PDNG"), linked_account)]
+    assert svc._replace_pending(db, linked_account, first) == 1
+    db.commit()
+    assert db.query(Transaction).filter(Transaction.is_pending.is_(True)).count() == 1
+
+    # Next sync: it booked, so it is no longer in the pending set.
+    assert svc._replace_pending(db, linked_account, []) == 0
+    db.commit()
+    assert db.query(Transaction).filter(Transaction.is_pending.is_(True)).count() == 0
+
+
+def test_replacing_pending_leaves_booked_rows_alone(db, linked_account, include_pending):
+    booked = [svc.normalize_transaction(raw_tx(), linked_account)]
+    svc._write_transactions(db, linked_account, booked)
+    db.commit()
+
+    svc._replace_pending(db, linked_account, [])
+    db.commit()
+
+    assert db.query(Transaction).filter(Transaction.is_pending.is_(False)).count() == 1
+
+
+def test_pending_replacement_is_scoped_to_one_account(db, seed_user, linked_account, include_pending):
+    other = make_account(db, seed_user, name="Other")
+    theirs = [svc.normalize_transaction(raw_tx(status="PDNG"), other)]
+    svc._replace_pending(db, other, theirs)
+    db.commit()
+
+    svc._replace_pending(db, linked_account, [])
+    db.commit()
+
+    assert db.query(Transaction).filter(Transaction.account_id == other.id).count() == 1
+
+
+def test_repeated_pending_sync_does_not_accumulate(db, linked_account, include_pending):
+    rows = [svc.normalize_transaction(raw_tx(status="PDNG"), linked_account)]
+    for _ in range(3):
+        svc._replace_pending(db, linked_account, rows)
+        db.commit()
+    assert db.query(Transaction).count() == 1
+
+
+def test_balance_uses_available_when_pending_included(include_pending):
+    balances = [
+        {"balance_type": "ITAV", "balance_amount": {"amount": "500.00"}},
+        {"balance_type": "ITBD", "balance_amount": {"amount": "420.00"}},
+    ]
+    # With pending in the ledger, the available balance is the one that ties.
+    assert svc._pick_balance(balances) == 500.00
+
+
+def test_balance_uses_booked_when_pending_excluded(monkeypatch):
+    monkeypatch.setattr(svc.settings, "EB_INCLUDE_PENDING", False)
+    balances = [
+        {"balance_type": "ITAV", "balance_amount": {"amount": "500.00"}},
+        {"balance_type": "ITBD", "balance_amount": {"amount": "420.00"}},
+    ]
+    assert svc._pick_balance(balances) == 420.00
+
+
+# --- account editing ------------------------------------------------------
+
+
+def test_renaming_a_linked_account_while_resending_unchanged_fields(client, linked_account):
+    """The edit form submits the whole account, not just what changed."""
+    response = client.put(
+        f"/api/accounts/{linked_account.id}",
+        json={
+            "name": "Everyday",
+            "icon": "eurobank.svg",
+            "type": linked_account.type,
+            "currency": linked_account.currency,
+            "balance": linked_account.balance,
+        },
+    )
+    assert response.status_code == 200, response.json()
+    assert response.json()["name"] == "Everyday"
+    assert response.json()["icon"] == "eurobank.svg"
+
+
+def test_changing_the_balance_of_a_linked_account_is_still_rejected(client, linked_account):
+    response = client.put(
+        f"/api/accounts/{linked_account.id}",
+        json={"name": "Everyday", "balance": linked_account.balance + 100},
+    )
+    assert response.status_code == 400
+    assert "balance" in response.json()["detail"]
+
+
+def test_unchanged_balance_is_not_rewritten(client, db, linked_account):
+    linked_account.balance = 123.45
+    db.commit()
+    client.put(f"/api/accounts/{linked_account.id}", json={"name": "X", "balance": 123.45})
+    db.refresh(linked_account)
+    assert linked_account.balance == 123.45
+
+
 # --- connection state -----------------------------------------------------
 
 

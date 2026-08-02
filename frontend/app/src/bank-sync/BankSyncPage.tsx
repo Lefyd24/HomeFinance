@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { HugeiconsIcon } from '@hugeicons/react'
 import {
   Alert01Icon,
@@ -20,18 +21,6 @@ import { ConnectBankDialog } from './ConnectBankDialog'
 import { useBankConnections, useDeleteConnection, useSyncConnection } from './useBankSync'
 import type { BankConnection, ConnectionStatus } from './bankSyncApi'
 
-/** Why a callback failed, in the user's terms rather than the API's. */
-const CALLBACK_ERRORS: Record<string, string> = {
-  missing_state: 'The bank did not send back enough information. Please try again.',
-  invalid_state: 'That connection attempt is no longer valid. Please start again.',
-  state_expired: 'The connection attempt timed out. Please try again.',
-  state_already_used: 'That connection link was already used. Start a new one.',
-  bank_declined: 'Your bank declined the request or the approval was cancelled.',
-  session_failed: 'We could not complete the connection with your bank. Please try again.',
-  no_accounts:
-    'Your bank approved access but returned no accounts. They likely still need to be linked in the Enable Banking Control Panel.',
-}
-
 const STATUS_STYLES: Record<ConnectionStatus, string> = {
   active: 'bg-flow-in/15 text-flow-in',
   pending: 'bg-muted text-muted-foreground',
@@ -40,8 +29,8 @@ const STATUS_STYLES: Record<ConnectionStatus, string> = {
   error: 'bg-destructive/15 text-destructive',
 }
 
-function formatDate(value: string | null): string {
-  if (!value) return 'never'
+function formatDate(value: string | null): string | null {
+  if (!value) return null
   return new Date(value).toLocaleString(undefined, {
     dateStyle: 'medium',
     timeStyle: 'short',
@@ -55,6 +44,7 @@ function daysUntil(value: string | null): number | null {
 }
 
 export function BankSyncPage() {
+  const { t, i18n } = useTranslation('bankSync')
   const [searchParams, setSearchParams] = useSearchParams()
   const [connectOpen, setConnectOpen] = useState(false)
   const [syncingId, setSyncingId] = useState<number | null>(null)
@@ -75,10 +65,15 @@ export function BankSyncPage() {
     if (linked === '1') {
       const count = searchParams.get('accounts')
       toast.success(
-        count ? `Bank connected — ${count} account(s) linked` : 'Bank connected',
+        count
+          ? t('toasts.connectedWithAccounts', { count: Number(count) })
+          : t('toasts.connected'),
       )
     } else if (error) {
-      toast.error(CALLBACK_ERRORS[error] ?? 'The bank connection could not be completed.')
+      // The backend may add error codes this build has no copy for; show the
+      // generic message rather than a raw translation key.
+      const key = `callbackErrors.${error}`
+      toast.error(i18n.exists(`bankSync:${key}`) ? t(key) : t('callbackErrors.generic'))
     }
 
     const next = new URLSearchParams(searchParams)
@@ -86,7 +81,7 @@ export function BankSyncPage() {
     next.delete('error')
     next.delete('accounts')
     setSearchParams(next, { replace: true })
-  }, [searchParams, setSearchParams])
+  }, [searchParams, setSearchParams, t, i18n])
 
   async function handleSync(connection: BankConnection) {
     setSyncingId(connection.id)
@@ -94,14 +89,14 @@ export function BankSyncPage() {
       const result = await syncConnection.mutateAsync(connection.id)
       toast.success(
         result.imported > 0
-          ? `Imported ${result.imported} new transaction(s)`
-          : 'Already up to date',
+          ? t('toasts.imported', { count: result.imported })
+          : t('toasts.upToDate'),
       )
       if (result.errors.length > 0) {
-        toast.warning(`${result.errors.length} account(s) could not be synced`)
+        toast.warning(t('toasts.partialFailure', { count: result.errors.length }))
       }
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Sync failed')
+      toast.error(err instanceof Error ? err.message : t('toasts.syncFailed'))
     } finally {
       setSyncingId(null)
     }
@@ -109,31 +104,30 @@ export function BankSyncPage() {
 
   async function handleDisconnect(connection: BankConnection) {
     const ok = await confirm({
-      title: `Disconnect ${connection.aspsp_name}?`,
-      description:
-        'Syncing stops and the bank consent is revoked. The accounts and their transactions are kept, and become editable again.',
-      confirmLabel: 'Disconnect',
+      title: t('disconnectDialog.title', { bank: connection.aspsp_name }),
+      description: t('disconnectDialog.description'),
+      confirmLabel: t('disconnectDialog.confirmLabel'),
       icon: Unlink01Icon,
     })
     if (!ok) return
 
     try {
       await deleteConnection.mutateAsync({ id: connection.id, deleteAccounts: false })
-      toast.success(`${connection.aspsp_name} disconnected`)
+      toast.success(t('toasts.disconnected', { bank: connection.aspsp_name }))
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Could not disconnect')
+      toast.error(err instanceof Error ? err.message : t('toasts.disconnectFailed'))
     }
   }
 
   return (
     <PageContainer className="flex flex-col gap-6">
       <PageHeader
-        title="Bank connections"
-        description="Sync transactions straight from your bank instead of entering them by hand."
+        title={t('page.title')}
+        description={t('page.description')}
         action={
           <Button onClick={() => setConnectOpen(true)}>
             <HugeiconsIcon icon={Link01Icon} strokeWidth={2} data-icon="inline-start" />
-            Connect a bank
+            {t('page.connect')}
           </Button>
         }
       />
@@ -154,13 +148,12 @@ export function BankSyncPage() {
             className="size-10 text-muted-foreground"
           />
           <div>
-            <p className="font-heading text-foreground">No banks connected</p>
+            <p className="font-heading text-foreground">{t('empty.title')}</p>
             <p className="mt-1 text-sm text-muted-foreground">
-              Connect a bank to import transactions automatically. You can keep entering cash
-              and other accounts by hand.
+              {t('empty.description')}
             </p>
           </div>
-          <Button onClick={() => setConnectOpen(true)}>Connect a bank</Button>
+          <Button onClick={() => setConnectOpen(true)}>{t('page.connect')}</Button>
         </ListCard>
       )}
 
@@ -181,11 +174,13 @@ export function BankSyncPage() {
                       STATUS_STYLES[connection.status],
                     )}
                   >
-                    {connection.status}
+                    {t(`status.${connection.status}`)}
                   </span>
                 </div>
                 <p className="mt-1 text-sm text-muted-foreground tabular-nums">
-                  Last synced {formatDate(connection.last_sync_at)}
+                  {t('connection.lastSynced', {
+                    when: formatDate(connection.last_sync_at) ?? t('connection.never'),
+                  })}
                 </p>
               </div>
 
@@ -197,14 +192,16 @@ export function BankSyncPage() {
                   onClick={() => void handleSync(connection)}
                 >
                   <HugeiconsIcon icon={RefreshIcon} strokeWidth={2} data-icon="inline-start" />
-                  {syncingId === connection.id ? 'Syncing…' : 'Sync now'}
+                  {syncingId === connection.id
+                    ? t('connection.syncing')
+                    : t('connection.syncNow')}
                 </Button>
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={() => void handleDisconnect(connection)}
                 >
-                  Disconnect
+                  {t('connection.disconnect')}
                 </Button>
               </div>
             </div>
@@ -218,8 +215,8 @@ export function BankSyncPage() {
                 />
                 <span>
                   {connection.status === 'expired'
-                    ? 'This connection has expired and is no longer syncing. Reconnect the bank to resume.'
-                    : `Access expires in ${expiresIn} day(s). Reconnect to keep transactions syncing.`}
+                    ? t('connection.expiredNotice')
+                    : t('connection.expiringNotice', { days: expiresIn })}
                 </span>
               </div>
             )}
@@ -249,8 +246,7 @@ export function BankSyncPage() {
               </ul>
             ) : (
               <p className="rounded-lg bg-muted/50 p-3 text-sm text-muted-foreground">
-                No accounts are linked to this connection. They need to be whitelisted in the
-                Enable Banking Control Panel before they will appear here.
+                {t('connection.noAccounts')}
               </p>
             )}
           </ListCard>

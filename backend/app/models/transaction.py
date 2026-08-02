@@ -46,6 +46,11 @@ class Transaction(Base):
     # SQLite treats NULLs as distinct in a unique index, so those never collide.
     # See uq_transactions_user_external below.
     external_id = Column(String(255), nullable=True)
+    # True for a bank transaction the bank has not yet booked. These are
+    # ephemeral: they change, vanish, or reappear as a booked entry under a
+    # different identifier, so bank_sync_service replaces the whole pending set
+    # for an account on every sync rather than accumulating it.
+    is_pending = Column(Boolean, nullable=False, default=False)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     

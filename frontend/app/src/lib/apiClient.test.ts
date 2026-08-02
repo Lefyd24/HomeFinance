@@ -62,7 +62,6 @@ describe('apiFetch', () => {
   })
 
   it('prefers FastAPI detail and exposes status on ApiError', async () => {
-    const { ApiError } = await import('./apiClient')
     vi.stubGlobal(
       'fetch',
       vi.fn().mockResolvedValue({
@@ -77,7 +76,7 @@ describe('apiFetch', () => {
       name: 'ApiError',
       status: 404,
       message: 'No company data for symbol: ZZZ',
-    } satisfies Partial<InstanceType<typeof ApiError>>)
+    } satisfies Partial<ApiError>)
   })
 
   it('returns undefined for a 204 No Content response', async () => {
