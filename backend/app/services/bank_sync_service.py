@@ -9,11 +9,14 @@ reported balance is the source of truth.
 
 import hashlib
 import logging
+import re
 import secrets
 from datetime import date, datetime, timedelta
 from decimal import Decimal, InvalidOperation
+from pathlib import Path
 from typing import Any
 
+import httpx
 from sqlalchemy.orm import Session
 
 from app.config import settings
@@ -22,6 +25,34 @@ from app.services import enable_banking_client as eb
 from app.utils import crypto
 
 logger = logging.getLogger("app.bank_sync")
+
+# Where AccountIcon (frontend/app/src/accounts/bankIcons.tsx) resolves
+# `/assets/icons/banks/<file>` from. Two candidate write targets because dev
+# and Docker serve icons from different places:
+#  - frontend/app/public is Vite's dev public dir, served directly by
+#    `vite dev` (this repo's normal local workflow).
+#  - settings.FRONTEND_DIR is whatever the backend itself serves statically
+#    (the built dist, copied to frontend/public in the Docker image) — the
+#    directory manually-created accounts' icons already live in there.
+# Writing to both keeps the two setups in sync; a missing directory is
+# skipped rather than created, so this never conjures a frontend tree that
+# doesn't already exist.
+_REPO_ROOT = Path(__file__).resolve().parent.parent.parent.parent
+_BANK_ICON_DIRS = [
+    _REPO_ROOT / "frontend" / "app" / "public" / "assets" / "icons" / "banks",
+    Path(settings.FRONTEND_DIR) / "assets" / "icons" / "banks",
+]
+
+_LOGO_FETCH_TIMEOUT = 15.0
+_CONTENT_TYPE_EXTENSIONS = {
+    "image/png": ".png",
+    "image/jpeg": ".jpg",
+    "image/jpg": ".jpg",
+    "image/svg+xml": ".svg",
+    "image/webp": ".webp",
+    "image/x-icon": ".ico",
+    "image/vnd.microsoft.icon": ".ico",
+}
 
 # Balance types in preference order. ITBD/CLBD are booked balances, which match
 # what we import (booked transactions only); ITAV/available includes pending
@@ -42,6 +73,98 @@ _FALLBACK_WINDOW_DAYS = (90, 30, 7)
 def generate_state() -> str:
     """Opaque single-use nonce binding a bank callback back to a user."""
     return secrets.token_urlsafe(32)[:64]
+
+
+def _icon_slug(aspsp_name: str, aspsp_country: str) -> str:
+    """Filesystem- and URL-safe stem, e.g. "Eurobank" + "GR" -> "eurobank-gr"."""
+    slug = re.sub(r"[^a-z0-9]+", "-", aspsp_name.strip().lower()).strip("-")
+    return f"{slug or 'bank'}-{aspsp_country.strip().lower()}"
+
+
+def _find_existing_icon(slug: str) -> str | None:
+    """An already-downloaded icon for this bank, if any directory has one.
+
+    Checked by stem rather than a fixed extension because the extension is
+    whatever Enable Banking served the first time this bank was linked.
+    """
+    for directory in _BANK_ICON_DIRS:
+        if not directory.is_dir():
+            continue
+        for match in directory.glob(f"{slug}.*"):
+            return match.name
+    return None
+
+
+def _write_icon(filename: str, content: bytes) -> None:
+    for directory in _BANK_ICON_DIRS:
+        # Only write where the frontend tree already exists — never create it,
+        # this is a best-effort enrichment, not something that should conjure
+        # directories in an unexpected layout.
+        if not directory.is_dir():
+            continue
+        try:
+            (directory / filename).write_bytes(content)
+        except OSError as exc:
+            logger.warning("Could not write bank icon to %s: %s", directory, exc)
+
+
+def get_or_fetch_bank_icon(aspsp_name: str, aspsp_country: str) -> str | None:
+    """Persist the ASPSP's real logo locally and return its filename, or None.
+
+    Mirrors how manually-created accounts pick an icon: a filename under
+    frontend/app/public/assets/icons/banks/, resolved by bankIconSrc() at
+    render time. Downloaded once per bank (matched by slug) rather than on
+    every account link, both to avoid hammering the bank directory and
+    because Enable Banking's logo URL is stable per ASPSP.
+
+    Never raises: a failure here must not break account linking, so every
+    step downgrades to a logged warning and a None return.
+    """
+    slug = _icon_slug(aspsp_name, aspsp_country)
+
+    existing = _find_existing_icon(slug)
+    if existing:
+        return existing
+
+    try:
+        aspsps = eb.list_aspsps(aspsp_country)
+    except eb.EnableBankingError as exc:
+        logger.warning(
+            "Could not list ASPSPs to find a logo for %s (%s): %s",
+            aspsp_name,
+            aspsp_country,
+            exc,
+        )
+        return None
+
+    logo_url = next(
+        (
+            a.get("logo")
+            for a in aspsps
+            if isinstance(a, dict) and a.get("name") == aspsp_name and a.get("logo")
+        ),
+        None,
+    )
+    if not logo_url:
+        logger.info("No logo URL from Enable Banking for %s (%s)", aspsp_name, aspsp_country)
+        return None
+
+    try:
+        with httpx.Client(timeout=_LOGO_FETCH_TIMEOUT, follow_redirects=True) as client:
+            response = client.get(logo_url)
+        response.raise_for_status()
+    except httpx.HTTPError as exc:
+        logger.warning("Failed to download bank logo for %s: %s", aspsp_name, exc)
+        return None
+
+    content_type = response.headers.get("content-type", "").split(";")[0].strip().lower()
+    ext = _CONTENT_TYPE_EXTENSIONS.get(content_type) or Path(logo_url.split("?")[0]).suffix
+    if not ext or len(ext) > 5:
+        ext = ".png"
+
+    filename = f"{slug}{ext}"
+    _write_icon(filename, response.content)
+    return filename
 
 
 # --- normalisation --------------------------------------------------------
@@ -312,12 +435,25 @@ def _fetch_with_fallback(
             )
         except (eb.WrongTransactionsPeriod, eb.AspspError) as exc:
             last_error = exc
-            logger.info(
-                "Account %s rejected transactions from %s (strategy=%s): %s — narrowing window",
+            # The very first attempt of a `longest` request is the one that
+            # matters: if IT falls back, this account is about to get stuck on
+            # a narrow window until it is re-authorised (see _link_accounts),
+            # since last_synced_at is stamped after this call regardless of
+            # which window actually succeeded. That is worth a WARNING, not an
+            # INFO buried among routine incremental-sync retries.
+            is_full_history_attempt = attempt_strategy == strategy == "longest"
+            log = logger.warning if is_full_history_attempt else logger.info
+            log(
+                "Account %s rejected transactions from %s (strategy=%s): %s — "
+                "narrowing window%s",
                 account.id,
                 attempt_from,
                 attempt_strategy,
                 exc,
+                " (full-history request failed on first sync — this account "
+                "will only get recent history until reconnected)"
+                if is_full_history_attempt
+                else "",
             )
 
     assert last_error is not None

@@ -275,7 +275,8 @@ def bank_callback(
             days=settings.EB_CONSENT_DAYS
         )
 
-    created = _link_accounts(db, connection, session.get("accounts") or [])
+    icon_filename = _fetch_bank_icon(connection.aspsp_name, connection.aspsp_country)
+    created = _link_accounts(db, connection, session.get("accounts") or [], icon_filename)
     db.commit()
 
     if created == 0:
@@ -297,7 +298,27 @@ def bank_callback(
     return _frontend_redirect(linked="1", accounts=str(created))
 
 
-def _link_accounts(db: Session, connection: BankConnection, raw_accounts: list) -> int:
+def _fetch_bank_icon(aspsp_name: str, aspsp_country: str) -> str | None:
+    """Best-effort local copy of the bank's real logo (see bank_sync_service).
+
+    Isolated in its own try/except even though the service function already
+    guards its own steps: this runs on the callback path right after the
+    account link succeeded, and no logo-fetching failure mode is worth
+    turning into a broken bank connection.
+    """
+    try:
+        return bank_sync_service.get_or_fetch_bank_icon(aspsp_name, aspsp_country)
+    except Exception:
+        logger.exception("Unexpected error fetching bank icon for %s", aspsp_name)
+        return None
+
+
+def _link_accounts(
+    db: Session,
+    connection: BankConnection,
+    raw_accounts: list,
+    icon_filename: str | None = None,
+) -> int:
     """Create or re-attach Account rows for the accounts a session exposes."""
     created = 0
     for raw in raw_accounts:
@@ -319,6 +340,18 @@ def _link_accounts(db: Session, connection: BankConnection, raw_accounts: list) 
             existing.bank_connection_id = connection.id
             existing.is_linked = True
             existing.is_active = True
+            if icon_filename and not existing.icon:
+                existing.icon = icon_filename
+            # A fresh authorisation reopens the bank's short post-authorisation
+            # full-history window (Enable Banking: "typically around one hour"),
+            # even for an account that was already linked. Clearing
+            # last_synced_at makes the next sync treat this as a first sync
+            # again — requesting EB_INITIAL_HISTORY_DAYS with strategy=longest
+            # instead of resuming from wherever the last (possibly
+            # narrow-windowed) sync left off. Without this, an account that
+            # fell back to 90 days on its very first sync had no way back to
+            # more history short of deleting and recreating it.
+            existing.last_synced_at = None
             created += 1
             continue
 
@@ -336,6 +369,7 @@ def _link_accounts(db: Session, connection: BankConnection, raw_accounts: list) 
                 bank_connection_id=connection.id,
                 external_account_id=uid,
                 is_linked=True,
+                icon=icon_filename,
                 name=str(name)[:100],
                 type="checking",
                 currency=(raw.get("currency") if isinstance(raw, dict) else None) or "EUR",

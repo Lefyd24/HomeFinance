@@ -1,359 +1,198 @@
-# Personal Finance Management System
+# 💶 Personal Finance
 
-A full-stack personal finance application with a FastAPI backend and a vanilla JavaScript frontend. Track accounts, transactions, budgets, debts, goals, and reports — with bank import, JWT auth, and PWA support.
+Your own money, on your own server. Personal Finance is a **self-hosted** app for tracking accounts, spending, budgets, debts, and goals — built for one household to run for itself, not for a company to run for millions.
 
-## Features
+It's a normal web app you sign into from your phone or laptop (it also installs as a PWA), but the data lives in a plain SQLite file on a machine you control — there's no third party reading your bank statements by default. A few *optional* features (AI chat, live bank sync, brokerage sync) do talk to outside services, and each one is called out below so you know exactly what leaves your server and only if you choose to turn it on.
 
-- **Dashboard** — cashflow + net-worth combo chart, spending breakdown, goals overview
-- **Transactions** — income, expenses, transfers; inline editing and filtering
-- **Accounts & categories** — multi-account tracking with color-coded categories
-- **Budgets** — limit tracking with progress indicators
-- **Reports** — tabbed reports (Overview, Cashflow, Spending, Budget & Savings, Debt) with global filters, saved views, and CSV export
-- **Debts & goals** — payoff tracking and savings goals
-- **Bank import** — CSV/Excel import wizard
-- **Advisor** — spending forecasts and financial insights
-- **Documents** — attach receipts and statements
-- **Recurring expenses** — scheduled payment tracking; disable instead of delete to retire a bill while keeping its payment history, re-enable anytime
-- **Notifications** — email + desktop (Web Push) alerts for due bills, low balances, and budget thresholds, with per-channel test sends and quiet hours
-- **PWA** — installable progressive web app
-- **Auth** — JWT login with refresh tokens; optional API keys
-
-## Architecture
-
-| Layer | Stack |
-|-------|-------|
-| Frontend | Static HTML, Tailwind CSS v4, daisyUI, vanilla JS, Apache ECharts |
-| Backend | FastAPI, SQLAlchemy, SQLite, Alembic |
-| Auth | JWT (access + refresh tokens) |
-| Packaging | Docker Compose (optional) or local two-process dev |
-
-## Ports (default)
-
-| Service | URL |
-|---------|-----|
-| Frontend | http://localhost:3100 |
-| Backend API | http://localhost:8223/api |
-| Swagger docs | http://localhost:8223/docs |
-| Health check | http://localhost:8223/health |
-
-Ports are configured via `BACKEND_PORT` and `FRONTEND_PORT` in `.env`.
+This README is written for the person actually using the app day to day. Every feature section below has a short **⚙ Setup** note for whoever installs/configures it — that might be you too, or a more technical friend/family member who set the server up.
 
 ---
 
-## Development setup (without Docker)
+## 🧭 What you can do with it
 
-Use two terminals — one for the API, one for the static frontend.
+### Track your money
+
+**Accounts, transactions & categories** — Add your bank accounts, cash, or credit cards, and log income, expenses, and transfers between them. Every transaction gets a category (groceries, rent, salary, …) so your spending naturally sorts itself into a picture you can read. Categories are color-coded and fully yours to rename or add to.
+
+**Dashboard** — The first thing you see when you log in: a combined cashflow + net-worth chart, a breakdown of where your money went, and a quick look at your goals — the "how am I doing" screen.
+
+**Reports** — A deeper, tabbed view (Overview, Cashflow, Spending, Budget & Savings, Debt) with a shared filter bar (pick accounts/categories once, it applies everywhere), saved views so you don't have to rebuild your favorite filter every time, and CSV export if you want to pull numbers into a spreadsheet.
+
+> ⚙ **Setup** — No configuration needed; this is core functionality that works out of the box.
+
+### Bring your data in without typing it all by hand
+
+**Import wizard** — Upload a CSV or Excel export from your bank and step through mapping its columns to accounts, dates, and amounts, instead of entering months of history one row at a time.
+
+**Categorization rules** — Write simple "if the description contains X, put it in category Y" rules once, and every future import or bank-synced transaction that matches gets categorized automatically. Rules are listed with how many times each has fired, so you can see which ones are actually doing work.
+
+> ⚙ **Setup** — Both work out of the box, no configuration needed.
+
+**Automatic bank sync** — For banks that support it (via the Enable Banking PSD2 service, mainly EU institutions), you can link an account once and have new transactions pull in automatically instead of importing manually. You'll be sent to your bank to approve the connection (this is the same "strong customer authentication" step you'd do in your bank's own app), then it just stays in sync — the app warns you a week before that consent expires so your sync doesn't quietly go dark.
+
+> ⚙ **Setup** — Off by default. Requires registering an application with [Enable Banking](https://enablebanking.com) and setting these in `.env`:
+> `BANK_SYNC_ENABLED=true`, `EB_APPLICATION_ID`, `EB_PRIVATE_KEY_PATH` (the `.pem` key downloaded at registration — mount it as a Docker volume, never bake it into the image), and `EB_REDIRECT_URL` (must exactly match a redirect URL registered with Enable Banking, and be reachable from your browser). Optional tuning: `EB_CONSENT_DAYS` (default 90, banks may grant less), `EB_INITIAL_HISTORY_DAYS` (default 365), `EB_INCLUDE_PENDING` (also import not-yet-booked card charges — off by default since they can vanish/change), `EB_SYNC_OVERLAP_DAYS`, `EB_MANUAL_SYNC_COOLDOWN_MINUTES`, `EB_CONSENT_WARN_DAYS`. The app refuses to start with `BANK_SYNC_ENABLED=true` and missing settings (unless `DEBUG=true`).
+
+### Plan ahead
+
+**Budgets** — Set a spending limit per category (or overall) for a period, and watch a progress bar fill up as you spend, instead of finding out you're over budget at the end of the month.
+
+**Recurring expenses** — Track subscriptions and regular bills (rent, streaming, insurance) with their schedule, so you always know what's coming and when. If a bill stops but you want to keep its payment history, you can disable it instead of deleting it, and re-enable it later.
+
+**Goals** — Set a savings target (emergency fund, vacation, a big purchase) with an amount and, optionally, a date. The app tracks your progress, tells you how much to save per month to hit your target date, and estimates when you'll actually get there based on how you've been saving recently.
+
+**Debts** — Track loans and credit cards with their balance and interest rate, log payments against them, and see payoff progress over time.
+
+> ⚙ **Setup** — All work out of the box, no configuration needed.
+
+### Get help making sense of it
+
+**Advisor** — A set of financial calculators (compound interest / investment growth, loan and mortgage amortization, an emergency-fund size recommendation based on your real spending, and net worth over time) that run entirely on your own numbers — no external service involved, deterministic math, always available.
+
+**AI Advisor (chat)** — A conversational assistant you can ask things like *"how much did I spend on groceries last month?"* or *"am I on track for my emergency fund?"*. It looks up your real transactions, accounts, budgets, and debts via tool calls before answering (never guesses), and can email you a written summary on request. It's scoped to only discuss your own finances and general money advice.
+
+> ⚙ **Setup** — Off unless configured. Uses [DeepSeek](https://platform.deepseek.com) as the AI provider — get an API key there and set `DEEPSEEK_API_KEY` in `.env`. Your questions and the transaction data the assistant looks up to answer them are sent to DeepSeek's API for that one request; nothing is sent otherwise. Optional: `DEEPSEEK_BASE_URL`, `DEEPSEEK_MODEL` (default `deepseek-chat`), `AI_CHAT_MAX_TOOL_ROUNDS` (default 6, caps how many data look-ups the assistant can chain per question).
+
+### Keep receipts and grow your portfolio
+
+**Documents** — Attach receipts, statements, or any file to a transaction (or just file it away), organized into folders, with previews. Handy for tax time or warranty claims.
+
+> ⚙ **Setup** — No configuration needed. Files are stored under `data/documents/` on the server (`DOCUMENTS_DIR`, `DOCUMENTS_MAX_FILE_SIZE` — default 50MB — are configurable but rarely need changing).
+
+**Investments** — Link a brokerage account (currently Freedom24) with API keys you generate on the broker's side, and the app pulls in your balance, positions, and transaction history on a schedule, plus lets you research companies and tickers and check market news. A manual "sync now" button is rate-limited so it doesn't hammer the broker's API.
+
+> ⚙ **Setup** — Enabled by default (`INVESTMENT_SYNC_ENABLED=true`, syncs every `INVESTMENT_SYNC_INTERVAL_HOURS` hours, default 4). No server-wide API key needed — each user adds their own broker API key/secret when linking an account from the Investments page. `INVESTMENT_MANUAL_SYNC_COOLDOWN_SECONDS` (default 60) throttles the manual refresh button.
+
+### Stay in the loop
+
+**Notifications** — Email and desktop (Web Push) alerts for bills coming due, low account balances, and budget thresholds you're approaching, with quiet hours so you're not pinged at 2am, per-channel test-send buttons to confirm it's working, and dedupe so you don't get the same alert twice.
+
+> ⚙ **Setup** — On by default (`NOTIFICATIONS_ENABLED=true`), but degrades gracefully with nothing configured (email silently no-ops, push shows a clear "not configured" message). To actually receive alerts:
+> - **Email**: set `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, `SMTP_FROM`, `SMTP_USE_TLS` in `.env` (each user can also override these from the Notifications page in the UI).
+> - **Desktop push**: generate a VAPID keypair once with `uv run python scripts/generate_vapid_keys.py` and set `VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY` / `VAPID_SUBJECT`, then click "Enable desktop notifications" in the app.
+> - Whenever notifications are on, set `NOTIFICATION_ENCRYPTION_KEY` (`openssl rand -hex 32`) — it encrypts any per-user SMTP password saved through the UI. **Set this before you ever rotate `SECRET_KEY`**, and never change it afterward without re-saving those passwords, or they become permanently unreadable.
+
+---
+
+## 👪 Multiple people, one server
+
+The app supports more than one person (e.g. you and a partner) with separate logins and separate data.
+
+- **Registration is invite-only.** New accounts need a one-time invite code — nobody can just sign themselves up on your server.
+- Whoever is promoted to **admin** (see setup below) gets an **Admin** page to create and revoke invite codes and manage user accounts (activate/deactivate — no deletion from the UI).
+- Accounts go through **email verification** before they can log in, and there's a self-service **forgot-password** flow.
+- Login, registration, and password-reset attempts are **rate-limited** per IP and per email address, so a forgotten password doesn't turn into a lockout tool against someone else.
+
+> ⚙ **Setup** — Set `ADMIN_EMAILS=["you@example.com"]` in `.env` (a JSON list) and restart; any user who **already registered** with a matching email becomes admin (this doesn't create the account itself — register normally first). From the Admin page, issue invite codes for everyone else. `PUBLIC_BASE_URL` (e.g. your Tailscale hostname) makes links in verification/reset emails stable; it otherwise falls back to whatever origin the request came in on. Rate limits are tunable via `RATE_LIMIT_PER_IP_MAX` / `RATE_LIMIT_PER_IP_WINDOW_SECONDS` and `RATE_LIMIT_PER_EMAIL_MAX` / `RATE_LIMIT_PER_EMAIL_WINDOW_SECONDS`.
+
+## 🌍 Language
+
+The interface is available in **English** and **Greek**, and picks up your browser's language automatically.
+
+---
+
+## 🔒 Your data, your server
+
+This app is self-hosted: the API, the web app, and your SQLite database all run from one Docker container on a machine you control (your own server, a Raspberry Pi, a home NAS, etc.) — there's no vendor with a copy of your finances by default. The database file and any uploaded documents live in a plain `./data` folder on disk, so backing up your data is just backing up that folder.
+
+The exceptions are the integrations you explicitly turn on: the **AI Advisor** sends your question and the data needed to answer it to DeepSeek's API; **bank sync** and **investment sync** talk to your bank/broker's own API to pull transactions and balances (that's the whole point of those features). Nothing else phones home. Everything else — accounts, transactions, budgets, debts, goals, reports, rules, notifications, documents — is computed and stored locally.
+
+For exposing your instance to yourself (or family) outside your home network, the project is built around [Tailscale Funnel](https://tailscale.com/kb/1223/funnel) — see [`DEPLOYMENT_UPGRADE.md`](DEPLOYMENT_UPGRADE.md) for the exact hardening steps (this is also where the invite-only registration and rate-limiting behavior above comes from).
+
+---
+
+## 🚀 Getting started (self-hosting)
+
+This section is for whoever is setting the server up. The app ships as a single Docker image — one container serves both the web app and the API from one port.
 
 ### Prerequisites
 
-- **Python 3.11+**
-- **[uv](https://docs.astral.sh/uv/)** (recommended) or `pip` + `venv`
-- **Node.js 18+** and **npm** (Tailwind CSS build only; no frontend bundler)
-- **Git**
+- Docker and Docker Compose
+- (Optional, for bare-metal/dev setups without Docker) Python 3.11+, [uv](https://docs.astral.sh/uv/), Node.js 22+
 
-Install uv (if needed):
-
-```bash
-# macOS / Linux
-curl -LsSf https://astral.sh/uv/install.sh | sh
-
-# Windows (PowerShell)
-powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
-```
-
-### 1. Clone and configure environment
+### Run it with Docker
 
 ```bash
 git clone <repository-url>
 cd PersonalFinance
 
-cp .env.example .env   # Windows: copy .env.example .env
-```
-
-Edit `.env` for local development. At minimum, set a secret key and enable debug reload:
-
-```env
-SECRET_KEY=change-me-to-a-random-string
-DEBUG=true
-
-# Docker value works locally too — the backend remaps /app/data/ → ./data/finance.db
-DATABASE_URL=sqlite:////app/data/finance.db
-
-BACKEND_PORT=8223
-FRONTEND_PORT=3100
-CORS_ORIGINS=["*"]
-```
-
-Create the data directory (the SQLite file is created on first run):
-
-```bash
-mkdir -p data
-```
-
-> **Note:** You can keep the Docker `DATABASE_URL` from `.env.example` unchanged for local dev. The backend detects `/app/data/` and writes to `<repo>/data/finance.db` instead.
-
-### 2. Install backend dependencies
-
-From the **repository root**:
-
-```bash
-uv sync
-```
-
-This reads `pyproject.toml` and creates/updates `.venv`. To include test dependencies:
-
-```bash
-uv sync --group dev
-```
-
-> **Alternative (pip):** `cd backend && python -m venv .venv`, activate it, then `pip install -r requirements.txt`.
-
-### 3. Apply database migrations (recommended)
-
-```bash
-cd backend
-uv run alembic upgrade head
-cd ..
-```
-
-On first startup the app also calls `create_all`, but Alembic is the source of truth for schema changes. See [`backend/ALEMBIC_GUIDE.md`](backend/ALEMBIC_GUIDE.md) for migration workflows.
-
-### 4. Start the backend (terminal 1)
-
-```bash
-cd backend
-uv run python main.py
-```
-
-With `DEBUG=true`, uvicorn reloads on code changes. The API listens on `http://localhost:8223`.
-
-Verify: open http://localhost:8223/health — you should see `{"status":"healthy",...}`.
-
-**Windows PowerShell** (if you need to override the port for one session):
-
-```powershell
-cd backend
-$env:BACKEND_PORT = "8223"
-uv run python main.py
-```
-
-### 5. Build and serve the frontend (terminal 2)
-
-```bash
-cd frontend
-npm install
-npm run build:css          # compile Tailwind → public/assets/css/app.css
-npm run sync:runtime-config # write BACKEND_PORT into js/runtime-config.js
-```
-
-Serve the static site from `frontend/public`:
-
-```bash
-cd public
-python -m http.server 3100
-```
-
-Open http://localhost:3100 — register a user, then sign in.
-
-**CSS watch mode** (optional, while editing styles):
-
-```bash
-cd frontend
-npm run watch:css
-```
-
-Re-run `npm run sync:runtime-config` whenever you change `BACKEND_PORT` in `.env`.
-
-### How the frontend finds the API
-
-The API client in `frontend/public/js/api.js` resolves the backend URL in this order:
-
-1. `window.API_BASE_URL` (manual override)
-2. `localStorage.backendUrl`
-3. Same hostname as the page + port from `js/runtime-config.js` (`BACKEND_PORT` from `.env`)
-
-For local dev, `npm run sync:runtime-config` keeps the port in sync. You only need a manual override when the API runs on a different host:
-
-```html
-<script>window.API_BASE_URL = 'http://localhost:8223/api';</script>
-```
-
-### Run backend tests
-
-From the repository root (requires `uv sync --group dev`):
-
-```bash
-uv run pytest backend/tests -v
-```
-
-### Local dev checklist
-
-| Step | Command | Expected result |
-|------|---------|-----------------|
-| Health | `curl http://localhost:8223/health` | `"status":"healthy"` |
-| Frontend | http://localhost:3100 | Login / register page |
-| API docs | http://localhost:8223/docs | Interactive Swagger UI |
-| Reports | http://localhost:3100/pages/reports.html | Tabbed reports with charts; top filter bar (accounts/categories) affects every tab |
-| Notifications | http://localhost:3100/pages/notifications.html | Channel toggles, SMTP settings, rules, and test-send buttons |
-
-### Troubleshooting (local dev)
-
-| Problem | Fix |
-|---------|-----|
-| `unable to open database file` on startup | Ensure `./data` exists (`mkdir data`). The backend auto-remaps Docker's `/app/data/` path to `./data/finance.db` locally. |
-| Frontend can't reach API | Run `npm run sync:runtime-config`; confirm `BACKEND_PORT` in `.env` matches the running backend |
-| CORS errors | Set `CORS_ORIGINS=["*"]` in `.env` or include `http://localhost:3100` |
-| Database locked | Only run one backend process; SQLite uses WAL mode but concurrent writers still conflict |
-| Stale CSS | Re-run `npm run build:css` after editing `frontend/build/css/input.css` |
-| Charts look broken after pull | Hard-refresh the browser (Ctrl+Shift+R) to bust cached `echarts-theme.js` |
-
----
-
-## Quick start with Docker
-
-### Prerequisites
-
-- Docker
-- Docker Compose
-
-### Running
-
-```bash
 cp .env.example .env
-# Edit SECRET_KEY and other values as needed
+# Edit .env: at minimum set SECRET_KEY (openssl rand -hex 32)
 
 docker compose up --build
 ```
 
-| URL | |
-|-----|---|
-| Frontend | http://localhost:3100 |
-| API | http://localhost:8223 |
-| Docs | http://localhost:8223/docs |
+Open **http://localhost:8223** — register the first account, then set `ADMIN_EMAILS` in `.env` to that address, restart, and use the Admin page to invite everyone else.
 
-### Docker commands
+| Command | Effect |
+|---|---|
+| `docker compose up --build` | Build and start |
+| `docker compose up -d` | Start in the background |
+| `docker compose logs -f` | Follow logs |
+| `docker compose down` | Stop |
+| `docker compose down -v` | Stop and remove volumes (⚠ deletes the database) |
 
-```bash
-docker compose up --build      # build and start
-docker compose up -d           # detached
-docker compose logs -f         # follow logs
-docker compose down            # stop
-docker compose down -v         # stop and remove volumes (deletes DB)
-```
+Your database and any uploaded documents persist in `./data` on the host; logs go to `./logs`. Database migrations run automatically on container startup.
 
-### Data persistence (Docker)
+### Key settings to review before going live
 
-The SQLite database and uploaded documents live in the bind-mounted `./data` folder:
+| Variable | Why it matters |
+|---|---|
+| `SECRET_KEY` | Signs login tokens. The app **refuses to start** without a real, ≥32-character value (unless `DEBUG=true`). Generate with `openssl rand -hex 32`. |
+| `NOTIFICATION_ENCRYPTION_KEY` | Required once `NOTIFICATIONS_ENABLED=true`. Pin it to a fresh random value *before* anyone saves a personal SMTP password — rotating it afterward makes those passwords unreadable. |
+| `DEBUG` | Must be `false` in production — `true` bypasses the key checks above and loosens CORS. |
+| `BACKEND_PORT` | The single port the whole app is served on (default `8223`). |
+| `CORS_ORIGINS` | Leave as `[]` for a normal same-origin deployment (the backend serves the frontend itself). |
+| `ADMIN_EMAILS` | JSON list of emails to promote to admin on next startup (account must already exist). |
 
-```
-data/
-├── finance.db
-└── documents/
-```
+Running it long-term on a home server with systemd instead of managing `docker compose` by hand? See [`SETUP_SERVICE.md`](SETUP_SERVICE.md). Upgrading an existing production instance, or exposing it over Tailscale Funnel? See [`DEPLOYMENT_UPGRADE.md`](DEPLOYMENT_UPGRADE.md).
 
-Logs are written to `./logs/`.
+### Running it for development (without Docker)
 
----
+<details>
+<summary>Expand for local dev setup</summary>
 
-## Configuration
-
-Environment variables (set in repo-root `.env`):
-
-| Variable | Description | Default (local) |
-|----------|-------------|-----------------|
-| `SECRET_KEY` | JWT signing key | *(must change in production)* |
-| `DATABASE_URL` | SQLAlchemy database URL | `sqlite:///./finance.db` |
-| `ACCESS_TOKEN_EXPIRE_MINUTES` | Access token lifetime | `1440` (1 day) |
-| `DEBUG` | Enable uvicorn auto-reload | `false` |
-| `CORS_ORIGINS` | Allowed origins (JSON array) | `["*"]` |
-| `BACKEND_PORT` | API listen port | `8223` |
-| `FRONTEND_PORT` | Used for CORS + runtime config | `3100` |
-| `LOG_DIR` | Application log directory | `./logs` |
-
-### Notifications (optional, for local dev)
-
-Email and desktop alerts work without any setup — the app degrades gracefully if unconfigured (email silently no-ops, push shows a clear "not configured" message on the Notifications page). To exercise them locally:
-
-**Email (SMTP)** — set in `.env`, or override per-user from the Notifications page in the UI:
-
-```env
-SMTP_HOST=smtp.gmail.com
-SMTP_PORT=587
-SMTP_USER=you@gmail.com
-SMTP_PASSWORD=your-app-password
-SMTP_FROM=you@gmail.com
-SMTP_USE_TLS=true
-```
-
-Then from the Notifications page (`http://localhost:3100/pages/notifications.html`), click **Send test email** in the SMTP card. Any failure shows the real SMTP error (e.g. auth failure) instead of a generic message.
-
-**Desktop (Web Push / VAPID)** — generate a keypair once and append it to `.env`:
+The frontend is a Vite + React + TypeScript app (`frontend/app`); the backend is FastAPI. In production they're built into one image and served from one port, but for day-to-day frontend development you'll normally run Vite's own dev server against a locally running backend.
 
 ```bash
-cd backend
-uv run python ../scripts/generate_vapid_keys.py
+# 1. Backend deps
+uv sync --group dev
+
+# 2. Apply migrations
+cd backend && uv run alembic upgrade head && cd ..
+
+# 3. Start the backend
+cd backend && uv run python main.py   # http://localhost:8223
+
+# 4. In a second terminal, start the frontend dev server
+cd frontend/app
+npm install
+npm run dev                            # Vite dev server, proxies API calls to the backend
 ```
 
-Restart the backend, then on the Notifications page click **Enable desktop notifications** (grants the browser permission) followed by **Send test desktop notification**.
+Run backend tests with `uv run pytest backend/tests -v` from the repo root. Run frontend tests with `npm run test` inside `frontend/app`.
 
-`NOTIFICATION_ENCRYPTION_KEY` encrypts any per-user SMTP password saved via the UI — generate one with `openssl rand -base64 32`; without it, per-user SMTP passwords can't be saved (server SMTP env vars still work).
+</details>
 
 ---
 
-## API overview
+## 🛠 Under the hood (for the curious)
 
-All routes are prefixed with `/api`. Full interactive documentation: http://localhost:8223/docs
+| Layer | Stack |
+|---|---|
+| Frontend | React 19 + TypeScript, Vite, Tailwind CSS, Radix UI/shadcn components, TanStack Query & Table, Apache ECharts, i18next |
+| Backend | FastAPI, SQLAlchemy, SQLite, Alembic migrations, APScheduler for background jobs |
+| Auth | JWT (access + refresh tokens), invite-only registration, email verification, rate-limited login |
+| AI | DeepSeek (chat), scikit-learn (spending clustering / category prediction), statsmodels ARIMA (spending forecasts) |
+| Packaging | Single Docker image (multi-stage build), Docker Compose |
 
-| Area | Examples |
-|------|----------|
-| Auth | `POST /api/auth/register`, `POST /api/auth/login`, `POST /api/auth/refresh` |
-| Core | `/api/accounts`, `/api/transactions`, `/api/categories`, `/api/budgets` |
-| Reports | `/api/reports/cashflow`, `/api/reports/net-worth`, `/api/reports/export` |
-| Import | `POST /api/import-wizard/upload` |
-| Debts & goals | `/api/debts`, `/api/goals` |
-| Advisor | `/api/advisor/*` |
+Full interactive API documentation is available at `/docs` on your running instance (e.g. `http://localhost:8223/docs`) once it's up.
 
-Report JSON contracts:
+Related docs in this repo:
 
-- Series reports: `{ "labels": string[], "series": [{ "name", "data" }] }`
-- Single-value reports: `{ "labels": string[], "data": number[] }`
-
----
-
-## Project structure
-
-```
-.
-├── backend/
-│   ├── app/
-│   │   ├── models/          # SQLAlchemy models
-│   │   ├── routers/         # FastAPI route modules
-│   │   ├── schemas/         # Pydantic request/response models
-│   │   └── services/        # Business logic
-│   ├── alembic/             # Database migrations
-│   ├── tests/               # pytest suite
-│   └── main.py              # ASGI entry point
-├── frontend/
-│   ├── build/css/           # Tailwind input
-│   ├── public/              # Static site root (serve this in dev)
-│   │   ├── index.html       # Login
-│   │   ├── pages/           # App pages
-│   │   └── js/              # Vanilla JS modules + ECharts theme
-│   └── package.json         # CSS build scripts only
-├── data/                    # SQLite DB + documents (gitignored)
-├── logs/                    # Application logs (gitignored)
-├── docs/                    # Design docs and implementation plans
-├── pyproject.toml           # Python deps (uv / pip)
-├── docker-compose.yml
-├── Dockerfile
-└── .env.example
-```
-
----
-
-## Related docs
-
-- [`backend/ALEMBIC_GUIDE.md`](backend/ALEMBIC_GUIDE.md) — database migrations
+- [`backend/ALEMBIC_GUIDE.md`](backend/ALEMBIC_GUIDE.md) — database migration workflow
+- [`DEPLOYMENT_UPGRADE.md`](DEPLOYMENT_UPGRADE.md) — production hardening, invite-only auth, Tailscale Funnel
+- [`SETUP_SERVICE.md`](SETUP_SERVICE.md) — running as a systemd service
 - [`MIGRATION_GUIDE.md`](MIGRATION_GUIDE.md) — historical schema/data migration notes
 - [`docs/superpowers/`](docs/superpowers/) — feature design and implementation plans
 

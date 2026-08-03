@@ -5,6 +5,7 @@ from datetime import date, datetime, timedelta
 import pytest
 
 from app.models import Account, BankConnection, Transaction, User
+from app.routers import bank_sync as bank_sync_router
 from app.services import bank_sync_service as svc
 from app.services import enable_banking_client as eb
 from app.utils import crypto
@@ -352,6 +353,41 @@ def test_window_narrows_when_the_bank_rejects_the_period(monkeypatch, linked_acc
     assert attempts[0][1] == "longest"
     # Second attempt steps down to the 90-day floor most banks fall back to.
     assert attempts[1][0] == (datetime.utcnow() - timedelta(days=90)).date()
+
+
+def test_full_history_fallback_is_logged_at_warning(monkeypatch, linked_account, caplog):
+    """A `longest` request falling back is the case that silently strands an
+    account on ~90 days of history forever — it must be visible in logs, not
+    buried at INFO alongside routine incremental-sync retries.
+    """
+    def fake(uid, date_from, strategy="default", **kw):
+        if strategy == "longest":
+            raise eb.AspspError("Error interacting with ASPSP")
+        return [raw_tx()]
+
+    monkeypatch.setattr(eb, "get_transactions", fake)
+
+    start = (datetime.utcnow() - timedelta(days=365)).date()
+    with caplog.at_level("WARNING", logger="app.bank_sync"):
+        svc._fetch_with_fallback(linked_account, start, "longest")
+
+    assert any(record.levelname == "WARNING" for record in caplog.records)
+
+
+def test_incremental_fallback_stays_at_info(monkeypatch, linked_account, caplog):
+    """The routine 3-day-overlap retries are expected and frequent; they must
+    not be promoted to WARNING alongside the first-sync case above."""
+    def fake(uid, date_from, strategy="default", **kw):
+        raise eb.AspspError("Error interacting with ASPSP")
+
+    monkeypatch.setattr(eb, "get_transactions", fake)
+
+    recent = (datetime.utcnow() - timedelta(days=3)).date()
+    with caplog.at_level("INFO", logger="app.bank_sync"):
+        with pytest.raises(eb.AspspError):
+            svc._fetch_with_fallback(linked_account, recent, "default")
+
+    assert not any(record.levelname == "WARNING" for record in caplog.records)
 
 
 def test_fallback_gives_up_after_the_narrowest_window(monkeypatch, linked_account):
@@ -888,6 +924,71 @@ def test_split_can_be_applied_to_a_manual_transaction(client, db, seed_user):
     assert response.status_code == 200
     # Manual rows have no external_id, so parts get none either.
     assert all(p["is_bank_synced"] is False for p in response.json())
+
+
+# --- re-authorisation reopens the full-history window ----------------------
+
+
+def test_relinking_an_existing_account_resets_last_synced_at(db, seed_user, linked_account):
+    """A fresh authorisation reopens Enable Banking's short post-auth window for
+    full history, even for an account that got stuck on a narrow one on its
+    first sync. Clearing last_synced_at is what makes the next sync retry
+    strategy=longest instead of resuming from the old, narrow cutoff.
+    """
+    linked_account.last_synced_at = datetime.utcnow() - timedelta(days=10)
+    db.commit()
+
+    new_connection = BankConnection(
+        user_id=seed_user.id,
+        aspsp_name="Eurobank",
+        aspsp_country="GR",
+        status="active",
+    )
+    db.add(new_connection)
+    db.commit()
+    db.refresh(new_connection)
+
+    created = bank_sync_router._link_accounts(
+        db, new_connection, [{"uid": linked_account.external_account_id}]
+    )
+    db.commit()
+    db.refresh(linked_account)
+
+    assert created == 1
+    assert linked_account.last_synced_at is None
+    assert linked_account.bank_connection_id == new_connection.id
+
+
+def test_relinking_makes_the_next_sync_use_longest_again(monkeypatch, db, seed_user, linked_account):
+    """End-to-end check: after a re-link, sync_account must behave exactly like
+    a first-ever sync, because that is what unlocks more history.
+    """
+    linked_account.last_synced_at = datetime.utcnow() - timedelta(days=10)
+    db.commit()
+
+    new_connection = BankConnection(
+        user_id=seed_user.id, aspsp_name="Eurobank", aspsp_country="GR", status="active"
+    )
+    db.add(new_connection)
+    db.commit()
+
+    bank_sync_router._link_accounts(
+        db, new_connection, [{"uid": linked_account.external_account_id}]
+    )
+    db.commit()
+    db.refresh(linked_account)
+
+    calls = []
+
+    def fake(uid, date_from, strategy="default", **kw):
+        calls.append(strategy)
+        return []
+
+    monkeypatch.setattr(eb, "get_transactions", fake)
+    monkeypatch.setattr(eb, "get_balances", lambda uid: [])
+
+    svc.sync_account(db, linked_account)
+    assert calls == ["longest"]
 
 
 # --- connection state -----------------------------------------------------
