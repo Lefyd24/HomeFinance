@@ -6,13 +6,16 @@ import { HugeiconsIcon } from '@hugeicons/react'
 import type { IconSvgElement } from '@hugeicons/react'
 import {
   AlarmClockIcon,
+  Alert01Icon,
   BankIcon,
   PiggyBankIcon,
   TagIcon,
   TargetIcon,
   WalletIcon,
 } from '@hugeicons/core-free-icons'
-import { useAccounts } from '../accounts/useAccounts'
+import { useActiveAccounts } from '../accounts/useAccounts'
+import { useBankConnections } from '../bank-sync/useBankSync'
+import { needsReauth } from '../bank-sync/connectionHealth'
 import { useBudgets } from '../budgets/useBudgets'
 import { useCategories } from '../categories/useCategories'
 import { useGoals } from '../goals/useGoals'
@@ -94,7 +97,17 @@ export function DashboardPage() {
   const isDesktop = useMediaQuery('(min-width: 1024px)')
   const monthRange = currentMonthRange()
 
-  const { data: accounts, isLoading: accountsLoading } = useAccounts()
+  // Active only: a deactivated account is one the user has told us to stop
+  // caring about — a closed card, a manual account superseded by its
+  // bank-synced twin. Its history stays reachable from every filter, but it
+  // must not skew the headline balance or pad the panel below.
+  const { data: accounts, isLoading: accountsLoading } = useActiveAccounts()
+  const { data: connections = [] } = useBankConnections()
+  // A consent can lapse on any day — Enable Banking's own docs list several
+  // ways a bank ends a session early. The Connections page explains it well,
+  // but only to someone who goes there; without this the first symptom is
+  // transactions silently not arriving.
+  const ailingConnections = connections.filter(needsReauth)
   const { data: budgets, isLoading: budgetsLoading } = useBudgets()
   const { data: goals, isLoading: goalsLoading } = useGoals()
   const { data: categories = [] } = useCategories()
@@ -439,6 +452,28 @@ export function DashboardPage() {
         description={t('subtitle')}
         className="mb-0"
       />
+
+      {ailingConnections.length > 0 && (
+        <Link
+          to="/connections"
+          className="flex items-start gap-2.5 rounded-2xl bg-warning/10 p-4 text-sm text-warning transition-colors hover:bg-warning/15"
+        >
+          <HugeiconsIcon
+            icon={Alert01Icon}
+            strokeWidth={2}
+            className="mt-0.5 size-4 shrink-0"
+          />
+          <span>
+            <span className="font-medium">
+              {t('bankAlert.title', {
+                banks: ailingConnections.map((c) => c.aspsp_name).join(', '),
+                count: ailingConnections.length,
+              })}
+            </span>{' '}
+            <span className="opacity-90">{t('bankAlert.action')}</span>
+          </span>
+        </Link>
+      )}
 
       {/* The month in four figures. Everything below explains it. */}
       <section

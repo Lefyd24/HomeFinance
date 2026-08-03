@@ -5,9 +5,11 @@ import { toast } from 'sonner'
 import { HugeiconsIcon } from '@hugeicons/react'
 import {
   Add01Icon,
+  ArchiveIcon,
   MoreVerticalIcon,
   PencilEdit02Icon,
   Delete02Icon,
+  RefreshIcon,
   ArrowDataTransferHorizontalIcon,
   Wallet01Icon,
 } from '@hugeicons/core-free-icons'
@@ -34,7 +36,7 @@ import { PageHeader, PageHeaderActionLabel } from '../ui/PageHeader'
 import { useConfirm } from '../ui/useConfirm'
 import { formatCurrency } from '../lib/format'
 import { cn } from '@/lib/utils'
-import { useAccounts, useDeleteAccount } from './useAccounts'
+import { useAccounts, useDeleteAccount, useSetAccountActive } from './useAccounts'
 import { AccountFormDialog } from './AccountFormDialog'
 import { AccountIcon, getAccountTypeMeta, ACCOUNT_TYPE_ORDER } from './bankIcons'
 import type { Account, AccountType } from './accountsApi'
@@ -48,39 +50,47 @@ export function AccountsPage() {
   const { t } = useTranslation('accounts')
   const { data: accounts = [], isLoading } = useAccounts()
   const deleteAccount = useDeleteAccount()
+  const setAccountActive = useSetAccountActive()
   const { confirm, confirmDialog } = useConfirm()
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editingAccount, setEditingAccount] = useState<Account | null>(null)
+  const [showRetired, setShowRetired] = useState(false)
+
+  // This page is the one place that shows retired accounts at all, and even
+  // here they are kept out of the arithmetic: a closed account's last balance
+  // is a historical fact, not part of what you hold today.
+  const active = useMemo(() => accounts.filter((a) => a.is_active), [accounts])
+  const retired = useMemo(() => accounts.filter((a) => !a.is_active), [accounts])
 
   const summary = useMemo(() => {
-    const held = accounts
+    const held = active
       .filter((a) => !isLiability(a.type))
       .reduce((sum, a) => sum + Math.max(a.balance ?? 0, 0), 0)
-    const owed = accounts
+    const owed = active
       .filter((a) => isLiability(a.type))
       .reduce((sum, a) => sum + Math.abs(a.balance ?? 0), 0)
-    const liquid = accounts
+    const liquid = active
       .filter((a) => a.type === 'checking' || a.type === 'savings' || a.type === 'cash')
       .reduce((sum, a) => sum + Math.max(a.balance ?? 0, 0), 0)
 
     const allocation = ACCOUNT_TYPE_ORDER.filter((type) => !isLiability(type))
       .map((type) => ({
         type,
-        amount: accounts
+        amount: active
           .filter((a) => a.type === type)
           .reduce((sum, a) => sum + Math.max(a.balance ?? 0, 0), 0),
       }))
       .filter((slice) => slice.amount > 0)
 
     return { held, owed, liquid, net: held - owed, allocation }
-  }, [accounts])
+  }, [active])
 
   const groups = useMemo(() => {
     return ACCOUNT_TYPE_ORDER.map((type) => ({
       type,
-      accounts: accounts.filter((a) => a.type === type),
+      accounts: active.filter((a) => a.type === type),
     })).filter((group) => group.accounts.length > 0)
-  }, [accounts])
+  }, [active])
 
   const handleAdd = () => {
     setEditingAccount(null)
@@ -90,6 +100,27 @@ export function AccountsPage() {
   const handleEdit = (account: Account) => {
     setEditingAccount(account)
     setDialogOpen(true)
+  }
+
+  const handleToggleActive = async (account: Account) => {
+    if (account.is_active) {
+      const ok = await confirm({
+        title: t('deactivateDialog.title', { name: account.name }),
+        description: t('deactivateDialog.description'),
+        confirmLabel: t('deactivateDialog.confirmLabel'),
+      })
+      if (!ok) return
+    }
+    try {
+      await setAccountActive.mutateAsync({ id: account.id, isActive: !account.is_active })
+      toast.success(account.is_active ? t('toasts.deactivated') : t('toasts.reactivated'))
+      // Nothing is hidden without saying where it went — the retired section is
+      // collapsed by default, so a card vanishing from the grid is otherwise
+      // indistinguishable from a deletion.
+      if (account.is_active) setShowRetired(true)
+    } catch {
+      toast.error(t('toasts.activeChangeFailed'))
+    }
   }
 
   const handleDelete = async (account: Account) => {
@@ -177,12 +208,56 @@ export function AccountsPage() {
                         shareOf={summary.held}
                         onEdit={handleEdit}
                         onDelete={handleDelete}
+                        onToggleActive={handleToggleActive}
                       />
                     ))}
                   </div>
                 </section>
               )
             })}
+
+            {retired.length > 0 && (
+              <section className="flex flex-col gap-3">
+                {/* Below the fold and behind a click: these are accounts the
+                    user has finished with. Present, findable, and out of the
+                    way of the ones that still matter. */}
+                <button
+                  type="button"
+                  onClick={() => setShowRetired((open) => !open)}
+                  aria-expanded={showRetired}
+                  className="flex items-baseline gap-3 text-left"
+                >
+                  <span className="size-2 rounded-full bg-muted-foreground/40" aria-hidden />
+                  <h2 className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                    {t('retired.heading')}
+                  </h2>
+                  <span className="text-xs tabular-nums text-muted-foreground">
+                    {retired.length}
+                  </span>
+                  <span className="h-px flex-1 bg-border" />
+                  <span className="text-xs font-medium text-muted-foreground">
+                    {showRetired ? t('retired.hide') : t('retired.show')}
+                  </span>
+                </button>
+                {showRetired && (
+                  <>
+                    <p className="text-xs text-muted-foreground">{t('retired.description')}</p>
+                    <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
+                      {retired.map((account) => (
+                        <AccountCard
+                          key={account.id}
+                          account={account}
+                          shareOf={0}
+                          onEdit={handleEdit}
+                          onDelete={handleDelete}
+                          onToggleActive={handleToggleActive}
+                        />
+                      ))}
+                    </div>
+                  </>
+                )}
+              </section>
+            )}
           </div>
         </>
       )}
@@ -304,11 +379,13 @@ function AccountCard({
   shareOf,
   onEdit,
   onDelete,
+  onToggleActive,
 }: {
   account: Account
   shareOf: number
   onEdit: (account: Account) => void
   onDelete: (account: Account) => void
+  onToggleActive: (account: Account) => void
 }) {
   const { t } = useTranslation('accounts')
   const meta = getAccountTypeMeta(account.type, t)
@@ -319,7 +396,13 @@ function AccountCard({
   const sharePct = Math.round(share * 100)
 
   return (
-    <article className="glass-panel flex h-full flex-col rounded-xl border">
+    <article
+      className={cn(
+        'glass-panel flex h-full flex-col rounded-xl border',
+        // Legible, but visibly not part of the working set.
+        !account.is_active && 'opacity-65 saturate-50',
+      )}
+    >
       <div className="flex flex-1 flex-col gap-2 p-3.5">
         <div className="flex items-center gap-2.5">
           <AccountIcon
@@ -399,6 +482,20 @@ function AccountCard({
                     <HugeiconsIcon icon={ArrowDataTransferHorizontalIcon} strokeWidth={2} />
                     {t('card.transactions')}
                   </Link>
+                </DropdownMenuItem>
+              </DropdownMenuGroup>
+              <DropdownMenuSeparator />
+              <DropdownMenuGroup>
+                {/* Offered above delete, and deliberately: retiring an account
+                    is what most people actually want when they reach for
+                    delete, and it keeps the history the rest of the app is
+                    built on. */}
+                <DropdownMenuItem onClick={() => onToggleActive(account)}>
+                  <HugeiconsIcon
+                    icon={account.is_active ? ArchiveIcon : RefreshIcon}
+                    strokeWidth={2}
+                  />
+                  {account.is_active ? t('card.deactivate') : t('card.reactivate')}
                 </DropdownMenuItem>
               </DropdownMenuGroup>
               <DropdownMenuSeparator />

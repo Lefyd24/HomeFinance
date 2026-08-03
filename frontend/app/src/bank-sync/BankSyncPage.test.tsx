@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { MemoryRouter } from 'react-router-dom'
 import { toast } from 'sonner'
@@ -99,12 +100,54 @@ describe('BankSyncPage', () => {
     expect(await screen.findByText(/Access expires in 3 day/i)).toBeInTheDocument()
   })
 
-  it('disables Sync now for a connection that is not active', async () => {
+  it('offers Reconnect instead of Sync now once re-authorisation is needed', async () => {
+    // Syncing cannot revive a dead consent — only the user re-authorising at
+    // their bank can. Showing a disabled Sync button would name the wrong fix.
     vi.spyOn(bankSyncApi, 'listConnections').mockResolvedValue([
       makeConnection({ status: 'expired' }),
     ])
     renderPage()
-    expect(await screen.findByRole('button', { name: /sync now/i })).toBeDisabled()
+    expect(await screen.findByRole('button', { name: /reconnect/i })).toBeEnabled()
+    expect(screen.queryByRole('button', { name: /sync now/i })).not.toBeInTheDocument()
+  })
+
+  it('explains an early expiry differently from one that ran its course', async () => {
+    // Enable Banking's EXPIRED_SESSION: the bank can drop a session long before
+    // the agreed valid_until, which leaves the consent date reading as still in
+    // the future. Generic "it expired" copy would contradict that date.
+    const inThirtyDays = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+    vi.spyOn(bankSyncApi, 'listConnections').mockResolvedValue([
+      makeConnection({ status: 'expired', consent_valid_until: inThirtyDays }),
+    ])
+    renderPage()
+    expect(await screen.findByText(/ended this session early/i)).toBeInTheDocument()
+  })
+
+  it('starts a fresh authorisation for the same bank when reconnecting', async () => {
+    vi.spyOn(bankSyncApi, 'listConnections').mockResolvedValue([
+      makeConnection({ status: 'expired' }),
+    ])
+    const start = vi.spyOn(bankSyncApi, 'startConnection').mockResolvedValue({
+      connection_id: 2,
+      authorization_url: 'https://bank.example/sca',
+    })
+    renderPage()
+
+    await userEvent.click(await screen.findByRole('button', { name: /reconnect/i }))
+
+    await waitFor(() => expect(start).toHaveBeenCalled())
+    // The same ASPSP as the dead connection — that is what lets the callback
+    // re-point the existing accounts instead of creating duplicates.
+    expect(start.mock.calls[0][0]).toEqual({ aspsp_name: 'Eurobank', aspsp_country: 'GR' })
+  })
+
+  it('flags a revoked connection as needing reconnection too', async () => {
+    vi.spyOn(bankSyncApi, 'listConnections').mockResolvedValue([
+      makeConnection({ status: 'revoked' }),
+    ])
+    renderPage()
+    expect(await screen.findByText(/was revoked/i)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /reconnect/i })).toBeEnabled()
   })
 
   it('reports success after returning from the bank', async () => {

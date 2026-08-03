@@ -48,6 +48,26 @@ export function updateAccount(id: number, input: Partial<AccountInput>): Promise
   return apiFetch<Account>(`/accounts/${id}`, { method: 'PUT', body: JSON.stringify(input) })
 }
 
+/**
+ * Retire an account without destroying anything, or bring it back.
+ *
+ * The alternative to deletion, and usually the right one: an account you have
+ * closed, or a manual one superseded by a bank-synced version, still holds
+ * history that reports and past budgets are built on. Deactivating hides it
+ * from the places that describe your money *now* — the dashboard, the balance
+ * totals — while leaving every transaction intact and every filter able to
+ * reach it.
+ *
+ * Separate from `updateAccount` because `is_active` is not part of the create
+ * payload and has nothing to do with editing an account's details.
+ */
+export function setAccountActive(id: number, isActive: boolean): Promise<Account> {
+  return apiFetch<Account>(`/accounts/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify({ is_active: isActive }),
+  })
+}
+
 export function deleteAccount(id: number): Promise<void> {
   return apiFetch<void>(`/accounts/${id}`, { method: 'DELETE' })
 }

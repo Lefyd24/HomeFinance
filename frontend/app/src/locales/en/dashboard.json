@@ -4,6 +4,11 @@
   "panel": {
     "viewAll": "View all"
   },
+  "bankAlert": {
+    "title_one": "{{banks}} has stopped syncing.",
+    "title_other": "{{banks}} have stopped syncing.",
+    "action": "Reconnect to resume — your accounts and history are kept."
+  },
   "summary": {
     "ariaLabel": "This month",
     "totalBalance": "Total balance",

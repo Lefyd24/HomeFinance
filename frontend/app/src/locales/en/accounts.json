@@ -24,6 +24,8 @@
     "transactions": "Transactions",
     "actionsLabel": "Account actions",
     "edit": "Edit",
+    "deactivate": "Deactivate",
+    "reactivate": "Reactivate",
     "delete": "Delete",
     "bankSynced": "Bank-synced",
     "manageConnection": "Manage connection",
@@ -31,14 +33,28 @@
     "lastSyncedAt": "Last synced {{when}}",
     "neverSynced": "Not synced yet"
   },
+  "retired": {
+    "heading": "Inactive",
+    "show": "Show",
+    "hide": "Hide",
+    "description": "These accounts are hidden from your dashboard and left out of your totals. Their transactions are untouched, and you can still filter by them anywhere in the app."
+  },
+  "deactivateDialog": {
+    "title": "Deactivate {{name}}?",
+    "description": "It disappears from your dashboard and stops counting towards your balances. Nothing is deleted — its transactions stay, and you can still filter by it. Reactivate it any time.",
+    "confirmLabel": "Deactivate"
+  },
   "deleteDialog": {
     "title": "Delete {{name}}?",
-    "description": "Transactions recorded against this account are removed with it. This cannot be undone.",
+    "description": "Transactions recorded against this account are removed with it. This cannot be undone. To hide it without losing anything, deactivate it instead.",
     "confirmLabel": "Delete account"
   },
   "toasts": {
     "deleted": "Account deleted",
     "deleteFailed": "Could not delete the account. Try again.",
+    "deactivated": "Account deactivated — find it under Inactive",
+    "reactivated": "Account reactivated",
+    "activeChangeFailed": "Could not change the account. Try again.",
     "updated": "Account updated",
     "created": "Account created",
     "updateFailed": "Failed to update account",

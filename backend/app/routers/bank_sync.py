@@ -277,6 +277,7 @@ def bank_callback(
 
     icon_filename = _fetch_bank_icon(connection.aspsp_name, connection.aspsp_country)
     created = _link_accounts(db, connection, session.get("accounts") or [], icon_filename)
+    _drop_superseded_connections(db, connection)
     db.commit()
 
     if created == 0:
@@ -381,6 +382,56 @@ def _link_accounts(
         created += 1
 
     return created
+
+
+def _drop_superseded_connections(db: Session, connection: BankConnection) -> int:
+    """Remove older rows for the same bank that this authorisation replaced.
+
+    Reconnecting after an expiry starts a *new* connection, and `_link_accounts`
+    re-points the existing accounts at it. The old row is then an empty husk —
+    it would show on the Connections page as a second, permanently expired card
+    for a bank that is in fact working, which reads as a bug.
+
+    Only rows with nothing left attached are removed, so a genuinely separate
+    authorisation of the same bank (different accounts) is never swallowed. The
+    remote session is revoked first: it is dead or superseded either way, and
+    leaving it alive means holding bank access nothing uses.
+    """
+    # The re-pointing done by _link_accounts is still pending in the session;
+    # without flushing, the "does anything still reference it" count below would
+    # read the pre-relink state and spare every stale row.
+    db.flush()
+
+    stale = (
+        db.query(BankConnection)
+        .filter(
+            BankConnection.user_id == connection.user_id,
+            BankConnection.id != connection.id,
+            BankConnection.aspsp_name == connection.aspsp_name,
+            BankConnection.aspsp_country == connection.aspsp_country,
+        )
+        .all()
+    )
+
+    removed = 0
+    for old in stale:
+        remaining = (
+            db.query(Account).filter(Account.bank_connection_id == old.id).count()
+        )
+        if remaining:
+            continue
+        _revoke_session(old)
+        db.delete(old)
+        removed += 1
+
+    if removed:
+        logger.info(
+            "Reconnect to %s superseded %s stale connection row(s) for user %s",
+            connection.aspsp_name,
+            removed,
+            connection.user_id,
+        )
+    return removed
 
 
 @router.post("/connections/{connection_id}/sync", response_model=SyncResultResponse)

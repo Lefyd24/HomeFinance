@@ -23,9 +23,11 @@ import type { DisconnectChoice, DisconnectTarget } from './DisconnectChoiceDialo
 import {
   useBankConnections,
   useDeleteConnection,
+  useStartConnection,
   useSyncConnection,
   useUnlinkAccount,
 } from './useBankSync'
+import { daysUntil, needsReauth, noticeKind } from './connectionHealth'
 import type { BankConnection, ConnectionStatus, LinkedAccount } from './bankSyncApi'
 
 const STATUS_STYLES: Record<ConnectionStatus, string> = {
@@ -44,11 +46,6 @@ function formatDate(value: string | null): string | null {
   })
 }
 
-function daysUntil(value: string | null): number | null {
-  if (!value) return null
-  const ms = new Date(value).getTime() - Date.now()
-  return Math.ceil(ms / (1000 * 60 * 60 * 24))
-}
 
 export function BankSyncPage() {
   const { t, i18n } = useTranslation('bankSync')
@@ -59,10 +56,13 @@ export function BankSyncPage() {
   // of the account(s) and their transactions. Covers both scopes.
   const [disconnecting, setDisconnecting] = useState<DisconnectTarget | null>(null)
 
+  const [reconnectingId, setReconnectingId] = useState<number | null>(null)
+
   const { data: connections = [], isLoading } = useBankConnections()
   const syncConnection = useSyncConnection()
   const deleteConnection = useDeleteConnection()
   const unlinkAccount = useUnlinkAccount()
+  const startConnection = useStartConnection()
   const { confirm, confirmDialog } = useConfirm()
 
   // The backend handles the bank's callback server-side, then redirects here
@@ -110,6 +110,31 @@ export function BankSyncPage() {
       toast.error(err instanceof Error ? err.message : t('toasts.syncFailed'))
     } finally {
       setSyncingId(null)
+    }
+  }
+
+  /**
+   * Re-authorise a bank we are already connected to.
+   *
+   * Deliberately not "disconnect, then connect again": the accounts must keep
+   * their ids so their history, budgets and rules survive. Starting a fresh
+   * authorisation for the same ASPSP lets the callback re-point the existing
+   * accounts by their bank-side uid, and the now-empty old connection row is
+   * cleaned up server-side.
+   */
+  async function handleReconnect(connection: BankConnection) {
+    setReconnectingId(connection.id)
+    try {
+      const { authorization_url } = await startConnection.mutateAsync({
+        aspsp_name: connection.aspsp_name,
+        aspsp_country: connection.aspsp_country,
+      })
+      // Full navigation for the same reason as the connect dialog: bank SCA
+      // pages routinely refuse to run inside a popup.
+      window.location.assign(authorization_url)
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t('toasts.startFailed'))
+      setReconnectingId(null)
     }
   }
 
@@ -225,8 +250,9 @@ export function BankSyncPage() {
 
       {connections.map((connection) => {
         const expiresIn = daysUntil(connection.consent_valid_until)
-        const expiringSoon =
-          connection.status === 'active' && expiresIn !== null && expiresIn <= 7
+        const notice = noticeKind(connection)
+        const reauth = needsReauth(connection)
+        const reconnecting = reconnectingId === connection.id
 
         return (
           <ListCard as="div" key={connection.id} className="flex flex-col gap-4">
@@ -251,17 +277,33 @@ export function BankSyncPage() {
               </div>
 
               <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  disabled={connection.status !== 'active' || syncingId === connection.id}
-                  onClick={() => void handleSync(connection)}
-                >
-                  <HugeiconsIcon icon={RefreshIcon} strokeWidth={2} data-icon="inline-start" />
-                  {syncingId === connection.id
-                    ? t('connection.syncing')
-                    : t('connection.syncNow')}
-                </Button>
+                {/* A dead consent cannot be revived by syncing — only by the
+                    user re-authorising at their bank. Promote that to the
+                    primary action so the fix is one click from the problem. */}
+                {reauth ? (
+                  <Button
+                    size="sm"
+                    disabled={reconnecting}
+                    onClick={() => void handleReconnect(connection)}
+                  >
+                    <HugeiconsIcon icon={Link01Icon} strokeWidth={2} data-icon="inline-start" />
+                    {reconnecting
+                      ? t('connection.reconnecting')
+                      : t('connection.reconnect')}
+                  </Button>
+                ) : (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={connection.status !== 'active' || syncingId === connection.id}
+                    onClick={() => void handleSync(connection)}
+                  >
+                    <HugeiconsIcon icon={RefreshIcon} strokeWidth={2} data-icon="inline-start" />
+                    {syncingId === connection.id
+                      ? t('connection.syncing')
+                      : t('connection.syncNow')}
+                  </Button>
+                )}
                 <Button
                   variant="ghost"
                   size="sm"
@@ -272,22 +314,41 @@ export function BankSyncPage() {
               </div>
             </div>
 
-            {(expiringSoon || connection.status === 'expired') && (
-              <div className="flex items-start gap-2 rounded-lg bg-warning/10 p-3 text-sm text-warning">
-                <HugeiconsIcon
-                  icon={Alert01Icon}
-                  strokeWidth={2}
-                  className="mt-0.5 size-4 shrink-0"
-                />
-                <span>
-                  {connection.status === 'expired'
-                    ? t('connection.expiredNotice')
-                    : t('connection.expiringNotice', { days: expiresIn })}
+            {notice && (
+              <div className="flex flex-col gap-2 rounded-lg bg-warning/10 p-3 text-sm text-warning sm:flex-row sm:items-start sm:justify-between">
+                <span className="flex items-start gap-2">
+                  <HugeiconsIcon
+                    icon={Alert01Icon}
+                    strokeWidth={2}
+                    className="mt-0.5 size-4 shrink-0"
+                  />
+                  <span>
+                    {notice === 'expiring'
+                      ? t('connection.expiringNotice', { days: expiresIn })
+                      : t(`connection.${notice}Notice`)}
+                  </span>
                 </span>
+                {/* Expiring-soon is the one case where re-authorising early is
+                    worth offering but nothing is broken yet, so the button
+                    lives in the notice rather than replacing "Sync now". */}
+                {notice === 'expiring' && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="shrink-0 self-start"
+                    disabled={reconnecting}
+                    onClick={() => void handleReconnect(connection)}
+                  >
+                    {reconnecting ? t('connection.reconnecting') : t('connection.reconnectNow')}
+                  </Button>
+                )}
               </div>
             )}
 
-            {connection.last_sync_error && connection.status !== 'expired' && (
+            {/* The notice above already explains every re-auth state in plain
+                language; the raw error underneath would only repeat it in the
+                API's words. */}
+            {connection.last_sync_error && !reauth && (
               <p className="text-sm text-destructive">{connection.last_sync_error}</p>
             )}
 

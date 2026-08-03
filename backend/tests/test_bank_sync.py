@@ -1233,6 +1233,99 @@ def test_callback_does_not_trust_a_user_id_in_the_query_string(client, db, seed_
     assert db.get(BankConnection, conn_id).user_id == seed_user.id
 
 
+# --- reconnecting after an expiry -----------------------------------------
+
+
+def test_reconnect_reuses_the_account_and_drops_the_dead_connection(
+    db, seed_user, connection, linked_account, monkeypatch
+):
+    """Re-authorising must not leave a ghost card on the Connections page.
+
+    `_link_accounts` moves the existing account to the new connection, which
+    leaves the old row attached to nothing. Left behind it renders as a second,
+    permanently expired connection for a bank that is in fact working.
+    """
+    connection.status = "expired"
+    db.commit()
+    old_id = connection.id
+
+    fresh = BankConnection(
+        user_id=seed_user.id,
+        aspsp_name="Eurobank",
+        aspsp_country="GR",
+        status="active",
+    )
+    db.add(fresh)
+    db.commit()
+
+    monkeypatch.setattr(bank_sync_router, "_revoke_session", lambda conn: None)
+    bank_sync_router._link_accounts(db, fresh, [{"uid": "uid-1"}])
+    bank_sync_router._drop_superseded_connections(db, fresh)
+    db.commit()
+
+    db.expire_all()
+    assert db.get(BankConnection, old_id) is None
+    account = db.get(Account, linked_account.id)
+    assert account.bank_connection_id == fresh.id
+    assert account.is_linked is True
+
+
+def test_reconnect_keeps_another_connection_that_still_has_accounts(
+    db, seed_user, connection, linked_account, monkeypatch
+):
+    """Only empty husks go. A separate live authorisation must survive."""
+    other = BankConnection(
+        user_id=seed_user.id,
+        aspsp_name="Eurobank",
+        aspsp_country="GR",
+        status="active",
+    )
+    db.add(other)
+    db.commit()
+    other_id = other.id
+
+    db.add(
+        Account(
+            user_id=seed_user.id,
+            name="Eurobank Savings",
+            type="savings",
+            currency="EUR",
+            balance=0,
+            bank_connection_id=other_id,
+            external_account_id="uid-2",
+            is_linked=True,
+            is_active=True,
+        )
+    )
+    db.commit()
+
+    monkeypatch.setattr(bank_sync_router, "_revoke_session", lambda conn: None)
+    bank_sync_router._drop_superseded_connections(db, connection)
+    db.commit()
+
+    db.expire_all()
+    assert db.get(BankConnection, other_id) is not None
+
+
+def test_reconnect_leaves_other_banks_alone(db, seed_user, connection, monkeypatch):
+    alpha = BankConnection(
+        user_id=seed_user.id,
+        aspsp_name="Alpha Bank",
+        aspsp_country="GR",
+        status="expired",
+    )
+    db.add(alpha)
+    db.commit()
+    alpha_id = alpha.id
+
+    monkeypatch.setattr(bank_sync_router, "_revoke_session", lambda conn: None)
+    bank_sync_router._drop_superseded_connections(db, connection)
+    db.commit()
+
+    db.expire_all()
+    assert db.get(BankConnection, alpha_id) is not None
+
+
 # --- disconnecting --------------------------------------------------------
 
 
