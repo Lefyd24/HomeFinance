@@ -334,8 +334,13 @@ def test_sync_applies_categorisation_rules_to_new_rows(monkeypatch, db, seed_use
     assert tx.category_id == cat.id
 
 
-def test_window_narrows_when_the_bank_rejects_the_period(monkeypatch, linked_account):
-    """Reproduces the production failure: reject the wide window, accept 90 days."""
+def test_longest_failure_retries_default_at_the_same_range(monkeypatch, linked_account):
+    """Reproduces the production failure seen for Eurobank GR: `strategy=longest`
+    itself is rejected outright (bare ASPSP_ERROR, regardless of date_from).
+    That says nothing about what `default` can serve, so it must be retried at
+    the SAME wide range before the window narrows at all — recovering the
+    full requested history instead of falling straight back to 90 days.
+    """
     attempts = []
 
     def fake(uid, date_from, strategy="default", **kw):
@@ -350,9 +355,34 @@ def test_window_narrows_when_the_bank_rejects_the_period(monkeypatch, linked_acc
     rows = svc._fetch_with_fallback(linked_account, start, "longest")
 
     assert len(rows) == 1, "should have recovered instead of failing the account"
-    assert attempts[0][1] == "longest"
-    # Second attempt steps down to the 90-day floor most banks fall back to.
-    assert attempts[1][0] == (datetime.utcnow() - timedelta(days=90)).date()
+    assert attempts[0] == (start, "longest")
+    # Retried at the SAME range under `default`, not narrowed to 90 days.
+    assert attempts[1] == (start, "default")
+
+
+def test_window_narrows_when_default_also_rejects_the_wide_range(monkeypatch, linked_account):
+    """When even `default` at the full range is refused, narrow progressively
+    instead of jumping straight to 90 days — some ASPSPs will serve more.
+    """
+    attempts = []
+
+    def fake(uid, date_from, strategy="default", **kw):
+        attempts.append((date_from, strategy))
+        if len(attempts) < 3:
+            raise eb.AspspError("Error interacting with ASPSP")
+        return [raw_tx()]
+
+    monkeypatch.setattr(eb, "get_transactions", fake)
+
+    start = (datetime.utcnow() - timedelta(days=365)).date()
+    rows = svc._fetch_with_fallback(linked_account, start, "longest")
+
+    assert len(rows) == 1, "should have recovered instead of failing the account"
+    assert attempts[0] == (start, "longest")
+    assert attempts[1] == (start, "default")
+    # Third attempt steps down to the widest narrowing window (270 days).
+    assert attempts[2][0] == (datetime.utcnow() - timedelta(days=270)).date()
+    assert attempts[2][1] == "default"
 
 
 def test_full_history_fallback_is_logged_at_warning(monkeypatch, linked_account, caplog):

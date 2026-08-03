@@ -65,9 +65,11 @@ _BALANCE_PREFERENCE_WITH_PENDING = ("ITAV", "ITBD", "CLBD", "XPCD", "OTHR")
 STATE_TTL_MINUTES = 15
 
 # Progressively narrower windows tried when a bank refuses the requested range.
-# 90 days is the floor most institutions fall back to once the post-authorisation
-# full-history window has closed; 30 and 7 cover banks that are stricter still.
-_FALLBACK_WINDOW_DAYS = (90, 30, 7)
+# 270/180 give an ASPSP that simply doesn't support `strategy=longest` (see
+# _fetch_with_fallback) a real chance at more than the bare 90-day floor most
+# institutions fall back to once the post-authorisation full-history window
+# has closed; 30 and 7 cover banks that are stricter still.
+_FALLBACK_WINDOW_DAYS = (270, 180, 90, 30, 7)
 
 
 def generate_state() -> str:
@@ -417,8 +419,19 @@ def _fetch_with_fallback(
     WRONG_TRANSACTIONS_PERIOD, others a bare ASPSP_ERROR / "Unknown error". Both
     are treated the same here — step the window down and try again, rather than
     failing the whole account and importing nothing.
+
+    A distinct failure mode, observed for Eurobank GR: `strategy=longest`
+    itself is rejected outright with a bare ASPSP_ERROR ("Unknown error"),
+    regardless of date_from — this ASPSP's Enable Banking connector appears to
+    simply not implement the `longest` strategy, which says nothing about how
+    much history `default` could actually serve. So a `longest` failure is
+    retried once more at the SAME requested range under `strategy=default`
+    before the window narrows at all — that alone can recover far more than 90
+    days for ASPSPs like this one.
     """
     attempts: list[tuple[date, str]] = [(date_from, strategy)]
+    if strategy == "longest":
+        attempts.append((date_from, "default"))
     today = datetime.utcnow().date()
     for days in _FALLBACK_WINDOW_DAYS:
         candidate = today - timedelta(days=days)
