@@ -15,6 +15,8 @@ from app.schemas import (
     BulkTransactionUpdate,
     BulkTransactionDelete,
     TransactionSplitRequest,
+    PairTransferRequest,
+    RetagTransferRequest,
 )
 from app.models import User, Transaction, Account, Category, DebtPayment
 from app.models.recurring_expense import RecurringExpensePayment
@@ -75,6 +77,9 @@ def _serialize_transaction(db: Session, tx: Transaction) -> dict:
             if recurring_payment and recurring_payment.recurring_expense
             else None
         ),
+        "paired_transaction_id": tx.paired_transaction_id,
+        "transfer_direction": tx.transfer_direction,
+        "original_type": tx.original_type,
     }
 
 
@@ -707,6 +712,100 @@ def split_transaction(
     return [
         _serialize_transaction(db, row) for row in (transaction, *created)
     ]
+
+
+def _owned_transaction(db: Session, user_id: int, transaction_id: int) -> Transaction:
+    transaction = (
+        db.query(Transaction)
+        .filter(Transaction.id == transaction_id, Transaction.user_id == user_id)
+        .first()
+    )
+    if not transaction:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Transaction not found"
+        )
+    return transaction
+
+
+@router.post("/{transaction_id}/pair-transfer", response_model=TransactionResponse)
+def pair_transfer(
+    transaction_id: int,
+    request: PairTransferRequest,
+    current_user: User = Depends(get_current_user_authenticated),
+    db: Session = Depends(get_db),
+):
+    """Match two existing transactions (e.g. legs on two linked accounts) as one transfer.
+
+    Both rows already carry their own bank-correct balance, so no balance math
+    runs — only the linking fields change.
+    """
+    from app.services import TransactionService
+
+    transaction = _owned_transaction(db, current_user.id, transaction_id)
+    partner = _owned_transaction(db, current_user.id, request.paired_transaction_id)
+
+    try:
+        TransactionService.pair_as_transfer(db, transaction, partner)
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
+    db.refresh(transaction)
+    return _serialize_transaction(db, transaction)
+
+
+@router.post("/{transaction_id}/retag-transfer", response_model=TransactionResponse)
+def retag_transfer(
+    transaction_id: int,
+    request: RetagTransferRequest,
+    current_user: User = Depends(get_current_user_authenticated),
+    db: Session = Depends(get_db),
+):
+    """Retag a synced transaction as a transfer to a destination with no row of its own.
+
+    Only the destination's balance is adjusted — the source (a linked
+    account) is already bank-correct.
+    """
+    from app.services import TransactionService
+
+    transaction = _owned_transaction(db, current_user.id, transaction_id)
+
+    destination = (
+        db.query(Account)
+        .filter(Account.id == request.destination_account_id, Account.user_id == current_user.id)
+        .first()
+    )
+    if not destination:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Destination account not found"
+        )
+
+    try:
+        TransactionService.retag_as_transfer(db, transaction, request.destination_account_id)
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
+    db.refresh(transaction)
+    return _serialize_transaction(db, transaction)
+
+
+@router.post("/{transaction_id}/unmark-transfer", response_model=TransactionResponse)
+def unmark_transfer(
+    transaction_id: int,
+    current_user: User = Depends(get_current_user_authenticated),
+    db: Session = Depends(get_db),
+):
+    """Undo pair_transfer / retag_transfer: restore the original type and reverse balance."""
+    from app.services import TransactionService
+
+    transaction = _owned_transaction(db, current_user.id, transaction_id)
+
+    try:
+        TransactionService.unmark_transfer(db, transaction)
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
+    db.refresh(transaction)
+    return _serialize_transaction(db, transaction)
 
 
 @router.post("/bulk-update")

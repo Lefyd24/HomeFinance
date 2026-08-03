@@ -4,8 +4,10 @@ from app.models import Account, Category, Transaction, Budget, Debt
 from app.models.recurring_expense import RecurringExpense
 
 
-def make_account(db, user, name="Checking", balance=1000.0, is_active=True, type="checking"):
-    a = Account(user_id=user.id, name=name, balance=balance, is_active=is_active, type=type)
+def make_account(db, user, name="Checking", balance=1000.0, is_active=True, type="checking",
+                  is_linked=False):
+    a = Account(user_id=user.id, name=name, balance=balance, is_active=is_active, type=type,
+                is_linked=is_linked)
     db.add(a); db.commit(); db.refresh(a)
     return a
 
@@ -17,14 +19,14 @@ def make_category(db, user, name="Groceries", color="#EF4444", type="expense"):
 
 
 def make_transaction(db, user, account, category=None, amount=50.0, type="expense",
-                      tx_date=None, description="Test", notes=None):
+                      tx_date=None, description="Test", notes=None, external_id=None):
     # Note: Transaction has no `payee` column (backend/app/models/transaction.py) —
     # only `description`, `notes`, `type`, `date`, etc. Adjusted from the brief accordingly.
     t = Transaction(
         user_id=user.id, account_id=account.id,
         category_id=category.id if category else None,
         amount=amount, type=type, date=tx_date or date.today(),
-        description=description, notes=notes,
+        description=description, notes=notes, external_id=external_id,
     )
     db.add(t); db.commit(); db.refresh(t)
     return t

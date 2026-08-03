@@ -51,12 +51,31 @@ class Transaction(Base):
     # different identifier, so bank_sync_service replaces the whole pending set
     # for an account on every sync rather than accumulating it.
     is_pending = Column(Boolean, nullable=False, default=False)
+
+    # --- Transfer retagging (linked-account transfers) --------------------
+    # A linked account's synced row can be retagged as a transfer leg without
+    # losing its bank-owned identity. See TransactionService.pair_as_transfer /
+    # retag_as_transfer / unmark_transfer.
+    # Set on both rows when two pre-existing transactions (e.g. the expense on
+    # one linked account and the income on another) are matched as the two
+    # legs of the same real-world transfer.
+    paired_transaction_id = Column(Integer, ForeignKey("transactions.id"), nullable=True)
+    # "outgoing" | "incoming" — which way money actually flowed. Needed because
+    # a linked account's account_id can never be repointed (it's tied to its
+    # bank statement line), so it stays in `account_id` even when it is really
+    # the destination of the transfer (an incoming retagged row).
+    transfer_direction = Column(String(10), nullable=True)
+    # The row's type before it was retagged to "transfer", so unmark_transfer
+    # can restore it.
+    original_type = Column(String(20), nullable=True)
+
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    
+
     # Relationships
     user = relationship("User", back_populates="transactions")
     account = relationship("Account", back_populates="transactions", foreign_keys="Transaction.account_id")
     destination_account = relationship("Account", foreign_keys="Transaction.destination_account_id")
+    paired_transaction = relationship("Transaction", remote_side=[id], foreign_keys="Transaction.paired_transaction_id")
     category = relationship("Category", back_populates="transactions")
     debt_payment = relationship("DebtPayment", back_populates="transaction", uselist=False)

@@ -168,6 +168,25 @@
       "done": "Split into {{count}} transactions"
     }
   },
+  "markTransfer": {
+    "action": "Mark as transfer",
+    "undo": "Undo transfer",
+    "title": "Mark as transfer",
+    "description": "Tag this synced transaction as a transfer to another account instead of income or an expense.",
+    "counterpartLabel": "Other account",
+    "counterpartPlaceholder": "Choose the other account",
+    "candidateLabel": "Matching transaction",
+    "candidateHint": "This account is also synced from your bank — pick its matching row for the same transfer. Neither balance will change.",
+    "candidatesLoading": "Looking for matching transactions…",
+    "noCandidates": "No matching transaction found on that account for this amount.",
+    "manualHint": "{{account}} isn't bank-synced, so its balance will be updated to reflect this transfer.",
+    "confirm": "Mark as transfer",
+    "toast": {
+      "success": "Marked as a transfer",
+      "unmarked": "Transfer tag removed",
+      "error": "Couldn't update this transaction. Try again."
+    }
+  },
   "detail": {
     "flowTitle": {
       "in": "Money in",

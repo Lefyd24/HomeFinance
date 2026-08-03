@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
+import { toast } from 'sonner'
 import { HugeiconsIcon } from '@hugeicons/react'
 import {
   ArrowDownLeft01Icon,
@@ -8,6 +9,7 @@ import {
   Delete02Icon,
   Exchange01Icon,
   PencilEdit02Icon,
+  Undo02Icon,
 } from '@hugeicons/core-free-icons'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -15,6 +17,7 @@ import { Dialog } from '../ui/Dialog'
 import { Amount, CategoryChip, flowOfType } from '../ui/money'
 import { formatDate } from '../lib/format'
 import { cn } from '@/lib/utils'
+import { useUnmarkTransfer } from './useTransactions'
 import type { Transaction } from './transactionsApi'
 
 interface TransactionDetailDialogProps {
@@ -23,6 +26,7 @@ interface TransactionDetailDialogProps {
   transaction: Transaction | null
   onEdit: (transaction: Transaction) => void
   onDelete: (transaction: Transaction) => void
+  onMarkTransfer: (transaction: Transaction) => void
 }
 
 const FLOW_ICON = {
@@ -46,18 +50,34 @@ export function TransactionDetailDialog({
   transaction,
   onEdit,
   onDelete,
+  onMarkTransfer,
 }: TransactionDetailDialogProps) {
   const { t } = useTranslation('transactions')
+  const unmarkTransfer = useUnmarkTransfer()
 
   if (!transaction) return null
 
   const isTransfer = transaction.type === 'transfer'
+  // Was retagged/paired via MarkTransferDialog (as opposed to a manually
+  // created transfer, which the normal edit form already handles).
+  const isRetaggedTransfer = Boolean(transaction.original_type)
+  const canMarkAsTransfer = transaction.is_bank_synced && !isTransfer
   const flow = flowOfType(transaction.type)
   const FLOW_TITLE = {
     in: t('detail.flowTitle.in'),
     out: t('detail.flowTitle.out'),
     move: t('detail.flowTitle.move'),
   } as const
+
+  async function handleUnmarkTransfer() {
+    try {
+      await unmarkTransfer.mutateAsync(transaction!.id)
+      toast.success(t('markTransfer.toast.unmarked'))
+      onOpenChange(false)
+    } catch {
+      toast.error(t('markTransfer.toast.error'))
+    }
+  }
 
   return (
     <Dialog
@@ -81,6 +101,28 @@ export function TransactionDetailDialog({
             <HugeiconsIcon icon={Delete02Icon} strokeWidth={2} data-icon="inline-start" />
             {t('common:actions.delete')}
           </Button>
+          {canMarkAsTransfer && (
+            <Button
+              variant="outline"
+              onClick={() => {
+                onMarkTransfer(transaction)
+                onOpenChange(false)
+              }}
+            >
+              <HugeiconsIcon icon={Exchange01Icon} strokeWidth={2} data-icon="inline-start" />
+              {t('markTransfer.action')}
+            </Button>
+          )}
+          {isRetaggedTransfer && (
+            <Button
+              variant="outline"
+              onClick={() => void handleUnmarkTransfer()}
+              disabled={unmarkTransfer.isPending}
+            >
+              <HugeiconsIcon icon={Undo02Icon} strokeWidth={2} data-icon="inline-start" />
+              {t('markTransfer.undo')}
+            </Button>
+          )}
           <Button
             onClick={() => {
               onEdit(transaction)

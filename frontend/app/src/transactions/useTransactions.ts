@@ -12,10 +12,11 @@ function invalidateFinanceQueries(queryClient: ReturnType<typeof useQueryClient>
   queryClient.invalidateQueries({ queryKey: ['netWorthReport'] })
 }
 
-export function useTransactions(filters: TransactionFilters = {}) {
+export function useTransactions(filters: TransactionFilters = {}, options: { enabled?: boolean } = {}) {
   return useQuery({
     queryKey: queryKeys.transactions(filters),
     queryFn: () => transactionsApi.listTransactions(filters),
+    enabled: options.enabled,
   })
 }
 
@@ -59,6 +60,32 @@ export function useSplitTransaction() {
   return useMutation({
     mutationFn: ({ id, parts }: { id: number; parts: transactionsApi.TransactionSplitPart[] }) =>
       transactionsApi.splitTransaction(id, parts),
+    onSuccess: () => invalidateFinanceQueries(queryClient),
+  })
+}
+
+export function usePairTransfer() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, pairedTransactionId }: { id: number; pairedTransactionId: number }) =>
+      transactionsApi.pairTransfer(id, pairedTransactionId),
+    onSuccess: () => invalidateFinanceQueries(queryClient),
+  })
+}
+
+export function useRetagTransfer() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, destinationAccountId }: { id: number; destinationAccountId: number }) =>
+      transactionsApi.retagTransfer(id, destinationAccountId),
+    onSuccess: () => invalidateFinanceQueries(queryClient),
+  })
+}
+
+export function useUnmarkTransfer() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (id: number) => transactionsApi.unmarkTransfer(id),
     onSuccess: () => invalidateFinanceQueries(queryClient),
   })
 }

@@ -58,9 +58,22 @@ class TransactionResponse(TransactionBase):
     recurring_payment_id: Optional[int] = None
     recurring_expense_id: Optional[int] = None
     recurring_expense_name: Optional[str] = None
+    paired_transaction_id: Optional[int] = None
+    transfer_direction: Optional[str] = None
+    original_type: Optional[str] = None
 
     class Config:
         from_attributes = True
+
+
+class PairTransferRequest(BaseModel):
+    """Match two existing transactions as the two legs of one transfer."""
+    paired_transaction_id: int
+
+
+class RetagTransferRequest(BaseModel):
+    """Retag a single transaction as a transfer to a destination with no row of its own yet."""
+    destination_account_id: int
 
 
 class TransactionList(BaseModel):

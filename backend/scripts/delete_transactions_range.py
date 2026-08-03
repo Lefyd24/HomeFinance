@@ -211,7 +211,22 @@ def main() -> int:
             return 0
 
         if not args.yes:
-            answer = input(f"Delete these {len(doomed)} transaction(s)? [y/N] ").strip().lower()
+            # `docker exec` without -i leaves the process no stdin, which is how
+            # this is most likely to be run. Catch the EOF rather than testing
+            # isatty(): some shells report a terminal and still read EOF, and
+            # either way a traceback would bury a one-flag fix.
+            try:
+                answer = (
+                    input(f"Delete these {len(doomed)} transaction(s)? [y/N] ").strip().lower()
+                )
+            except EOFError:
+                print()
+                print(
+                    "Cannot ask for confirmation: nothing is attached to stdin.\n"
+                    "Re-run with --yes to skip the prompt, or attach a terminal "
+                    "(docker exec -it ...) to be asked."
+                )
+                return 1
             if answer not in {"y", "yes"}:
                 print("Aborted.")
                 return 1

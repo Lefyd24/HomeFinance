@@ -132,6 +132,8 @@ from app.schemas.transaction import (
     TransactionList,
     TransactionResponse,
     TransactionUpdate,
+    PairTransferRequest,
+    RetagTransferRequest,
 )
 from app.schemas.user import UserBase, UserCreate, UserInDB, UserResponse, UserUpdate
 
@@ -169,6 +171,8 @@ __all__ = [
     "TransactionList",
     "BulkTransactionUpdate",
     "BulkTransactionDelete",
+    "PairTransferRequest",
+    "RetagTransferRequest",
     # Budget schemas
     "BudgetBase",
     "BudgetCreate",

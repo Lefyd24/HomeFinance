@@ -44,6 +44,7 @@ import { createColumns } from './columns'
 import { TransactionFilterBar, type DatePreset } from './TransactionFilterBar'
 import { TransactionFormDialog } from './TransactionFormDialog'
 import { TransactionDetailDialog } from './TransactionDetailDialog'
+import { MarkTransferDialog } from './MarkTransferDialog'
 import { currentMonthRange } from '../lib/format'
 import { isLinkedPayment, type Transaction, type TransactionFilters } from './transactionsApi'
 import { Alert01Icon } from '@hugeicons/core-free-icons'
@@ -105,6 +106,7 @@ export function TransactionsPage() {
   const [addDialogOpen, setAddDialogOpen] = useState(false)
   const [editDialogOpen, setEditDialogOpen] = useState(false)
   const [detailDialogOpen, setDetailDialogOpen] = useState(false)
+  const [markTransferDialogOpen, setMarkTransferDialogOpen] = useState(false)
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null)
   const [linkedDeleteTarget, setLinkedDeleteTarget] = useState<Transaction | null>(null)
 
@@ -129,6 +131,11 @@ export function TransactionsPage() {
   const handleEdit = (transaction: Transaction) => {
     setSelectedTransaction(transaction)
     setEditDialogOpen(true)
+  }
+
+  const handleMarkTransfer = (transaction: Transaction) => {
+    setSelectedTransaction(transaction)
+    setMarkTransferDialogOpen(true)
   }
 
   async function performDelete(transaction: Transaction, affectLinked: boolean) {
@@ -399,6 +406,12 @@ export function TransactionsPage() {
         transaction={selectedTransaction}
         onEdit={handleEdit}
         onDelete={handleDelete}
+        onMarkTransfer={handleMarkTransfer}
+      />
+      <MarkTransferDialog
+        open={markTransferDialogOpen}
+        onOpenChange={setMarkTransferDialogOpen}
+        transaction={selectedTransaction}
       />
 
       <AlertDialog

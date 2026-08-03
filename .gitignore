@@ -17,7 +17,6 @@ skills-lock.json
 .agents/
 .cursor/
 .lunaos/
-CLAUDE.md
 
 # Secrets — Enable Banking private key, TLS material, anything PEM-encoded
 *.pem

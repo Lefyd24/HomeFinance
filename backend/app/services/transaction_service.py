@@ -359,7 +359,97 @@ class TransactionService:
 
         db.delete(transaction)
         db.commit()
-    
+
+    @staticmethod
+    def pair_as_transfer(db: Session, tx_a: Transaction, tx_b: Transaction) -> None:
+        """Mark two existing transactions as the two legs of one transfer.
+
+        Used when both accounts already carry their own balance-correct row
+        for the same real-world transfer (e.g. two linked accounts, each
+        synced independently by the bank) — so no balance math runs here,
+        only the linking fields are set.
+        """
+        if round(tx_a.amount, 2) != round(tx_b.amount, 2):
+            raise ValueError("Both legs of a transfer must have the same amount")
+        if tx_a.account_id == tx_b.account_id:
+            raise ValueError("A transfer cannot be paired with itself")
+
+        for leg, other in ((tx_a, tx_b), (tx_b, tx_a)):
+            leg.original_type = leg.type
+            leg.type = "transfer"
+            leg.destination_account_id = other.account_id
+            leg.paired_transaction_id = other.id
+            leg.transfer_direction = "incoming" if leg.original_type == "income" else "outgoing"
+
+        db.commit()
+
+    @staticmethod
+    def retag_as_transfer(
+        db: Session, transaction: Transaction, destination_account_id: int
+    ) -> None:
+        """Retag a single synced row as a transfer to an account with no row of its own yet.
+
+        `transaction.account_id` is bank-owned and never moves. Its balance is
+        already correct (set by the bank sync), so only the destination's
+        balance is adjusted here — added to if the row was an expense (money
+        left the linked account and arrived at the destination), subtracted
+        from if it was income (money arrived at the linked account, having
+        left the destination).
+        """
+        destination = db.query(Account).filter(Account.id == destination_account_id).first()
+        if not destination:
+            raise ValueError("Destination account not found")
+        if destination.is_linked:
+            raise ValueError(
+                "Both accounts are already linked accounts — pair their existing "
+                "synced rows instead of retagging one onto a new destination"
+            )
+
+        original_type = transaction.type
+        transaction.original_type = original_type
+        transaction.type = "transfer"
+        transaction.destination_account_id = destination_account_id
+
+        if original_type == "expense":
+            transaction.transfer_direction = "outgoing"
+            destination.balance = round(destination.balance + transaction.amount, 2)
+        elif original_type == "income":
+            transaction.transfer_direction = "incoming"
+            destination.balance = round(destination.balance - transaction.amount, 2)
+
+        db.commit()
+
+    @staticmethod
+    def unmark_transfer(db: Session, transaction: Transaction) -> None:
+        """Undo pair_as_transfer / retag_as_transfer.
+
+        Restores the row's original type and reverses whatever balance effect
+        retagging applied. Paired rows are un-paired independently of each
+        other — un-pairing one leg does not touch the other.
+        """
+        if not transaction.original_type:
+            raise ValueError("This transaction was not retagged as a transfer")
+
+        if transaction.paired_transaction_id is None and transaction.destination_account_id:
+            destination = (
+                db.query(Account)
+                .filter(Account.id == transaction.destination_account_id)
+                .first()
+            )
+            if destination:
+                if transaction.transfer_direction == "outgoing":
+                    destination.balance = round(destination.balance - transaction.amount, 2)
+                elif transaction.transfer_direction == "incoming":
+                    destination.balance = round(destination.balance + transaction.amount, 2)
+
+        transaction.type = transaction.original_type
+        transaction.original_type = None
+        transaction.destination_account_id = None
+        transaction.paired_transaction_id = None
+        transaction.transfer_direction = None
+
+        db.commit()
+
     @staticmethod
     def get_transaction_summary(
         db: Session,
