@@ -482,6 +482,26 @@ def sync_account(db: Session, account: Account) -> dict[str, Any]:
     # filtered by status. Splitting them here rather than making a second
     # request matters: banks allow as few as 4 AIS calls per account per day.
     raw_transactions = _fetch_with_fallback(account, date_from, strategy)
+    if strategy == "longest" and raw_transactions:
+        # Diagnostic for exactly the failure mode that prompted this comment:
+        # a sync can succeed (no exception, no window-narrowing) while still
+        # only returning a fraction of the account's real history, because the
+        # ASPSP itself limits it — either via the SCA consent scope or its own
+        # data retention. Logging the earliest date actually received makes
+        # that visible without having to reproduce the sync to find out.
+        earliest = min(
+            _parse_date(raw.get("booking_date") or raw.get("value_date") or raw.get("transaction_date"))
+            or date_from
+            for raw in raw_transactions
+        )
+        logger.info(
+            "Account %s: full-history sync returned %s transaction(s), earliest dated %s "
+            "(requested from %s)",
+            account.id,
+            len(raw_transactions),
+            earliest,
+            date_from,
+        )
     rows = [
         row
         for row in (normalize_transaction(raw, account) for raw in raw_transactions)

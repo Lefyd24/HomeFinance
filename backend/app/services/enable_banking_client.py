@@ -270,11 +270,26 @@ def start_authorization(
 
     `state` is our own single-use nonce; the bank echoes it to the callback and
     it is what binds the returned code back to a user.
+
+    The `access.transactionsLimitDays` field is the consent-scope counterpart
+    to `get_transactions(strategy="longest")`: it caps, at the ASPSP's SCA
+    consent screen, how much history the bank will EVER hand over for this
+    authorisation, regardless of what strategy is later used to fetch it. Left
+    unset, Enable Banking's docs do not commit to a particular default, and
+    some ASPSPs appear to fall back to a short window (observed: a fresh
+    reconnect still yielded only ~90 days). Explicitly requesting 0 ("no
+    explicit limit") closes that off — `strategy=longest` can only ever return
+    as much history as the consent itself was scoped to allow.
     """
     if valid_until is None:
         valid_until = datetime.now(timezone.utc) + timedelta(days=settings.EB_CONSENT_DAYS)
     body = {
-        "access": {"valid_until": valid_until.isoformat()},
+        "access": {
+            "valid_until": valid_until.isoformat(),
+            "balances": True,
+            "transactions": True,
+            "transactionsLimitDays": 0,
+        },
         "aspsp": {"name": aspsp_name, "country": aspsp_country.upper()},
         "state": state,
         "redirect_url": settings.EB_REDIRECT_URL,
