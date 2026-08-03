@@ -7,7 +7,7 @@ class TransactionBase(BaseModel):
     account_id: int
     destination_account_id: Optional[int] = None  # Required for transfers
     category_id: Optional[int] = None
-    amount: float = Field(..., gt=0)
+    amount: float = Field(..., ge=0)
     type: str = Field(..., pattern="^(income|expense|transfer)$")
     description: str = Field(..., min_length=1)
     date: datetime
@@ -27,7 +27,7 @@ class TransactionUpdate(BaseModel):
     account_id: Optional[int] = None
     destination_account_id: Optional[int] = None
     category_id: Optional[int] = None
-    amount: Optional[float] = Field(None, gt=0)
+    amount: Optional[float] = Field(None, ge=0)
     type: Optional[str] = Field(None, pattern="^(income|expense|transfer)$")
     description: Optional[str] = Field(None, min_length=1)
     date: Optional[datetime] = None
