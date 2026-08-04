@@ -42,6 +42,7 @@ import { useCreateRule } from '../rules/useRules'
 import { useRecordRecurringPayment, useRecurringExpenses } from '../recurring/useRecurring'
 import { useCreateTransaction, useSplitTransaction, useUpdateTransaction } from './useTransactions'
 import type { Transaction, TransactionType } from './transactionsApi'
+import { todayIsoDate } from '../lib/format'
 
 const transactionSchema = z
   .object({
@@ -130,7 +131,7 @@ export function TransactionFormDialog({
       destination_account_id: '',
       category_id: '',
       description: '',
-      date: new Date().toISOString().slice(0, 10),
+      date: todayIsoDate(),
       notes: '',
     },
   })
@@ -177,7 +178,7 @@ export function TransactionFormDialog({
           destination_account_id: '',
           category_id: '',
           description: '',
-          date: new Date().toISOString().slice(0, 10),
+          date: todayIsoDate(),
           notes: '',
         })
       }

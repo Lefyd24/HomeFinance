@@ -1,5 +1,6 @@
 import type { TFunction } from 'i18next'
 import type { Goal } from './goalsApi'
+import { todayIsoDate } from '../lib/format'
 
 export const CATEGORY_VALUES = [
   'emergency_fund',
@@ -74,5 +75,5 @@ export function pickPrimaryGoal(goals: Goal[]): Goal | null {
 }
 
 export function todayISO(): string {
-  return new Date().toISOString().slice(0, 10)
+  return todayIsoDate()
 }

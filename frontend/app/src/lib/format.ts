@@ -66,22 +66,42 @@ export function formatSignedCurrency(amount: number, type: 'income' | 'expense' 
   return formatted
 }
 
+/**
+ * A calendar date as YYYY-MM-DD, read off the *local* clock.
+ *
+ * Never use `toISOString().slice(0, 10)` for this. `new Date(y, m, d)` is
+ * midnight local time, and `toISOString` converts to UTC before formatting, so
+ * east of Greenwich every such date came out one day early — which is how the
+ * month filters ended up starting on the last day of the previous month and
+ * ending a day short. The bug is invisible in UTC, so it survived a long time.
+ */
+export function toLocalIsoDate(date: Date): string {
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`
+}
+
+/** Today as YYYY-MM-DD on the user's own calendar. */
+export function todayIsoDate(now = new Date()): string {
+  return toLocalIsoDate(now)
+}
+
 /** First/last day of current calendar month as YYYY-MM-DD. */
 export function currentMonthRange(now = new Date()): { start_date: string; end_date: string } {
   const y = now.getFullYear()
   const m = now.getMonth()
-  const start = new Date(y, m, 1)
-  const end = new Date(y, m + 1, 0)
-  const iso = (d: Date) => d.toISOString().slice(0, 10)
-  return { start_date: iso(start), end_date: iso(end) }
+  // Day 0 of the next month is the last day of this one, so this is correct for
+  // 28/29/30/31-day months alike without any length table.
+  return {
+    start_date: toLocalIsoDate(new Date(y, m, 1)),
+    end_date: toLocalIsoDate(new Date(y, m + 1, 0)),
+  }
 }
 
 export function rangeForPreset(preset: '1M' | '3M' | '6M' | '1Y', now = new Date()) {
   const end = new Date(now.getFullYear(), now.getMonth() + 1, 0)
   const months = preset === '1M' ? 1 : preset === '3M' ? 3 : preset === '6M' ? 6 : 12
   const start = new Date(end.getFullYear(), end.getMonth() - (months - 1), 1)
-  const iso = (d: Date) => d.toISOString().slice(0, 10)
-  return { start_date: iso(start), end_date: iso(end) }
+  return { start_date: toLocalIsoDate(start), end_date: toLocalIsoDate(end) }
 }
 
 export const currencyFormatter = {

@@ -16,8 +16,9 @@ import { useAccounts } from '../accounts/useAccounts'
 import { useCategories } from '../categories/useCategories'
 import { useCreateRecurringExpense, useUpdateRecurringExpense } from './useRecurring'
 import type { RecurringExpense } from './recurringApi'
+import { todayIsoDate } from '../lib/format'
 
-const today = () => new Date().toISOString().slice(0, 10)
+const today = () => todayIsoDate()
 const NONE = '__none__'
 
 function createRecurringSchema(t: (key: string) => string) {

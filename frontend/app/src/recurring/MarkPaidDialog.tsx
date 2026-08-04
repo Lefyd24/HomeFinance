@@ -11,13 +11,13 @@ import { Label } from '@/components/ui/label'
 import { CheckmarkCircle02Icon } from '@hugeicons/core-free-icons'
 import { Dialog } from '../ui/Dialog'
 import { Select } from '../ui/Select'
-import { formatCurrency, formatDate } from '../lib/format'
+import { formatCurrency, formatDate, todayIsoDate } from '../lib/format'
 import { listTransactions } from '../transactions/transactionsApi'
 import { useRecordRecurringPayment } from './useRecurring'
 import type { RecurringExpense } from './recurringApi'
 
 const NONE = '__none__'
-const today = () => new Date().toISOString().slice(0, 10)
+const today = () => todayIsoDate()
 
 function parseLocalDate(iso: string): Date {
   const [y, m, d] = iso.split('-').map(Number)

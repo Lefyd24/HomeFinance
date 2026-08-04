@@ -38,7 +38,13 @@ export interface NavGroup {
   items: NavItem[]
 }
 
-/** First 4 are the mobile bottom-bar items; the 5th slot is always "More". */
+export const BUDGETS_NAV_ITEM: NavItem = {
+  labelKey: 'items.budgets',
+  to: '/budgets',
+  icon: PiggyBankIcon,
+}
+
+/** The top-level destinations, in the order the desktop sidebar lists them. */
 export const PRIMARY_NAV_ITEMS: NavItem[] = [
   {
     labelKey: 'items.dashboard',
@@ -53,8 +59,18 @@ export const PRIMARY_NAV_ITEMS: NavItem[] = [
     icon: ArrowDataTransferHorizontalIcon,
   },
   { labelKey: 'items.accounts', to: '/accounts', icon: WalletIcon },
-  { labelKey: 'items.budgets', to: '/budgets', icon: PiggyBankIcon },
+  BUDGETS_NAV_ITEM,
 ]
+
+/**
+ * The mobile dock, which holds three items plus a fixed "More" slot. Kept at
+ * three deliberately: five cramped 10px labels read worse than three legible
+ * ones, and Budgets is a "sit down and plan" destination rather than something
+ * tapped in passing, so it lives in the More sheet.
+ */
+export const DOCK_NAV_ITEMS: NavItem[] = PRIMARY_NAV_ITEMS.filter(
+  (item) => item.to !== BUDGETS_NAV_ITEM.to,
+)
 
 /**
  * Kept deliberately short. Anything reachable from the page it belongs to
@@ -107,13 +123,15 @@ function flatten(items: NavItem[]): NavItem[] {
   return items.flatMap((item) => (item.children ? item.children : [item]))
 }
 
-/** Destinations only available from the mobile More sheet (not the primary dock). */
+/** Destinations only available from the mobile More sheet (not the dock). */
 export const MORE_NAV_GROUPS: NavGroup[] = [
-  { groupKey: 'groups.overview', items: [NOTIFICATIONS_NAV_ITEM] },
+  { groupKey: 'groups.overview', items: [BUDGETS_NAV_ITEM, NOTIFICATIONS_NAV_ITEM] },
   ...NAV_GROUPS.slice(1),
 ]
 
+/** Everything the dock does not show — used to light up "More" by route. */
 export const SECONDARY_NAV_ITEMS: NavItem[] = [
+  BUDGETS_NAV_ITEM,
   NOTIFICATIONS_NAV_ITEM,
   ...NAV_GROUPS.slice(1).flatMap((group) => flatten(group.items)),
 ]

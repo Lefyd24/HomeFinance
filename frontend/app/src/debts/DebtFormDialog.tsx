@@ -14,7 +14,7 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Separator } from '@/components/ui/separator'
 import { Dialog } from '../ui/Dialog'
 import { Select } from '../ui/Select'
-import { formatCurrency } from '../lib/format'
+import { formatCurrency, todayIsoDate } from '../lib/format'
 import { useAccounts } from '../accounts/useAccounts'
 import { useCreateDebt, useUpdateDebt } from './useDebts'
 import type { Debt, DebtInput } from './debtsApi'
@@ -463,7 +463,7 @@ export function DebtFormDialog({
                     const on = checked === true
                     field.onChange(on)
                     if (on && !watch('paid_off_date')) {
-                      setValue('paid_off_date', new Date().toISOString().slice(0, 10))
+                      setValue('paid_off_date', todayIsoDate())
                     }
                   }}
                 />

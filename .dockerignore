@@ -22,7 +22,6 @@ yarn-debug.log*
 yarn-error.log*
 
 # Build outputs (we build in container)
-frontend/public/assets/css/app.css
 frontend/app/dist
 
 # IDE

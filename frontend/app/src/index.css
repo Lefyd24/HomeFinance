@@ -310,6 +310,94 @@
     backdrop-filter: blur(16px) saturate(145%);
   }
 
+  /*
+   * Mobile dock — "liquid glass"
+   * ----------------------------
+   * A floating pill that reads as a single piece of thick glass sitting over
+   * the page, plus a lens that slides to whichever item is active.
+   *
+   * The lens is one absolutely-positioned element rather than a background on
+   * each item: only a single moving box can animate *between* slots, which is
+   * the whole effect. Every slot is `flex: 1` and the container's padding is
+   * uniform, so slot width is exactly `(100% - 2 * padding) / count` and the
+   * lens can be positioned with arithmetic instead of measuring the DOM.
+   */
+  .liquid-dock {
+    --dock-pad: 0.3125rem;
+    --dock-slots: 4;
+    isolation: isolate;
+    background: var(--glass-surface);
+    border-color: color-mix(in oklch, var(--glass-border) 70%, var(--border));
+    -webkit-backdrop-filter: blur(22px) saturate(180%);
+    backdrop-filter: blur(22px) saturate(180%);
+    box-shadow:
+      inset 0 1px 0 color-mix(in oklch, white 52%, transparent),
+      inset 0 -1px 0 color-mix(in oklch, var(--glass-border) 26%, transparent),
+      0 2px 10px -6px var(--glass-shadow),
+      0 18px 40px -20px var(--glass-shadow-depth);
+    padding: var(--dock-pad);
+  }
+
+  .liquid-dock-lens {
+    position: absolute;
+    top: var(--dock-pad);
+    bottom: var(--dock-pad);
+    left: var(--dock-pad);
+    width: calc((100% - 2 * var(--dock-pad)) / var(--dock-slots));
+    border-radius: 9999px;
+    pointer-events: none;
+    transform: translate3d(calc(var(--dock-index, 0) * 100%), 0, 0);
+    /* Overshoot easing is what sells "liquid" — the lens arrives slightly past
+       its slot and settles back, the way a blob of fluid would. */
+    transition:
+      transform 460ms cubic-bezier(0.34, 1.36, 0.44, 1),
+      opacity 200ms ease-out;
+    background:
+      linear-gradient(
+        155deg,
+        color-mix(in oklch, white 30%, transparent),
+        color-mix(in oklch, white 7%, transparent) 46%,
+        color-mix(in oklch, white 17%, transparent)
+      );
+    -webkit-backdrop-filter: blur(2px) brightness(1.16) saturate(1.5);
+    backdrop-filter: blur(2px) brightness(1.16) saturate(1.5);
+    box-shadow:
+      inset 0 1px 1px color-mix(in oklch, white 70%, transparent),
+      inset 0 -1px 2px color-mix(in oklch, white 28%, transparent),
+      0 2px 8px -4px var(--glass-shadow);
+  }
+
+  .liquid-dock-lens[data-visible='false'] {
+    opacity: 0;
+  }
+
+  /* The chromatic rim: a conic gradient masked down to a 1px ring, standing in
+     for the way a real lens splits light at its edge. */
+  .liquid-dock-lens::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    background: conic-gradient(
+      from 210deg,
+      oklch(78% 0.16 20 / 0.6),
+      oklch(84% 0.15 95 / 0.5),
+      oklch(80% 0.14 175 / 0.6),
+      oklch(74% 0.17 285 / 0.5),
+      oklch(78% 0.16 20 / 0.6)
+    );
+    -webkit-mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    mask-composite: exclude;
+    opacity: 0.55;
+  }
+
   .glass-popover {
     background: var(--glass-surface-strong);
     isolation: isolate;
@@ -393,8 +481,21 @@
   @supports not ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
     .glass-panel,
     .glass-bar,
-    .glass-popover {
+    .glass-popover,
+    .liquid-dock {
       background: var(--card);
+    }
+
+    /* Without backdrop-filter the lens has nothing to refract, so it has to
+       carry its own fill or the active item reads as unhighlighted. */
+    .liquid-dock-lens {
+      background: color-mix(in oklch, var(--primary) 15%, var(--card));
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .liquid-dock-lens {
+      transition: opacity 200ms ease-out;
     }
   }
 
@@ -409,10 +510,22 @@
 
     .glass-panel,
     .glass-bar,
-    .glass-popover {
+    .glass-popover,
+    .liquid-dock {
       background: var(--card);
       -webkit-backdrop-filter: none;
       backdrop-filter: none;
+    }
+
+    .liquid-dock-lens {
+      background: color-mix(in oklch, var(--primary) 15%, var(--card));
+      -webkit-backdrop-filter: none;
+      backdrop-filter: none;
+    }
+
+    .liquid-dock-lens::after {
+      background: var(--primary);
+      opacity: 0.5;
     }
 
     [data-slot="tabs-list"] {

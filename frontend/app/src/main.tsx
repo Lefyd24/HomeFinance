@@ -8,11 +8,25 @@ import { TooltipProvider } from '@/components/ui/tooltip'
 import { Toaster } from '@/components/ui/sonner'
 import App from './App.tsx'
 import { AuthProvider } from './auth/AuthContext.tsx'
+import { ApiError } from './lib/apiClient'
 import { ensureServiceWorker } from './notifications/pushNotifications'
 import './i18n/config'
 import './index.css'
 
-const queryClient = new QueryClient()
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      // Retrying an auth failure just delays the bounce to /login by the
+      // backoff — the answer will not change until the user signs in again.
+      retry: (failureCount, error) => {
+        if (error instanceof ApiError && (error.status === 401 || error.status === 403)) {
+          return false
+        }
+        return failureCount < 3
+      },
+    },
+  },
+})
 
 // Register the service worker on boot rather than waiting for someone to enable
 // push notifications — installability (add to home screen) needs an active

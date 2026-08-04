@@ -1,8 +1,8 @@
 # Multi-stage Dockerfile for Personal Finance App
 # BACKEND_PORT / FRONTEND_PORT default here; override via .env / docker compose at runtime
 
-# Stage 1a: Build the React SPA (frontend/app) — this is the frontend served by
-# default. `npm run build` is `tsc -b && vite build`, so a type error fails the
+# Stage 1: Build the React SPA (frontend/app) — the only frontend.
+# `npm run build` is `tsc -b && vite build`, so a type error fails the
 # image build rather than shipping a broken bundle.
 #
 # Node 22, not 20: vite 8 / rolldown declare engines "^20.19.0 || >=22.12.0",
@@ -19,28 +19,6 @@ RUN npm ci
 COPY frontend/app ./
 
 RUN npm run build
-
-# Stage 1b: Build the legacy vanilla frontend's CSS. Kept only so the image can
-# roll back to the old UI without a rebuild — see FRONTEND_DIR below. Delete this
-# stage once the React cutover has soaked and frontend/public is removed.
-FROM node:20-alpine AS legacy-builder
-
-WORKDIR /app/frontend
-
-# Copy frontend package files
-COPY frontend/package*.json ./
-
-# Install dependencies
-RUN npm ci
-
-# Copy frontend source
-COPY frontend/build ./build
-
-# Copy frontend public files (needed for CSS build reference)
-COPY frontend/public ./public
-
-# Build CSS
-RUN npm run build:css
 
 # Stage 2: Install Python dependencies with uv
 FROM ghcr.io/astral-sh/uv:python3.11-bookworm-slim AS python-builder
@@ -77,12 +55,9 @@ ENV PATH="/app/.venv/bin:$PATH"
 # Copy backend code
 COPY backend/ ./backend/
 
-# Copy both frontends. /app/frontend/public is the React build (served by
-# default); /app/frontend/legacy is the old vanilla app, kept as a no-rebuild
-# rollback target — set FRONTEND_DIR=/app/frontend/legacy in .env and
-# `docker compose up -d` to switch back.
+# Copy the built SPA. /app/frontend/public is what FRONTEND_DIR points at and
+# what main.py serves statically at "/".
 COPY --from=react-builder /app/frontend/app/dist ./frontend/public
-COPY --from=legacy-builder /app/frontend/public ./frontend/legacy
 
 # Create data + logs directories for bind mounts
 RUN mkdir -p /app/data /app/logs
@@ -104,8 +79,7 @@ ENV DATABASE_URL=sqlite:////app/data/finance.db
 ENV DEBUG=false
 ENV BACKEND_PORT=8223
 ENV FRONTEND_PORT=3100
-# Explicit rather than relying on config.py's directory probing. Override with
-# /app/frontend/legacy to serve the old vanilla UI instead.
+# Explicit rather than relying on config.py's directory probing.
 ENV FRONTEND_DIR=/app/frontend/public
 
 # Frontend is served by the backend at BACKEND_PORT — only that port needs exposing.

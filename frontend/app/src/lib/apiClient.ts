@@ -57,6 +57,34 @@ async function readErrorDetail(response: Response): Promise<string | null> {
 }
 
 
+/**
+ * Called when the server rejects a request we made *as a logged-in user* —
+ * i.e. the session is over, not "you typed the wrong password".
+ *
+ * This lives here because `apiFetch` is the only place that sees every
+ * response. AuthProvider registers a handler that tears the session down; the
+ * router then bounces to /login on the next render. Without it an expired token
+ * was invisible: the stored user object kept the app looking logged in while
+ * every request quietly failed.
+ */
+type UnauthorizedHandler = () => void
+
+let unauthorizedHandler: UnauthorizedHandler | null = null
+
+export function setUnauthorizedHandler(handler: UnauthorizedHandler | null): void {
+  unauthorizedHandler = handler
+}
+
+/**
+ * A 401 from the login endpoint means bad credentials — the login form shows
+ * that itself, and treating it as a dead session would be nonsense (there is no
+ * session yet). Every other 401 on a request that carried a token means the
+ * token is no longer good.
+ */
+function isSessionEndingUnauthorized(path: string, hadToken: boolean): boolean {
+  return hadToken && !path.startsWith('/auth/login')
+}
+
 export async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
   const token = window.localStorage.getItem('token')
   const response = await fetch(`${getApiBaseUrl()}${path}`, {
@@ -69,6 +97,10 @@ export async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> 
   })
 
   if (!response.ok) {
+    if (response.status === 401 && isSessionEndingUnauthorized(path, Boolean(token))) {
+      unauthorizedHandler?.()
+    }
+    // Still thrown either way, so callers keep their own error states.
     throw new ApiError(response.status, response.statusText, await readErrorDetail(response))
   }
 

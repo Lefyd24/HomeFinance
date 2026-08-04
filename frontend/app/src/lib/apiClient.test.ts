@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { ApiError, getApiBaseUrl, apiFetch } from './apiClient'
+import { ApiError, getApiBaseUrl, apiFetch, setUnauthorizedHandler } from './apiClient'
 
 describe('getApiBaseUrl', () => {
   afterEach(() => {
@@ -153,6 +153,84 @@ describe('apiFetch', () => {
     )
 
     await expect(apiFetch('/x')).rejects.toThrow('API request failed: 502 Bad Gateway')
+  })
+
+  /**
+   * A dead session used to be completely silent: the token expired, every
+   * request 401'd, and nothing anywhere turned that into "you are logged out".
+   * The stored `user` object kept RequireAuth satisfied, so the app sat there
+   * rendering empty pages forever.
+   */
+  describe('401 handling', () => {
+    afterEach(() => {
+      setUnauthorizedHandler(null)
+    })
+
+    const unauthorized = () =>
+      vi.fn().mockResolvedValue({
+        ok: false,
+        status: 401,
+        statusText: 'Unauthorized',
+        json: () => Promise.resolve({ detail: 'Could not validate credentials' }),
+      })
+
+    it('notifies the handler when an authenticated request is rejected', async () => {
+      window.localStorage.setItem('token', 'expired-token')
+      vi.stubGlobal('fetch', unauthorized())
+      const onUnauthorized = vi.fn()
+      setUnauthorizedHandler(onUnauthorized)
+
+      await expect(apiFetch('/accounts/')).rejects.toBeInstanceOf(ApiError)
+
+      expect(onUnauthorized).toHaveBeenCalledTimes(1)
+    })
+
+    it('stays quiet for a failed login, which 401s on a wrong password', async () => {
+      vi.stubGlobal('fetch', unauthorized())
+      const onUnauthorized = vi.fn()
+      setUnauthorizedHandler(onUnauthorized)
+
+      await expect(apiFetch('/auth/login', { method: 'POST' })).rejects.toBeInstanceOf(ApiError)
+
+      expect(onUnauthorized).not.toHaveBeenCalled()
+    })
+
+    it('stays quiet when the caller never had a token to begin with', async () => {
+      vi.stubGlobal('fetch', unauthorized())
+      const onUnauthorized = vi.fn()
+      setUnauthorizedHandler(onUnauthorized)
+
+      await expect(apiFetch('/accounts/')).rejects.toBeInstanceOf(ApiError)
+
+      expect(onUnauthorized).not.toHaveBeenCalled()
+    })
+
+    it('still throws so callers can render their own error state', async () => {
+      window.localStorage.setItem('token', 'expired-token')
+      vi.stubGlobal('fetch', unauthorized())
+      setUnauthorizedHandler(vi.fn())
+
+      await expect(apiFetch('/accounts/')).rejects.toMatchObject({ status: 401 })
+    })
+
+    it('does not fire for other error statuses', async () => {
+      window.localStorage.setItem('token', 'good-token')
+      vi.stubGlobal(
+        'fetch',
+        vi.fn().mockResolvedValue({
+          ok: false,
+          status: 403,
+          statusText: 'Forbidden',
+          json: () => Promise.resolve({ detail: 'Not permitted' }),
+        }),
+      )
+      const onUnauthorized = vi.fn()
+      setUnauthorizedHandler(onUnauthorized)
+
+      await expect(apiFetch('/admin/users')).rejects.toBeInstanceOf(ApiError)
+
+      expect(onUnauthorized).not.toHaveBeenCalled()
+    })
   })
 
   it('attaches Authorization Bearer when a token is present', async () => {

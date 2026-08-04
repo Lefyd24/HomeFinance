@@ -14,6 +14,7 @@ import { Select } from '../ui/Select'
 import { useAccounts } from '../accounts/useAccounts'
 import { useAddDebtPayment, useUpdateDebtPayment } from './useDebts'
 import type { Debt, DebtPayment } from './debtsApi'
+import { todayIsoDate } from '../lib/format'
 
 const NONE = '__none__'
 
@@ -67,7 +68,7 @@ export function DebtPaymentDialog({
       amount: 0,
       principal_amount: '',
       interest_amount: '',
-      payment_date: new Date().toISOString().slice(0, 10),
+      payment_date: todayIsoDate(),
       account_id: NONE,
       create_transaction: true,
       notes: '',
@@ -92,7 +93,7 @@ export function DebtPaymentDialog({
       amount: debt.minimum_payment && debt.minimum_payment > 0 ? debt.minimum_payment : 0,
       principal_amount: '',
       interest_amount: '',
-      payment_date: new Date().toISOString().slice(0, 10),
+      payment_date: todayIsoDate(),
       account_id: debt.linked_account_id != null ? String(debt.linked_account_id) : NONE,
       create_transaction: true,
       notes: '',

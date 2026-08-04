@@ -1,4 +1,10 @@
-import { Fragment, useMemo, useState, type ComponentProps, type ReactNode } from 'react'
+import {
+  Fragment,
+  useMemo,
+  useState,
+  type CSSProperties,
+  type ReactNode,
+} from 'react'
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useQuery } from '@tanstack/react-query'
@@ -14,10 +20,10 @@ import { getNotificationLog } from '../notifications/notificationsApi'
 import { useAuth } from '../auth/AuthContext'
 import {
   ALL_NAV_ITEMS,
+  DOCK_NAV_ITEMS,
   MORE_NAV_ICON as MoreIcon,
   MORE_NAV_GROUPS,
   NAV_GROUPS,
-  PRIMARY_NAV_ITEMS,
   SECONDARY_NAV_ITEMS,
   type NavItem,
 } from './NavItems'
@@ -568,7 +574,9 @@ function QuickAddTransactionFab() {
             size="icon-xl"
             className={cn(
               'fixed z-30 size-12 rounded-full shadow-lg',
-              'bottom-[calc(5.75rem+env(safe-area-inset-bottom))] end-3',
+              // Clears the dock (3.5rem tall, sitting ~0.5rem above the safe
+              // area) with a gap, in a browser tab and an installed PWA alike.
+              'bottom-[max(4.5rem,calc(4rem+env(safe-area-inset-bottom)))] end-3',
               'lg:bottom-12 lg:end-6',
             )}
             onClick={() => setOpen(true)}
@@ -611,48 +619,41 @@ function dockLabel(item: NavItem, t: (key: string) => string) {
   return t(item.dockLabelKey ?? item.labelKey)
 }
 
-function DockItemShell({
-  active,
-  children,
-  className,
-  ...props
-}: ComponentProps<'button'> & { active?: boolean }) {
-  return (
-    <button
-      type="button"
-      className={cn(
-        'group/dock flex min-h-11 flex-1 flex-col items-center justify-center gap-0.5 rounded-xl px-1',
-        'transition-[color,transform,background-color] duration-150 ease-out',
-        'motion-safe:active:scale-[0.96]',
-        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50',
-        active ? 'text-primary' : 'text-muted-foreground hover:text-foreground',
-        className,
-      )}
-      {...props}
-    >
-      {children}
-    </button>
-  )
-}
+/**
+ * One dock slot. Deliberately backgroundless: the active highlight is the
+ * single sliding `.liquid-dock-lens` behind the row, so a slot only ever
+ * changes colour and weight.
+ */
+const DOCK_SLOT_CLASS = cn(
+  'group/dock relative z-10 flex min-h-[2.875rem] flex-1 flex-col items-center justify-center gap-px rounded-full px-0.5',
+  'transition-[color,transform] duration-200 ease-out',
+  'motion-safe:active:scale-[0.94]',
+  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60',
+)
 
-function DockIconWell({
-  active,
-  children,
-}: {
-  active: boolean
-  children: ReactNode
-}) {
+function DockLabel({ active, children }: { active: boolean; children: ReactNode }) {
   return (
     <span
       className={cn(
-        'flex size-9 items-center justify-center rounded-xl transition-colors duration-150',
-        active
-          ? 'bg-primary/12 text-primary shadow-[inset_0_1px_0_color-mix(in_oklch,white_55%,transparent)]'
-          : 'text-muted-foreground group-hover/dock:bg-muted/70 group-hover/dock:text-foreground',
+        'max-w-full truncate px-0.5 text-[10px] leading-tight tracking-wide transition-colors duration-200',
+        active ? 'font-semibold text-primary' : 'font-medium text-muted-foreground',
       )}
     >
       {children}
     </span>
+  )
+}
+
+function DockIcon({ icon, active }: { icon: NavItem['icon']; active: boolean }) {
+  return (
+    <HugeiconsIcon
+      icon={icon}
+      strokeWidth={active ? 2.25 : 1.75}
+      className={cn(
+        'size-[1.375rem] transition-colors duration-200',
+        active ? 'text-primary' : 'text-muted-foreground',
+      )}
+    />
   )
 }
 
@@ -747,76 +748,62 @@ function MobileBottomNav({
   )
   const moreActive = moreOpen || secondaryActive
 
+  const dockIndex = useMemo(() => {
+    const hit = DOCK_NAV_ITEMS.findIndex((item) => location.pathname.startsWith(item.to))
+    if (hit >= 0) return hit
+    // "More" is the last slot; it owns every route the dock doesn't show.
+    return moreActive ? DOCK_NAV_ITEMS.length : -1
+  }, [location.pathname, moreActive])
+
   return (
     <nav
       aria-label={t('primaryNav')}
-      className="pointer-events-none fixed inset-x-0 bottom-0 z-40 px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] lg:hidden"
+      className={cn(
+        'pointer-events-none fixed inset-x-0 bottom-0 z-40 px-4 lg:hidden',
+        // Sits closer to the bottom edge than a full safe-area inset would put
+        // it: the inset reserves room for the home indicator, and the dock only
+        // needs to clear it, not stand a full gap above it.
+        'pb-[max(0.375rem,calc(env(safe-area-inset-bottom)-0.5rem))]',
+      )}
     >
       <div
-        className={cn(
-          'pointer-events-auto mx-auto flex max-w-lg items-stretch gap-0.5 border p-1.5',
-          'glass-panel rounded-2xl',
-        )}
+        className="liquid-dock pointer-events-auto relative mx-auto flex max-w-sm items-stretch rounded-full border"
+        style={{ '--dock-slots': DOCK_NAV_ITEMS.length + 1 } as CSSProperties}
       >
-        {PRIMARY_NAV_ITEMS.map((item) => (
+        <span
+          aria-hidden="true"
+          className="liquid-dock-lens"
+          data-visible={dockIndex >= 0}
+          style={{ '--dock-index': Math.max(dockIndex, 0) } as CSSProperties}
+        />
+
+        {DOCK_NAV_ITEMS.map((item) => (
           <NavLink
             key={item.to}
             to={item.to}
             aria-label={t(item.labelKey)}
-            className={cn(
-              'group/dock flex min-h-11 flex-1 flex-col items-center justify-center gap-0.5 rounded-xl px-1',
-              'transition-[color,transform] duration-150 ease-out',
-              'motion-safe:active:scale-[0.96]',
-              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50',
-            )}
+            className={DOCK_SLOT_CLASS}
           >
             {({ isActive }) => (
               <>
-                <DockIconWell active={isActive}>
-                  <HugeiconsIcon
-                    icon={item.icon}
-                    strokeWidth={isActive ? 2.25 : 1.75}
-                    className="size-5"
-                  />
-                </DockIconWell>
-                <span
-                  className={cn(
-                    'max-w-full truncate px-0.5 text-[10px] font-medium tracking-wide',
-                    isActive ? 'text-primary' : 'text-muted-foreground group-hover/dock:text-foreground',
-                  )}
-                >
-                  {dockLabel(item, t)}
-                </span>
+                <DockIcon icon={item.icon} active={isActive} />
+                <DockLabel active={isActive}>{dockLabel(item, t)}</DockLabel>
               </>
             )}
           </NavLink>
         ))}
 
-        <Separator orientation="vertical" className="my-2 bg-border/70" />
-
-        <DockItemShell
-          active={moreActive}
+        <button
+          type="button"
+          className={DOCK_SLOT_CLASS}
           onClick={onMoreToggle}
           aria-label={t('moreNavigationAria')}
           aria-expanded={moreOpen}
           aria-haspopup="dialog"
         >
-          <DockIconWell active={moreActive}>
-            <HugeiconsIcon
-              icon={MoreIcon}
-              strokeWidth={moreActive ? 2.25 : 1.75}
-              className="size-5"
-            />
-          </DockIconWell>
-          <span
-            className={cn(
-              'max-w-full truncate px-0.5 text-[10px] font-medium tracking-wide',
-              moreActive ? 'text-primary' : 'text-muted-foreground group-hover/dock:text-foreground',
-            )}
-          >
-            {t('more')}
-          </span>
-        </DockItemShell>
+          <DockIcon icon={MoreIcon} active={moreActive} />
+          <DockLabel active={moreActive}>{t('more')}</DockLabel>
+        </button>
       </div>
     </nav>
   )
@@ -864,7 +851,7 @@ export function AppShell() {
 
         <main className="shell-main flex-1 min-h-0">
           <div className="shell-main-bg" aria-hidden="true" />
-          <div className="shell-main-scroll pb-[calc(5.75rem+env(safe-area-inset-bottom))] lg:pb-0">
+          <div className="shell-main-scroll pb-[max(4.875rem,calc(4rem+env(safe-area-inset-bottom)))] lg:pb-0">
             <Outlet />
           </div>
         </main>

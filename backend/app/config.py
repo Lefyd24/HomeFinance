@@ -47,15 +47,18 @@ def _default_documents_dir() -> str:
 
 
 def _default_frontend_dir() -> str:
-    """`<repo>/frontend/public` for local dev, `/app/frontend/public` under Docker (WORKDIR /app)."""
+    """`<repo>/frontend/app/dist` for local dev, `/app/frontend/public` under Docker (WORKDIR /app).
+
+    Local dev normally runs `vite dev`, which serves the SPA itself, so a missing
+    dist is expected and harmless — startup logs a warning and skips the mount.
+    """
     repo_root = Path(__file__).resolve().parent.parent.parent
-    candidate = repo_root / "frontend" / "public"
+    candidate = repo_root / "frontend" / "app" / "dist"
     if candidate.exists():
         return str(candidate)
     docker_candidate = Path("/app/frontend/public")
     if docker_candidate.exists():
         return str(docker_candidate)
-    # Fall back to the dev path even if missing yet — startup code logs a warning and skips the mount.
     return str(candidate)
 
 

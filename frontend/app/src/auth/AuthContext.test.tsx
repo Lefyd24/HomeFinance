@@ -3,6 +3,7 @@ import { act, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { AuthProvider, useAuth } from './AuthContext'
 import * as authApi from './authApi'
+import { apiFetch } from '../lib/apiClient'
 
 function TestConsumer() {
   const { user, isAuthenticated, login, logout } = useAuth()
@@ -29,6 +30,57 @@ describe('AuthContext', () => {
       </AuthProvider>,
     )
     expect(screen.getByText('anon')).toBeInTheDocument()
+  })
+
+  it('ignores a stored user when the token is gone', () => {
+    // The user object outlives the token (cleared tokens, a half-finished
+    // logout, a wiped cookie jar). Trusting it alone kept RequireAuth happy and
+    // left the app "logged in" against a server that rejected every request.
+    window.localStorage.setItem(
+      'user',
+      JSON.stringify({ id: 1, email: 'jane@example.com', full_name: null }),
+    )
+
+    render(
+      <AuthProvider>
+        <TestConsumer />
+      </AuthProvider>,
+    )
+
+    expect(screen.getByText('anon')).toBeInTheDocument()
+  })
+
+  it('a 401 from any authenticated request ends the session', async () => {
+    window.localStorage.setItem('token', 'expired')
+    window.localStorage.setItem(
+      'user',
+      JSON.stringify({ id: 1, email: 'jane@example.com', full_name: null }),
+    )
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: false,
+        status: 401,
+        statusText: 'Unauthorized',
+        json: () => Promise.resolve({ detail: 'Could not validate credentials' }),
+      }),
+    )
+
+    render(
+      <AuthProvider>
+        <TestConsumer />
+      </AuthProvider>,
+    )
+    expect(screen.getByText('authed')).toBeInTheDocument()
+
+    await act(async () => {
+      await apiFetch('/accounts/').catch(() => {})
+    })
+
+    await waitFor(() => expect(screen.getByText('anon')).toBeInTheDocument())
+    expect(window.localStorage.getItem('token')).toBeNull()
+    expect(window.localStorage.getItem('user')).toBeNull()
+    vi.unstubAllGlobals()
   })
 
   it('login stores tokens/user and flips to authenticated', async () => {

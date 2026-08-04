@@ -30,7 +30,7 @@ import {
 } from '@/components/ui/table'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { ProgressBar, progressVariantForPercent } from '../ui/ProgressBar'
-import { formatCurrency, formatDate } from '../lib/format'
+import { formatCurrency, formatDate, todayIsoDate } from '../lib/format'
 import { cn } from '@/lib/utils'
 import { useBudgetSummary } from './useBudgets'
 import type { Budget, BudgetSummaryPeriod } from './budgetsApi'
@@ -42,7 +42,7 @@ function periodSuffixKey(period: Budget['period']): 'perMonth' | 'perYear' | nul
 }
 
 function isCurrentPeriod(period: BudgetSummaryPeriod): boolean {
-  const today = new Date().toISOString().slice(0, 10)
+  const today = todayIsoDate()
   return today >= period.period_start.slice(0, 10) && today <= period.period_end.slice(0, 10)
 }
 
