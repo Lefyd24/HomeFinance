@@ -139,9 +139,11 @@ export function TransactionFormDialog({
   const selectedType = watch('type')
   const isTransfer = selectedType === 'transfer'
 
-  // A bank-synced transaction has its amount, date, type and account fixed by
-  // the bank — the next sync would overwrite any edit. Splitting is offered
-  // instead so the money can still be spread across categories.
+  // A bank-synced transaction has its amount, type and account fixed by the
+  // bank — the next sync would overwrite any edit to those. `date` stays
+  // editable so a transaction can be corrected to when it actually happened
+  // vs. when the bank cleared it; splitting is offered for the amount so the
+  // money can still be spread across categories.
   const isBankSynced = Boolean(transaction?.is_bank_synced)
   const splitTransaction = useSplitTransaction()
   const [splitting, setSplitting] = useState(false)
@@ -237,6 +239,7 @@ export function TransactionFormDialog({
         category_id: !isTransfer && data.category_id ? Number(data.category_id) : null,
         description: data.description,
         notes: data.notes || null,
+        date: dateValue,
       }
       // Fields the bank owns on a synced row. Sending them unchanged is
       // harmless server-side, but omitting them keeps the intent obvious.

@@ -11,7 +11,7 @@ import hashlib
 import logging
 import re
 import secrets
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, timezone
 from decimal import Decimal, InvalidOperation
 from pathlib import Path
 from typing import Any
@@ -547,7 +547,7 @@ def sync_account(db: Session, account: Account) -> dict[str, Any]:
     if balance is not None:
         account.balance = round(balance, 2)
 
-    account.last_synced_at = datetime.utcnow()
+    account.last_synced_at = datetime.now(timezone.utc)
     account.sync_status = "ok"
 
     return {
@@ -625,7 +625,7 @@ def sync_connection(db: Session, connection: BankConnection) -> dict[str, Any]:
             account.sync_status = "error"
             result["errors"].append({"account_id": account.id, "error": str(exc)})
 
-    connection.last_sync_at = datetime.utcnow()
+    connection.last_sync_at = datetime.now(timezone.utc)
     connection.last_sync_error = (
         None if not result["errors"] else f"{len(result['errors'])} account(s) failed"
     )

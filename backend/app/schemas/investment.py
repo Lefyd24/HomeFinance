@@ -1,6 +1,8 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_serializer
 from datetime import datetime, date
 from typing import Optional
+
+from app.utils.datetime_utils import ensure_utc
 
 
 class InvestmentAccountCreate(BaseModel):
@@ -48,6 +50,10 @@ class InvestmentAccountResponse(BaseModel):
     position_count: int = 0
     created_at: datetime
     updated_at: datetime
+
+    @field_serializer("last_synced_at")
+    def _serialize_last_synced_at(self, value: Optional[datetime]) -> Optional[datetime]:
+        return ensure_utc(value)
 
     class Config:
         from_attributes = True
@@ -185,3 +191,7 @@ class InvestmentSyncResult(BaseModel):
     sync_error: Optional[str] = None
     balance: float
     last_synced_at: Optional[datetime] = None
+
+    @field_serializer("last_synced_at")
+    def _serialize_last_synced_at(self, value: Optional[datetime]) -> Optional[datetime]:
+        return ensure_utc(value)

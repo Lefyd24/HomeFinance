@@ -1,6 +1,8 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_serializer
 from datetime import datetime
 from typing import Optional
+
+from app.utils.datetime_utils import ensure_utc
 
 
 class AccountBase(BaseModel):
@@ -39,6 +41,10 @@ class AccountResponse(AccountBase):
     sync_status: Optional[str] = None
     created_at: datetime
     updated_at: datetime
+
+    @field_serializer("last_synced_at")
+    def _serialize_last_synced_at(self, value: Optional[datetime]) -> Optional[datetime]:
+        return ensure_utc(value)
 
     class Config:
         from_attributes = True

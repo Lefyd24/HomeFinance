@@ -10,18 +10,20 @@ rows would look synced without ever appearing on a statement.
 Every write path that can touch an account balance must call one of these.
 """
 
-from datetime import datetime
-
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.models import Account, Transaction
 
 # Fields on a synced transaction that mirror the bank's own record. Everything
-# else — category_id, notes, description — stays editable, because synced rows
-# arrive uncategorised and categorising them is the whole point.
+# else — category_id, notes, description, date — stays editable. `date` is
+# deliberately not bank-owned: bank_sync_service only ever inserts new booked
+# transactions by external_id and never overwrites an existing row (see
+# _write_transactions), so a user correcting a transaction's date to when it
+# actually happened (vs. when the bank cleared it) can't be clobbered by a
+# later sync.
 BANK_OWNED_TRANSACTION_FIELDS = frozenset(
-    {"account_id", "destination_account_id", "amount", "type", "date"}
+    {"account_id", "destination_account_id", "amount", "type"}
 )
 
 
@@ -101,18 +103,12 @@ def reject_synced_field_edits(transaction: Transaction, update_data: dict) -> No
 def _differs(transaction: Transaction, field: str, new_value) -> bool:
     """True when `new_value` is a real change to `field`.
 
-    Dates arrive as datetimes from JSON but are stored as dates, and amounts
-    round-trip through float — both need normalising before comparison or every
-    unchanged submission looks like an edit.
+    Amounts round-trip through float, so they need normalising before comparison
+    or every unchanged submission looks like an edit.
     """
     current = getattr(transaction, field)
     if new_value is None or current is None:
         return new_value is not current
-
-    if field == "date":
-        new_date = new_value.date() if isinstance(new_value, datetime) else new_value
-        current_date = current.date() if isinstance(current, datetime) else current
-        return new_date != current_date
 
     if field == "amount":
         return round(float(current), 2) != round(float(new_value), 2)

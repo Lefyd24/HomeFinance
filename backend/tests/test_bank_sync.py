@@ -1118,6 +1118,17 @@ def test_synced_transaction_amount_cannot_be_edited(client, db, linked_account, 
     assert response.status_code == 400
 
 
+def test_synced_transaction_date_can_be_edited(client, db, linked_account, seed_user):
+    """Users may correct when a purchase actually happened vs. when the bank cleared it."""
+    tx = make_transaction(db, seed_user, linked_account)
+    tx.external_id = f"{linked_account.id}:REF-1"
+    db.commit()
+
+    response = client.put(f"/api/transactions/{tx.id}", json={"date": "2026-01-05T00:00:00"})
+    assert response.status_code == 200
+    assert response.json()["date"].startswith("2026-01-05")
+
+
 def test_synced_transaction_can_still_be_categorised(client, db, linked_account, seed_user):
     """The whole point of syncing uncategorised rows is that users can categorise them."""
     from tests.factories import make_category

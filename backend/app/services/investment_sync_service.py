@@ -1,6 +1,6 @@
 import logging
 from collections import defaultdict
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, timezone
 
 from sqlalchemy.orm import Session
 
@@ -72,7 +72,7 @@ def sync_account(db: Session, account: Account) -> InvestmentCredential:
 
         account.balance = round(balance.total_value, 2)
         account.currency = balance.currency
-        account.last_synced_at = datetime.utcnow()
+        account.last_synced_at = datetime.now(timezone.utc)
 
         db.query(PortfolioPosition).filter(PortfolioPosition.account_id == account.id).delete(
             synchronize_session=False

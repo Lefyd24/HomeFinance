@@ -1,7 +1,9 @@
 from datetime import datetime
 from typing import Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_serializer
+
+from app.utils.datetime_utils import ensure_utc
 
 
 class InstitutionResponse(BaseModel):
@@ -37,6 +39,10 @@ class LinkedAccountSummary(BaseModel):
     last_synced_at: Optional[datetime] = None
     sync_status: Optional[str] = None
 
+    @field_serializer("last_synced_at")
+    def _serialize_last_synced_at(self, value: Optional[datetime]) -> Optional[datetime]:
+        return ensure_utc(value)
+
     class Config:
         from_attributes = True
 
@@ -51,6 +57,10 @@ class BankConnectionResponse(BaseModel):
     last_sync_error: Optional[str] = None
     created_at: datetime
     accounts: list[LinkedAccountSummary] = Field(default_factory=list)
+
+    @field_serializer("last_sync_at")
+    def _serialize_last_sync_at(self, value: Optional[datetime]) -> Optional[datetime]:
+        return ensure_utc(value)
 
     class Config:
         from_attributes = True
