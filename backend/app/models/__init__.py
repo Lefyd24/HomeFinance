@@ -21,6 +21,7 @@ from app.models.notification import (
 )
 from app.models.recurring_expense import RecurringExpense, RecurringExpensePayment
 from app.models.saved_report import SavedReport
+from app.models.tracker import Tracker, TrackerTransaction
 from app.models.transaction import Transaction
 from app.models.user import User
 from app.models.user_token import UserToken
@@ -50,6 +51,8 @@ __all__ = [
     "RecurringExpense",
     "RecurringExpensePayment",
     "SavedReport",
+    "Tracker",
+    "TrackerTransaction",
     "Transaction",
     "User",
     "UserToken",

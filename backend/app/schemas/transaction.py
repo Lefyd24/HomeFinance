@@ -61,6 +61,9 @@ class TransactionResponse(TransactionBase):
     paired_transaction_id: Optional[int] = None
     transfer_direction: Optional[str] = None
     original_type: Optional[str] = None
+    # Trackers this transaction has been filed under, manually.
+    tracker_ids: List[int] = []
+    tracker_names: List[str] = []
 
     class Config:
         from_attributes = True

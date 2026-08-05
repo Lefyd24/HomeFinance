@@ -10,6 +10,7 @@ import { HugeiconsIcon } from '@hugeicons/react'
 import {
   ArrowDownLeft01Icon,
   ArrowUpRight01Icon,
+  CheckmarkCircle02Icon,
   Exchange01Icon,
 } from '@hugeicons/core-free-icons'
 import { Button } from '@/components/ui/button'
@@ -40,9 +41,18 @@ import { useCategories } from '../categories/useCategories'
 import { useAddDebtPayment, useDebts } from '../debts/useDebts'
 import { useCreateRule } from '../rules/useRules'
 import { useRecordRecurringPayment, useRecurringExpenses } from '../recurring/useRecurring'
-import { useCreateTransaction, useSplitTransaction, useUpdateTransaction } from './useTransactions'
+import { useTrackers } from '../trackers/useTrackers'
+import { DEFAULT_TRACKER_ICON } from '../trackers/trackerMeta'
+import { ICON_MAP, type IconKey } from '../categories/categoryIcons'
+import {
+  useCreateTransaction,
+  useSetTransactionTrackers,
+  useSplitTransaction,
+  useUpdateTransaction,
+} from './useTransactions'
 import type { Transaction, TransactionType } from './transactionsApi'
 import { todayIsoDate } from '../lib/format'
+import { cn } from '@/lib/utils'
 
 const transactionSchema = z
   .object({
@@ -113,6 +123,11 @@ export function TransactionFormDialog({
   const [debtId, setDebtId] = useState('')
   const [linkToRecurring, setLinkToRecurring] = useState(false)
   const [recurringId, setRecurringId] = useState('')
+  // Only active trackers are offered — a finished trip should stop appearing
+  // on every transaction you touch months later.
+  const { data: activeTrackers = [] } = useTrackers(true)
+  const setTransactionTrackers = useSetTransactionTrackers()
+  const [selectedTrackerIds, setSelectedTrackerIds] = useState<number[]>([])
 
   const {
     register,
@@ -198,6 +213,7 @@ export function TransactionFormDialog({
       setRecurringId(
         transaction?.recurring_expense_id ? String(transaction.recurring_expense_id) : '',
       )
+      setSelectedTrackerIds(transaction?.tracker_ids ?? [])
     }
   }, [open, transaction, reset])
 
@@ -316,6 +332,23 @@ export function TransactionFormDialog({
           toast.success(t('form.toast.recurringLinked'))
         } catch {
           toast.error(t('form.toast.recurringLinkFailed'))
+        }
+      }
+
+      // Tracker membership is saved separately, and only when it actually
+      // changed — an unchanged set costs a needless round-trip on every save.
+      if (savedId != null) {
+        const before = [...(transaction?.tracker_ids ?? [])].sort().join(',')
+        const after = [...selectedTrackerIds].sort().join(',')
+        if (before !== after) {
+          try {
+            await setTransactionTrackers.mutateAsync({
+              id: savedId,
+              trackerIds: selectedTrackerIds,
+            })
+          } catch {
+            toast.error(t('form.toast.trackersFailed'))
+          }
         }
       }
 
@@ -717,6 +750,60 @@ export function TransactionFormDialog({
                   )}
                 </>
               )}
+            </div>
+          )}
+
+          {activeTrackers.length > 0 && (
+            <div className="flex flex-col gap-2 rounded-lg border border-border/60 px-3 py-2.5">
+              <div>
+                <p className="text-sm font-medium">{t('form.trackers.label')}</p>
+                <p className="mt-0.5 text-xs text-muted-foreground">
+                  {t('form.trackers.hint')}
+                </p>
+              </div>
+              {/* Chips rather than a multi-select: the list is short, and seeing
+                  every tracker at once is what makes "does this belong to the
+                  Italy trip?" a one-glance decision. */}
+              <div className="flex flex-wrap gap-1.5">
+                {activeTrackers.map((tracker) => {
+                  const selected = selectedTrackerIds.includes(tracker.id)
+                  return (
+                    <button
+                      key={tracker.id}
+                      type="button"
+                      aria-pressed={selected}
+                      onClick={() =>
+                        setSelectedTrackerIds((current) =>
+                          current.includes(tracker.id)
+                            ? current.filter((id) => id !== tracker.id)
+                            : [...current, tracker.id],
+                        )
+                      }
+                      className={cn(
+                        'inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs transition-colors',
+                        selected
+                          ? 'border-primary bg-primary/10 text-primary font-medium'
+                          : 'border-border text-muted-foreground hover:border-primary/40 hover:text-foreground',
+                      )}
+                    >
+                      <HugeiconsIcon
+                        icon={
+                          selected
+                            ? CheckmarkCircle02Icon
+                            : ICON_MAP[
+                                (tracker.icon && tracker.icon in ICON_MAP
+                                  ? tracker.icon
+                                  : DEFAULT_TRACKER_ICON) as IconKey
+                              ]
+                        }
+                        strokeWidth={2}
+                        className="size-3.5 shrink-0"
+                      />
+                      {tracker.name}
+                    </button>
+                  )
+                })}
+              </div>
             </div>
           )}
 

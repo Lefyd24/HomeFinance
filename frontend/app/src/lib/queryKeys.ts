@@ -4,6 +4,7 @@ export const queryKeys = {
   transactions: (filters?: object) => ['transactions', filters] as const,
   budgets: ['budgets'] as const,
   goals: ['goals'] as const,
+  trackers: ['trackers'] as const,
   debts: ['debts'] as const,
   upcomingDebtPayments: ['upcomingDebtPayments'] as const,
   upcomingRecurringPayments: ['upcomingRecurringPayments'] as const,

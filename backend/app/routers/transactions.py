@@ -20,6 +20,9 @@ from app.schemas import (
 )
 from app.models import User, Transaction, Account, Category, DebtPayment
 from app.models.recurring_expense import RecurringExpensePayment
+from app.models.tracker import TrackerTransaction
+from app.schemas.tracker import TrackerAssignment
+from app.routers.trackers import set_transaction_trackers
 
 router = APIRouter(prefix="/transactions", tags=["Transactions"])
 
@@ -38,6 +41,11 @@ def _serialize_transaction(db: Session, tx: Transaction) -> dict:
         db.query(RecurringExpensePayment)
         .filter(RecurringExpensePayment.transaction_id == tx.id)
         .first()
+    )
+    tracker_links = (
+        db.query(TrackerTransaction)
+        .filter(TrackerTransaction.transaction_id == tx.id)
+        .all()
     )
     return {
         "id": tx.id,
@@ -80,6 +88,10 @@ def _serialize_transaction(db: Session, tx: Transaction) -> dict:
         "paired_transaction_id": tx.paired_transaction_id,
         "transfer_direction": tx.transfer_direction,
         "original_type": tx.original_type,
+        "tracker_ids": [link.tracker_id for link in tracker_links],
+        "tracker_names": [
+            link.tracker.name for link in tracker_links if link.tracker is not None
+        ],
     }
 
 
@@ -597,6 +609,36 @@ def delete_transaction(
     )
 
     return {"message": "Transaction deleted successfully"}
+
+
+@router.put("/{transaction_id}/trackers", response_model=TransactionResponse)
+def set_trackers(
+    transaction_id: int,
+    payload: TrackerAssignment,
+    current_user: User = Depends(get_current_user_authenticated),
+    db: Session = Depends(get_db),
+):
+    """Replace the set of trackers a transaction belongs to.
+
+    Sent as the whole set rather than add/remove calls so the edit modal's
+    multi-select can save in one request without diffing client-side.
+    """
+    transaction = (
+        db.query(Transaction)
+        .filter(
+            Transaction.id == transaction_id, Transaction.user_id == current_user.id
+        )
+        .first()
+    )
+
+    if not transaction:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Transaction not found"
+        )
+
+    set_transaction_trackers(db, current_user.id, transaction, payload.tracker_ids)
+
+    return _serialize_transaction(db, transaction)
 
 
 @router.post("/{transaction_id}/split", response_model=List[TransactionResponse])

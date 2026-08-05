@@ -37,6 +37,9 @@ export interface Transaction {
   transfer_direction?: 'outgoing' | 'incoming' | null
   /** The row's type before it was retagged as a transfer, so it can be unmarked. */
   original_type?: TransactionType | null
+  /** Trackers this transaction has been filed under. Manual assignment only. */
+  tracker_ids?: number[]
+  tracker_names?: string[]
 }
 
 export interface TransactionList {
@@ -107,6 +110,22 @@ export function deleteTransaction(
 ): Promise<void> {
   const qs = options.affectLinked ? '?affect_linked=true' : '?affect_linked=false'
   return apiFetch<void>(`/transactions/${id}${qs}`, { method: 'DELETE' })
+}
+
+/**
+ * Replace the set of trackers a transaction belongs to.
+ *
+ * Sent as the complete set, not a diff — the edit modal's multi-select already
+ * knows the final answer, and one request keeps it atomic.
+ */
+export function setTransactionTrackers(
+  id: number,
+  trackerIds: number[],
+): Promise<Transaction> {
+  return apiFetch<Transaction>(`/transactions/${id}/trackers`, {
+    method: 'PUT',
+    body: JSON.stringify({ tracker_ids: trackerIds }),
+  })
 }
 
 export function isLinkedPayment(transaction: Transaction): boolean {

@@ -22,6 +22,7 @@ import advisorEn from '../locales/en/advisor.json'
 import adminEn from '../locales/en/admin.json'
 import bankSyncEn from '../locales/en/bankSync.json'
 import rulesEn from '../locales/en/rules.json'
+import trackersEn from '../locales/en/trackers.json'
 import validationEn from '../locales/en/validation.json'
 
 import commonEl from '../locales/el/common.json'
@@ -44,6 +45,7 @@ import advisorEl from '../locales/el/advisor.json'
 import adminEl from '../locales/el/admin.json'
 import bankSyncEl from '../locales/el/bankSync.json'
 import rulesEl from '../locales/el/rules.json'
+import trackersEl from '../locales/el/trackers.json'
 import validationEl from '../locales/el/validation.json'
 
 export const defaultNS = 'common'
@@ -70,6 +72,7 @@ export const resources = {
     admin: adminEn,
     bankSync: bankSyncEn,
     rules: rulesEn,
+    trackers: trackersEn,
     validation: validationEn,
   },
   el: {
@@ -93,6 +96,7 @@ export const resources = {
     admin: adminEl,
     bankSync: bankSyncEl,
     rules: rulesEl,
+    trackers: trackersEl,
     validation: validationEl,
   },
 } as const

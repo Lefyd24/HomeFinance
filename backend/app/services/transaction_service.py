@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 
 from app.models import Transaction, Account, Category, Debt, DebtPayment
 from app.models.recurring_expense import RecurringExpense, RecurringExpensePayment
+from app.models.tracker import TrackerTransaction
 from app.schemas import TransactionCreate, TransactionUpdate
 
 
@@ -356,6 +357,12 @@ class TransactionService:
                 db.delete(recurring_payment)
             else:
                 recurring_payment.transaction_id = None
+
+        # Tracker membership is only a tag on the transaction — the tracker
+        # itself survives, it just loses this row from its total.
+        db.query(TrackerTransaction).filter(
+            TrackerTransaction.transaction_id == transaction.id
+        ).delete(synchronize_session=False)
 
         db.delete(transaction)
         db.commit()

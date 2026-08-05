@@ -8,6 +8,7 @@ import {
   BankIcon,
   TargetIcon,
   RepeatIcon,
+  Route01Icon,
   Analytics01Icon,
   File01Icon,
   SparklesIcon,
@@ -96,8 +97,9 @@ export const NAV_GROUPS: NavGroup[] = [
     items: [
       { labelKey: 'items.categories', to: '/categories', icon: TagIcon },
       { labelKey: 'items.debts', to: '/debts', icon: BankIcon },
-      { labelKey: 'items.goals', to: '/goals', icon: TargetIcon },
       { labelKey: 'items.recurring', to: '/recurring', icon: RepeatIcon },
+      { labelKey: 'items.trackers', to: '/trackers', icon: Route01Icon },
+      { labelKey: 'items.goals', to: '/goals', icon: TargetIcon },
     ],
   },
   {

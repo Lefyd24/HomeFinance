@@ -64,6 +64,19 @@ export function useSplitTransaction() {
   })
 }
 
+export function useSetTransactionTrackers() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, trackerIds }: { id: number; trackerIds: number[] }) =>
+      transactionsApi.setTransactionTrackers(id, trackerIds),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['transactions'] })
+      // Tracker totals are derived from membership, so they move with this.
+      queryClient.invalidateQueries({ queryKey: queryKeys.trackers })
+    },
+  })
+}
+
 export function usePairTransfer() {
   const queryClient = useQueryClient()
   return useMutation({

@@ -122,6 +122,17 @@ from app.schemas.report import (
     SpendingReport,
     TrendReport,
 )
+from app.schemas.tracker import (
+    TrackerAssignment,
+    TrackerBase,
+    TrackerCreate,
+    TrackerResponse,
+    TrackerTransactionCreate,
+    TrackerTransactionEntry,
+    TrackerTransactionLink,
+    TrackerTransactionList,
+    TrackerUpdate,
+)
 from app.schemas.transaction import (
     TransactionSplitPart,
     TransactionSplitRequest,
@@ -173,6 +184,16 @@ __all__ = [
     "BulkTransactionDelete",
     "PairTransferRequest",
     "RetagTransferRequest",
+    # Tracker schemas
+    "TrackerBase",
+    "TrackerCreate",
+    "TrackerUpdate",
+    "TrackerResponse",
+    "TrackerTransactionEntry",
+    "TrackerTransactionList",
+    "TrackerTransactionLink",
+    "TrackerTransactionCreate",
+    "TrackerAssignment",
     # Budget schemas
     "BudgetBase",
     "BudgetCreate",

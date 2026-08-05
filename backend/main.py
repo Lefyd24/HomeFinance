@@ -25,6 +25,7 @@ from app.routers import (
     recurring_expenses,
     reports,
     rules,
+    trackers,
     transactions,
 )
 from app.services.scheduler import shutdown_scheduler, start_scheduler
@@ -203,6 +204,7 @@ app.include_router(investments.router, prefix="/api")
 app.include_router(documents.router, prefix="/api")
 app.include_router(notifications.router, prefix="/api")
 app.include_router(rules.router, prefix="/api")
+app.include_router(trackers.router, prefix="/api")
 app.include_router(ai_chat.router, prefix="/api")
 app.include_router(bank_sync.router, prefix="/api")
 

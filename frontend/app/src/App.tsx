@@ -13,6 +13,7 @@ import { TransactionsPage } from './transactions/TransactionsPage'
 import { BudgetsPage } from './budgets/BudgetsPage'
 import { DebtsPage } from './debts/DebtsPage'
 import { GoalsPage } from './goals/GoalsPage'
+import { TrackersPage } from './trackers/TrackersPage'
 import { RecurringPage } from './recurring/RecurringPage'
 import { ReportsPage } from './reports/ReportsPage'
 import { ImportWizardPage } from './import/ImportWizardPage'
@@ -61,6 +62,7 @@ function App() {
           <Route path="/debts" element={<DebtsPage />} />
           <Route path="/goals" element={<GoalsPage />} />
           <Route path="/recurring" element={<RecurringPage />} />
+          <Route path="/trackers" element={<TrackersPage />} />
           <Route path="/reports" element={<ReportsPage />} />
           <Route path="/import" element={<ImportWizardPage />} />
           <Route path="/documents" element={<DocumentsPage />} />

@@ -138,7 +138,8 @@
       "debtLinked": "Debt payment recorded",
       "debtLinkFailed": "Transaction saved, but the debt payment could not be linked",
       "recurringLinked": "Recurring expense payment recorded",
-      "recurringLinkFailed": "Transaction saved, but the recurring expense link failed"
+      "recurringLinkFailed": "Transaction saved, but the recurring expense link failed",
+      "trackersFailed": "Transaction saved, but the trackers could not be updated"
     },
     "links": {
       "debt": "This is a debt payment",
@@ -151,6 +152,10 @@
       "recurringSelect": "Select recurring expense",
       "recurringPlaceholder": "Choose a recurring expense…",
       "recurringAlreadyLinked": "Already linked to {{name}}"
+    },
+    "trackers": {
+      "label": "Trackers",
+      "hint": "File this transaction under one or more trackers."
     },
     "split": {
       "start": "Break this transaction",
