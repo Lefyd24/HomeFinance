@@ -21,6 +21,7 @@ import { useAuth } from '../auth/AuthContext'
 import {
   ALL_NAV_ITEMS,
   DOCK_NAV_ITEMS,
+  INVESTMENTS_NAV_ITEM,
   MORE_NAV_ICON as MoreIcon,
   MORE_NAV_GROUPS,
   NAV_GROUPS,
@@ -551,9 +552,39 @@ function DesktopSidebar({
   )
 }
 
+/**
+ * A distinct entry point into investments, styled as a small departure from
+ * the rest of the top bar (secondary accent, pill shape) rather than another
+ * icon button — investments is its own module (separate accounts, sync,
+ * market data), so getting there should feel like stepping into another part
+ * of the app, not picking another everyday page.
+ */
+function InvestmentsNavButton() {
+  const { t } = useTranslation('nav')
+  return (
+    <NavLink
+      to={INVESTMENTS_NAV_ITEM.to}
+      className={({ isActive }) =>
+        cn(
+          'flex h-7 shrink-0 items-center gap-1.5 rounded-md border px-3 text-xs font-semibold',
+          'transition-colors duration-150 ease-out',
+          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary/50',
+          isActive
+            ? 'border-secondary bg-secondary text-secondary-foreground shadow-sm'
+            : 'border-secondary/30 bg-secondary/10 text-secondary hover:border-secondary/50 hover:bg-secondary/20',
+        )
+      }
+    >
+      <HugeiconsIcon icon={INVESTMENTS_NAV_ITEM.icon} strokeWidth={2.25} className="size-4 shrink-0" />
+      <span className="sr-only sm:not-sr-only">{t(INVESTMENTS_NAV_ITEM.labelKey)}</span>
+    </NavLink>
+  )
+}
+
 function NavActions() {
   return (
     <div className="ms-auto flex items-center gap-1">
+      <InvestmentsNavButton />
       <NotificationsMenu />
       <LanguageToggle />
       <ThemeToggle />

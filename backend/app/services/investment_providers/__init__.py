@@ -7,10 +7,12 @@ from app.services.investment_providers.base import (
     ProviderSymbol,
     ProviderTransaction,
 )
+from app.services.investment_providers.binance import BinanceProvider
 from app.services.investment_providers.freedom24 import Freedom24Provider
 
 PROVIDERS: dict[str, type[InvestmentProvider]] = {
     "freedom24": Freedom24Provider,
+    "binance": BinanceProvider,
 }
 
 

@@ -27,6 +27,7 @@ dependencies = [
     "uvicorn>=0.41.0",
     "tradernet-sdk>=2.2.0",
     "yfinance>=1.5.2",
+    "python-binance>=1.0.29",
 ]
 
 [dependency-groups]

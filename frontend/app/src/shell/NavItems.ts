@@ -45,6 +45,20 @@ export const BUDGETS_NAV_ITEM: NavItem = {
   icon: PiggyBankIcon,
 }
 
+/**
+ * Not part of the sidebar/dock nav at all — rendered as its own accented
+ * button in the top bar (see `InvestmentsNavButton`), since investments is a
+ * distinct section of the app (a separate module with its own accounts,
+ * sync, and market data) rather than another everyday destination. Still
+ * listed in `ALL_NAV_ITEMS` so the top bar's page title resolves correctly
+ * while on an investments page.
+ */
+export const INVESTMENTS_NAV_ITEM: NavItem = {
+  labelKey: 'items.investments',
+  to: '/investments',
+  icon: ChartIncreaseIcon,
+}
+
 /** The top-level destinations, in the order the desktop sidebar lists them. */
 export const PRIMARY_NAV_ITEMS: NavItem[] = [
   {
@@ -116,7 +130,6 @@ export const NAV_GROUPS: NavGroup[] = [
         ],
       },
       { labelKey: 'items.documents', to: '/documents', icon: File01Icon },
-      { labelKey: 'items.investments', to: '/investments', icon: ChartIncreaseIcon },
     ],
   },
 ]
@@ -154,5 +167,6 @@ export const ALL_NAV_ITEMS: NavItem[] = [
   ...PRIMARY_NAV_ITEMS,
   NOTIFICATIONS_NAV_ITEM,
   ...NAV_GROUPS.slice(1).flatMap((group) => flatten(group.items)),
+  INVESTMENTS_NAV_ITEM,
   { labelKey: 'items.import', to: '/import', icon: ArrowDataTransferHorizontalIcon },
 ]

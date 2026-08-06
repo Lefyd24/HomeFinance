@@ -57,7 +57,8 @@ class PortfolioPosition(Base):
     avg_price = Column(Float, nullable=True)
     current_price = Column(Float, nullable=True)
     market_value = Column(Float, nullable=False)
-    currency = Column(String(3), default="USD")
+    # 10, not 3 (ISO-4217) — crypto quote assets like "USDT"/"BUSD" don't fit.
+    currency = Column(String(10), default="USD")
     cost_basis = Column(Float, nullable=True)
     fx_rate = Column(Float, default=1.0)
     market_value_base = Column(Float, nullable=True)
@@ -85,7 +86,7 @@ class PortfolioSnapshot(Base):
     total_value = Column(Float, nullable=False)
     cash_balance = Column(Float, default=0)
     positions_value = Column(Float, default=0)
-    currency = Column(String(3), default="USD")
+    currency = Column(String(10), default="USD")
 
     account = relationship("Account", back_populates="portfolio_snapshots")
 
@@ -113,7 +114,7 @@ class InvestmentTransaction(Base):
     quantity = Column(Float, nullable=True)
     price = Column(Float, nullable=True)
     amount = Column(Float, nullable=False)
-    currency = Column(String(3), default="USD")
+    currency = Column(String(10), default="USD")
     date = Column(DateTime, nullable=False)
     raw_payload = Column(Text, nullable=True)
 

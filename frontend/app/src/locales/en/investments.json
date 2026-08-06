@@ -3,12 +3,7 @@
     "title": "Investments",
     "description": "Brokerage accounts synced automatically from your provider.",
     "connectAccount": "Connect account",
-    "marketTools": "Market tools",
-    "tools": {
-      "news": "Headlines & sentiment",
-      "search": "Lookup any ticker",
-      "research": "Company profiles"
-    }
+    "marketTools": "Market tools"
   },
   "empty": {
     "title": "No investment accounts yet",
@@ -21,7 +16,6 @@
     "accountCount": "{{count}} account",
     "accountCount_other": "{{count}} accounts",
     "mixedCurrencies": "Accounts are held in different currencies, so there's no combined total. Each card below shows its own.",
-    "trend": "6-month trend",
     "allocation": "Cash vs invested"
   },
   "status": {
@@ -60,6 +54,7 @@
     "namePlaceholder": "e.g., Freedom24 Brokerage",
     "providerLabel": "Provider",
     "providerFreedom24": "Freedom24",
+    "providerBinance": "Binance",
     "currencyLabel": "Currency",
     "currencyOptions": {
       "usd": "USD — US Dollar",
@@ -71,6 +66,11 @@
     "privateKeyLabel": "Private key",
     "privateKeyPlaceholder": "Private API key",
     "keysHint": "Generate a key pair at freedom24.com/tradernet-api/auth-api. Keys are stored encrypted and can't be viewed again after saving.",
+    "apiKeyLabel": "API key",
+    "apiKeyPlaceholder": "Binance API key",
+    "secretKeyLabel": "Secret key",
+    "secretKeyPlaceholder": "Binance secret key",
+    "keysHintBinance": "Create a read-only API key at binance.com/en/my/settings/api-management — disable trading and withdrawal permissions on it. Keys are stored encrypted and can't be viewed again after saving.",
     "connecting": "Connecting…",
     "connect": "Connect account",
     "toasts": {
@@ -206,6 +206,7 @@
   "providers": {
     "label": "Data source",
     "freedom24": "Freedom24",
+    "binance": "Binance",
     "yahoo": "Yahoo Finance",
     "comingSoonTitle": "{{provider}} is coming soon",
     "comingSoonDescription": "This data source isn't wired up yet. Stick with Yahoo Finance for now."

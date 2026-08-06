@@ -18,6 +18,7 @@ export const BANK_ICONS = [
   { value: 'optimabank.jpg', label: 'Optima', file: 'optimabank.jpg' },
   { value: 'revolut.png', label: 'Revolut', file: 'revolut.png' },
   { value: 'freedom24.svg', label: 'Freedom24', file: 'freedom24.svg' },
+  { value: 'binance.svg', label: 'Binance', file: 'binance.svg' },
 ] as const
 
 export type BankIconValue = (typeof BANK_ICONS)[number]['value']

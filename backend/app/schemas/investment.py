@@ -7,7 +7,7 @@ from app.utils.datetime_utils import ensure_utc
 
 class InvestmentAccountCreate(BaseModel):
     name: str = Field(..., min_length=1, max_length=100)
-    provider: str = Field(..., pattern="^(freedom24)$")
+    provider: str = Field(..., pattern="^(freedom24|binance)$")
     currency: str = Field(default="USD", pattern="^[A-Z]{3}$")
     public_key: str = Field(..., min_length=1)
     private_key: str = Field(..., min_length=1)

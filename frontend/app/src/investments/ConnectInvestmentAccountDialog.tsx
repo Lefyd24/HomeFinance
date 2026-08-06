@@ -14,7 +14,7 @@ import { useConnectInvestmentAccount } from './useInvestments'
 
 const connectSchema = z.object({
   name: z.string().min(1, 'Account name is required').max(100),
-  provider: z.enum(['freedom24']),
+  provider: z.enum(['freedom24', 'binance']),
   currency: z.enum(['USD', 'EUR', 'GBP']),
   public_key: z.string().min(1, 'Public key is required'),
   private_key: z.string().min(1, 'Private key is required'),
@@ -34,7 +34,10 @@ export function ConnectInvestmentAccountDialog({
   const { t } = useTranslation('investments')
   const connectAccount = useConnectInvestmentAccount()
 
-  const PROVIDER_OPTIONS = [{ value: 'freedom24', label: t('connect.providerFreedom24') }]
+  const PROVIDER_OPTIONS = [
+    { value: 'freedom24', label: t('connect.providerFreedom24') },
+    { value: 'binance', label: t('connect.providerBinance') },
+  ]
   const CURRENCY_OPTIONS = [
     { value: 'USD', label: t('connect.currencyOptions.usd') },
     { value: 'EUR', label: t('connect.currencyOptions.eur') },
@@ -46,6 +49,7 @@ export function ConnectInvestmentAccountDialog({
     control,
     handleSubmit,
     reset,
+    watch,
     formState: { errors, isSubmitting },
   } = useForm<ConnectForm>({
     resolver: zodResolver(connectSchema),
@@ -71,7 +75,9 @@ export function ConnectInvestmentAccountDialog({
         currency: data.currency,
         public_key: data.public_key.trim(),
         private_key: data.private_key.trim(),
-        icon: data.provider === 'freedom24' ? 'freedom24.svg' : undefined,
+        icon: data.provider === 'freedom24' || data.provider === 'binance'
+          ? `${data.provider}.svg`
+          : undefined,
       })
       toast.success(t('connect.toasts.connected'))
       onOpenChange(false)
@@ -81,6 +87,8 @@ export function ConnectInvestmentAccountDialog({
   })
 
   const isPending = isSubmitting || connectAccount.isPending
+  const selectedProvider = watch('provider')
+  const isBinance = selectedProvider === 'binance'
 
   return (
     <Dialog
@@ -148,11 +156,15 @@ export function ConnectInvestmentAccountDialog({
         </div>
 
         <div className="flex flex-col gap-2">
-          <Label htmlFor="public_key">{t('connect.publicKeyLabel')}</Label>
+          <Label htmlFor="public_key">
+            {isBinance ? t('connect.apiKeyLabel') : t('connect.publicKeyLabel')}
+          </Label>
           <Input
             id="public_key"
             autoComplete="off"
-            placeholder={t('connect.publicKeyPlaceholder')}
+            placeholder={
+              isBinance ? t('connect.apiKeyPlaceholder') : t('connect.publicKeyPlaceholder')
+            }
             {...register('public_key')}
           />
           {errors.public_key && (
@@ -161,18 +173,24 @@ export function ConnectInvestmentAccountDialog({
         </div>
 
         <div className="flex flex-col gap-2">
-          <Label htmlFor="private_key">{t('connect.privateKeyLabel')}</Label>
+          <Label htmlFor="private_key">
+            {isBinance ? t('connect.secretKeyLabel') : t('connect.privateKeyLabel')}
+          </Label>
           <Input
             id="private_key"
             type="password"
             autoComplete="off"
-            placeholder={t('connect.privateKeyPlaceholder')}
+            placeholder={
+              isBinance ? t('connect.secretKeyPlaceholder') : t('connect.privateKeyPlaceholder')
+            }
             {...register('private_key')}
           />
           {errors.private_key && (
             <p className="text-destructive text-sm">{errors.private_key.message}</p>
           )}
-          <p className="text-xs text-muted-foreground">{t('connect.keysHint')}</p>
+          <p className="text-xs text-muted-foreground">
+            {isBinance ? t('connect.keysHintBinance') : t('connect.keysHint')}
+          </p>
         </div>
       </form>
     </Dialog>

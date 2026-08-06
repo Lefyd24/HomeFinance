@@ -33,15 +33,7 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from '@/components/ui/empty'
-import {
-  Item,
-  ItemActions,
-  ItemContent,
-  ItemDescription,
-  ItemGroup,
-  ItemMedia,
-  ItemTitle,
-} from '@/components/ui/item'
+import { Item, ItemActions, ItemContent, ItemGroup, ItemMedia, ItemTitle } from '@/components/ui/item'
 import { PageContainer } from '../ui/PageContainer'
 import { PageHeader, PageHeaderActionLabel } from '../ui/PageHeader'
 import { useConfirm } from '../ui/useConfirm'
@@ -63,24 +55,9 @@ import { DeltaPct, DeltaPill, Metric, SyncStatusBadge } from './InvestmentPrimit
 import type { InvestmentAccount } from './investmentsApi'
 
 const MARKET_TOOLS = [
-  {
-    to: '/investments/news',
-    icon: News01Icon,
-    titleKey: 'news.title',
-    blurbKey: 'page.tools.news',
-  },
-  {
-    to: '/investments/search',
-    icon: Search01Icon,
-    titleKey: 'search.title',
-    blurbKey: 'page.tools.search',
-  },
-  {
-    to: '/investments/research',
-    icon: ChartLineData01Icon,
-    titleKey: 'research.title',
-    blurbKey: 'page.tools.research',
-  },
+  { to: '/investments/news', icon: News01Icon, titleKey: 'news.title' },
+  { to: '/investments/search', icon: Search01Icon, titleKey: 'search.title' },
+  { to: '/investments/research', icon: ChartLineData01Icon, titleKey: 'research.title' },
 ] as const
 
 type PortfolioTotals = {
@@ -212,35 +189,35 @@ export function InvestmentsPage() {
         </div>
       ) : (
         <>
-          {/* Main column fills width; tools sit as a compact sidebar. */}
-          <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-start">
-            <div className="flex min-w-0 flex-col gap-3">
-              {totals && !totals.mixed ? (
-                <PortfolioHero totals={totals} accountCount={accounts.length} sparkAccountId={selectedAccount?.id ?? null} />
-              ) : (
-                <section className="glass-panel rounded-xl border border-border px-4 py-3.5">
-                  <p className="text-sm text-muted-foreground">
-                    {totals?.mixed ? t('summary.mixedCurrencies') : t('page.description')}
-                  </p>
-                </section>
-              )}
-
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                {accounts.map((account) => (
-                  <AccountCard
-                    key={account.id}
-                    account={account}
-                    selected={account.id === selectedAccount?.id}
-                    onSelect={() => setSelectedId(account.id)}
-                    onEdit={() => setEditingAccount(account)}
-                    onRotateKeys={() => setRotatingAccount(account)}
-                    onDelete={() => handleDelete(account)}
-                  />
-                ))}
-              </div>
-            </div>
+          {/* Hero summary and market tools share one row; account cards get
+              the full width below rather than being squeezed beside the tools
+              panel too. */}
+          <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-stretch">
+            {totals && !totals.mixed ? (
+              <PortfolioHero totals={totals} accountCount={accounts.length} />
+            ) : (
+              <section className="glass-panel rounded-xl border border-border px-4 py-3.5">
+                <p className="text-sm text-muted-foreground">
+                  {totals?.mixed ? t('summary.mixedCurrencies') : t('page.description')}
+                </p>
+              </section>
+            )}
 
             <MarketToolsNav />
+          </div>
+
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            {accounts.map((account) => (
+              <AccountCard
+                key={account.id}
+                account={account}
+                selected={account.id === selectedAccount?.id}
+                onSelect={() => setSelectedId(account.id)}
+                onEdit={() => setEditingAccount(account)}
+                onRotateKeys={() => setRotatingAccount(account)}
+                onDelete={() => handleDelete(account)}
+              />
+            ))}
           </div>
 
           {selectedAccount && <InvestmentAccountDetail account={selectedAccount} />}
@@ -270,21 +247,15 @@ export function InvestmentsPage() {
 function PortfolioHero({
   totals,
   accountCount,
-  sparkAccountId,
 }: {
   totals: PortfolioTotals
   accountCount: number
-  sparkAccountId: number | null
 }) {
   const { t } = useTranslation('investments')
-  const historyParams = useMemo(() => ({ start_date: computeRange('6m').start }), [])
-  const { data: history = [] } = useInvestmentHistory(sparkAccountId, historyParams)
-  const sparkValues = useMemo(() => history.map((h) => h.total_value), [history])
 
   const investedPct =
     totals.value > 0 ? Math.min(100, Math.max(0, (totals.invested / totals.value) * 100)) : 0
   const cashPct = Math.min(100, Math.max(0, 100 - investedPct))
-  const sparkColor = (totals.pnl ?? 0) >= 0 ? 'var(--flow-in)' : 'var(--flow-out)'
 
   return (
     <section className="glass-panel relative overflow-hidden rounded-xl border border-primary/20 bg-primary/[0.04]">
@@ -297,100 +268,81 @@ function PortfolioHero({
         className="pointer-events-none absolute -bottom-24 -start-10 size-52 rounded-full bg-secondary/12 blur-3xl"
       />
 
-      <div className="relative grid gap-3 p-3 sm:grid-cols-[minmax(0,1fr)_minmax(11rem,38%)] sm:items-end sm:gap-6 sm:p-5">
-        <div className="flex flex-col gap-3 sm:gap-4">
-          <div className="flex flex-wrap items-end gap-x-5 gap-y-2 sm:gap-x-8 sm:gap-y-3">
-            <Metric
-              label={t('summary.totalValue')}
-              value={formatCurrency(totals.value, totals.currency)}
-              size="lg"
-              hint={t('summary.accountCount', { count: accountCount })}
-            />
-            <Metric
-              label={t('summary.unrealised')}
-              value={
+      <div className="relative flex flex-col gap-2.5 p-3 sm:gap-3 sm:p-4">
+        <div className="flex flex-wrap items-end gap-x-5 gap-y-2 sm:gap-x-8">
+          <Metric
+            label={t('summary.totalValue')}
+            value={formatCurrency(totals.value, totals.currency)}
+            size="lg"
+            hint={t('summary.accountCount', { count: accountCount })}
+          />
+          <Metric
+            label={t('summary.unrealised')}
+            value={
+              <span className="inline-flex items-baseline gap-2">
+                <span
+                  className={cn(
+                    totals.pnl > 0 && 'text-flow-in',
+                    totals.pnl < 0 && 'text-flow-out',
+                  )}
+                >
+                  {totals.pnl > 0 ? '+' : ''}
+                  {formatCurrency(totals.pnl, totals.currency)}
+                </span>
+                <DeltaPct pct={totals.returnPct} className="text-sm" />
+              </span>
+            }
+          />
+          <Metric
+            label={t('summary.today')}
+            value={
+              totals.dayChange != null ? (
                 <span className="inline-flex items-baseline gap-2">
                   <span
                     className={cn(
-                      totals.pnl > 0 && 'text-flow-in',
-                      totals.pnl < 0 && 'text-flow-out',
+                      totals.dayChange > 0 && 'text-flow-in',
+                      totals.dayChange < 0 && 'text-flow-out',
                     )}
                   >
-                    {totals.pnl > 0 ? '+' : ''}
-                    {formatCurrency(totals.pnl, totals.currency)}
+                    {totals.dayChange > 0 ? '+' : ''}
+                    {formatCurrency(totals.dayChange, totals.currency)}
                   </span>
-                  <DeltaPct pct={totals.returnPct} className="text-sm" />
+                  <DeltaPct pct={totals.dayChangePct} className="text-sm" />
                 </span>
-              }
+              ) : (
+                <span className="text-muted-foreground">—</span>
+              )
+            }
+          />
+        </div>
+
+        <div className="hidden flex-col gap-1.5 sm:flex">
+          <div className="flex items-center justify-between gap-2 text-[0.65rem] text-muted-foreground">
+            <span className="font-semibold uppercase tracking-[0.14em]">{t('summary.allocation')}</span>
+            <span className="tabular-nums">
+              {investedPct.toFixed(0)}% · {cashPct.toFixed(0)}%
+            </span>
+          </div>
+          <div className="flex h-2 w-full overflow-hidden rounded-full bg-muted/80">
+            <div
+              className="bg-primary transition-[width] duration-500 motion-reduce:transition-none"
+              style={{ width: `${investedPct}%` }}
             />
-            <Metric
-              label={t('summary.today')}
-              value={
-                totals.dayChange != null ? (
-                  <span className="inline-flex items-baseline gap-2">
-                    <span
-                      className={cn(
-                        totals.dayChange > 0 && 'text-flow-in',
-                        totals.dayChange < 0 && 'text-flow-out',
-                      )}
-                    >
-                      {totals.dayChange > 0 ? '+' : ''}
-                      {formatCurrency(totals.dayChange, totals.currency)}
-                    </span>
-                    <DeltaPct pct={totals.dayChangePct} className="text-sm" />
-                  </span>
-                ) : (
-                  <span className="text-muted-foreground">—</span>
-                )
-              }
+            <div
+              className="bg-chart-2/70 transition-[width] duration-500 motion-reduce:transition-none"
+              style={{ width: `${cashPct}%` }}
             />
           </div>
-
-          <div className="hidden flex-col gap-1.5 sm:flex">
-            <div className="flex items-center justify-between gap-2 text-[0.65rem] text-muted-foreground">
-              <span className="font-semibold uppercase tracking-[0.14em]">{t('summary.allocation')}</span>
-              <span className="tabular-nums">
-                {investedPct.toFixed(0)}% · {cashPct.toFixed(0)}%
-              </span>
-            </div>
-            <div className="flex h-2 w-full overflow-hidden rounded-full bg-muted/80">
-              <div
-                className="bg-primary transition-[width] duration-500 motion-reduce:transition-none"
-                style={{ width: `${investedPct}%` }}
-              />
-              <div
-                className="bg-chart-2/70 transition-[width] duration-500 motion-reduce:transition-none"
-                style={{ width: `${cashPct}%` }}
-              />
-            </div>
-            <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs">
-              <span className="inline-flex items-center gap-1.5 text-muted-foreground">
-                <span className="size-1.5 rounded-full bg-primary" aria-hidden />
-                {t('card.invested')}{' '}
-                <span className="font-medium tabular-nums text-foreground">
-                  {formatCurrency(totals.invested, totals.currency)}
-                </span>
-              </span>
-              <span className="inline-flex items-center gap-1.5 text-muted-foreground">
-                <span className="size-1.5 rounded-full bg-chart-2/70" aria-hidden />
-                {t('card.cash')}{' '}
-                <span className="font-medium tabular-nums text-foreground">
-                  {formatCurrency(totals.cash, totals.currency)}
-                </span>
-              </span>
-            </div>
-          </div>
-
-          {/* Allocation split stays visible on mobile as plain numbers — the bar
-              and per-currency breakdown are desktop-only, restored above. */}
-          <div className="flex items-center gap-3 text-xs text-muted-foreground sm:hidden">
-            <span>
+          <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs">
+            <span className="inline-flex items-center gap-1.5 text-muted-foreground">
+              <span className="size-1.5 rounded-full bg-primary" aria-hidden />
               {t('card.invested')}{' '}
               <span className="font-medium tabular-nums text-foreground">
                 {formatCurrency(totals.invested, totals.currency)}
               </span>
             </span>
-            <span>
+            <span className="inline-flex items-center gap-1.5 text-muted-foreground">
+              <span className="size-1.5 rounded-full bg-chart-2/70" aria-hidden />
               {t('card.cash')}{' '}
               <span className="font-medium tabular-nums text-foreground">
                 {formatCurrency(totals.cash, totals.currency)}
@@ -399,19 +351,21 @@ function PortfolioHero({
           </div>
         </div>
 
-        <div className="hidden min-w-0 flex-col gap-1.5 sm:flex">
-          <span className="text-[0.625rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-            {t('summary.trend')}
+        {/* Allocation split stays visible on mobile as plain numbers — the bar
+            and per-currency breakdown are desktop-only, restored above. */}
+        <div className="flex items-center gap-3 text-xs text-muted-foreground sm:hidden">
+          <span>
+            {t('card.invested')}{' '}
+            <span className="font-medium tabular-nums text-foreground">
+              {formatCurrency(totals.invested, totals.currency)}
+            </span>
           </span>
-          <div className="glass-panel rounded-lg border border-border/60 bg-background/35 px-2.5 py-2">
-            <Sparkline
-              values={sparkValues}
-              color={sparkColor}
-              width={280}
-              height={72}
-              className="h-[4.5rem] w-full"
-            />
-          </div>
+          <span>
+            {t('card.cash')}{' '}
+            <span className="font-medium tabular-nums text-foreground">
+              {formatCurrency(totals.cash, totals.currency)}
+            </span>
+          </span>
         </div>
       </div>
     </section>
@@ -445,35 +399,34 @@ function MarketToolsNav() {
         ))}
       </div>
 
-      <div className="glass-panel hidden flex-col overflow-hidden rounded-xl border border-border p-2 lg:flex">
-        <p className="relative px-2.5 pb-1.5 pt-1.5 text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+      <div className="glass-panel hidden h-full flex-col justify-center overflow-hidden rounded-xl border border-border p-2 lg:flex">
+        <p className="relative px-2 pb-1 text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
           {t('page.marketTools')}
         </p>
-        <ItemGroup className="relative gap-1.5" data-size="sm">
+        <ItemGroup className="relative gap-1" data-size="sm">
           {MARKET_TOOLS.map((tool) => (
             <Item
               key={tool.to}
               asChild
               variant="outline"
               size="sm"
-              className="min-h-[3.75rem] glass-panel border-border/70 bg-background/40 py-3 hover:border-primary/35 hover:bg-background/55"
+              className="min-h-0 glass-panel border-border/70 bg-background/40 py-1.5 hover:border-primary/35 hover:bg-background/55"
             >
               <Link to={tool.to}>
                 <ItemMedia
                   variant="icon"
-                  className="size-9 rounded-md bg-primary/10 text-primary ring-1 ring-primary/15"
+                  className="size-7 rounded-md bg-primary/10 text-primary ring-1 ring-primary/15"
                 >
-                  <HugeiconsIcon icon={tool.icon} strokeWidth={2} />
+                  <HugeiconsIcon icon={tool.icon} strokeWidth={2} className="size-3.5" />
                 </ItemMedia>
                 <ItemContent>
-                  <ItemTitle>{t(tool.titleKey)}</ItemTitle>
-                  <ItemDescription>{t(tool.blurbKey)}</ItemDescription>
+                  <ItemTitle className="text-sm">{t(tool.titleKey)}</ItemTitle>
                 </ItemContent>
                 <ItemActions>
                   <HugeiconsIcon
                     icon={ArrowRight01Icon}
                     strokeWidth={2}
-                    className="text-muted-foreground rtl:rotate-180"
+                    className="size-3.5 text-muted-foreground rtl:rotate-180"
                   />
                 </ItemActions>
               </Link>
@@ -532,10 +485,25 @@ function AccountCard({
         <span className="sr-only">{t('card.selectAccount', { name: account.name })}</span>
       </button>
 
-      <div className="relative flex flex-col gap-2.5 p-3">
-        <div className="pointer-events-none flex items-center gap-2">
+      {/* Trend as a backdrop rather than a caption-sized chip — it fills the
+          right half of the card and fades into the left, so it reads as the
+          card's own texture instead of competing with the figures over it. */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-y-0 end-0 w-3/5 opacity-70 [mask-image:linear-gradient(to_right,transparent,black_38%)]"
+      >
+        <Sparkline values={sparkValues} color={sparkColor} width={220} height={200} className="size-full" />
+      </div>
+
+      <div className="pointer-events-none relative flex flex-col gap-2.5 p-3">
+        <div className="flex items-center gap-2">
           <AccountIcon
-            icon={account.icon ?? (account.provider === 'freedom24' ? 'freedom24.svg' : null)}
+            icon={
+              account.icon ??
+              (account.provider === 'freedom24' || account.provider === 'binance'
+                ? `${account.provider}.svg`
+                : null)
+            }
             type="investment"
             className="size-9 shrink-0"
             imageClassName="size-6"
@@ -594,16 +562,7 @@ function AccountCard({
               {money(account.balance)}
             </span>
           </div>
-          <div className="flex flex-col items-end gap-1">
-            <DeltaPill pct={account.total_return_pct} />
-            <Sparkline
-              values={sparkValues}
-              color={sparkColor}
-              width={88}
-              height={24}
-              className="opacity-90"
-            />
-          </div>
+          <DeltaPill pct={account.total_return_pct} />
         </div>
 
         <dl className="pointer-events-none flex flex-wrap items-baseline gap-x-3.5 gap-y-0.5 text-xs">

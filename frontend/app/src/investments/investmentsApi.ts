@@ -1,10 +1,10 @@
 import { apiFetch } from '../lib/apiClient'
 
-export type InvestmentProvider = 'freedom24'
+export type InvestmentProvider = 'freedom24' | 'binance'
 export type SyncStatus = 'pending' | 'ok' | 'error'
 
 /** Backends that can power ticker search / market news (broker proxy or Yahoo). */
-export type MarketDataProviderId = 'freedom24' | 'yahoo'
+export type MarketDataProviderId = 'freedom24' | 'binance' | 'yahoo'
 
 export const DEFAULT_MARKET_DATA_PROVIDER: MarketDataProviderId = 'yahoo'
 
@@ -14,10 +14,12 @@ export const MARKET_DATA_PROVIDERS: ReadonlyArray<{
 }> = [
   { id: 'yahoo', ready: true },
   { id: 'freedom24', ready: true },
+  { id: 'binance', ready: true },
 ]
 
 export function parseMarketDataProvider(value: string | null): MarketDataProviderId {
   if (value === 'freedom24') return 'freedom24'
+  if (value === 'binance') return 'binance'
   if (value === 'yahoo') return 'yahoo'
   return DEFAULT_MARKET_DATA_PROVIDER
 }

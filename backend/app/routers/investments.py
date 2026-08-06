@@ -39,7 +39,7 @@ from app.utils.security import get_current_user_authenticated
 
 router = APIRouter(prefix="/investments", tags=["Investments"])
 
-MARKET_DATA_PROVIDERS = ("yahoo", "freedom24")
+MARKET_DATA_PROVIDERS = ("yahoo", "freedom24", "binance")
 DEFAULT_MARKET_DATA_PROVIDER = "yahoo"
 
 
