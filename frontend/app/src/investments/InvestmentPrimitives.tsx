@@ -2,7 +2,7 @@ import type { ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { HugeiconsIcon } from '@hugeicons/react'
-import { CheckmarkBadge01Icon } from '@hugeicons/core-free-icons'
+import { CheckmarkBadge01Icon, HelpCircleIcon } from '@hugeicons/core-free-icons'
 import { Badge } from '@/components/ui/badge'
 import {
   Breadcrumb,
@@ -12,8 +12,11 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { cn } from '@/lib/utils'
+import type { GlossaryEntry } from './metricGlossary'
 import {
   MARKET_DATA_PROVIDERS,
   type InvestmentAccount,
@@ -292,5 +295,146 @@ export function MarketDataProviderSwitch({
         </ToggleGroupItem>
       ))}
     </ToggleGroup>
+  )
+}
+
+/**
+ * The content shared by `MetricWithHelp`'s tooltip (desktop) and popover (touch).
+ * A real `<button aria-label>` triggers it either way — a bare tooltip is
+ * unreachable without hover, and half the value of the glossary is on a phone.
+ */
+function GlossaryBody({ entry }: { entry: GlossaryEntry }) {
+  const { t } = useTranslation('investments')
+  return (
+    <div className="flex flex-col gap-1.5 text-left">
+      <p className="text-xs font-semibold text-foreground">{t(entry.shortKey)}</p>
+      <p className="text-xs leading-relaxed text-muted-foreground">{t(entry.bodyKey)}</p>
+      {entry.scaleKey && (
+        <p className="text-xs leading-relaxed text-muted-foreground/80">{t(entry.scaleKey)}</p>
+      )}
+      {entry.caveatKey && (
+        <p className="text-xs leading-relaxed text-flow-out/90">{t(entry.caveatKey)}</p>
+      )}
+      {entry.sourceKey && (
+        <p className="text-[0.65rem] uppercase tracking-wide text-muted-foreground/70">
+          {t(entry.sourceKey)}
+        </p>
+      )}
+    </div>
+  )
+}
+
+/**
+ * A metric label with a `?` affordance that explains it in plain language —
+ * hover/focus opens a tooltip on desktop, tap opens a popover on touch, so the
+ * explanation is reachable either way. Wraps `Metric` rather than replacing it.
+ */
+export function MetricWithHelp({
+  label,
+  value,
+  hint,
+  entry,
+  size = 'md',
+  align = 'start',
+}: {
+  label: string
+  value: ReactNode
+  hint?: ReactNode
+  entry: GlossaryEntry
+  size?: 'sm' | 'md' | 'lg'
+  align?: 'start' | 'end'
+}) {
+  const { t } = useTranslation('investments')
+
+  const trigger = (
+    <button
+      type="button"
+      aria-label={t('compare.help', { metric: t(entry.labelKey) })}
+      className="inline-flex size-3.5 shrink-0 items-center justify-center rounded-full text-muted-foreground/70 transition-colors hover:text-foreground focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring"
+    >
+      <HugeiconsIcon icon={HelpCircleIcon} strokeWidth={2} className="size-3.5" />
+    </button>
+  )
+
+  return (
+    <div className={cn('flex min-w-0 flex-col gap-1', align === 'end' && 'items-end text-right')}>
+      <span className="inline-flex items-center gap-1 text-[0.625rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+        {label}
+        {/* A tap-or-click Popover reaches every input method — hover-only tooltips are
+            unreachable on touch, and half the value of the glossary is on a phone. */}
+        <Popover>
+          <PopoverTrigger asChild>{trigger}</PopoverTrigger>
+          <PopoverContent
+            className="w-[min(22rem,calc(100vw-2rem))] max-h-[min(24rem,70vh)] overflow-y-auto"
+            collisionPadding={12}
+          >
+            <GlossaryBody entry={entry} />
+          </PopoverContent>
+        </Popover>
+      </span>
+      <span
+        className={cn(
+          'font-heading font-semibold tabular-nums tracking-tight',
+          size === 'sm' && 'text-base',
+          size === 'md' && 'text-xl',
+          size === 'lg' && 'text-2xl sm:text-3xl',
+        )}
+      >
+        {value}
+      </span>
+      {hint && <span className="text-xs text-muted-foreground">{hint}</span>}
+    </div>
+  )
+}
+
+/**
+ * A point estimate with its 95% confidence interval subdued alongside it — for
+ * Sharpe and any other ratio whose standard error is too large to print as a
+ * bare number without misleading (see docs/investments/00-research-foundations.md §A.1).
+ */
+export function ConfidenceBand({
+  value,
+  ciLow,
+  ciHigh,
+  decimals = 2,
+  className,
+}: {
+  value: number | null | undefined
+  ciLow: number | null | undefined
+  ciHigh: number | null | undefined
+  decimals?: number
+  className?: string
+}) {
+  const { t } = useTranslation('investments')
+  if (value == null) return <span className={cn('text-muted-foreground', className)}>—</span>
+  const half = ciLow != null && ciHigh != null ? (ciHigh - ciLow) / 2 : null
+  return (
+    <span className={cn('inline-flex items-baseline gap-1 tabular-nums', className)}>
+      <span className="font-medium">{value.toFixed(decimals)}</span>
+      {half != null && (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <span className="cursor-default text-xs text-muted-foreground">
+              ±{half.toFixed(decimals)}
+            </span>
+          </TooltipTrigger>
+          <TooltipContent className="w-56">
+            <p className="text-xs leading-relaxed text-muted-foreground">
+              {t('compare.confidenceBand', {
+                low: ciLow!.toFixed(decimals),
+                high: ciHigh!.toFixed(decimals),
+              })}
+            </p>
+          </TooltipContent>
+        </Tooltip>
+      )}
+    </span>
+  )
+}
+
+/** The provenance line at a tile's footer — where the numbers came from, and as of when. */
+export function DataSourceNote({ children, className }: { children: ReactNode; className?: string }) {
+  return (
+    <p className={cn('text-[0.7rem] leading-relaxed text-muted-foreground/70', className)}>{children}</p>
   )
 }

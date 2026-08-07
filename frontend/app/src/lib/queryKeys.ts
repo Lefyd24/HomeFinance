@@ -25,4 +25,12 @@ export const queryKeys = {
   investmentNewsStory: (storyId: string, provider?: string) =>
     ['investmentNewsStory', provider ?? 'yahoo', storyId] as const,
   investmentCompany: (symbol: string) => ['investmentCompany', symbol] as const,
+  investmentCompareBenchmarks: ['investmentCompareBenchmarks'] as const,
+  investmentCompare: (
+    symbols: string[],
+    period: string,
+    benchmark?: string | null,
+    currency?: string | null,
+  ) => ['investmentCompare', symbols, period, benchmark ?? null, currency ?? null] as const,
+  investmentSavedComparisons: ['investmentSavedComparisons'] as const,
 }

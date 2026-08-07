@@ -103,6 +103,13 @@ export const COMPANY_RESEARCH_NAV_ITEM: NavItem = {
   icon: ChartLineData01Icon,
 }
 
+export const TICKER_COMPARE_NAV_ITEM: NavItem = {
+  labelKey: 'items.tickerCompare',
+  dockLabelKey: 'dock.compare',
+  to: '/investments/compare',
+  icon: Analytics01Icon,
+}
+
 /**
  * What the sidebar shows once you are inside investments. The everyday nav is
  * swapped out wholesale rather than appended to: inside the sub-app, Budgets
@@ -112,17 +119,28 @@ export const INVESTMENTS_NAV_GROUPS: NavGroup[] = [
   { groupKey: 'groups.portfolio', items: [INVESTMENTS_OVERVIEW_NAV_ITEM] },
   {
     groupKey: 'groups.market',
-    items: [MARKET_NEWS_NAV_ITEM, TICKER_SEARCH_NAV_ITEM, COMPANY_RESEARCH_NAV_ITEM],
+    items: [
+      MARKET_NEWS_NAV_ITEM,
+      TICKER_SEARCH_NAV_ITEM,
+      COMPANY_RESEARCH_NAV_ITEM,
+      TICKER_COMPARE_NAV_ITEM,
+    ],
   },
 ]
 
 /**
  * The investments dock. Four slots and no "More": unlike the main app, every
  * destination in the section fits, so a fifth slot would open onto nothing.
+ * Listed explicitly (rather than auto-derived from `INVESTMENTS_NAV_GROUPS`)
+ * now that the sidebar carries a fifth destination (Compare) that the dock has
+ * no room for — Compare is reachable from the sidebar and from Overview.
  */
-export const INVESTMENTS_DOCK_NAV_ITEMS: NavItem[] = INVESTMENTS_NAV_GROUPS.flatMap(
-  (group) => group.items,
-)
+export const INVESTMENTS_DOCK_NAV_ITEMS: NavItem[] = [
+  INVESTMENTS_OVERVIEW_NAV_ITEM,
+  MARKET_NEWS_NAV_ITEM,
+  TICKER_SEARCH_NAV_ITEM,
+  COMPANY_RESEARCH_NAV_ITEM,
+]
 
 /**
  * Whether a path belongs to the investments sub-app. The one place that
@@ -238,6 +256,7 @@ export const ALL_NAV_ITEMS: NavItem[] = [
   MARKET_NEWS_NAV_ITEM,
   TICKER_SEARCH_NAV_ITEM,
   COMPANY_RESEARCH_NAV_ITEM,
+  TICKER_COMPARE_NAV_ITEM,
   ...PRIMARY_NAV_ITEMS,
   NOTIFICATIONS_NAV_ITEM,
   ...NAV_GROUPS.slice(1).flatMap((group) => flatten(group.items)),

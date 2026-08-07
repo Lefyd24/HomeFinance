@@ -102,6 +102,17 @@ from app.schemas.investment import (
     PortfolioSnapshotResponse,
     SymbolSearchResult,
 )
+from app.schemas.investment_analytics import (
+    BenchmarkOption,
+    ComparisonMeta,
+    ComparisonResponse,
+    HeadToHead,
+    InstrumentComparison,
+    PairwiseBlock,
+    SavedComparisonCreate,
+    SavedComparisonResponse,
+    SeriesBlock,
+)
 from app.schemas.notification import (
     NotificationLogRead,
     NotificationRuleCreate,
@@ -244,6 +255,16 @@ __all__ = [
     "PortfolioPositionResponse",
     "PortfolioSnapshotResponse",
     "SymbolSearchResult",
+    # Investment analytics (ticker comparison) schemas
+    "BenchmarkOption",
+    "ComparisonMeta",
+    "ComparisonResponse",
+    "HeadToHead",
+    "InstrumentComparison",
+    "PairwiseBlock",
+    "SavedComparisonCreate",
+    "SavedComparisonResponse",
+    "SeriesBlock",
     # Dashboard schemas
     "DashboardSummary",
     "DashboardRecentTransaction",

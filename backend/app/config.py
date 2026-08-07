@@ -126,6 +126,17 @@ class Settings(BaseSettings):
     # Manual "Sync now" cooldown per account, to avoid hammering broker APIs.
     INVESTMENT_MANUAL_SYNC_COOLDOWN_SECONDS: int = 60
 
+    # Investment analytics (ticker comparison, market data cache)
+    ANALYTICS_ENABLED: bool = True
+    # Fallback annualised risk-free rate when ^IRX cannot be fetched, so Sharpe/Sortino
+    # still compute rather than going blank — see market_data/reference.py.
+    ANALYTICS_RISK_FREE_ANNUAL: float = 0.02
+    ANALYTICS_DEFAULT_BENCHMARK: str = "^GSPC"
+    ANALYTICS_MAX_COMPARE_SYMBOLS: int = 5
+    # Staleness before a cached symbol's tail is refetched from Yahoo.
+    MARKET_DATA_CACHE_TTL_HOURS: int = 12
+    MARKET_DATA_MAX_HISTORY_YEARS: int = 15
+
     # Notifications
     NOTIFICATIONS_ENABLED: bool = True
     NOTIFICATION_ENCRYPTION_KEY: str | None = None

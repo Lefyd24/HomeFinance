@@ -25,6 +25,7 @@
     "marketNews": "Ειδήσεις αγορών",
     "tickerSearch": "Αναζήτηση τίτλων",
     "companyResearch": "Έρευνα εταιρείας",
+    "tickerCompare": "Σύγκριση",
     "investmentsOverview": "Επισκόπηση"
   },
   "groups": {
@@ -40,7 +41,8 @@
     "portfolio": "Χαρτοφ.",
     "news": "Ειδήσεις",
     "search": "Αναζήτηση",
-    "research": "Έρευνα"
+    "research": "Έρευνα",
+    "compare": "Σύγκριση"
   },
   "investmentsSection": "Επενδύσεις",
   "backToDashboard": "Πίσω στον πίνακα",

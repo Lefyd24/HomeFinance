@@ -1,7 +1,8 @@
+import json
 from datetime import date, datetime, timedelta
 from typing import List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
@@ -13,10 +14,13 @@ from app.models import (
     InvestmentTransaction,
     PortfolioPosition,
     PortfolioSnapshot,
+    SavedComparison,
     User,
 )
 from app.schemas import (
+    BenchmarkOption,
     CompanyProfileResponse,
+    ComparisonResponse,
     InvestmentAccountCreate,
     InvestmentAccountResponse,
     InvestmentCredentialUpdate,
@@ -26,18 +30,25 @@ from app.schemas import (
     NewsPageResponse,
     PortfolioPositionResponse,
     PortfolioSnapshotResponse,
+    SavedComparisonCreate,
+    SavedComparisonResponse,
     SymbolSearchResult,
 )
+from app.services import comparison_service
 from app.services.investment_sync_service import (
     create_credential,
     get_provider_for_account,
     sync_account,
 )
 from app.services.investment_providers.yahoo import yahoo_market_data
+from app.services.market_data import BENCHMARKS, MarketDataUnavailable, SymbolNotFound
 from app.utils.crypto import encrypt
+from app.utils.rate_limit import SlidingWindowRateLimiter
 from app.utils.security import get_current_user_authenticated
 
 router = APIRouter(prefix="/investments", tags=["Investments"])
+
+_compare_limiter = SlidingWindowRateLimiter(max_hits=20, window_seconds=5 * 60)
 
 MARKET_DATA_PROVIDERS = ("yahoo", "freedom24", "binance")
 DEFAULT_MARKET_DATA_PROVIDER = "yahoo"
@@ -551,3 +562,127 @@ def update_investment_credentials(
     sync_account(db, account)
     db.refresh(account)
     return _to_response(db, account)
+
+
+# ---------------------------------------------------------------------------
+# Ticker comparison analytics
+# ---------------------------------------------------------------------------
+
+
+@router.get("/compare/benchmarks", response_model=List[BenchmarkOption])
+def list_compare_benchmarks(
+    current_user: User = Depends(get_current_user_authenticated),
+):
+    _ = current_user
+    return [BenchmarkOption(**b) for b in BENCHMARKS]
+
+
+@router.get("/compare", response_model=ComparisonResponse)
+def compare_tickers(
+    request: Request,
+    symbols: str = Query(..., description="Comma-separated tickers, 2-5"),
+    period: str = Query("3y"),
+    benchmark: Optional[str] = Query(settings.ANALYTICS_DEFAULT_BENCHMARK),
+    currency: Optional[str] = Query(None),
+    risk_free: Optional[float] = Query(None, alias="risk_free"),
+    current_user: User = Depends(get_current_user_authenticated),
+    db: Session = Depends(get_db),
+):
+    allowed, retry_after = _compare_limiter.check(f"user:{current_user.id}")
+    if not allowed:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail="Too many comparison requests. Please wait before trying again.",
+            headers={"Retry-After": str(retry_after)},
+        )
+
+    symbol_list = [s for s in (symbols or "").split(",") if s.strip()]
+    if not (2 <= len(symbol_list) <= settings.ANALYTICS_MAX_COMPARE_SYMBOLS):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Provide between 2 and {settings.ANALYTICS_MAX_COMPARE_SYMBOLS} symbols.",
+        )
+
+    try:
+        return comparison_service.build_comparison(
+            db,
+            symbol_list,
+            period=period,
+            benchmark=benchmark,
+            currency=currency,
+            risk_free_annual=risk_free,
+        )
+    except SymbolNotFound as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Unknown symbol: {exc.symbol}")
+    except MarketDataUnavailable as exc:
+        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=str(exc))
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc))
+
+
+@router.get("/compare/saved", response_model=List[SavedComparisonResponse])
+def list_saved_comparisons(
+    current_user: User = Depends(get_current_user_authenticated),
+    db: Session = Depends(get_db),
+):
+    rows = (
+        db.query(SavedComparison)
+        .filter(SavedComparison.user_id == current_user.id)
+        .order_by(SavedComparison.created_at.desc())
+        .all()
+    )
+    return [
+        SavedComparisonResponse(
+            id=r.id,
+            name=r.name,
+            symbols=json.loads(r.symbols),
+            benchmark=r.benchmark,
+            period=r.period,
+            created_at=r.created_at,
+        )
+        for r in rows
+    ]
+
+
+@router.post("/compare/saved", response_model=SavedComparisonResponse, status_code=status.HTTP_201_CREATED)
+def create_saved_comparison(
+    data: SavedComparisonCreate,
+    current_user: User = Depends(get_current_user_authenticated),
+    db: Session = Depends(get_db),
+):
+    row = SavedComparison(
+        user_id=current_user.id,
+        name=data.name,
+        symbols=json.dumps([s.strip().upper() for s in data.symbols]),
+        benchmark=data.benchmark,
+        period=data.period,
+    )
+    db.add(row)
+    db.commit()
+    db.refresh(row)
+    return SavedComparisonResponse(
+        id=row.id,
+        name=row.name,
+        symbols=json.loads(row.symbols),
+        benchmark=row.benchmark,
+        period=row.period,
+        created_at=row.created_at,
+    )
+
+
+@router.delete("/compare/saved/{comparison_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_saved_comparison(
+    comparison_id: int,
+    current_user: User = Depends(get_current_user_authenticated),
+    db: Session = Depends(get_db),
+):
+    row = (
+        db.query(SavedComparison)
+        .filter(SavedComparison.id == comparison_id, SavedComparison.user_id == current_user.id)
+        .first()
+    )
+    if row is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Saved comparison not found")
+    db.delete(row)
+    db.commit()
+    return None

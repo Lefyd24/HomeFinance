@@ -13,6 +13,11 @@ from app.models.investment import (
     PortfolioSnapshot,
     InvestmentTransaction,
 )
+from app.models.investment_analytics import (
+    MarketPriceBar,
+    MarketSymbolMeta,
+    SavedComparison,
+)
 from app.models.notification import (
     NotificationLog,
     NotificationRule,
@@ -44,6 +49,9 @@ __all__ = [
     "PortfolioPosition",
     "PortfolioSnapshot",
     "InvestmentTransaction",
+    "MarketPriceBar",
+    "MarketSymbolMeta",
+    "SavedComparison",
     "NotificationLog",
     "NotificationRule",
     "NotificationSettings",

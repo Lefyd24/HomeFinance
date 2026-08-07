@@ -25,6 +25,7 @@
     "marketNews": "Market news",
     "tickerSearch": "Ticker search",
     "companyResearch": "Company research",
+    "tickerCompare": "Compare",
     "investmentsOverview": "Overview"
   },
   "groups": {
@@ -40,7 +41,8 @@
     "portfolio": "Portfolio",
     "news": "News",
     "search": "Search",
-    "research": "Research"
+    "research": "Research",
+    "compare": "Compare"
   },
   "investmentsSection": "Investments",
   "backToDashboard": "Back to Dashboard",
