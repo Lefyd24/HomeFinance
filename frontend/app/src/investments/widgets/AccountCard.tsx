@@ -1,4 +1,3 @@
-import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { HugeiconsIcon } from '@hugeicons/react'
 import {
@@ -19,19 +18,17 @@ import {
 import { cn } from '@/lib/utils'
 import { formatCurrency } from '../../lib/format'
 import { AccountIcon } from '../../accounts/bankIcons'
-import { Sparkline } from '../../reports/Sparkline'
-import { computeRange } from '../../reports/useReportFilters'
 import { DeltaPill, SyncStatusBadge } from '../InvestmentPrimitives'
-import { useInvestmentHistory } from '../useInvestments'
 import type { InvestmentAccount } from '../investmentsApi'
 
 /**
  * A connected account, and the control that points the workspace at it.
  *
- * Unchanged in spirit from the card this page has always had — the trend as a
- * faded backdrop rather than a caption-sized chip, the figures over it — but
- * sized for the scope rail rather than a two-column grid, since selecting an
- * account now rescopes the whole page instead of opening a panel underneath.
+ * Sized for the scope rail: narrow on phones so a second card peeks in,
+ * wider on desktop. A 3 px left accent strip shows the account's trend
+ * direction at a glance — the same flow-in / flow-out tokens used everywhere
+ * else in the app. Selecting a card promotes the accent to primary and lifts
+ * the card with a directional shadow.
  */
 export function AccountCard({
   account,
@@ -54,27 +51,24 @@ export function AccountCard({
 }) {
   const { t } = useTranslation('investments')
   const money = (value: number) => formatCurrency(value, account.currency)
-  const historyParams = useMemo(() => ({ start_date: computeRange('3m').start }), [])
-  const { data: history = [] } = useInvestmentHistory(account.id, historyParams)
-  const sparkValues = useMemo(() => history.map((h) => h.total_value), [history])
-  const sparkColor = (account.total_return_pct ?? 0) >= 0 ? 'var(--flow-in)' : 'var(--flow-out)'
+  const trendPositive = (account.total_return_pct ?? 0) >= 0
 
   return (
     <article
       className={cn(
         // `border-2` on both states, so selecting a card changes its colour and
         // not its size — a 1px stroke swap would nudge the whole rail.
-        'glass-panel relative flex shrink-0 snap-start flex-col overflow-hidden rounded-xl border-2',
+        'glass-panel relative flex shrink-0 snap-start flex-col rounded-xl border-2',
         // Narrower on phones so a second card peeks in and the row reads as
         // scrollable, rather than one card filling the viewport edge to edge.
         'w-[13.5rem] sm:w-[16rem]',
         'transition-[box-shadow,border-color,opacity] duration-200 ease-out motion-reduce:transition-none',
+        // 3px left accent: the card's trend in one glance before you read numbers.
+        'border-l-[3px]',
+        trendPositive ? 'border-l-flow-in/70' : 'border-l-flow-out/60',
         selected
           ? cn(
-              // Border only — no tint or ring, which fought the sparkline
-              // backdrop behind it. A heavier stroke plus a shadow cast down
-              // and to the start edge is enough to lift the card off the rail.
-              'border-primary',
+              'border-primary [border-left-color:var(--color-primary)]',
               'shadow-[-8px_8px_20px_-10px_var(--glass-shadow-depth)]',
               'rtl:shadow-[8px_8px_20px_-10px_var(--glass-shadow-depth)]',
             )
@@ -92,21 +86,6 @@ export function AccountCard({
       >
         <span className="sr-only">{t('card.selectAccount', { name: account.name })}</span>
       </button>
-
-      {/* Trend as the card's own texture: it fills the right half and fades
-          into the left, so it never competes with the figures over it. */}
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-y-0 end-0 w-3/5 opacity-70 [mask-image:linear-gradient(to_right,transparent,black_38%)]"
-      >
-        <Sparkline
-          values={sparkValues}
-          color={sparkColor}
-          width={220}
-          height={160}
-          className="size-full"
-        />
-      </div>
 
       <div className="pointer-events-none relative flex flex-col gap-2 p-2.5">
         <div className="flex items-center gap-2">
