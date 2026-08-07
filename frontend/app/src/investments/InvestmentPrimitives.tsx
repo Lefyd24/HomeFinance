@@ -236,11 +236,17 @@ export function SyncStatusBadge({
   return <Badge variant="outline">{t('status.pending')}</Badge>
 }
 
-/** Investments › <current page>. Used by the market news and ticker search subpages. */
+/**
+ * Investments › <current page>.
+ *
+ * The sidebar says which section you are in; the breadcrumb says where this
+ * page sits within it and gives one click back to the portfolio. Used by every
+ * page under `/investments` except the overview itself, which is the root.
+ */
 export function InvestmentsBreadcrumb({ current }: { current: string }) {
   const { t } = useTranslation('investments')
   return (
-    <Breadcrumb className="mb-4">
+    <Breadcrumb className="mb-3">
       <BreadcrumbList>
         <BreadcrumbItem>
           <BreadcrumbLink asChild>

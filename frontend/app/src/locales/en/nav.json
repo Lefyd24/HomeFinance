@@ -24,17 +24,26 @@
     "import": "Import",
     "marketNews": "Market news",
     "tickerSearch": "Ticker search",
-    "companyResearch": "Company research"
+    "companyResearch": "Company research",
+    "investmentsOverview": "Overview"
   },
   "groups": {
     "overview": "Overview",
     "planning": "Planning",
-    "insights": "Insights"
+    "insights": "Insights",
+    "portfolio": "Portfolio",
+    "market": "Market"
   },
   "dock": {
     "home": "Home",
-    "transactions": "Txns"
+    "transactions": "Txns",
+    "portfolio": "Portfolio",
+    "news": "News",
+    "search": "Search",
+    "research": "Research"
   },
+  "investmentsSection": "Investments",
+  "backToDashboard": "Back to Dashboard",
   "more": "More",
   "moreSheet": {
     "description": "Planning, insights, and account tools"

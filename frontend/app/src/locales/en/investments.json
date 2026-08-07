@@ -2,21 +2,76 @@
   "page": {
     "title": "Investments",
     "description": "Brokerage accounts synced automatically from your provider.",
-    "connectAccount": "Connect account",
-    "marketTools": "Market tools"
+    "connectAccount": "Connect account"
   },
   "empty": {
     "title": "No investment accounts yet",
     "description": "Connect a Freedom24 account to start tracking its balance, holdings and trades automatically."
   },
   "summary": {
-    "totalValue": "Total value",
-    "unrealised": "Unrealised P/L",
-    "today": "Today",
     "accountCount": "{{count}} account",
-    "accountCount_other": "{{count}} accounts",
-    "mixedCurrencies": "Accounts are held in different currencies, so there's no combined total. Each card below shows its own.",
-    "allocation": "Cash vs invested"
+    "accountCount_other": "{{count}} accounts"
+  },
+  "headline": {
+    "totalAssets": "Total assets"
+  },
+  "ticker": {
+    "totalValue": "Total value",
+    "today": "Today",
+    "allTime": "All time",
+    "cash": "Cash",
+    "cashShare": "{{pct}}% of total",
+    "noQuote": "No live quote",
+    "syncAll": "Sync all",
+    "syncAccount": "Sync {{name}}",
+    "syncAllHint": "Refreshes all {{count}} accounts"
+  },
+  "tiles": {
+    "portfolioValue": "Portfolio value",
+    "allocation": "Allocation",
+    "movers": "Today's movers",
+    "holdings": "Holdings",
+    "plainEnglish": "In plain English",
+    "activity": "Recent activity",
+    "invested": "Invested",
+    "cash": "Cash",
+    "otherHoldings": "{{count}} other",
+    "otherHoldings_other": "{{count}} others",
+    "quotedCount": "Based on {{quoted}} of {{total}} holdings with a live quote",
+    "noQuotes": "No live quotes right now.",
+    "noMovers": "Nothing moved today.",
+    "noInsights": "Not enough here to say anything useful yet.",
+    "activityMore": "{{count}} more not shown",
+    "activityMore_other": "{{count}} more not shown"
+  },
+  "holding": {
+    "sortBy": "Sort by",
+    "open": "Open {{symbol}}",
+    "openHint": "Select a holding for full detail",
+    "close": "Close",
+    "dayChangeAmount": "Today",
+    "costBasis": "Cost basis",
+    "pricedAt": "Priced",
+    "hints": {
+      "quantity": "How many units you hold.",
+      "avgPrice": "What you paid per unit on average.",
+      "currentPrice": "What one unit is worth right now.",
+      "dayChange": "How much the price moved today.",
+      "dayChangeAmount": "What today's move is worth in money.",
+      "costBasis": "The total you originally paid for this holding.",
+      "weight": "How much of your invested money sits here.",
+      "pricedAt": "When this price was last refreshed."
+    }
+  },
+  "insights": {
+    "concentrated": "{{pct}}% of your money is in {{symbol}} alone — this portfolio largely rises and falls with that one holding.",
+    "diversified": "Your money is spread across {{count}} holdings, behaving like roughly {{effective}} independent ones — no single position dominates.",
+    "cashHeavy": "{{pct}}% is sitting in cash rather than invested, so that part isn't growing or falling with the market.",
+    "upOverall": "Overall you're up {{pct}}% on what you paid.",
+    "downOverall": "Overall you're down {{pct}}% on what you paid.",
+    "bestHolding": "{{symbol}} has made you the most money so far.",
+    "worstHolding": "{{symbol}} has lost you the most so far.",
+    "partialQuotes": "Only {{quoted}} of {{total}} holdings have a live price right now, so today's figures are partial."
   },
   "status": {
     "ok": "Synced",
@@ -34,6 +89,7 @@
     "today": "Today",
     "holdings": "{{count}} holding",
     "holdings_other": "{{count}} holdings",
+    "holdingsShort": "Holdings",
     "lastSynced": "Last synced {{date}}",
     "neverSynced": "Not synced yet",
     "allocation": "Allocation"

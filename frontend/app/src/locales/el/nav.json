@@ -24,17 +24,26 @@
     "import": "Εισαγωγή",
     "marketNews": "Ειδήσεις αγορών",
     "tickerSearch": "Αναζήτηση τίτλων",
-    "companyResearch": "Έρευνα εταιρείας"
+    "companyResearch": "Έρευνα εταιρείας",
+    "investmentsOverview": "Επισκόπηση"
   },
   "groups": {
     "overview": "ΕΠΙΣΚΟΠΗΣΗ",
     "planning": "ΣΧΕΔΙΑΣΜΟΣ",
-    "insights": "ΛΟΙΠΑ"
+    "insights": "ΛΟΙΠΑ",
+    "portfolio": "ΧΑΡΤΟΦΥΛΑΚΙΟ",
+    "market": "ΑΓΟΡΑ"
   },
   "dock": {
     "home": "Αρχική",
-    "transactions": "Συν/γές"
+    "transactions": "Συν/γές",
+    "portfolio": "Χαρτοφ.",
+    "news": "Ειδήσεις",
+    "search": "Αναζήτηση",
+    "research": "Έρευνα"
   },
+  "investmentsSection": "Επενδύσεις",
+  "backToDashboard": "Πίσω στον πίνακα",
   "more": "Περισσότερα",
   "moreSheet": {
     "description": "Σχεδιασμός, στατιστικά και εργαλεία λογαριασμού"

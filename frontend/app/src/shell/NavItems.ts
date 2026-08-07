@@ -31,6 +31,12 @@ export interface NavItem {
   icon: HugeIcon
   /** Renders as a collapsible parent. The parent's own `to` is used for matching only. */
   children?: NavItem[]
+  /**
+   * Match this route exactly instead of by prefix. Needed for a section root
+   * that sits above its own sub-pages — without it `/investments` would stay
+   * lit while you're on `/investments/news`.
+   */
+  end?: boolean
 }
 
 export interface NavGroup {
@@ -46,17 +52,85 @@ export const BUDGETS_NAV_ITEM: NavItem = {
 }
 
 /**
- * Not part of the sidebar/dock nav at all — rendered as its own accented
- * button in the top bar (see `InvestmentsNavButton`), since investments is a
- * distinct section of the app (a separate module with its own accounts,
- * sync, and market data) rather than another everyday destination. Still
- * listed in `ALL_NAV_ITEMS` so the top bar's page title resolves correctly
- * while on an investments page.
+ * Not part of the everyday sidebar/dock nav at all — rendered as its own
+ * accented button in the top bar (see `InvestmentsNavButton`), since
+ * investments is a distinct section of the app (a separate module with its own
+ * accounts, sync, and market data) rather than another everyday destination.
+ * Still listed in `ALL_NAV_ITEMS` so the top bar's page title resolves
+ * correctly while on an investments page.
  */
 export const INVESTMENTS_NAV_ITEM: NavItem = {
   labelKey: 'items.investments',
   to: '/investments',
   icon: ChartIncreaseIcon,
+}
+
+/**
+ * The investments sub-app's own destinations.
+ *
+ * These are defined once here and reused by `INVESTMENTS_NAV_GROUPS` (the
+ * sidebar while inside the section), `INVESTMENTS_DOCK_NAV_ITEMS` (the mobile
+ * dock), and `ALL_NAV_ITEMS` (top-bar title resolution) — three places that
+ * previously each carried their own copy of the same routes.
+ */
+export const INVESTMENTS_OVERVIEW_NAV_ITEM: NavItem = {
+  labelKey: 'items.investmentsOverview',
+  dockLabelKey: 'dock.portfolio',
+  to: '/investments',
+  icon: ChartIncreaseIcon,
+  // The section root sits above its own sub-pages, so it must match exactly.
+  end: true,
+}
+
+export const MARKET_NEWS_NAV_ITEM: NavItem = {
+  labelKey: 'items.marketNews',
+  dockLabelKey: 'dock.news',
+  to: '/investments/news',
+  icon: News01Icon,
+}
+
+export const TICKER_SEARCH_NAV_ITEM: NavItem = {
+  labelKey: 'items.tickerSearch',
+  dockLabelKey: 'dock.search',
+  to: '/investments/search',
+  icon: Search01Icon,
+}
+
+export const COMPANY_RESEARCH_NAV_ITEM: NavItem = {
+  labelKey: 'items.companyResearch',
+  dockLabelKey: 'dock.research',
+  to: '/investments/research',
+  icon: ChartLineData01Icon,
+}
+
+/**
+ * What the sidebar shows once you are inside investments. The everyday nav is
+ * swapped out wholesale rather than appended to: inside the sub-app, Budgets
+ * and Debts are noise, and the shell reading differently is the point.
+ */
+export const INVESTMENTS_NAV_GROUPS: NavGroup[] = [
+  { groupKey: 'groups.portfolio', items: [INVESTMENTS_OVERVIEW_NAV_ITEM] },
+  {
+    groupKey: 'groups.market',
+    items: [MARKET_NEWS_NAV_ITEM, TICKER_SEARCH_NAV_ITEM, COMPANY_RESEARCH_NAV_ITEM],
+  },
+]
+
+/**
+ * The investments dock. Four slots and no "More": unlike the main app, every
+ * destination in the section fits, so a fifth slot would open onto nothing.
+ */
+export const INVESTMENTS_DOCK_NAV_ITEMS: NavItem[] = INVESTMENTS_NAV_GROUPS.flatMap(
+  (group) => group.items,
+)
+
+/**
+ * Whether a path belongs to the investments sub-app. The one place that
+ * decides — the shell branches on this for the sidebar, the dock, the top bar
+ * and the section theming, and they must never disagree.
+ */
+export function isInvestmentsRoute(pathname: string): boolean {
+  return pathname === INVESTMENTS_NAV_ITEM.to || pathname.startsWith(`${INVESTMENTS_NAV_ITEM.to}/`)
 }
 
 /** The top-level destinations, in the order the desktop sidebar lists them. */
@@ -161,9 +235,9 @@ export const MORE_NAV_ICON = MoreHorizontalCircleIcon
  * `/investments/news` and the header would name the wrong page.
  */
 export const ALL_NAV_ITEMS: NavItem[] = [
-  { labelKey: 'items.marketNews', to: '/investments/news', icon: News01Icon },
-  { labelKey: 'items.tickerSearch', to: '/investments/search', icon: Search01Icon },
-  { labelKey: 'items.companyResearch', to: '/investments/research', icon: ChartLineData01Icon },
+  MARKET_NEWS_NAV_ITEM,
+  TICKER_SEARCH_NAV_ITEM,
+  COMPANY_RESEARCH_NAV_ITEM,
   ...PRIMARY_NAV_ITEMS,
   NOTIFICATIONS_NAV_ITEM,
   ...NAV_GROUPS.slice(1).flatMap((group) => flatten(group.items)),

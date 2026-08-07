@@ -120,4 +120,25 @@ void i18next
     },
   })
 
+/**
+ * Keep `<html lang>` in step with the active language.
+ *
+ * `index.html` hardcodes `lang="en"`, which is wrong the moment someone
+ * switches to Greek — and not only for screen readers. Case mapping in CSS is
+ * language-sensitive: uppercasing Greek is supposed to drop the tonos
+ * (Ημέρας → ΗΜΕΡΑΣ), and browsers only apply that rule when the content
+ * language says Greek. With `lang="en"` every `text-transform: uppercase`
+ * label — which is most of the app's micro-labels — kept its accents.
+ *
+ * Hyphenation, quote marks and font fallback all key off this too, so it is
+ * worth setting once here rather than patching the strings that show it.
+ */
+function syncDocumentLanguage(language: string) {
+  if (typeof document === 'undefined') return
+  document.documentElement.lang = language.split('-')[0]
+}
+
+syncDocumentLanguage(i18next.resolvedLanguage ?? i18next.language ?? 'en')
+i18next.on('languageChanged', syncDocumentLanguage)
+
 export default i18next

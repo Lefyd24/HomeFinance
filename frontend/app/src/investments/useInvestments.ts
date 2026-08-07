@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query'
 import { queryKeys } from '../lib/queryKeys'
 import { ApiError } from '../lib/apiClient'
 import { deleteAccount } from '../accounts/accountsApi'
@@ -71,6 +71,63 @@ export function useInvestmentHistory(
     queryKey: queryKeys.investmentHistory(accountId ?? -1, range),
     queryFn: () => investmentsApi.getInvestmentHistory(accountId as number, range),
     enabled: accountId != null,
+  })
+}
+
+/**
+ * Positions across several accounts at once, for the "all accounts" view.
+ *
+ * Deliberately built on the same per-account query keys as
+ * `useInvestmentPositions` rather than a combined key: a sync invalidates one
+ * account, and this then re-fetches exactly that one and leaves the rest cached.
+ */
+export function useInvestmentPositionsForAccounts(accountIds: number[]) {
+  return useQueries({
+    queries: accountIds.map((id) => ({
+      queryKey: queryKeys.investmentPositions(id),
+      queryFn: () => investmentsApi.getInvestmentPositions(id),
+    })),
+    combine: (results) => ({
+      data: results.flatMap((result) => result.data ?? []),
+      isLoading: results.some((result) => result.isLoading),
+      isError: results.some((result) => result.isError),
+    }),
+  })
+}
+
+export function useInvestmentTransactionsForAccounts(accountIds: number[]) {
+  return useQueries({
+    queries: accountIds.map((id) => ({
+      queryKey: queryKeys.investmentTransactions(id),
+      queryFn: () => investmentsApi.getInvestmentTransactions(id),
+    })),
+    combine: (results) => ({
+      data: results.flatMap((result) => result.data ?? []),
+      isLoading: results.some((result) => result.isLoading),
+      isError: results.some((result) => result.isError),
+    }),
+  })
+}
+
+/**
+ * History for several accounts, left as one series per account — merging them
+ * needs to know which dates every account actually reported, so that decision
+ * belongs to `mergeHistory` rather than here.
+ */
+export function useInvestmentHistoryForAccounts(
+  accountIds: number[],
+  range?: { start_date?: string; end_date?: string },
+) {
+  return useQueries({
+    queries: accountIds.map((id) => ({
+      queryKey: queryKeys.investmentHistory(id, range),
+      queryFn: () => investmentsApi.getInvestmentHistory(id, range),
+    })),
+    combine: (results) => ({
+      data: results.map((result) => result.data ?? []),
+      isLoading: results.some((result) => result.isLoading),
+      isError: results.some((result) => result.isError),
+    }),
   })
 }
 

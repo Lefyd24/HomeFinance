@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
+import { useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import DOMPurify from 'dompurify'
 import { HugeiconsIcon } from '@hugeicons/react'
@@ -164,20 +164,15 @@ export function MarketNewsPage() {
 
   return (
     <PageContainer wide className="flex flex-col gap-5">
+      {/* The sibling-page buttons are gone — the sidebar lists them now — but
+          the breadcrumb stays: it says where this page sits and gets you back
+          to the portfolio in one click. */}
       <div>
         <InvestmentsBreadcrumb current={t('news.title')} />
         <PageHeader
           title={t('news.title')}
           description={t('news.description')}
           className="mb-0"
-          action={
-            <Button asChild size="sm" variant="secondary">
-              <Link to="/investments/search">
-                <HugeiconsIcon icon={Search01Icon} strokeWidth={2} data-icon="inline-start" />
-                <span className="sr-only sm:not-sr-only">{t('search.title')}</span>
-              </Link>
-            </Button>
-          }
         />
       </div>
 

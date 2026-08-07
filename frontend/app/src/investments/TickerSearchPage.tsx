@@ -84,20 +84,15 @@ export function TickerSearchPage() {
 
   return (
     <PageContainer wide className="flex flex-col gap-5">
+      {/* The sibling-page button is gone — the sidebar lists them now — but the
+          breadcrumb stays: it says where this page sits and gets you back to
+          the portfolio in one click. */}
       <div>
         <InvestmentsBreadcrumb current={t('search.title')} />
         <PageHeader
           title={t('search.title')}
           description={t('search.description')}
           className="mb-0"
-          action={
-            <Button asChild size="sm" variant="secondary">
-              <Link to="/investments/news">
-                <HugeiconsIcon icon={News01Icon} strokeWidth={2} data-icon="inline-start" />
-                <span className="sr-only sm:not-sr-only">{t('news.title')}</span>
-              </Link>
-            </Button>
-          }
         />
       </div>
 

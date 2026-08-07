@@ -6,7 +6,6 @@ import {
   ChartLineData01Icon,
   LinkSquare02Icon,
   News01Icon,
-  Search01Icon,
 } from '@hugeicons/core-free-icons'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -57,28 +56,15 @@ export function CompanyResearchPage() {
 
   return (
     <PageContainer wide className="flex flex-col gap-5">
+      {/* The sibling-page buttons are gone — the sidebar lists them now — but
+          the breadcrumb stays: it says where this page sits and gets you back
+          to the portfolio in one click. */}
       <div>
         <InvestmentsBreadcrumb current={t('research.title')} />
         <PageHeader
           title={t('research.title')}
           description={t('research.description')}
           className="mb-0"
-          action={
-            <div className="flex items-center gap-2">
-              <Button asChild size="sm" variant="secondary">
-                <Link to="/investments/search">
-                  <HugeiconsIcon icon={Search01Icon} strokeWidth={2} data-icon="inline-start" />
-                  <span className="sr-only sm:not-sr-only">{t('search.title')}</span>
-                </Link>
-              </Button>
-              <Button asChild size="sm" variant="secondary">
-                <Link to="/investments/news">
-                  <HugeiconsIcon icon={News01Icon} strokeWidth={2} data-icon="inline-start" />
-                  <span className="sr-only sm:not-sr-only">{t('news.title')}</span>
-                </Link>
-              </Button>
-            </div>
-          }
         />
       </div>
 

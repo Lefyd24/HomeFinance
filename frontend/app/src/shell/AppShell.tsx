@@ -7,10 +7,12 @@ import {
 } from 'react'
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { AnimatePresence, motion } from 'motion/react'
 import { useQuery } from '@tanstack/react-query'
 import { HugeiconsIcon } from '@hugeicons/react'
 import {
   ArrowDown01Icon,
+  ArrowLeft01Icon,
   Logout01Icon,
   DashboardCircleAddIcon,
   Notification03Icon,
@@ -21,11 +23,16 @@ import { useAuth } from '../auth/AuthContext'
 import {
   ALL_NAV_ITEMS,
   DOCK_NAV_ITEMS,
+  INVESTMENTS_DOCK_NAV_ITEMS,
+  INVESTMENTS_NAV_GROUPS,
   INVESTMENTS_NAV_ITEM,
+  isInvestmentsRoute,
   MORE_NAV_ICON as MoreIcon,
   MORE_NAV_GROUPS,
   NAV_GROUPS,
+  PRIMARY_NAV_ITEMS,
   SECONDARY_NAV_ITEMS,
+  type NavGroup,
   type NavItem,
 } from './NavItems'
 import { TransactionFormDialog } from '../transactions/TransactionFormDialog'
@@ -82,7 +89,14 @@ function userInitials(name: string | null | undefined, email: string | undefined
   return source.slice(0, 2).toUpperCase()
 }
 
-function BrandMark({ compact = false }: { compact?: boolean }) {
+function BrandMark({
+  compact = false,
+  section,
+}: {
+  compact?: boolean
+  /** Names the sub-app the rail is currently showing, in place of the tagline. */
+  section?: string
+}) {
   const { t } = useTranslation('nav')
   return (
     <div className={cn('flex items-center gap-2.5 min-w-0', compact && 'justify-center')}>
@@ -97,7 +111,22 @@ function BrandMark({ compact = false }: { compact?: boolean }) {
       {!compact && (
         <div className="min-w-0 flex flex-col">
           <span className="font-heading font-bold text-sm tracking-tight truncate">{t('brand.name')}</span>
-          <span className="text-[10px] uppercase tracking-[0.14em] text-muted-foreground">{t('brand.tagline')}</span>
+          {/* Swaps with the nav below it, on the same beat. */}
+          <AnimatePresence mode="wait" initial={false}>
+            <motion.span
+              key={section ?? 'default'}
+              initial={{ opacity: 0, y: 3 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -3 }}
+              transition={{ duration: 0.18, ease: 'easeOut' }}
+              className={cn(
+                'text-[10px] uppercase tracking-[0.14em] truncate',
+                section ? 'font-semibold text-sidebar-primary' : 'text-muted-foreground',
+              )}
+            >
+              {section ?? t('brand.tagline')}
+            </motion.span>
+          </AnimatePresence>
         </div>
       )}
     </div>
@@ -120,6 +149,7 @@ function NavItemLink({
   const link = (
     <NavLink
       to={item.to}
+      end={item.end}
       onClick={onNavigate}
       title={collapsed ? label : undefined}
       className={({ isActive }) =>
@@ -467,13 +497,19 @@ function UserMenu({
 function DesktopSidebar({
   collapsed,
   onToggle,
+  groups,
+  section,
 }: {
   collapsed: boolean
   onToggle: () => void
+  /** Which nav set to show — swapped wholesale when inside a sub-app. */
+  groups: NavGroup[]
+  section?: string
 }) {
   const { t } = useTranslation('nav')
   return (
     <aside
+      data-section={section ? 'investments' : undefined}
       className={cn(
         'shell-sidebar hidden lg:flex lg:flex-col h-dvh sticky top-0 shrink-0 overflow-hidden',
         'glass-bar text-sidebar-foreground',
@@ -487,7 +523,7 @@ function DesktopSidebar({
           collapsed && 'justify-center px-2',
         )}
       >
-        <BrandMark compact={collapsed} />
+        <BrandMark compact={collapsed} section={section} />
         {!collapsed && (
           <Button
             variant="ghost"
@@ -502,34 +538,50 @@ function DesktopSidebar({
       </div>
 
       <ScrollArea className="flex-1 min-h-0">
-        <nav
-          className={cn(
-            'flex flex-col gap-4 p-2',
-            collapsed && 'items-center px-1.5',
-          )}
-        >
-          {NAV_GROUPS.map((group) => (
-            <div
-              key={group.groupKey}
-              className={cn(
-                'flex flex-col gap-1',
-                collapsed && 'w-full items-center',
-              )}
-            >
-              {!collapsed && (
-                <p className="px-2.5 pb-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                  {t(group.groupKey)}
-                </p>
-              )}
-              {collapsed && group.groupKey !== 'groups.overview' && (
-                <Separator className="my-1 w-6 bg-sidebar-border" />
-              )}
-              {group.items.map((item) => (
-                <NavEntry key={item.to} item={item} collapsed={collapsed} />
-              ))}
-            </div>
-          ))}
-        </nav>
+        {/*
+          Crossing into or out of a sub-app replaces the entire nav, and an
+          instant swap reads as a glitch — the rail appears to flicker into a
+          different sidebar. Fading the outgoing set out before the incoming one
+          slides in makes it legible as one rail changing what it lists.
+          `mode="wait"` is what keeps the two sets from overlapping mid-flight.
+        */}
+        <AnimatePresence mode="wait" initial={false}>
+          <motion.nav
+            key={section ?? 'default'}
+            initial={{ opacity: 0, x: section ? 10 : -10 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: section ? -10 : 10 }}
+            transition={{ duration: 0.18, ease: 'easeOut' }}
+            className={cn(
+              'flex flex-col gap-4 p-2',
+              collapsed && 'items-center px-1.5',
+            )}
+          >
+            {groups.map((group, groupIndex) => (
+              <div
+                key={group.groupKey}
+                className={cn(
+                  'flex flex-col gap-1',
+                  collapsed && 'w-full items-center',
+                )}
+              >
+                {!collapsed && (
+                  <p className="px-2.5 pb-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                    {t(group.groupKey)}
+                  </p>
+                )}
+                {/* Collapsed hides the group headings, so a rule stands in for
+                    them — between groups only, never above the first. */}
+                {collapsed && groupIndex > 0 && (
+                  <Separator className="my-1 w-6 bg-sidebar-border" />
+                )}
+                {group.items.map((item) => (
+                  <NavEntry key={item.to} item={item} collapsed={collapsed} />
+                ))}
+              </div>
+            ))}
+          </motion.nav>
+        </AnimatePresence>
       </ScrollArea>
 
       {collapsed && (
@@ -609,10 +661,60 @@ function InvestmentsNavButton() {
   )
 }
 
-function NavActions() {
+/**
+ * The way out of the investments sub-app, and deliberately the mirror image of
+ * `InvestmentsNavButton` — same noise blob, same pill, arrow reversed. One
+ * control takes you in, the other takes you out, and they read as a pair.
+ *
+ * It sits at the *start* of the top bar rather than in `NavActions`, because
+ * leaving a section is a back action, not one of the persistent tools.
+ */
+function BackToDashboardButton() {
+  const { t } = useTranslation('nav')
+  return (
+    <NavLink
+      to={PRIMARY_NAV_ITEMS[0].to}
+      className={cn(
+        'flex shrink-0 items-center rounded-full',
+        'transition-transform duration-150 ease-out active:scale-[0.98]',
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary/50',
+      )}
+    >
+      <NoiseBackground
+        containerClassName="w-fit p-1.5 rounded-full mx-auto"
+        gradientColors={[
+          'oklch(51.5% 0.126 227)',
+          'oklch(67.08% 0.175 40.64)',
+          'oklch(80% 0.09 205)',
+        ]}
+        noiseIntensity={0.08}
+        speed={0.05}
+      >
+        <span
+          className={cn(
+            'flex h-7 items-center gap-1.5 rounded-full px-2 text-xs font-semibold',
+            'text-neutral-900 bg-linear-to-r from-white via-neutral-100 to-white',
+            'dark:from-black dark:via-black dark:to-neutral-900 dark:text-white',
+          )}
+        >
+          <HugeiconsIcon
+            icon={ArrowLeft01Icon}
+            strokeWidth={2.25}
+            className="size-4 shrink-0 rtl:rotate-180"
+          />
+          <span className="sr-only sm:not-sr-only">{t('backToDashboard')}</span>
+        </span>
+      </NoiseBackground>
+    </NavLink>
+  )
+}
+
+function NavActions({ inInvestments }: { inInvestments: boolean }) {
   return (
     <div className="ms-auto flex items-center gap-1">
-      <InvestmentsNavButton />
+      {/* Already inside investments — the way in is replaced by the way out,
+          which the top bar renders at its start. */}
+      {!inInvestments && <InvestmentsNavButton />}
       <NotificationsMenu />
       <LanguageToggle />
       <ThemeToggle />
@@ -651,7 +753,7 @@ function QuickAddTransactionFab() {
   )
 }
 
-function MobileTopBar() {
+function MobileTopBar({ inInvestments }: { inInvestments: boolean }) {
   const { t } = useTranslation('nav')
   const location = useLocation()
   const current = ALL_NAV_ITEMS.find((item) => location.pathname.startsWith(item.to))
@@ -661,14 +763,17 @@ function MobileTopBar() {
     // status bar / notch in an installed PWA. index.html sets viewport-fit=cover,
     // so env(safe-area-inset-top) is a real value there and 0 in a browser tab.
     <header className="glass-bar lg:hidden sticky top-0 z-30 shrink-0 border-b border-border pt-[env(safe-area-inset-top)]">
-      <div className="flex h-14 items-center gap-3 px-3">
+      <div className="flex h-14 items-center gap-2 px-3">
+        {inInvestments && <BackToDashboardButton />}
         <div className="min-w-0 flex-1">
-          <p className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">{t('brand.name')}</p>
+          <p className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
+            {inInvestments ? t('investmentsSection') : t('brand.name')}
+          </p>
           <h1 className="font-heading text-sm font-semibold tracking-tight truncate">
             {current ? t(current.labelKey) : t('workspace')}
           </h1>
         </div>
-        <NavActions />
+        <NavActions inInvestments={inInvestments} />
       </div>
     </header>
   )
@@ -793,26 +898,43 @@ function MoreSheet({
 }
 
 function MobileBottomNav({
+  items,
+  showMore,
   moreOpen,
   onMoreToggle,
 }: {
+  items: NavItem[]
+  /** The investments dock shows every destination it has, so it has no More. */
+  showMore: boolean
   moreOpen: boolean
   onMoreToggle: () => void
 }) {
   const { t } = useTranslation('nav')
   const location = useLocation()
   const secondaryActive = useMemo(
-    () => SECONDARY_NAV_ITEMS.some((item) => location.pathname.startsWith(item.to)),
-    [location.pathname],
+    () =>
+      showMore && SECONDARY_NAV_ITEMS.some((item) => location.pathname.startsWith(item.to)),
+    [location.pathname, showMore],
   )
   const moreActive = moreOpen || secondaryActive
 
   const dockIndex = useMemo(() => {
-    const hit = DOCK_NAV_ITEMS.findIndex((item) => location.pathname.startsWith(item.to))
+    // Longest match wins, so a section root never claims its own sub-page.
+    let hit = -1
+    let hitLength = -1
+    items.forEach((item, index) => {
+      const matches = item.end
+        ? location.pathname === item.to
+        : location.pathname === item.to || location.pathname.startsWith(`${item.to}/`)
+      if (matches && item.to.length > hitLength) {
+        hit = index
+        hitLength = item.to.length
+      }
+    })
     if (hit >= 0) return hit
     // "More" is the last slot; it owns every route the dock doesn't show.
-    return moreActive ? DOCK_NAV_ITEMS.length : -1
-  }, [location.pathname, moreActive])
+    return showMore && moreActive ? items.length : -1
+  }, [items, location.pathname, moreActive, showMore])
 
   return (
     <nav
@@ -827,7 +949,7 @@ function MobileBottomNav({
     >
       <div
         className="liquid-dock pointer-events-auto relative mx-auto flex max-w-sm items-stretch rounded-full border"
-        style={{ '--dock-slots': DOCK_NAV_ITEMS.length + 1 } as CSSProperties}
+        style={{ '--dock-slots': items.length + (showMore ? 1 : 0) } as CSSProperties}
       >
         <span
           aria-hidden="true"
@@ -836,52 +958,59 @@ function MobileBottomNav({
           style={{ '--dock-index': Math.max(dockIndex, 0) } as CSSProperties}
         />
 
-        {DOCK_NAV_ITEMS.map((item) => (
-          <NavLink
-            key={item.to}
-            to={item.to}
-            aria-label={t(item.labelKey)}
-            className={DOCK_SLOT_CLASS}
-          >
-            {({ isActive }) => (
-              <>
-                <DockIcon icon={item.icon} active={isActive} />
-                <DockLabel active={isActive}>{dockLabel(item, t)}</DockLabel>
-              </>
-            )}
-          </NavLink>
-        ))}
+        {items.map((item, index) => {
+          // Drive the slot from the same longest-match result as the lens, so
+          // the highlight and the icon can never disagree.
+          const active = index === dockIndex
+          return (
+            <NavLink
+              key={item.to}
+              to={item.to}
+              end={item.end}
+              aria-label={t(item.labelKey)}
+              className={DOCK_SLOT_CLASS}
+            >
+              <DockIcon icon={item.icon} active={active} />
+              <DockLabel active={active}>{dockLabel(item, t)}</DockLabel>
+            </NavLink>
+          )
+        })}
 
-        <button
-          type="button"
-          className={DOCK_SLOT_CLASS}
-          onClick={onMoreToggle}
-          aria-label={t('moreNavigationAria')}
-          aria-expanded={moreOpen}
-          aria-haspopup="dialog"
-        >
-          <DockIcon icon={MoreIcon} active={moreActive} />
-          <DockLabel active={moreActive}>{t('more')}</DockLabel>
-        </button>
+        {showMore && (
+          <button
+            type="button"
+            className={DOCK_SLOT_CLASS}
+            onClick={onMoreToggle}
+            aria-label={t('moreNavigationAria')}
+            aria-expanded={moreOpen}
+            aria-haspopup="dialog"
+          >
+            <DockIcon icon={MoreIcon} active={moreActive} />
+            <DockLabel active={moreActive}>{t('more')}</DockLabel>
+          </button>
+        )}
       </div>
     </nav>
   )
 }
 
-function DesktopTopBar() {
+function DesktopTopBar({ inInvestments }: { inInvestments: boolean }) {
   const { t } = useTranslation('nav')
   const location = useLocation()
   const current = ALL_NAV_ITEMS.find((item) => location.pathname.startsWith(item.to))
 
   return (
     <header className="shell-topbar glass-bar hidden lg:flex sticky top-0 z-20 h-14 shrink-0 items-center gap-3 px-4">
+      {inInvestments && <BackToDashboardButton />}
       <div className="min-w-0">
-        <p className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">{t('workspace')}</p>
+        <p className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
+          {inInvestments ? t('investmentsSection') : t('workspace')}
+        </p>
         <h1 className="font-heading text-sm font-semibold tracking-tight truncate">
           {current ? t(current.labelKey) : t('brand.name')}
         </h1>
       </div>
-      <NavActions />
+      <NavActions inInvestments={inInvestments} />
     </header>
   )
 }
@@ -896,17 +1025,39 @@ function DesktopFooter() {
   )
 }
 
+/**
+ * The app shell, which is section-aware rather than fixed.
+ *
+ * Investments is a module of its own — separate accounts, credentials, sync and
+ * market data — so once you are inside it the shell re-points at it wholesale:
+ * the sidebar and dock list investments destinations, the top-bar pill that got
+ * you here is replaced by the way out, and `data-section` re-skins the surfaces
+ * from the existing tokens. One shell, one collapse state; only the nav data
+ * and the theming change.
+ */
 export function AppShell() {
   const [collapsed, setCollapsed] = useState(false)
   const [moreOpen, setMoreOpen] = useState(false)
+  const location = useLocation()
+  const inInvestments = isInvestmentsRoute(location.pathname)
+  const { t } = useTranslation('nav')
+  const section = inInvestments ? 'investments' : undefined
 
   return (
     <div className="app-canvas h-dvh flex overflow-hidden">
-      <DesktopSidebar collapsed={collapsed} onToggle={() => setCollapsed((v) => !v)} />
+      <DesktopSidebar
+        collapsed={collapsed}
+        onToggle={() => setCollapsed((v) => !v)}
+        groups={inInvestments ? INVESTMENTS_NAV_GROUPS : NAV_GROUPS}
+        section={inInvestments ? t('investmentsSection') : undefined}
+      />
 
-      <div className="shell-content-column flex-1 min-w-0 min-h-0 flex flex-col overflow-hidden">
-        <MobileTopBar />
-        <DesktopTopBar />
+      <div
+        data-section={section}
+        className="shell-content-column flex-1 min-w-0 min-h-0 flex flex-col overflow-hidden"
+      >
+        <MobileTopBar inInvestments={inInvestments} />
+        <DesktopTopBar inInvestments={inInvestments} />
 
         <main className="shell-main flex-1 min-h-0">
           <div className="shell-main-bg" aria-hidden="true" />
@@ -921,6 +1072,8 @@ export function AppShell() {
       <QuickAddTransactionFab />
 
       <MobileBottomNav
+        items={inInvestments ? INVESTMENTS_DOCK_NAV_ITEMS : DOCK_NAV_ITEMS}
+        showMore={!inInvestments}
         moreOpen={moreOpen}
         onMoreToggle={() => setMoreOpen((open) => !open)}
       />
