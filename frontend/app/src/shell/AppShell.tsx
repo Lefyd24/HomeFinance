@@ -60,6 +60,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Separator } from '@/components/ui/separator'
+import { NoiseBackground } from "@/components/ui/noise-background";
 import {
   Sheet,
   SheetContent,
@@ -564,19 +565,46 @@ function InvestmentsNavButton() {
   return (
     <NavLink
       to={INVESTMENTS_NAV_ITEM.to}
-      className={({ isActive }) =>
-        cn(
-          'flex h-7 shrink-0 items-center gap-1.5 rounded-md border px-3 text-xs font-semibold',
-          'transition-colors duration-150 ease-out',
-          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary/50',
-          isActive
-            ? 'border-secondary bg-secondary text-secondary-foreground shadow-sm'
-            : 'border-secondary/30 bg-secondary/10 text-secondary hover:border-secondary/50 hover:bg-secondary/20',
-        )
-      }
+      className={cn(
+        'flex shrink-0 items-center rounded-full',
+        'transition-transform duration-150 ease-out active:scale-[0.98]',
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary/50',
+      )}
     >
-      <HugeiconsIcon icon={INVESTMENTS_NAV_ITEM.icon} strokeWidth={2.25} className="size-4 shrink-0" />
-      <span className="sr-only sm:not-sr-only">{t(INVESTMENTS_NAV_ITEM.labelKey)}</span>
+      {({ isActive }) => (
+        <NoiseBackground
+          containerClassName="w-fit p-1.5 rounded-full mx-auto"
+          gradientColors={[
+            'oklch(51.5% 0.126 227)',
+            'oklch(67.08% 0.175 40.64)',
+            'oklch(80% 0.09 205)',
+          ]}
+          noiseIntensity={0.08}
+          speed={0.05}
+        >
+          {/* Selected state colours the pill itself (a dark green, like the
+              neutral chrome's dark variant but tinted) rather than ringing
+              the outside — the noise blob stays the constant, brand-toned
+              backdrop either way. */}
+          <span
+            className={cn(
+              'flex h-7 items-center gap-1.5 rounded-full px-2 text-xs font-semibold',
+              isActive
+                ? cn(
+                    'bg-linear-to-r from-emerald-950 via-emerald-900 to-emerald-950 text-emerald-50',
+                    'shadow-[0px_2px_0px_0px_rgba(16,185,129,0.18)_inset,0px_0.5px_1px_0px_rgba(0,0,0,0.4)]',
+                  )
+                : cn(
+                    'text-neutral-900 bg-linear-to-r from-white via-neutral-100 to-white',
+                    'dark:from-black dark:via-black dark:to-neutral-900 dark:text-white',
+                  ),
+            )}
+          >
+            <HugeiconsIcon icon={INVESTMENTS_NAV_ITEM.icon} strokeWidth={2.25} className="size-4 shrink-0" />
+            <span className="sr-only sm:not-sr-only">{t(INVESTMENTS_NAV_ITEM.labelKey)}</span>
+          </span>
+        </NoiseBackground>
+      )}
     </NavLink>
   )
 }

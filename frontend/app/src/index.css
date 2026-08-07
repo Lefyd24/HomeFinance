@@ -79,6 +79,26 @@
   --tabs-active-bg: oklch(100% 0 0);
   --tabs-active-border: color-mix(in oklch, var(--primary) 22%, var(--border));
   --tabs-inactive-foreground: oklch(34% 0.022 224);
+
+  /* Aurora mesh — replaces the ffflux SVG as the canvas/content-well fill.
+     Drawn from brand tokens (cerulean primary, cyan chart accent, terracotta
+     secondary, warm beige) but each pulled well back toward --background so
+     the effect reads as a quiet tint, not a loud gradient; re-tunes itself in
+     dark mode along with everything else. */
+  --aurora-color-1: color-mix(in oklch, var(--primary) 55%, var(--background));
+  --aurora-color-2: color-mix(in oklch, oklch(80% 0.09 205) 45%, var(--background));
+  --aurora-color-3: color-mix(in oklch, var(--secondary) 45%, var(--background));
+  --aurora-color-4: color-mix(in oklch, oklch(90% 0.035 85) 55%, var(--background));
+  --aurora-color-5: color-mix(in oklch, var(--chart-2) 45%, var(--background));
+  --aurora-gradient: repeating-linear-gradient(
+    100deg,
+    var(--aurora-color-1) 10%,
+    var(--aurora-color-2) 15%,
+    var(--aurora-color-3) 20%,
+    var(--aurora-color-4) 25%,
+    var(--aurora-color-5) 30%
+  );
+  --aurora-opacity: 0.4;
 }
 
 /* Dark keeps the cerulean family but at low chroma — a quiet slate-blue room,
@@ -139,11 +159,15 @@
   --tabs-active-bg: oklch(34% 0.024 224);
   --tabs-active-border: color-mix(in oklch, var(--primary) 35%, var(--border));
   --tabs-inactive-foreground: oklch(84% 0.014 222);
+
+  --aurora-color-2: color-mix(in oklch, oklch(72% 0.11 205) 40%, var(--background));
+  --aurora-color-4: color-mix(in oklch, oklch(78% 0.05 80) 40%, var(--background));
+  --aurora-opacity: 0.22;
 }
 
 @theme inline {
   --font-sans: 'Inter Variable', sans-serif;
-  --font-heading: 'Montserrat Variable', sans-serif;
+  --font-heading: 'Inter Variable', sans-serif;
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -189,6 +213,16 @@
   --radius-2xl: calc(var(--radius) * 1.8);
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
+
+  --animate-aurora: aurora 240s linear infinite;
+  @keyframes aurora {
+    from {
+      background-position: 50% 50%;
+    }
+    to {
+      background-position: 130% 50%;
+    }
+  }
 }
 
 /*
@@ -251,23 +285,22 @@
     background-color: var(--background);
   }
 
-  /* ffflux mesh — light uses near-white stop; dark swaps asset (see ffflux-dark.svg). */
+  /* Aurora mesh — animated gradient replaces the old ffflux SVG as the body fill. */
   .app-canvas::before {
     content: '';
     position: fixed;
     z-index: -2;
-    inset: 0;
+    inset: -10px;
     pointer-events: none;
     background-color: var(--background);
-    background-image: url('/assets/images/ffflux.svg');
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
-    background-attachment: fixed;
-  }
-
-  .dark .app-canvas::before {
-    background-image: url('/assets/images/ffflux-dark.svg');
+    background-image: var(--aurora-gradient);
+    background-size: 300% 200%;
+    background-position: 50% 50%;
+    opacity: var(--aurora-opacity);
+    filter: blur(3px);
+    animation: var(--animate-aurora);
+    mask-image: radial-gradient(ellipse at 50% 0%, black 10%, transparent 70%);
+    -webkit-mask-image: radial-gradient(ellipse at 50% 0%, black 10%, transparent 70%);
   }
 
   .app-canvas::after {
@@ -497,6 +530,12 @@
     .liquid-dock-lens {
       transition: opacity 200ms ease-out;
     }
+
+    .app-canvas::before,
+    .shell-main-bg::before {
+      animation: none;
+      background-position: 50% 50%;
+    }
   }
 
   @media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
@@ -592,34 +631,42 @@
 
   /*
    * Static canvas fill for the content well. Sits on the non-scrolling shell
-   * frame so page content can scroll over it without moving the mesh.
+   * frame so page content can scroll over it without moving the mesh. The
+   * aurora layer lives on ::before/::after rather than directly on this
+   * element so it can carry its own animated gradient plus a tint overlay;
+   * `.shell-main`'s `overflow: hidden` clips both to the scoop's rounded
+   * start-edge corners, which is what keeps the left corners rounded.
    */
   .shell-main-bg {
     position: absolute;
     inset: 0;
     z-index: 0;
     pointer-events: none;
+    overflow: hidden;
     border-start-start-radius: inherit;
     border-end-start-radius: inherit;
     background-color: var(--background);
-    background-image:
-      linear-gradient(
-        color-mix(in oklch, var(--background) 22%, transparent),
-        color-mix(in oklch, var(--background) 22%, transparent)
-      ),
-      url('/assets/images/ffflux.svg');
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
   }
 
-  .dark .shell-main-bg {
-    background-image:
-      linear-gradient(
-        color-mix(in oklch, var(--background) 22%, transparent),
-        color-mix(in oklch, var(--background) 22%, transparent)
-      ),
-      url('/assets/images/ffflux-dark.svg');
+  .shell-main-bg::before {
+    content: '';
+    position: absolute;
+    inset: -10px;
+    background-image: var(--aurora-gradient);
+    background-size: 300% 200%;
+    background-position: 50% 50%;
+    opacity: var(--aurora-opacity);
+    filter: blur(3px);
+    animation: var(--animate-aurora);
+    mask-image: radial-gradient(ellipse at 100% 0%, black 10%, transparent 70%);
+    -webkit-mask-image: radial-gradient(ellipse at 100% 0%, black 10%, transparent 70%);
+  }
+
+  .shell-main-bg::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: color-mix(in oklch, var(--background) 22%, transparent);
   }
 
   .shell-main-scroll {
@@ -639,8 +686,12 @@
   }
 
   @media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
+    .shell-main-bg::before,
+    .shell-main-bg::after {
+      display: none;
+    }
+
     .shell-main-bg {
-      background-image: none;
       background-color: var(--background);
     }
 
