@@ -149,17 +149,35 @@ export const INVESTMENTS_NAV_GROUPS: NavGroup[] = [
 ]
 
 /**
- * The investments dock. Four slots and no "More": unlike the main app, every
- * destination in the section fits, so a fifth slot would open onto nothing.
- * Listed explicitly (rather than auto-derived from `INVESTMENTS_NAV_GROUPS`)
- * now that the sidebar carries a fifth destination (Compare) that the dock has
- * no room for — Compare is reachable from the sidebar and from Overview.
+ * The investments dock. Three primary slots plus a "More" slot that opens onto
+ * the rest — Research, Compare, Backtest, and Scenario Library. The dock keeps
+ * the top three high-traffic destinations (Overview, News, Search); everything
+ * else lives in the More sheet, the same pattern the main app uses.
  */
 export const INVESTMENTS_DOCK_NAV_ITEMS: NavItem[] = [
   INVESTMENTS_OVERVIEW_NAV_ITEM,
   MARKET_NEWS_NAV_ITEM,
   TICKER_SEARCH_NAV_ITEM,
+]
+
+/** Investments destinations not shown in the dock — lights up the "More" slot. */
+export const INVESTMENTS_SECONDARY_NAV_ITEMS: NavItem[] = [
   COMPANY_RESEARCH_NAV_ITEM,
+  TICKER_COMPARE_NAV_ITEM,
+  BACKTEST_NAV_ITEM,
+  SCENARIO_LIBRARY_NAV_ITEM,
+]
+
+/** What the More sheet shows when inside the investments section. */
+export const INVESTMENTS_MORE_NAV_GROUPS: NavGroup[] = [
+  {
+    groupKey: 'groups.market',
+    items: [COMPANY_RESEARCH_NAV_ITEM, TICKER_COMPARE_NAV_ITEM],
+  },
+  {
+    groupKey: 'groups.sandbox',
+    items: [BACKTEST_NAV_ITEM, SCENARIO_LIBRARY_NAV_ITEM],
+  },
 ]
 
 /**

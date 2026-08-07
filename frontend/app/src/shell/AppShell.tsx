@@ -24,8 +24,10 @@ import {
   ALL_NAV_ITEMS,
   DOCK_NAV_ITEMS,
   INVESTMENTS_DOCK_NAV_ITEMS,
+  INVESTMENTS_MORE_NAV_GROUPS,
   INVESTMENTS_NAV_GROUPS,
   INVESTMENTS_NAV_ITEM,
+  INVESTMENTS_SECONDARY_NAV_ITEMS,
   isInvestmentsRoute,
   MORE_NAV_ICON as MoreIcon,
   MORE_NAV_GROUPS,
@@ -824,12 +826,15 @@ function DockIcon({ icon, active }: { icon: NavItem['icon']; active: boolean }) 
 function MoreSheet({
   open,
   onOpenChange,
+  inInvestments = false,
 }: {
   open: boolean
   onOpenChange: (open: boolean) => void
+  inInvestments?: boolean
 }) {
   const { t } = useTranslation('nav')
   const { logout } = useAuth()
+  const groups = inInvestments ? INVESTMENTS_MORE_NAV_GROUPS : MORE_NAV_GROUPS
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -862,7 +867,7 @@ function MoreSheet({
         </SheetHeader>
         <ScrollArea className="min-h-0 flex-1">
           <nav className="flex flex-col gap-4 px-3 pb-3">
-            {MORE_NAV_GROUPS.map((group) => (
+            {groups.map((group) => (
               <div key={group.groupKey} className="flex flex-col gap-1">
                 <p className="px-2.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
                   {t(group.groupKey)}
@@ -899,22 +904,22 @@ function MoreSheet({
 
 function MobileBottomNav({
   items,
-  showMore,
   moreOpen,
   onMoreToggle,
+  inInvestments = false,
 }: {
   items: NavItem[]
-  /** The investments dock shows every destination it has, so it has no More. */
-  showMore: boolean
   moreOpen: boolean
   onMoreToggle: () => void
+  inInvestments?: boolean
 }) {
   const { t } = useTranslation('nav')
   const location = useLocation()
+  const secondaryNavItems = inInvestments ? INVESTMENTS_SECONDARY_NAV_ITEMS : SECONDARY_NAV_ITEMS
   const secondaryActive = useMemo(
     () =>
-      showMore && SECONDARY_NAV_ITEMS.some((item) => location.pathname.startsWith(item.to)),
-    [location.pathname, showMore],
+      secondaryNavItems.some((item) => location.pathname.startsWith(item.to)),
+    [location.pathname, secondaryNavItems],
   )
   const moreActive = moreOpen || secondaryActive
 
@@ -933,8 +938,8 @@ function MobileBottomNav({
     })
     if (hit >= 0) return hit
     // "More" is the last slot; it owns every route the dock doesn't show.
-    return showMore && moreActive ? items.length : -1
-  }, [items, location.pathname, moreActive, showMore])
+    return moreActive ? items.length : -1
+  }, [items, location.pathname, moreActive])
 
   return (
     <nav
@@ -949,7 +954,7 @@ function MobileBottomNav({
     >
       <div
         className="liquid-dock pointer-events-auto relative mx-auto flex max-w-sm items-stretch rounded-full border"
-        style={{ '--dock-slots': items.length + (showMore ? 1 : 0) } as CSSProperties}
+        style={{ '--dock-slots': items.length + 1 } as CSSProperties}
       >
         <span
           aria-hidden="true"
@@ -976,19 +981,17 @@ function MobileBottomNav({
           )
         })}
 
-        {showMore && (
-          <button
-            type="button"
-            className={DOCK_SLOT_CLASS}
-            onClick={onMoreToggle}
-            aria-label={t('moreNavigationAria')}
-            aria-expanded={moreOpen}
-            aria-haspopup="dialog"
-          >
-            <DockIcon icon={MoreIcon} active={moreActive} />
-            <DockLabel active={moreActive}>{t('more')}</DockLabel>
-          </button>
-        )}
+        <button
+          type="button"
+          className={DOCK_SLOT_CLASS}
+          onClick={onMoreToggle}
+          aria-label={t('moreNavigationAria')}
+          aria-expanded={moreOpen}
+          aria-haspopup="dialog"
+        >
+          <DockIcon icon={MoreIcon} active={moreActive} />
+          <DockLabel active={moreActive}>{t('more')}</DockLabel>
+        </button>
       </div>
     </nav>
   )
@@ -1073,11 +1076,11 @@ export function AppShell() {
 
       <MobileBottomNav
         items={inInvestments ? INVESTMENTS_DOCK_NAV_ITEMS : DOCK_NAV_ITEMS}
-        showMore={!inInvestments}
         moreOpen={moreOpen}
         onMoreToggle={() => setMoreOpen((open) => !open)}
+        inInvestments={inInvestments}
       />
-      <MoreSheet open={moreOpen} onOpenChange={setMoreOpen} />
+      <MoreSheet open={moreOpen} onOpenChange={setMoreOpen} inInvestments={inInvestments} />
     </div>
   )
 }

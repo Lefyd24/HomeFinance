@@ -71,7 +71,8 @@ describe('AppShell', () => {
     renderShell('/investments/news', 'News content')
 
     expect(screen.getAllByText('Back to Dashboard').length).toBeGreaterThan(0)
-    // No "More" slot in the investments dock — every destination is on it.
-    expect(screen.queryByLabelText('More navigation')).not.toBeInTheDocument()
+    // The investments dock now includes a More slot (like the main dock)
+    // so Research, Compare, Backtest, and Scenarios remain reachable on mobile.
+    expect(screen.queryByLabelText('More navigation')).toBeInTheDocument()
   })
 })
