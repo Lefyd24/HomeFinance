@@ -137,6 +137,15 @@ class Settings(BaseSettings):
     MARKET_DATA_CACHE_TTL_HOURS: int = 12
     MARKET_DATA_MAX_HISTORY_YEARS: int = 15
 
+    # Backtesting & forward sandbox (docs/investments/02-backtesting-sandbox.md)
+    SCENARIO_TRACKING_ENABLED: bool = True
+    # After the US close (21:00/22:00 UTC depending on DST), before midnight, so a
+    # "daily" valuation lands on the correct trading date.
+    SCENARIO_VALUATION_HOUR_UTC: int = 22
+    SCENARIO_MAX_PER_USER: int = 200
+    SCENARIO_DEFAULT_COST_BPS: float = 10.0
+    SCENARIO_MAX_CONTRIBUTIONS: int = 600
+
     # Notifications
     NOTIFICATIONS_ENABLED: bool = True
     NOTIFICATION_ENCRYPTION_KEY: str | None = None

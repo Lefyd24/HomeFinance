@@ -18,6 +18,8 @@ import {
   Notification03Icon,
   News01Icon,
   Search01Icon,
+  FlashIcon,
+  Album02Icon,
 } from '@hugeicons/core-free-icons'
 
 export type HugeIcon = typeof DashboardSquare01Icon
@@ -110,6 +112,20 @@ export const TICKER_COMPARE_NAV_ITEM: NavItem = {
   icon: Analytics01Icon,
 }
 
+export const BACKTEST_NAV_ITEM: NavItem = {
+  labelKey: 'items.backtest',
+  dockLabelKey: 'dock.backtest',
+  to: '/investments/backtest',
+  icon: FlashIcon,
+}
+
+export const SCENARIO_LIBRARY_NAV_ITEM: NavItem = {
+  labelKey: 'items.scenarioLibrary',
+  dockLabelKey: 'dock.scenarios',
+  to: '/investments/scenarios',
+  icon: Album02Icon,
+}
+
 /**
  * What the sidebar shows once you are inside investments. The everyday nav is
  * swapped out wholesale rather than appended to: inside the sub-app, Budgets
@@ -125,6 +141,10 @@ export const INVESTMENTS_NAV_GROUPS: NavGroup[] = [
       COMPANY_RESEARCH_NAV_ITEM,
       TICKER_COMPARE_NAV_ITEM,
     ],
+  },
+  {
+    groupKey: 'groups.sandbox',
+    items: [BACKTEST_NAV_ITEM, SCENARIO_LIBRARY_NAV_ITEM],
   },
 ]
 
@@ -257,6 +277,8 @@ export const ALL_NAV_ITEMS: NavItem[] = [
   TICKER_SEARCH_NAV_ITEM,
   COMPANY_RESEARCH_NAV_ITEM,
   TICKER_COMPARE_NAV_ITEM,
+  BACKTEST_NAV_ITEM,
+  SCENARIO_LIBRARY_NAV_ITEM,
   ...PRIMARY_NAV_ITEMS,
   NOTIFICATIONS_NAV_ITEM,
   ...NAV_GROUPS.slice(1).flatMap((group) => flatten(group.items)),

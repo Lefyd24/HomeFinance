@@ -26,14 +26,17 @@
     "tickerSearch": "Ticker search",
     "companyResearch": "Company research",
     "tickerCompare": "Compare",
-    "investmentsOverview": "Overview"
+    "investmentsOverview": "Overview",
+    "backtest": "Backtest",
+    "scenarioLibrary": "Scenarios"
   },
   "groups": {
     "overview": "Overview",
     "planning": "Planning",
     "insights": "Insights",
     "portfolio": "Portfolio",
-    "market": "Market"
+    "market": "Market",
+    "sandbox": "Sandbox"
   },
   "dock": {
     "home": "Home",
@@ -42,7 +45,9 @@
     "news": "News",
     "search": "Search",
     "research": "Research",
-    "compare": "Compare"
+    "compare": "Compare",
+    "backtest": "Backtest",
+    "scenarios": "Scenarios"
   },
   "investmentsSection": "Investments",
   "backToDashboard": "Back to Dashboard",

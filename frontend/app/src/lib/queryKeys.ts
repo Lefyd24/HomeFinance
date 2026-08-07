@@ -33,4 +33,7 @@ export const queryKeys = {
     currency?: string | null,
   ) => ['investmentCompare', symbols, period, benchmark ?? null, currency ?? null] as const,
   investmentSavedComparisons: ['investmentSavedComparisons'] as const,
+  scenarios: (filters?: object) => ['scenarios', filters ?? {}] as const,
+  scenario: (id: number) => ['scenario', id] as const,
+  scenarioTrackRecord: ['scenarioTrackRecord'] as const,
 }

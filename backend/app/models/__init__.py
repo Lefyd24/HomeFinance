@@ -26,6 +26,7 @@ from app.models.notification import (
 )
 from app.models.recurring_expense import RecurringExpense, RecurringExpensePayment
 from app.models.saved_report import SavedReport
+from app.models.scenario import Scenario, ScenarioValuation
 from app.models.tracker import Tracker, TrackerTransaction
 from app.models.transaction import Transaction
 from app.models.user import User
@@ -59,6 +60,8 @@ __all__ = [
     "RecurringExpense",
     "RecurringExpensePayment",
     "SavedReport",
+    "Scenario",
+    "ScenarioValuation",
     "Tracker",
     "TrackerTransaction",
     "Transaction",

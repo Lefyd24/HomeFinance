@@ -23,6 +23,9 @@ import { MarketNewsPage } from './investments/MarketNewsPage'
 import { TickerSearchPage } from './investments/TickerSearchPage'
 import { CompanyResearchPage } from './investments/CompanyResearchPage'
 import { ComparisonPage } from './investments/ComparisonPage'
+import { BacktestPage } from './investments/BacktestPage'
+import { ScenarioLibraryPage } from './investments/ScenarioLibraryPage'
+import { ScenarioDetailPage } from './investments/ScenarioDetailPage'
 import { AdvisorPage } from './advisor/AdvisorPage'
 import { AiAdvisorPage } from './ai-advisor/AiAdvisorPage'
 import { NotificationsPage } from './notifications/NotificationsPage'
@@ -72,6 +75,9 @@ function App() {
           <Route path="/investments/search" element={<TickerSearchPage />} />
           <Route path="/investments/research" element={<CompanyResearchPage />} />
           <Route path="/investments/compare" element={<ComparisonPage />} />
+          <Route path="/investments/backtest" element={<BacktestPage />} />
+          <Route path="/investments/scenarios" element={<ScenarioLibraryPage />} />
+          <Route path="/investments/scenarios/:id" element={<ScenarioDetailPage />} />
           <Route path="/advisor" element={<AdvisorPage />} />
           <Route path="/ai-advisor" element={<AiAdvisorPage />} />
           <Route path="/notifications" element={<NotificationsPage />} />

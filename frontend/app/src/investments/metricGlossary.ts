@@ -42,6 +42,11 @@ export type MetricId =
   | 'debtToEquity'
   | 'expenseRatio'
   | 'psr'
+  | 'twr'
+  | 'mwr'
+  | 'deflatedSharpe'
+  | 'entrySensitivity'
+  | 'costDrag'
 
 export interface GlossaryEntry {
   labelKey: string
@@ -60,6 +65,17 @@ function entry(id: MetricId, opts: { scale?: boolean; caveat?: boolean } = {}): 
     bodyKey: `${base}.body`,
     scaleKey: opts.scale ? `${base}.scale` : undefined,
     caveatKey: opts.caveat ? `${base}.caveat` : undefined,
+    sourceKey: 'compare.source.computed',
+  }
+}
+
+/** Same registry mechanism, `backtest.metrics.<id>` copy — see docs/investments/02-backtesting-sandbox.md §5.8. */
+function backtestEntry(id: MetricId): GlossaryEntry {
+  const base = `backtest.metrics.${id}`
+  return {
+    labelKey: `${base}.label`,
+    shortKey: `${base}.short`,
+    bodyKey: `${base}.body`,
     sourceKey: 'compare.source.computed',
   }
 }
@@ -99,4 +115,9 @@ export const GLOSSARY: Record<MetricId, GlossaryEntry> = {
   debtToEquity: entry('debtToEquity'),
   expenseRatio: entry('expenseRatio', { caveat: true }),
   psr: entry('psr', { caveat: true }),
+  twr: backtestEntry('twr'),
+  mwr: backtestEntry('mwr'),
+  deflatedSharpe: backtestEntry('deflatedSharpe'),
+  entrySensitivity: backtestEntry('entrySensitivity'),
+  costDrag: backtestEntry('costDrag'),
 }

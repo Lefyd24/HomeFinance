@@ -18,6 +18,9 @@ os.environ.setdefault("DATABASE_URL", "sqlite://")
 # tests use fake credentials, so that job must not run here or it hangs/
 # errors against the real network on every test that spins up a TestClient.
 os.environ.setdefault("INVESTMENT_SYNC_ENABLED", "false")
+# Same reasoning as above: the scenario_valuation_tick job must not start under
+# TestClient (would hit the network on Yahoo-backed price fetches).
+os.environ.setdefault("SCENARIO_TRACKING_ENABLED", "false")
 
 import pytest
 from sqlalchemy import create_engine

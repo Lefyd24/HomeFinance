@@ -26,14 +26,17 @@
     "tickerSearch": "Αναζήτηση τίτλων",
     "companyResearch": "Έρευνα εταιρείας",
     "tickerCompare": "Σύγκριση",
-    "investmentsOverview": "Επισκόπηση"
+    "investmentsOverview": "Επισκόπηση",
+    "backtest": "Δοκιμή σεναρίου",
+    "scenarioLibrary": "Σενάρια"
   },
   "groups": {
     "overview": "ΕΠΙΣΚΟΠΗΣΗ",
     "planning": "ΣΧΕΔΙΑΣΜΟΣ",
     "insights": "ΛΟΙΠΑ",
     "portfolio": "ΧΑΡΤΟΦΥΛΑΚΙΟ",
-    "market": "ΑΓΟΡΑ"
+    "market": "ΑΓΟΡΑ",
+    "sandbox": "ΔΟΚΙΜΕΣ"
   },
   "dock": {
     "home": "Αρχική",
@@ -42,7 +45,9 @@
     "news": "Ειδήσεις",
     "search": "Αναζήτηση",
     "research": "Έρευνα",
-    "compare": "Σύγκριση"
+    "compare": "Σύγκριση",
+    "backtest": "Δοκιμή",
+    "scenarios": "Σενάρια"
   },
   "investmentsSection": "Επενδύσεις",
   "backToDashboard": "Πίσω στον πίνακα",

@@ -7,6 +7,7 @@ from app.models import User
 from app.models.notification import NotificationSettings, NotificationRule
 from app.services import notification_service as ns
 from app.services.investment_sync_service import sync_all_investment_accounts
+from app.services.scenario_service import run_scenario_valuation_tick
 
 logger = logging.getLogger("app.notifications")
 _scheduler = None
@@ -101,6 +102,7 @@ def start_scheduler(app_settings, session_factory):
         app_settings.NOTIFICATIONS_ENABLED
         or app_settings.INVESTMENT_SYNC_ENABLED
         or app_settings.BANK_SYNC_ENABLED
+        or app_settings.SCENARIO_TRACKING_ENABLED
     )
     if not jobs_needed:
         logger.info("No scheduled jobs enabled; scheduler not started")
@@ -142,6 +144,19 @@ def start_scheduler(app_settings, session_factory):
         )
     else:
         logger.info("Bank sync disabled; bank_sync_tick not scheduled")
+
+    if app_settings.SCENARIO_TRACKING_ENABLED:
+        _scheduler.add_job(
+            lambda: run_scenario_valuation_tick(session_factory),
+            "cron",
+            hour=app_settings.SCENARIO_VALUATION_HOUR_UTC,
+            minute=30,
+            id="scenario_valuation_tick",
+            # Deliberately NOT next_run_time=now: nothing urgent about revaluing on
+            # boot, and a deploy loop would hammer Yahoo (see bank_sync_tick above).
+        )
+    else:
+        logger.info("Scenario tracking disabled; scenario_valuation_tick not scheduled")
 
     _scheduler.start()
     logger.info("Scheduler started with jobs: %s", [j.id for j in _scheduler.get_jobs()])

@@ -627,5 +627,253 @@
         "caveat": "A statement about the past, calculated from the sample shown — not a forecast."
       }
     }
+  },
+  "backtest": {
+    "title": "Backtest",
+    "description": "See what a hypothetical investment would have been worth, or track one from today forward.",
+    "form": {
+      "mode": "Mode",
+      "modeBacktest": "Backtest — what would have happened",
+      "modeForward": "Forward — track from today",
+      "ticker": "Ticker",
+      "tickerPlaceholder": "Choose a ticker",
+      "amount": "Amount",
+      "currency": "Currency",
+      "from": "From",
+      "to": "To",
+      "benchmark": "Benchmark",
+      "contribute": "Add regularly",
+      "contributionAmount": "Contribution amount",
+      "contributionFreq": {
+        "none": "None",
+        "weekly": "Weekly",
+        "monthly": "Monthly",
+        "quarterly": "Quarterly"
+      },
+      "advancedShow": "Advanced: trading cost, dividends",
+      "advancedHide": "Hide advanced options",
+      "costBps": "Trading cost",
+      "costFlat": "Flat fee per trade",
+      "dividends": "Dividends",
+      "dividendTreatment": {
+        "reinvest": "Reinvested",
+        "cash": "Paid as cash",
+        "ignore": "Price only (ignored)"
+      },
+      "withholding": "Withholding tax",
+      "run": "Run",
+      "running": "Running…",
+      "save": "Save to library",
+      "saving": "Saving…",
+      "saveName": "Name",
+      "saveNamePlaceholder": "e.g. MSFT since Jan 2022",
+      "saveNote": "Note (optional)"
+    },
+    "headline": {
+      "finalValue": "Value today",
+      "invested": "You invested",
+      "profit": "Profit",
+      "vsBenchmark": "vs {{symbol}}"
+    },
+    "sentence": {
+      "base": "{{amount}} invested in {{symbol}} on {{date}} would be worth {{finalValue}} today — a gain of {{returnPct}}, or {{cagr}} per year. The same money in the benchmark would be worth {{benchmarkValue}}.",
+      "baseNoBenchmark": "{{amount}} invested in {{symbol}} on {{date}} would be worth {{finalValue}} today — a gain of {{returnPct}}, or {{cagr}} per year.",
+      "drawdown": "Along the way you would have been down {{worst}} at the worst point, in {{worstDate}}.",
+      "recovery": "It took {{days}} days to get back to even.",
+      "twrMwrGap": "Time-weighted return ({{twr}}/year) and money-weighted return ({{mwr}}/year) differ by more than a percentage point — your money's timing mattered, which is normal with regular contributions and mostly luck."
+    },
+    "journey": {
+      "title": "The journey",
+      "investedLine": "Invested",
+      "viewToggle": "Chart view",
+      "viewValue": "Value",
+      "viewNormalized": "Growth of 100",
+      "showInvested": "Show invested line"
+    },
+    "tiles": {
+      "worstMoment": "The worst moment",
+      "riskAdjusted": "Risk-adjusted",
+      "cost": "What it cost",
+      "peak": "Peak",
+      "trough": "Trough",
+      "recovered": "Recovered",
+      "notRecovered": "Not yet recovered",
+      "noDrawdown": "No drawdown over this period.",
+      "exitCost": "If you sold today",
+      "dividendsReceived": "Dividends received"
+    },
+    "sensitivity": {
+      "title": "If you had entered a few weeks earlier or later",
+      "median": "median {{value}}",
+      "p25": "25th percentile",
+      "p75": "75th percentile",
+      "caption": "You picked one date. Entering anywhere in the month either side would have produced final values between {{min}} and {{max}}. Your date landed in the {{percentile}}th percentile of that range — a measurement, not a repeatable edge."
+    },
+    "honesty": {
+      "title": "Read this before you trust the numbers above",
+      "hindsight": {
+        "title": "Hindsight",
+        "body": "You chose these dates knowing what happened. This shows what did happen in this window, not what will happen next."
+      },
+      "survivorship": {
+        "title": "Survivorship bias",
+        "body": "You can only backtest instruments that still exist and are still listed. Companies that went to zero are not in this dataset. Research on the US market (Bessembinder, 2018) found the median listed stock underperformed Treasury bills over its lifetime — the winners you can still see are the survivors."
+      },
+      "costs": {
+        "title": "Cost realism",
+        "body": "This assumes 0.10% per transaction and fractional shares. It excludes taxes, currency conversion spreads, bid–ask spreads, and platform account fees."
+      },
+      "data": {
+        "title": "Data basis",
+        "body": "Prices are Yahoo Finance daily adjusted closes, which assume dividends are reinvested at the closing price on the ex-dividend date."
+      },
+      "deflated": {
+        "title": "Adjusted for how many tries this took",
+        "body": "You have run {{nTrials}} backtests. Even with no skill at all, the best of that many tries would be expected to show a Sharpe of about {{expected}} by luck alone. This one's is {{actual}}."
+      }
+    },
+    "warnings": {
+      "staleData": "The last available price is from {{date}} — this instrument may be delisted or suspended.",
+      "dataGaps": "There {{count, plural, one {is a gap} other {are # gaps}}} in the price history over this period (a halt or delisting) — the simulation runs across it.",
+      "fxApplied": "Part of this return reflects currency movement — the instrument trades in a different currency than this scenario.",
+      "periodTooShort": "This period is under 30 days, so annualised figures (CAGR, Sharpe, Sortino) would be meaningless and are hidden. Value and return are still shown above."
+    },
+    "empty": {
+      "title": "Run a backtest to see it here",
+      "description": "Pick a ticker, an amount and a start date — the result appears below the form.",
+      "noResult": "No result yet."
+    },
+    "errors": {
+      "generic": "Something went wrong running this scenario. Please try again."
+    },
+    "toasts": {
+      "saved": "Scenario saved to your library.",
+      "saveFailed": "Could not save this scenario. Please try again."
+    },
+    "footer": {
+      "dataSource": "Prices are Yahoo Finance daily adjusted closes. Figures are recomputed from the cached price history each time you view them."
+    },
+    "metrics": {
+      "twr": {
+        "label": "Time-weighted return",
+        "short": "How the investment performed, ignoring when you added money.",
+        "body": "Time-weighted return measures how the investment performed, ignoring when you added money. It is what a fund reports."
+      },
+      "mwr": {
+        "label": "Money-weighted return",
+        "short": "How you performed, including the timing of your contributions.",
+        "body": "Money-weighted return (IRR) measures how you performed, including the timing of your contributions. If it is lower than the time-weighted return, your money arrived at less fortunate moments — which is normal and mostly luck."
+      },
+      "deflatedSharpe": {
+        "label": "Deflated Sharpe ratio",
+        "short": "Sharpe, adjusted for how many scenarios you have tried.",
+        "body": "When you try many strategies, the best-looking one is partly lucky. This adjusts the score for how many scenarios you have run, so a good-looking result has to be genuinely good rather than the best of many tries."
+      },
+      "entrySensitivity": {
+        "label": "Entry-date sensitivity",
+        "short": "How much the result depends on the exact day you started.",
+        "body": "The same investment started a few weeks earlier or later. A wide spread means the result depends heavily on the exact day you picked — which you chose knowing what happened next."
+      },
+      "costDrag": {
+        "label": "Cost drag",
+        "short": "Cumulative trading fees, compounded.",
+        "body": "Trading fees, compounded. Small percentages become large amounts over long periods — this is the single most reliable way to improve returns, because unlike returns, costs are certain."
+      }
+    }
+  },
+  "scenarios": {
+    "title": "Scenario library",
+    "detailTitle": "Scenario",
+    "description": "Every hypothetical you've saved, backtest and forward, and how your track record holds up.",
+    "newScenario": "New scenario",
+    "kind": {
+      "backtest": "Backtest",
+      "forward": "Forward"
+    },
+    "status": {
+      "active": "Active",
+      "closed": "Closed",
+      "error": "Error"
+    },
+    "filters": {
+      "kind": {
+        "all": "All",
+        "backtest": "Backtests",
+        "forward": "Forward"
+      },
+      "status": {
+        "all": "All",
+        "active": "Active",
+        "closed": "Closed"
+      },
+      "sort": {
+        "newest": "Newest",
+        "best": "Best",
+        "worst": "Worst"
+      }
+    },
+    "trackRecord": {
+      "title": "Your track record",
+      "empty": "Close or grow a scenario past 30 days to start building a track record.",
+      "matured": "Matured scenarios",
+      "hitRate": "Beat the benchmark",
+      "hitRateValue": "{{beating}} of {{total}} ({{pct}}%)",
+      "meanExcess": "Mean excess return",
+      "medianExcess": "Median excess return",
+      "verdict": {
+        "too_few": "With only {{count}} matured scenarios, there isn't enough evidence yet to say anything about your stock-picking either way.",
+        "no_evidence_of_skill": "Across your {{count}} matured scenarios, {{beating}} beat the benchmark and the rest did not — a {{pct}}% hit rate. Average excess return: {{meanExcess}} percentage points. With this few scenarios, a {{pct}}% hit rate is well within what coin-flipping produces (p = {{pValue}}) — this is not yet enough to say anything about your stock-picking either way.",
+        "some_evidence": "Across your {{count}} matured scenarios, {{beating}} beat the benchmark and the rest did not — a {{pct}}% hit rate. Average excess return: {{meanExcess}} percentage points. That hit rate would be unusual from coin-flipping alone (p = {{pValue}}) — early evidence, not proof."
+      }
+    },
+    "card": {
+      "since": "since {{date}}",
+      "vsBenchmark": "vs benchmark",
+      "error": "This scenario could not be revalued."
+    },
+    "empty": {
+      "title": "No scenarios yet",
+      "description": "It costs nothing to create a forward scenario, and in six months it will tell you something true about your instincts.",
+      "exampleOne": {
+        "name": "MSFT since Jan 2022",
+        "detail": "Backtest · +68.2%"
+      },
+      "exampleTwo": {
+        "name": "VOO, tracked from today",
+        "detail": "Forward · updated daily"
+      }
+    },
+    "detail": {
+      "subtitle": "{{symbol}} · since {{date}}",
+      "lockedNotice": "Entry terms are locked — that's what makes the track record meaningful. Create a new scenario to try different terms.",
+      "note": "Note",
+      "notePlaceholder": "Why did you set this scenario up? What were you expecting?",
+      "saveNote": "Save note",
+      "noteSaved": "Note saved.",
+      "noteSaveFailed": "Could not save the note. Please try again.",
+      "rebuild": "Rebuild",
+      "rebuilt": "Scenario rebuilt from the latest prices.",
+      "close": "Close",
+      "reopen": "Reopen",
+      "closed": "Scenario closed.",
+      "reopened": "Scenario reopened.",
+      "delete": "Delete",
+      "deleted": "Scenario deleted.",
+      "actionFailed": "Something went wrong. Please try again.",
+      "deleteConfirm": {
+        "title": "Delete \"{{name}}\"?",
+        "description": "This removes the scenario and its valuation history. This can't be undone.",
+        "confirm": "Delete scenario"
+      },
+      "errorTitle": "This scenario couldn't be revalued",
+      "noResultTitle": "No result available yet.",
+      "dailyTable": "Daily valuation history",
+      "table": {
+        "date": "Date",
+        "value": "Value",
+        "invested": "Invested",
+        "benchmark": "Benchmark"
+      }
+    }
   }
 }
