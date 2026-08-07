@@ -98,7 +98,7 @@
     var(--aurora-color-4) 25%,
     var(--aurora-color-5) 30%
   );
-  --aurora-opacity: 0.4;
+  --aurora-opacity: 0.6;
 }
 
 /* Dark keeps the cerulean family but at low chroma — a quiet slate-blue room,
@@ -160,9 +160,9 @@
   --tabs-active-border: color-mix(in oklch, var(--primary) 35%, var(--border));
   --tabs-inactive-foreground: oklch(84% 0.014 222);
 
-  --aurora-color-2: color-mix(in oklch, oklch(72% 0.11 205) 40%, var(--background));
-  --aurora-color-4: color-mix(in oklch, oklch(78% 0.05 80) 40%, var(--background));
-  --aurora-opacity: 0.22;
+  --aurora-color-2: color-mix(in oklch, oklch(77.212% 0.12314 205.011) 40%, var(--background));
+  --aurora-color-4: color-mix(in oklch, oklch(83.737% 0.08356 79.39) 40%, var(--background));
+  --aurora-opacity: 0.62;
 }
 
 @theme inline {
