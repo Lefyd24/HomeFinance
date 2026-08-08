@@ -213,6 +213,16 @@ export function HoldingDetailCard({
                 </Link>
               </Button>
               <Button asChild size="sm" variant="secondary">
+                <Link to={`/investments/technical?symbol=${encodeURIComponent(position.symbol)}`}>
+                  <HugeiconsIcon
+                    icon={ChartLineData01Icon}
+                    strokeWidth={2}
+                    data-icon="inline-start"
+                  />
+                  {t('technical.title')}
+                </Link>
+              </Button>
+              <Button asChild size="sm" variant="secondary">
                 <Link to={`/investments/news?symbol=${encodeURIComponent(position.symbol)}`}>
                   <HugeiconsIcon icon={News01Icon} strokeWidth={2} data-icon="inline-start" />
                   {t('news.title')}

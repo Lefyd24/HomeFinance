@@ -268,6 +268,79 @@ def get_price_history(
     return result
 
 
+def _download_one_raw(symbol: str, fetch_start: date, fetch_end: date) -> pd.DataFrame:
+    """Like _download_one but auto_adjust=False — unadjusted OHLC, the prices that actually
+    traded. Used only for technical analysis (support/resistance, the price chart itself),
+    never for return metrics — see docs/investments/03-technical-analysis.md Part 1.
+    """
+    try:
+        frame = yf.download(
+            symbol,
+            start=fetch_start.isoformat(),
+            end=(fetch_end + timedelta(days=1)).isoformat(),
+            interval="1d",
+            auto_adjust=False,
+            actions=False,
+            progress=False,
+            threads=False,
+            timeout=20,
+        )
+    except Exception as exc:  # noqa: BLE001
+        logger.exception("yfinance raw download failed for %s", symbol)
+        raise MarketDataUnavailable(symbol, str(exc)) from exc
+
+    if frame is None or frame.empty:
+        return pd.DataFrame()
+
+    if isinstance(frame.columns, pd.MultiIndex):
+        try:
+            frame = frame.xs(symbol, axis=1, level=-1)
+        except KeyError:
+            frame.columns = frame.columns.get_level_values(0)
+
+    frame = frame.rename(columns=str.lower)
+    return frame
+
+
+def _raw_cache_key(symbol: str) -> str:
+    """`-` is in the symbol charset (see _SYMBOL_RE); `::` is not, so this stays a valid
+    `MarketPriceBar.symbol` value under the same (symbol, date) unique constraint."""
+    return f"{symbol}-RAW"
+
+
+def get_price_history_raw(
+    symbols: Sequence[str],
+    start: date,
+    end: date,
+    *,
+    db: Session,
+    refresh: bool = False,
+) -> dict[str, pd.DataFrame]:
+    """Unadjusted daily OHLCV per symbol — the prices that actually traded, not
+    split/dividend-adjusted. Cached under a distinct `f"{symbol}-RAW"` key so it never
+    collides with the adjusted series `get_price_history` maintains."""
+    result: dict[str, pd.DataFrame] = {}
+    normalized_symbols = [_normalize_symbol(s) for s in symbols]
+
+    for symbol in normalized_symbols:
+        cache_symbol = _raw_cache_key(symbol)
+        with _symbol_lock(cache_symbol):
+            cached_first, cached_last = _cached_range(db, cache_symbol)
+            if refresh or not _coverage_sufficient(cached_first, cached_last, start, end):
+                fstart = _fetch_start(cached_first, cached_last, start)
+                frame = _download_one_raw(symbol, fstart, end)
+                meta = db.query(MarketSymbolMeta).filter(MarketSymbolMeta.symbol == symbol).first()
+                currency = meta.currency if meta else None
+                _upsert_bars(db, cache_symbol, frame, currency)
+
+        frame = _read_window(db, cache_symbol, start, end)
+        if frame.empty:
+            raise SymbolNotFound(symbol)
+        result[symbol] = frame
+
+    return result
+
+
 def _fetch_and_store_one(db: Session, symbol: str, start: date, end: date) -> None:
     with _symbol_lock(symbol):
         cached_first, cached_last = _cached_range(db, symbol)

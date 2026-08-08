@@ -165,3 +165,158 @@ class SavedComparisonResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+# ---------------------------------------------------------------------------
+# Technical analysis (docs/investments/03-technical-analysis.md Part 5)
+# ---------------------------------------------------------------------------
+
+
+class PriceBarSchema(BaseModel):
+    date: date
+    open: float
+    high: float
+    low: float
+    close: float
+    volume: Optional[float] = None
+
+
+class TechnicalMeta(BaseModel):
+    symbol: str
+    name: Optional[str] = None
+    quote_type: Optional[str] = None
+    currency: Optional[str] = None
+    period: str
+    last_bar_date: Optional[date] = None
+    stale: bool = False
+    price_basis: str = "unadjusted"
+    bars: int = 0
+    warnings: list[str] = Field(default_factory=list)
+
+
+class LevelZoneSchema(BaseModel):
+    kind: str  # "support" | "resistance"
+    low: float
+    high: float
+    centre: float
+    touches: int
+    last_touch: Optional[date] = None
+    score: float
+    distance_pct: float
+
+
+class CrossoverSchema(BaseModel):
+    date: date
+    kind: str  # "golden" | "death"
+    fast: int
+    slow: int
+
+
+class VarianceRatioSchema(BaseModel):
+    q: int
+    vr: float
+    z: float
+    p: float
+
+
+class RegimeBlock(BaseModel):
+    trend: str  # "up" | "down" | "sideways"
+    adx: Optional[float] = None
+    variance_ratio: list[VarianceRatioSchema] = Field(default_factory=list)
+    vol_annualized: Optional[float] = None
+    vol_percentile_3y: Optional[float] = None
+    vol_regime: str = "normal"  # "low" | "normal" | "elevated"
+    bollinger_squeeze: bool = False
+    squeeze_percentile: Optional[float] = None
+
+
+class SignalSchema(BaseModel):
+    id: str
+    state: str
+    value: Optional[float] = None
+    detail_key: str
+    direction: int  # -1 | 0 | +1, confluence count only
+    confidence: str  # "low" | "medium" | "high"
+
+
+class ConfluenceBlock(BaseModel):
+    positive: int
+    negative: int
+    neutral: int
+    note_key: str
+
+
+class TechnicalResponse(BaseModel):
+    meta: TechnicalMeta
+    price: list[PriceBarSchema] = Field(default_factory=list)
+    # Row-per-date, one dict per bar carrying every overlay/pane series that has
+    # a value on that date (recharts consumes this directly as chart `data`,
+    # matching the `series.normalized`/`series.drawdown` convention in
+    # ComparisonResponse rather than plan 03's literal per-field parallel arrays).
+    overlays: list[dict] = Field(default_factory=list)
+    panes: list[dict] = Field(default_factory=list)
+    levels: list[LevelZoneSchema] = Field(default_factory=list)
+    crossovers: list[CrossoverSchema] = Field(default_factory=list)
+    regime: RegimeBlock
+    signals: list[SignalSchema] = Field(default_factory=list)
+    confluence: ConfluenceBlock
+
+
+class SimPercentileRow(BaseModel):
+    day: int
+    p5: float
+    p10: float
+    p25: float
+    p50: float
+    p75: float
+    p90: float
+    p95: float
+
+
+class HistogramBin(BaseModel):
+    bin_low: float
+    bin_high: float
+    count: int
+
+
+class TerminalBlock(BaseModel):
+    p5: float
+    p10: float
+    p25: float
+    p50: float
+    p75: float
+    p90: float
+    p95: float
+    mean: float
+    histogram: list[HistogramBin] = Field(default_factory=list)
+
+
+class ProbabilitiesBlock(BaseModel):
+    p_above_today: float
+    p_above_target: Optional[float] = None
+    p_drawdown_20: float
+    expected_shortfall_5: float
+
+
+class CalibrationBlock(BaseModel):
+    lookback_start: date
+    lookback_end: date
+    n_observations: int
+    annualized_vol_used: float
+    vol_percentile_vs_3y: Optional[float] = None
+    drift_used: float
+    drift_se: Optional[float] = None
+    mean_block: Optional[int] = None
+    model: str
+    seed: int
+
+
+class SimulationResponse(BaseModel):
+    symbol: str
+    horizon_days: int
+    last_price: float
+    last_bar_date: date
+    percentiles: list[SimPercentileRow] = Field(default_factory=list)
+    terminal: TerminalBlock
+    probabilities: ProbabilitiesBlock
+    calibration: CalibrationBlock

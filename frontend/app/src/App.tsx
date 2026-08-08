@@ -23,6 +23,7 @@ import { MarketNewsPage } from './investments/MarketNewsPage'
 import { TickerSearchPage } from './investments/TickerSearchPage'
 import { CompanyResearchPage } from './investments/CompanyResearchPage'
 import { ComparisonPage } from './investments/ComparisonPage'
+import { TechnicalPage } from './investments/TechnicalPage'
 import { BacktestPage } from './investments/BacktestPage'
 import { ScenarioLibraryPage } from './investments/ScenarioLibraryPage'
 import { ScenarioDetailPage } from './investments/ScenarioDetailPage'
@@ -75,6 +76,7 @@ function App() {
           <Route path="/investments/search" element={<TickerSearchPage />} />
           <Route path="/investments/research" element={<CompanyResearchPage />} />
           <Route path="/investments/compare" element={<ComparisonPage />} />
+          <Route path="/investments/technical" element={<TechnicalPage />} />
           <Route path="/investments/backtest" element={<BacktestPage />} />
           <Route path="/investments/scenarios" element={<ScenarioLibraryPage />} />
           <Route path="/investments/scenarios/:id" element={<ScenarioDetailPage />} />

@@ -28,7 +28,8 @@
     "tickerCompare": "Σύγκριση",
     "investmentsOverview": "Επισκόπηση",
     "backtest": "Δοκιμή σεναρίου",
-    "scenarioLibrary": "Σενάρια"
+    "scenarioLibrary": "Σενάρια",
+    "technicalAnalysis": "Τεχνική ανάλυση"
   },
   "groups": {
     "overview": "ΕΠΙΣΚΟΠΗΣΗ",
@@ -47,7 +48,8 @@
     "research": "Έρευνα",
     "compare": "Σύγκριση",
     "backtest": "Δοκιμή",
-    "scenarios": "Σενάρια"
+    "scenarios": "Σενάρια",
+    "technical": "Τεχνικά"
   },
   "investmentsSection": "Επενδύσεις",
   "backToDashboard": "Πίσω στον πίνακα",

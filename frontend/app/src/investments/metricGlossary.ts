@@ -47,6 +47,15 @@ export type MetricId =
   | 'deflatedSharpe'
   | 'entrySensitivity'
   | 'costDrag'
+  | 'rsi'
+  | 'macd'
+  | 'bollinger'
+  | 'atr'
+  | 'obv'
+  | 'adx'
+  | 'varianceRatio'
+  | 'monteCarlo'
+  | 'supportResistance'
 
 export interface GlossaryEntry {
   labelKey: string
@@ -75,6 +84,17 @@ function backtestEntry(id: MetricId): GlossaryEntry {
   return {
     labelKey: `${base}.label`,
     shortKey: `${base}.short`,
+    bodyKey: `${base}.body`,
+    sourceKey: 'compare.source.computed',
+  }
+}
+
+/** Same registry mechanism, `technical.glossary.<id>` copy — see docs/investments/03-technical-analysis.md §6.5. */
+function technicalEntry(id: MetricId): GlossaryEntry {
+  const base = `technical.glossary.${id}`
+  return {
+    labelKey: `${base}.label`,
+    shortKey: `${base}.label`,
     bodyKey: `${base}.body`,
     sourceKey: 'compare.source.computed',
   }
@@ -120,4 +140,13 @@ export const GLOSSARY: Record<MetricId, GlossaryEntry> = {
   deflatedSharpe: backtestEntry('deflatedSharpe'),
   entrySensitivity: backtestEntry('entrySensitivity'),
   costDrag: backtestEntry('costDrag'),
+  rsi: technicalEntry('rsi'),
+  macd: technicalEntry('macd'),
+  bollinger: technicalEntry('bollinger'),
+  atr: technicalEntry('atr'),
+  obv: technicalEntry('obv'),
+  adx: technicalEntry('adx'),
+  varianceRatio: technicalEntry('varianceRatio'),
+  monteCarlo: technicalEntry('monteCarlo'),
+  supportResistance: technicalEntry('supportResistance'),
 }

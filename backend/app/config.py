@@ -135,6 +135,13 @@ class Settings(BaseSettings):
     ANALYTICS_MAX_COMPARE_SYMBOLS: int = 5
     # Staleness before a cached symbol's tail is refetched from Yahoo.
     MARKET_DATA_CACHE_TTL_HOURS: int = 12
+
+    # Technical analysis & Monte Carlo simulation (docs/investments/03-technical-analysis.md)
+    TECHNICAL_ANALYSIS_ENABLED: bool = True
+    SIMULATION_DEFAULT_PATHS: int = 10_000
+    SIMULATION_MAX_PATHS: int = 20_000
+    SIMULATION_MAX_HORIZON_DAYS: int = 504
+    SIMULATION_DEFAULT_LOOKBACK_DAYS: int = 756
     MARKET_DATA_MAX_HISTORY_YEARS: int = 15
 
     # Backtesting & forward sandbox (docs/investments/02-backtesting-sandbox.md)

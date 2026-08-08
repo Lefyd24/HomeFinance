@@ -28,7 +28,8 @@
     "tickerCompare": "Compare",
     "investmentsOverview": "Overview",
     "backtest": "Backtest",
-    "scenarioLibrary": "Scenarios"
+    "scenarioLibrary": "Scenarios",
+    "technicalAnalysis": "Technical analysis"
   },
   "groups": {
     "overview": "Overview",
@@ -47,7 +48,8 @@
     "research": "Research",
     "compare": "Compare",
     "backtest": "Backtest",
-    "scenarios": "Scenarios"
+    "scenarios": "Scenarios",
+    "technical": "Technicals"
   },
   "investmentsSection": "Investments",
   "backToDashboard": "Back to Dashboard",

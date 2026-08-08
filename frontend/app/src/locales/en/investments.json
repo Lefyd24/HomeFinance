@@ -257,7 +257,8 @@
       "lastPrice": "Last price",
       "dayChange": "Day",
       "actions": ""
-    }
+    },
+    "viewTechnical": "Technicals"
   },
   "providers": {
     "label": "Data source",
@@ -297,7 +298,8 @@
       "weekLow": "52-week low",
       "volume": "Volume",
       "avgVolume": "Avg volume"
-    }
+    },
+    "viewTechnical": "Technical analysis"
   },
   "edit": {
     "title": "Edit investment account",
@@ -874,6 +876,269 @@
         "invested": "Invested",
         "benchmark": "Benchmark"
       }
+    }
+  },
+  "technical": {
+    "title": "Technical Analysis",
+    "description": "Indicators and a distributional forward view — never a buy or sell signal.",
+    "periods": {
+      "3m": "3M",
+      "6m": "6M",
+      "1y": "1Y",
+      "2y": "2Y",
+      "5y": "5Y"
+    },
+    "loading": "Loading technical data…",
+    "error": "Could not load technical data for {{symbol}}.",
+    "regime": {
+      "caption": "This is the context every indicator below should be read in.",
+      "trendLabel": "Trend",
+      "trendUp": "Up",
+      "trendDown": "Down",
+      "trendSideways": "Sideways",
+      "strengthLabel": "Strength",
+      "strengthWeak": "ADX {{adx}} — weak / sideways",
+      "strengthModerate": "ADX {{adx}} — moderate",
+      "strengthStrong": "ADX {{adx}} — strong",
+      "volatilityLabel": "Volatility",
+      "volatilityCalm": "{{vol}} — {{percentile}}th percentile, calm",
+      "volatilityNormal": "{{vol}} — {{percentile}}th percentile, normal",
+      "volatilityElevated": "{{vol}} — {{percentile}}th percentile, elevated",
+      "volatilityUnknown": "{{vol}}",
+      "randomWalkLabel": "Random-walk test",
+      "randomWalkTrending": "Trending (p={{p}})",
+      "randomWalkMeanReverting": "Mean-reverting (p={{p}})",
+      "randomWalkInconclusive": "Indistinguishable from random walk (p={{p}})",
+      "squeezeLabel": "Bollinger",
+      "squeezeYes": "Squeeze ({{percentile}}th percentile bandwidth)",
+      "squeezeNo": "No squeeze",
+      "heroTitle": "Market Regime",
+      "heroBadge": {
+        "strongUp": "Strong Uptrend",
+        "up": "Uptrend",
+        "sideways": "Sideways / Choppy",
+        "down": "Downtrend",
+        "strongDown": "Strong Downtrend"
+      },
+      "summary": "{{symbol}} is in {{trendPhrase}} with {{volPhrase}}. {{weightHint}}",
+      "weightTrending": "Trend-following signals carry more weight than overbought/oversold signals in this environment.",
+      "weightRanging": "Overbought/oversold signals have historically been more meaningful than trend signals in this sideways environment.",
+      "kpiAdxLabel": "Trend strength (ADX)",
+      "kpiVolatilityLabel": "Annualized volatility",
+      "kpiVarianceLabel": "Random-walk test",
+      "kpiSqueezeLabel": "Bollinger squeeze"
+    },
+    "price": {
+      "title": "Price",
+      "candles": "Candles",
+      "line": "Line",
+      "legendHint": "Click a series in the legend to show or hide it."
+    },
+    "levels": {
+      "title": "Key price levels",
+      "support": "Support",
+      "resistance": "Resistance",
+      "touches": "{{count}} touches",
+      "distanceAbove": "{{pct}} above",
+      "distanceBelow": "{{pct}} below",
+      "empty": "Not enough confirmed pivots yet to identify a level.",
+      "caption": "Price areas where this instrument has repeatedly reversed. They are not floors or ceilings — they break regularly.",
+      "ladderTitle": "Price ladder",
+      "currentPriceLabel": "Current price"
+    },
+    "crossovers": {
+      "golden": "Golden cross",
+      "death": "Death cross"
+    },
+    "panes": {
+      "rsi": "Momentum — RSI",
+      "macd": "Momentum — MACD",
+      "obv": "Volume — OBV",
+      "rsiOverboughtMuted": "Overbought/oversold lines are muted — less meaningful in a strong trend.",
+      "obvDivergenceHint": "Shaded range: price and volume flow have been moving in different directions.",
+      "currentLabel": "Current"
+    },
+    "signals": {
+      "title": "What the indicators are saying together",
+      "confluence": "{{positive}} lean positive · {{negative}} lean negative · {{neutral}} neutral",
+      "footer": "Professional analysts look for agreement across several indicators. Disagreement is information too — it usually means no clear signal.",
+      "ids": {
+        "priceVsSma200": "Price vs SMA200",
+        "smaCross": "SMA50 vs SMA200",
+        "rsi": "RSI (14)",
+        "macd": "MACD histogram",
+        "bollinger": "%B (Bollinger)",
+        "obv": "OBV slope",
+        "adx": "Trend strength (ADX)"
+      },
+      "states": {
+        "bullish": "Bullish-leaning",
+        "bearish": "Bearish-leaning",
+        "neutral": "Neutral",
+        "context": "Context"
+      },
+      "detail": {
+        "priceVsSma200": {
+          "above": "Price is above its 200-day moving average, a conventional (if crude) long-term uptrend marker.",
+          "below": "Price is below its 200-day moving average, a conventional (if crude) long-term downtrend marker.",
+          "neutral": "Price is within 1% of its 200-day moving average — too close to call a clear trend from this alone."
+        },
+        "smaCross": {
+          "golden": "The 50-day average is above the 200-day average (a “golden cross” regime) — a conventional bullish trend marker.",
+          "death": "The 50-day average is below the 200-day average (a “death cross” regime) — a conventional bearish trend marker.",
+          "neutral": "The 50- and 200-day averages are too close to call a clear regime."
+        },
+        "rsi": {
+          "trending_overbought": "RSI is {{rsi}}, above the conventional 70 “overbought” line. But ADX is {{adx}}, which says this instrument is in a strong trend — and in strong trends RSI routinely stays above 70 for weeks or months. In this context an elevated RSI is much weaker evidence than it would be in a sideways market.",
+          "ranging_overbought": "RSI is {{rsi}} and ADX is {{adx}}, meaning price has been moving sideways rather than trending. Overbought readings have historically been more meaningful in range-bound conditions than in trending ones — but ‘more meaningful’ is not the same as reliable.",
+          "trending_oversold": "RSI is {{rsi}}, below the conventional 30 “oversold” line, while ADX ({{adx}}) shows a strong trend in place — in a strong downtrend RSI can stay depressed for a long time.",
+          "ranging_oversold": "RSI is {{rsi}} and ADX is {{adx}} (range-bound). Oversold readings have historically carried a little more weight in sideways conditions.",
+          "random_walk": "Statistically, this instrument's recent price movements are indistinguishable from a random walk (variance-ratio test, p={{p}}). Trend-following indicators assume the opposite. Treat what follows as description, not prediction.",
+          "neutral": "RSI is {{rsi}}, within the conventional 30–70 neutral band."
+        },
+        "macd": {
+          "bullish": "The MACD histogram is positive and rising — short-term momentum has turned upward relative to the longer term. This is a lagging measure by construction.",
+          "bearish": "The MACD histogram is negative and falling — short-term momentum has turned downward relative to the longer term. This is a lagging measure by construction.",
+          "neutral": "The MACD histogram is close to zero — no clear momentum shift either way right now."
+        },
+        "bollinger": {
+          "above": "Price is above the upper Bollinger Band (%B > 1). Price spends about 95% of its time inside the bands, so this is uncommon but not exceptional on its own.",
+          "below": "Price is below the lower Bollinger Band (%B < 0).",
+          "inside": "Price is within the Bollinger Bands (0 ≤ %B ≤ 1), where it spends most of its time."
+        },
+        "obv": {
+          "divergence_bearish": "Price has been making new highs while on-balance volume has not — the move looks like it is happening on thinner participation than the last one.",
+          "divergence_bullish": "Price has been making new lows while on-balance volume has not fallen with it — selling pressure looks like it may be thinning.",
+          "confirming": "On-balance volume is moving in the same direction as price, with no divergence detected over the trailing window.",
+          "unavailable": "Volume data isn't available for this instrument, so OBV can't be computed."
+        },
+        "adx": {
+          "context": "ADX measures trend strength, not direction. At {{adx}} this instrument is {{state}} — use it to weigh how much to trust the trend-following indicators above."
+        }
+      },
+      "confluenceHeading": "{{positive}} bullish · {{negative}} bearish · {{neutral}} neutral",
+      "groups": {
+        "trend": "Trend signals",
+        "momentum": "Momentum signals",
+        "volume": "Volume signals"
+      },
+      "lowConfidenceNote": "Lower confidence: short history, an insignificant random-walk test, or thin volume weakens this reading."
+    },
+    "monteCarlo": {
+      "title": "Possible paths from here",
+      "horizon": {
+        "30d": "30d",
+        "90d": "90d",
+        "180d": "180d",
+        "1y": "1y"
+      },
+      "modelLabel": "Model",
+      "models": {
+        "bootstrap": "Historical patterns (recommended)",
+        "gbm": "Simple bell curve (textbook)",
+        "student_t": "Fat-tailed bell curve"
+      },
+      "modelHints": {
+        "bootstrap": "Resamples blocks of this instrument's own historical daily moves, which preserves real patterns of calm and turbulent stretches.",
+        "gbm": "The textbook random-walk model: returns drawn from a normal distribution. Its tails are visibly thinner than what markets actually produce.",
+        "student_t": "A normal-shaped model with fatter tails than the plain bell curve, closer to how markets actually behave but still not a resampling of real history."
+      },
+      "driftLabel": "Drift",
+      "drifts": {
+        "zero": "No drift",
+        "historical": "Historical average",
+        "risk_free": "Risk-free rate"
+      },
+      "sentenceIntro": "Based on how {{symbol}} has actually behaved over the past {{years}} years, in {{horizon}} trading days:",
+      "bulletMiddleHalf": "the middle half of simulated outcomes land between {{low}} and {{high}}",
+      "bulletOneIn20Below": "about 1 in 20 simulations end below {{value}}",
+      "bulletAboveToday": "{{pct}} of paths finish above today's price",
+      "bulletDrawdown20": "in {{pct}} of paths, the price fell more than 20% at some point along the way",
+      "calibrationNote": "This is not a forecast. It resamples {{symbol}}'s actual daily moves from {{start}} to {{end}} in blocks, which preserves its real pattern of calm and turbulent stretches. It assumes {{driftNote}}. It cannot know about anything that has not happened before — an earnings surprise, a takeover, a market crash of a new kind.",
+      "calibrationVolNote": " Current volatility is in the {{percentile}}th percentile of the last three years, so if conditions return to normal, the real range would be wider than shown.",
+      "driftNoteZero": "no expected drift, so it says nothing about direction",
+      "driftNoteHistorical": "a historical drift of {{drift}}/yr (±{{se}} standard error — treat the direction with real skepticism)",
+      "driftNoteRiskFree": "drift at the risk-free rate, the risk-neutral convention",
+      "targetLabel": "Target price",
+      "probAboveTarget": "{{pct}} of paths finish above {{target}}",
+      "settingsLabel": "Simulation Settings",
+      "todayLabel": "Today",
+      "kpiMiddleHalfLabel": "50% of outcomes",
+      "kpiWorstCaseLabel": "5% worst case",
+      "kpiAboveTodayLabel": "Probability above today",
+      "kpiDrawdownLabel": "Probability of 20%+ drawdown"
+    },
+    "outcomeHistogram": {
+      "title": "Where it could end up",
+      "xAxisLabel": "Simulated price at horizon",
+      "meanLabel": "Mean"
+    },
+    "glossary": {
+      "rsi": {
+        "label": "RSI",
+        "body": "A 0–100 momentum gauge comparing recent gains to recent losses. Above 70 is conventionally called 'overbought', below 30 'oversold'. These are conventions, not laws — in a strong trend RSI can sit above 70 for months while the price keeps rising. Read it alongside the trend strength shown above."
+      },
+      "macd": {
+        "label": "MACD",
+        "body": "The gap between a fast and a slow moving average. When the bars flip from below to above zero, short-term momentum has turned upward relative to the longer term. It is a lagging measure by construction — it describes what has already changed."
+      },
+      "bollinger": {
+        "label": "Bollinger Bands",
+        "body": "A moving average with bands two standard deviations above and below. Price spends about 95% of its time inside the bands, so touching a band is common, not exceptional. When the bands squeeze tight, the instrument has been unusually calm — and calm periods have historically been more often followed by large moves, in either direction."
+      },
+      "atr": {
+        "label": "ATR",
+        "body": "The typical size of a day's price range, in currency. An ATR of 4.20 means a 4 move on a given day is ordinary, not news. Traders use it to size stop-losses; long-term investors can use it to calibrate what 'normal' looks like."
+      },
+      "obv": {
+        "label": "OBV",
+        "body": "Adds the day's volume when price closes up and subtracts it when price closes down. If price is making new highs while this line is not, the move is happening on thinner trading than the previous one."
+      },
+      "adx": {
+        "label": "ADX",
+        "body": "Measures how strongly price is trending, without saying in which direction. Below 20 means sideways; above 25 means a real trend is in place. It is the context that decides how much weight to give the other indicators."
+      },
+      "varianceRatio": {
+        "label": "Variance ratio test",
+        "body": "A statistical test of whether price movements have any memory. If the result is not significant, this instrument's recent movements are indistinguishable from coin flips — which is what most academic finance predicts, and it means trend indicators have little to work with here."
+      },
+      "monteCarlo": {
+        "label": "Monte Carlo simulation",
+        "body": "Thousands of simulated futures built by reshuffling this instrument's own historical daily moves. It shows the range of what its past behaviour makes plausible — not a prediction. The width of the fan is the message."
+      },
+      "supportResistance": {
+        "label": "Support & resistance",
+        "body": "Price areas where this instrument has repeatedly stopped and turned around. They matter because other market participants watch them and place orders around them, which can make them partly self-fulfilling. They are not floors or ceilings — they break regularly."
+      }
+    },
+    "states": {
+      "insufficientHistory": "Needs at least 200 days of history — this instrument has {{bars}}.",
+      "noVolume": "Volume data isn't available for this instrument, so on-balance volume isn't shown.",
+      "crypto": "Crypto trades 24/7, so daily-bar indicators here behave a little differently than for stocks."
+    },
+    "footer": {
+      "priceBasis": "The price chart, moving averages and levels use unadjusted prices — the prices that actually traded — while volatility and the simulation use dividend-adjusted total-return prices.",
+      "disclaimer": "Nothing on this page is investment advice, a recommendation, or a buy/sell signal."
+    },
+    "sections": {
+      "indicators": "Technical Indicators",
+      "levels": "Support & Resistance",
+      "signals": "What the Indicators Are Saying Together",
+      "forward": "Forward Simulation",
+      "summary": "Executive Summary"
+    },
+    "summary": {
+      "title": "Executive Summary",
+      "leansBullish": "Overall, technicals lean bullish for {{symbol}}.",
+      "leansBearish": "Overall, technicals lean bearish for {{symbol}}.",
+      "mixed": "Overall, technicals are mixed for {{symbol}}.",
+      "regimeClause": "The regime is {{regimeBadge}}.",
+      "signalClause": "{{positive}} of {{total}} indicators lean positive.",
+      "monteCarloClause": "The {{horizon}}-day simulation puts the middle half of outcomes between {{low}} and {{high}}."
+    },
+    "warnings": {
+      "shortHistoryTitle": "Limited history",
+      "cryptoTitle": "24/7 market"
     }
   }
 }

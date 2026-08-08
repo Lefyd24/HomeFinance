@@ -32,9 +32,11 @@ from app.schemas import (
     PortfolioSnapshotResponse,
     SavedComparisonCreate,
     SavedComparisonResponse,
+    SimulationResponse,
     SymbolSearchResult,
+    TechnicalResponse,
 )
-from app.services import comparison_service
+from app.services import comparison_service, technical_service
 from app.services.investment_sync_service import (
     create_credential,
     get_provider_for_account,
@@ -49,6 +51,8 @@ from app.utils.security import get_current_user_authenticated
 router = APIRouter(prefix="/investments", tags=["Investments"])
 
 _compare_limiter = SlidingWindowRateLimiter(max_hits=20, window_seconds=5 * 60)
+_technical_limiter = SlidingWindowRateLimiter(max_hits=60, window_seconds=5 * 60)
+_simulate_limiter = SlidingWindowRateLimiter(max_hits=20, window_seconds=5 * 60)
 
 MARKET_DATA_PROVIDERS = ("yahoo", "freedom24", "binance")
 DEFAULT_MARKET_DATA_PROVIDER = "yahoo"
@@ -686,3 +690,77 @@ def delete_saved_comparison(
     db.delete(row)
     db.commit()
     return None
+
+
+# ---------------------------------------------------------------------------
+# Technical analysis (docs/investments/03-technical-analysis.md)
+# ---------------------------------------------------------------------------
+
+
+@router.get("/technical/{symbol}", response_model=TechnicalResponse)
+def get_technical(
+    symbol: str,
+    request: Request,
+    period: str = Query("1y"),
+    current_user: User = Depends(get_current_user_authenticated),
+    db: Session = Depends(get_db),
+):
+    if not settings.TECHNICAL_ANALYSIS_ENABLED:
+        raise HTTPException(status_code=status.HTTP_501_NOT_IMPLEMENTED, detail="Technical analysis is disabled.")
+
+    allowed, retry_after = _technical_limiter.check(f"user:{current_user.id}")
+    if not allowed:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail="Too many technical-analysis requests. Please wait before trying again.",
+            headers={"Retry-After": str(retry_after)},
+        )
+
+    try:
+        return technical_service.get_technical(db, symbol, period=period)
+    except SymbolNotFound as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Unknown symbol: {exc.symbol}")
+    except MarketDataUnavailable as exc:
+        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=str(exc))
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc))
+
+
+@router.get("/simulate/{symbol}", response_model=SimulationResponse)
+def simulate_technical(
+    symbol: str,
+    request: Request,
+    horizon: int = Query(30, ge=1, le=settings.SIMULATION_MAX_HORIZON_DAYS),
+    model: str = Query("bootstrap"),
+    drift: str = Query("zero"),
+    paths: Optional[int] = Query(None, ge=100, le=settings.SIMULATION_MAX_PATHS),
+    target_price: Optional[float] = Query(None, gt=0),
+    current_user: User = Depends(get_current_user_authenticated),
+    db: Session = Depends(get_db),
+):
+    if not settings.TECHNICAL_ANALYSIS_ENABLED:
+        raise HTTPException(status_code=status.HTTP_501_NOT_IMPLEMENTED, detail="Technical analysis is disabled.")
+
+    if model not in ("bootstrap", "gbm", "student_t"):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Unknown model: {model}")
+    if drift not in ("zero", "historical", "risk_free"):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Unknown drift mode: {drift}")
+
+    allowed, retry_after = _simulate_limiter.check(f"user:{current_user.id}")
+    if not allowed:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail="Too many simulation requests. Please wait before trying again.",
+            headers={"Retry-After": str(retry_after)},
+        )
+
+    try:
+        return technical_service.simulate_technical(
+            db, symbol, horizon, model=model, drift_mode=drift, n_paths=paths, target_price=target_price
+        )
+    except SymbolNotFound as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Unknown symbol: {exc.symbol}")
+    except MarketDataUnavailable as exc:
+        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=str(exc))
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc))

@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import type { CSSProperties, ReactNode } from 'react'
 import { cn } from '@/lib/utils'
 
 /**
@@ -20,6 +20,7 @@ export function Tile({
   footer,
   className,
   bodyClassName,
+  bodyStyle,
   allowOverflow = false,
   children,
 }: {
@@ -29,6 +30,12 @@ export function Tile({
   footer?: ReactNode
   className?: string
   bodyClassName?: string
+  /**
+   * Inline style for the body, for dimensions that must apply even if an
+   * arbitrary-value Tailwind class (e.g. `h-[120px]`) hasn't been picked up
+   * by the dev-time JIT scanner yet — inline `style` always wins.
+   */
+  bodyStyle?: CSSProperties
   /**
    * Let content escape the tile's bounds. `.glass-panel` clips its children so
    * the inner highlight follows the rounded corner, which also clips a chart
@@ -53,7 +60,9 @@ export function Tile({
           {action && <div className="flex shrink-0 items-center gap-1">{action}</div>}
         </header>
       )}
-      <div className={cn('min-w-0 flex-1', bodyClassName)}>{children}</div>
+      <div className={cn('min-w-0 flex-1', bodyClassName)} style={bodyStyle}>
+        {children}
+      </div>
       {footer && (
         <footer className="mt-2.5 shrink-0 border-t border-border/60 pt-2 text-xs text-muted-foreground">
           {footer}

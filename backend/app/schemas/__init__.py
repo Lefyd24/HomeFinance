@@ -104,14 +104,24 @@ from app.schemas.investment import (
 )
 from app.schemas.investment_analytics import (
     BenchmarkOption,
+    CalibrationBlock,
     ComparisonMeta,
     ComparisonResponse,
+    ConfluenceBlock,
+    CrossoverSchema,
     HeadToHead,
     InstrumentComparison,
+    LevelZoneSchema,
     PairwiseBlock,
+    ProbabilitiesBlock,
+    RegimeBlock,
     SavedComparisonCreate,
     SavedComparisonResponse,
     SeriesBlock,
+    SignalSchema,
+    SimulationResponse,
+    TechnicalResponse,
+    VarianceRatioSchema,
 )
 from app.schemas.notification import (
     NotificationLogRead,

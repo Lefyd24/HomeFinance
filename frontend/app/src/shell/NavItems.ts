@@ -112,6 +112,13 @@ export const TICKER_COMPARE_NAV_ITEM: NavItem = {
   icon: Analytics01Icon,
 }
 
+export const TECHNICAL_ANALYSIS_NAV_ITEM: NavItem = {
+  labelKey: 'items.technicalAnalysis',
+  dockLabelKey: 'dock.technical',
+  to: '/investments/technical',
+  icon: ChartLineData01Icon,
+}
+
 export const BACKTEST_NAV_ITEM: NavItem = {
   labelKey: 'items.backtest',
   dockLabelKey: 'dock.backtest',
@@ -140,6 +147,7 @@ export const INVESTMENTS_NAV_GROUPS: NavGroup[] = [
       TICKER_SEARCH_NAV_ITEM,
       COMPANY_RESEARCH_NAV_ITEM,
       TICKER_COMPARE_NAV_ITEM,
+      TECHNICAL_ANALYSIS_NAV_ITEM,
     ],
   },
   {
@@ -164,6 +172,7 @@ export const INVESTMENTS_DOCK_NAV_ITEMS: NavItem[] = [
 export const INVESTMENTS_SECONDARY_NAV_ITEMS: NavItem[] = [
   COMPANY_RESEARCH_NAV_ITEM,
   TICKER_COMPARE_NAV_ITEM,
+  TECHNICAL_ANALYSIS_NAV_ITEM,
   BACKTEST_NAV_ITEM,
   SCENARIO_LIBRARY_NAV_ITEM,
 ]
@@ -172,7 +181,7 @@ export const INVESTMENTS_SECONDARY_NAV_ITEMS: NavItem[] = [
 export const INVESTMENTS_MORE_NAV_GROUPS: NavGroup[] = [
   {
     groupKey: 'groups.market',
-    items: [COMPANY_RESEARCH_NAV_ITEM, TICKER_COMPARE_NAV_ITEM],
+    items: [COMPANY_RESEARCH_NAV_ITEM, TICKER_COMPARE_NAV_ITEM, TECHNICAL_ANALYSIS_NAV_ITEM],
   },
   {
     groupKey: 'groups.sandbox',
@@ -295,6 +304,7 @@ export const ALL_NAV_ITEMS: NavItem[] = [
   TICKER_SEARCH_NAV_ITEM,
   COMPANY_RESEARCH_NAV_ITEM,
   TICKER_COMPARE_NAV_ITEM,
+  TECHNICAL_ANALYSIS_NAV_ITEM,
   BACKTEST_NAV_ITEM,
   SCENARIO_LIBRARY_NAV_ITEM,
   ...PRIMARY_NAV_ITEMS,

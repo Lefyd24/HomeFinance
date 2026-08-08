@@ -173,6 +173,12 @@ function CompanyProfileView({ profile }: { profile: CompanyProfile }) {
         </CardHeader>
         <CardContent className="flex flex-wrap items-center gap-2">
           <Button asChild size="sm" variant="secondary">
+            <Link to={`/investments/technical?symbol=${encodeURIComponent(profile.symbol)}`}>
+              <HugeiconsIcon icon={ChartLineData01Icon} strokeWidth={2} data-icon="inline-start" />
+              {t('research.viewTechnical')}
+            </Link>
+          </Button>
+          <Button asChild size="sm" variant="outline">
             <Link to={`/investments/news?symbol=${encodeURIComponent(profile.symbol)}`}>
               <HugeiconsIcon icon={News01Icon} strokeWidth={2} data-icon="inline-start" />
               {t('research.viewNews')}

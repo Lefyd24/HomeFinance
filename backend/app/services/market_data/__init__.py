@@ -1,5 +1,5 @@
 from app.services.market_data.errors import MarketDataUnavailable, SymbolNotFound
-from app.services.market_data.prices import get_price_history, get_symbol_meta
+from app.services.market_data.prices import get_price_history, get_price_history_raw, get_symbol_meta
 from app.services.market_data.reference import (
     BENCHMARKS,
     DEFAULT_BENCHMARK,
@@ -12,6 +12,7 @@ __all__ = [
     "MarketDataUnavailable",
     "SymbolNotFound",
     "get_price_history",
+    "get_price_history_raw",
     "get_symbol_meta",
     "BENCHMARKS",
     "DEFAULT_BENCHMARK",

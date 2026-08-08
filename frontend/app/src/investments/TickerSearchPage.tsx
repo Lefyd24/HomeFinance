@@ -239,6 +239,11 @@ export function TickerSearchPage() {
                       </Link>
                     </Button>
                     <Button asChild variant="ghost" size="sm">
+                      <Link to={`/investments/technical?symbol=${encodeURIComponent(result.symbol)}`}>
+                        {t('search.viewTechnical')}
+                      </Link>
+                    </Button>
+                    <Button asChild variant="ghost" size="sm">
                       <Link to={`/investments/news?symbol=${encodeURIComponent(result.symbol)}`}>
                         {t('search.viewNews')}
                       </Link>
@@ -321,6 +326,11 @@ function SearchRow({
             <Link to={`/investments/research?symbol=${encodeURIComponent(result.symbol)}`}>
               <HugeiconsIcon icon={ChartLineData01Icon} strokeWidth={2} data-icon="inline-start" />
               {t('search.viewResearch')}
+            </Link>
+          </Button>
+          <Button asChild variant="ghost" size="sm">
+            <Link to={`/investments/technical?symbol=${encodeURIComponent(result.symbol)}`}>
+              {t('search.viewTechnical')}
             </Link>
           </Button>
           <Button asChild variant="ghost" size="sm">
