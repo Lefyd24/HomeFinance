@@ -263,7 +263,7 @@ export function TechnicalPage() {
         </Empty>
       ) : (
         <div className="flex flex-col gap-4">
-          <RegimeStrip regime={regime} bars={technical?.meta.bars ?? 0} loading={technicalLoading} />
+          <RegimeStrip regime={regime} bars={technical?.meta.bars ?? 0} loading={technicalLoading} symbol={symbol} />
 
           <PriceChart
             overlays={technical?.overlays ?? []}
