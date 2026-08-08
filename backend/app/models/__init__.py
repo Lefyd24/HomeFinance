@@ -17,6 +17,7 @@ from app.models.investment_analytics import (
     MarketPriceBar,
     MarketSymbolMeta,
     SavedComparison,
+    SavedWatch,
 )
 from app.models.notification import (
     NotificationLog,
@@ -53,6 +54,7 @@ __all__ = [
     "MarketPriceBar",
     "MarketSymbolMeta",
     "SavedComparison",
+    "SavedWatch",
     "NotificationLog",
     "NotificationRule",
     "NotificationSettings",

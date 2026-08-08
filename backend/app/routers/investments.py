@@ -1,7 +1,9 @@
 import json
+import math
 from datetime import date, datetime, timedelta
 from typing import List, Optional
 
+import yfinance as yf
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
@@ -15,6 +17,7 @@ from app.models import (
     PortfolioPosition,
     PortfolioSnapshot,
     SavedComparison,
+    SavedWatch,
     User,
 )
 from app.schemas import (
@@ -30,8 +33,11 @@ from app.schemas import (
     NewsPageResponse,
     PortfolioPositionResponse,
     PortfolioSnapshotResponse,
+    PriceBar,
     SavedComparisonCreate,
     SavedComparisonResponse,
+    SavedWatchCreate,
+    SavedWatchResponse,
     SimulationResponse,
     SymbolSearchResult,
     TechnicalResponse,
@@ -47,6 +53,16 @@ from app.services.market_data import BENCHMARKS, MarketDataUnavailable, SymbolNo
 from app.utils.crypto import encrypt
 from app.utils.rate_limit import SlidingWindowRateLimiter
 from app.utils.security import get_current_user_authenticated
+
+
+def _maybe_float(value):
+    if value is None:
+        return None
+    try:
+        f = float(value)
+        return f if math.isfinite(f) else None
+    except (TypeError, ValueError):
+        return None
 
 router = APIRouter(prefix="/investments", tags=["Investments"])
 
@@ -687,6 +703,171 @@ def delete_saved_comparison(
     )
     if row is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Saved comparison not found")
+    db.delete(row)
+    db.commit()
+    return None
+
+
+# ---------------------------------------------------------------------------
+# Watchlist
+# ---------------------------------------------------------------------------
+
+
+@router.get("/watchlist", response_model=List[SavedWatchResponse])
+def list_watches(
+    current_user: User = Depends(get_current_user_authenticated),
+    db: Session = Depends(get_db),
+):
+    """List saved watches for the current user with best-effort price refresh."""
+    rows = (
+        db.query(SavedWatch)
+        .filter(SavedWatch.user_id == current_user.id)
+        .order_by(SavedWatch.created_at.desc())
+        .all()
+    )
+    for r in rows:
+        if r.last_updated is None or (datetime.utcnow() - r.last_updated).total_seconds() > 900:
+            try:
+                ticker = yf.Ticker(r.symbol)
+                fast = ticker.fast_info
+                price = getattr(fast, "last_price", None) or getattr(
+                    fast, "regular_market_previous_close", None
+                )
+                if price is not None:
+                    r.last_price = _maybe_float(price)
+                    r.last_updated = datetime.utcnow()
+                    db.commit()
+            except Exception:
+                pass  # best-effort, keep stale price
+
+    return [
+        SavedWatchResponse(
+            id=r.id,
+            symbol=r.symbol,
+            name=r.name,
+            last_price=r.last_price,
+            day_change_pct=r.day_change_pct,
+            last_updated=r.last_updated,
+            notes=r.notes,
+            created_at=r.created_at,
+        )
+        for r in rows
+    ]
+
+
+@router.post("/watchlist", response_model=SavedWatchResponse, status_code=status.HTTP_201_CREATED)
+def save_watch(
+    data: SavedWatchCreate,
+    current_user: User = Depends(get_current_user_authenticated),
+    db: Session = Depends(get_db),
+):
+    """Save a ticker to the watchlist (upsert). Fetches current price on save."""
+    symbol = data.symbol.strip().upper()
+    if not symbol:
+        raise HTTPException(status_code=400, detail="Symbol is required")
+
+    existing = (
+        db.query(SavedWatch)
+        .filter(SavedWatch.user_id == current_user.id, SavedWatch.symbol == symbol)
+        .first()
+    )
+
+    last_price = None
+    day_change_pct = None
+    name = data.name
+    try:
+        ticker = yf.Ticker(symbol)
+        info = ticker.info or {}
+        last_price = _maybe_float(info.get("currentPrice")) or _maybe_float(
+            info.get("regularMarketPrice")
+        )
+        day_change_pct = _maybe_float(info.get("regularMarketChangePercent"))
+        if not name:
+            name = info.get("shortName") or info.get("longName")
+    except Exception:
+        pass
+
+    if existing:
+        existing.name = name or existing.name
+        if data.notes is not None:
+            existing.notes = data.notes
+        existing.last_price = last_price
+        existing.day_change_pct = day_change_pct
+        existing.last_updated = datetime.utcnow()
+        db.commit()
+        db.refresh(existing)
+        row = existing
+    else:
+        row = SavedWatch(
+            user_id=current_user.id,
+            symbol=symbol,
+            name=name,
+            last_price=last_price,
+            day_change_pct=day_change_pct,
+            last_updated=datetime.utcnow(),
+            notes=data.notes,
+        )
+        db.add(row)
+        db.commit()
+        db.refresh(row)
+
+    return SavedWatchResponse(
+        id=row.id,
+        symbol=row.symbol,
+        name=row.name,
+        last_price=row.last_price,
+        day_change_pct=row.day_change_pct,
+        last_updated=row.last_updated,
+        notes=row.notes,
+        created_at=row.created_at,
+    )
+
+
+@router.put("/watchlist/{watch_id}", response_model=SavedWatchResponse)
+def update_watch(
+    watch_id: int,
+    data: SavedWatchCreate,
+    current_user: User = Depends(get_current_user_authenticated),
+    db: Session = Depends(get_db),
+):
+    row = (
+        db.query(SavedWatch)
+        .filter(SavedWatch.id == watch_id, SavedWatch.user_id == current_user.id)
+        .first()
+    )
+    if row is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Watch not found")
+    if data.name is not None:
+        row.name = data.name
+    if data.notes is not None:
+        row.notes = data.notes
+    db.commit()
+    db.refresh(row)
+    return SavedWatchResponse(
+        id=row.id,
+        symbol=row.symbol,
+        name=row.name,
+        last_price=row.last_price,
+        day_change_pct=row.day_change_pct,
+        last_updated=row.last_updated,
+        notes=row.notes,
+        created_at=row.created_at,
+    )
+
+
+@router.delete("/watchlist/{watch_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_watch(
+    watch_id: int,
+    current_user: User = Depends(get_current_user_authenticated),
+    db: Session = Depends(get_db),
+):
+    row = (
+        db.query(SavedWatch)
+        .filter(SavedWatch.id == watch_id, SavedWatch.user_id == current_user.id)
+        .first()
+    )
+    if row is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Watch not found")
     db.delete(row)
     db.commit()
     return None

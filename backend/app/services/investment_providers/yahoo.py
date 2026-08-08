@@ -113,6 +113,64 @@ def _safe_float(value: Any) -> Optional[float]:
     return number
 
 
+def _company_price_history_and_performance(
+    ticker: "yf.Ticker",
+) -> tuple[Optional[list[dict[str, Any]]], dict[str, Optional[float]]]:
+    """1y daily OHLCV bars plus return/volatility/drawdown/Sharpe computed from them."""
+    performance: dict[str, Optional[float]] = {
+        "one_year_return": None,
+        "one_year_volatility": None,
+        "max_drawdown_1y": None,
+        "sharpe_1y": None,
+    }
+    try:
+        history = ticker.history(period="1y")
+    except Exception:
+        logger.exception("Yahoo price history failed for %s", ticker.ticker)
+        return None, performance
+
+    if history is None or history.empty:
+        return None, performance
+
+    bars = [
+        {
+            "date": index.strftime("%Y-%m-%d"),
+            "open": _safe_float(row.get("Open")),
+            "high": _safe_float(row.get("High")),
+            "low": _safe_float(row.get("Low")),
+            "close": _safe_float(row.get("Close")),
+            "volume": _safe_float(row.get("Volume")),
+        }
+        for index, row in history.iterrows()
+    ]
+
+    closes = history["Close"].dropna()
+    if len(closes) >= 2:
+        daily_returns = closes.pct_change().dropna()
+        first_close = float(closes.iloc[0])
+        last_close = float(closes.iloc[-1])
+        total_return = (last_close / first_close - 1) if first_close else None
+        volatility = float(daily_returns.std(ddof=0)) * math.sqrt(252) if not daily_returns.empty else None
+
+        running_max = closes.cummax()
+        drawdown = (closes - running_max) / running_max
+        max_drawdown = float(drawdown.min()) if not drawdown.empty else None
+
+        sharpe = None
+        if total_return is not None and volatility not in (None, 0):
+            annualized_return = (1 + total_return) ** (252 / len(closes)) - 1
+            sharpe = (annualized_return - 0.04) / volatility
+
+        performance = {
+            "one_year_return": _safe_float(total_return),
+            "one_year_volatility": _safe_float(volatility),
+            "max_drawdown_1y": _safe_float(max_drawdown),
+            "sharpe_1y": _safe_float(sharpe),
+        }
+
+    return bars, performance
+
+
 class YahooFinanceMarketData:
     """Market-data-only client. Not registered as a brokerage sync provider."""
 
@@ -253,12 +311,14 @@ class YahooFinanceMarketData:
             if price is not None and prev not in (None, 0):
                 change_pct = round((price - prev) / prev * 100, 2)
 
-        return {
+        kind = _normalize_quote_type(info.get("quoteType"))
+
+        profile: dict[str, Any] = {
             "symbol": str(info.get("symbol") or trimmed),
             "name": info.get("longName") or info.get("shortName"),
             "short_name": info.get("shortName"),
             "exchange": info.get("fullExchangeName") or info.get("exchange"),
-            "quote_type": _normalize_quote_type(info.get("quoteType")),
+            "quote_type": kind,
             "currency": info.get("currency"),
             "sector": info.get("sector"),
             "industry": info.get("industry"),
@@ -286,6 +346,52 @@ class YahooFinanceMarketData:
             "target_mean_price": _safe_float(info.get("targetMeanPrice")),
             "recommendation": info.get("recommendationKey"),
         }
+
+        if kind == "stock":
+            fcf = _safe_float(info.get("freeCashflow"))
+            market_cap = _safe_float(info.get("marketCap"))
+            fcf_yield = (
+                fcf / market_cap if fcf is not None and market_cap not in (None, 0) else None
+            )
+            profile.update(
+                {
+                    "price_to_book": _safe_float(info.get("priceToBook")),
+                    "ev_to_ebitda": _safe_float(info.get("enterpriseToEbitda")),
+                    "ev_to_sales": _safe_float(info.get("enterpriseToRevenue")),
+                    "fcf_yield": fcf_yield,
+                    "roe": _safe_float(info.get("returnOnEquity")),
+                    "debt_to_equity": _safe_float(info.get("debtToEquity")),
+                    "gross_margin": _safe_float(info.get("grossMargins")),
+                    "revenue_growth": _safe_float(info.get("revenueGrowth")),
+                    "payout_ratio": _safe_float(info.get("payoutRatio")),
+                    "book_value": _safe_float(info.get("bookValue")),
+                    "earnings_growth": _safe_float(info.get("earningsGrowth")),
+                }
+            )
+        elif kind in ("etf", "mutual_fund"):
+            profile.update(
+                {
+                    "expense_ratio": _safe_float(
+                        info.get("annualReportExpenseRatio") or info.get("netExpenseRatio")
+                    ),
+                    "aum": _safe_float(info.get("totalAssets")),
+                    "category": info.get("category"),
+                    "yield_": _safe_float(info.get("yield")),
+                }
+            )
+        elif kind == "crypto":
+            profile.update(
+                {
+                    "circulating_supply": _safe_float(info.get("circulatingSupply")),
+                    "volume_24h": _safe_float(info.get("volume24Hr") or info.get("volume")),
+                }
+            )
+
+        price_history, performance = _company_price_history_and_performance(ticker)
+        profile["price_history"] = price_history
+        profile.update(performance)
+
+        return profile
 
     def _map_search_news(self, entry: dict[str, Any]) -> Optional[ProviderNewsItem]:
         story_id = entry.get("uuid") or entry.get("id")

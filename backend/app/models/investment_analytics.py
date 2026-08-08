@@ -67,3 +67,24 @@ class SavedComparison(Base):
     benchmark = Column(String(50), nullable=True)
     period = Column(String(10), nullable=False, default="3y")
     created_at = Column(DateTime, default=datetime.utcnow)
+
+
+class SavedWatch(Base):
+    """A ticker a user is tracking on the company research page ("watchlist").
+
+    `last_price`/`day_change_pct` are a best-effort cache refreshed on read (see
+    routers/investments.py) so the watchlist can render without a Yahoo call per view.
+    """
+
+    __tablename__ = "saved_watches"
+    __table_args__ = (UniqueConstraint("user_id", "symbol", name="uq_saved_watch_user_symbol"),)
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    symbol = Column(String(50), nullable=False)
+    name = Column(String(200), nullable=True)
+    last_price = Column(Float, nullable=True)
+    day_change_pct = Column(Float, nullable=True)
+    last_updated = Column(DateTime, nullable=True)
+    notes = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)

@@ -150,6 +150,16 @@ class NewsPageResponse(BaseModel):
     offset: int
 
 
+class PriceBar(BaseModel):
+    """One daily OHLCV bar, for the company research page's mini price chart."""
+    date: str
+    open: Optional[float] = None
+    high: Optional[float] = None
+    low: Optional[float] = None
+    close: Optional[float] = None
+    volume: Optional[float] = None
+
+
 class CompanyProfileResponse(BaseModel):
     """Company / instrument research snapshot from a market-data provider."""
     symbol: str
@@ -184,6 +194,38 @@ class CompanyProfileResponse(BaseModel):
     target_mean_price: Optional[float] = None
     recommendation: Optional[str] = None
 
+    # Valuation (stocks)
+    price_to_book: Optional[float] = None
+    ev_to_ebitda: Optional[float] = None
+    ev_to_sales: Optional[float] = None
+    fcf_yield: Optional[float] = None
+    roe: Optional[float] = None
+    debt_to_equity: Optional[float] = None
+    gross_margin: Optional[float] = None
+    revenue_growth: Optional[float] = None
+    payout_ratio: Optional[float] = None
+    book_value: Optional[float] = None
+    earnings_growth: Optional[float] = None
+
+    # Fund-specific (ETF / mutual fund)
+    expense_ratio: Optional[float] = None
+    aum: Optional[float] = None
+    category: Optional[str] = None
+    yield_: Optional[float] = Field(None, alias="yield", serialization_alias="yield")
+
+    # Crypto-specific
+    circulating_supply: Optional[float] = None
+    volume_24h: Optional[float] = None
+
+    # Price history + computed performance/risk (1y)
+    price_history: Optional[list[PriceBar]] = None
+    one_year_return: Optional[float] = None
+    one_year_volatility: Optional[float] = None
+    max_drawdown_1y: Optional[float] = None
+    sharpe_1y: Optional[float] = None
+
+    model_config = {"populate_by_name": True}
+
 
 class InvestmentSyncResult(BaseModel):
     account_id: int
@@ -194,4 +236,25 @@ class InvestmentSyncResult(BaseModel):
 
     @field_serializer("last_synced_at")
     def _serialize_last_synced_at(self, value: Optional[datetime]) -> Optional[datetime]:
+        return ensure_utc(value)
+
+
+class SavedWatchCreate(BaseModel):
+    symbol: str
+    name: Optional[str] = None
+    notes: Optional[str] = None
+
+
+class SavedWatchResponse(BaseModel):
+    id: int
+    symbol: str
+    name: Optional[str] = None
+    last_price: Optional[float] = None
+    day_change_pct: Optional[float] = None
+    last_updated: Optional[datetime] = None
+    notes: Optional[str] = None
+    created_at: datetime
+
+    @field_serializer("last_updated", "created_at")
+    def _serialize_dt(self, value: Optional[datetime]) -> Optional[datetime]:
         return ensure_utc(value)

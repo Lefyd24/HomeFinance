@@ -277,6 +277,15 @@ export function getNewsStory(
   )
 }
 
+export interface PriceBar {
+  date: string
+  open: number
+  high: number
+  low: number
+  close: number
+  volume: number
+}
+
 export interface CompanyProfile {
   symbol: string
   name: string | null
@@ -309,6 +318,32 @@ export interface CompanyProfile {
   day_change_pct: number | null
   target_mean_price: number | null
   recommendation: string | null
+  // Valuation (stocks)
+  price_to_book: number | null
+  ev_to_ebitda: number | null
+  ev_to_sales: number | null
+  fcf_yield: number | null
+  roe: number | null
+  debt_to_equity: number | null
+  gross_margin: number | null
+  revenue_growth: number | null
+  payout_ratio: number | null
+  book_value: number | null
+  earnings_growth: number | null
+  // Fund-specific
+  expense_ratio: number | null
+  aum: number | null
+  category: string | null
+  yield_: number | null
+  // Crypto-specific
+  circulating_supply: number | null
+  volume_24h: number | null
+  // Performance & history
+  price_history: PriceBar[] | null
+  one_year_return: number | null
+  one_year_volatility: number | null
+  max_drawdown_1y: number | null
+  sharpe_1y: number | null
 }
 
 export function getCompanyProfile(
@@ -319,4 +354,37 @@ export function getCompanyProfile(
   return apiFetch<CompanyProfile>(
     `/investments/company/${encodeURIComponent(symbol)}?${params}`,
   )
+}
+
+export interface SavedWatch {
+  id: number
+  symbol: string
+  name: string | null
+  last_price: number | null
+  day_change_pct: number | null
+  last_updated: string | null
+  notes: string | null
+  created_at: string
+}
+
+export function listWatches(): Promise<SavedWatch[]> {
+  return apiFetch<SavedWatch[]>('/investments/watchlist')
+}
+
+export function saveWatch(input: { symbol: string; name?: string; notes?: string }): Promise<SavedWatch> {
+  return apiFetch<SavedWatch>('/investments/watchlist', {
+    method: 'POST',
+    body: JSON.stringify(input),
+  })
+}
+
+export function deleteWatch(id: number): Promise<void> {
+  return apiFetch<void>(`/investments/watchlist/${id}`, { method: 'DELETE' })
+}
+
+export function updateWatch(id: number, input: { name?: string; notes?: string }): Promise<SavedWatch> {
+  return apiFetch<SavedWatch>(`/investments/watchlist/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(input),
+  })
 }

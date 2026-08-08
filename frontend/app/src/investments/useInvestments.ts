@@ -206,3 +206,28 @@ export function useCompanyProfile(symbol: string | null) {
     },
   })
 }
+
+export function useWatches() {
+  return useQuery({
+    queryKey: queryKeys.investmentWatches,
+    queryFn: investmentsApi.listWatches,
+    staleTime: 30_000,
+  })
+}
+
+export function useSaveWatch() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (input: { symbol: string; name?: string; notes?: string }) =>
+      investmentsApi.saveWatch(input),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.investmentWatches }),
+  })
+}
+
+export function useDeleteWatch() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (id: number) => investmentsApi.deleteWatch(id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.investmentWatches }),
+  })
+}

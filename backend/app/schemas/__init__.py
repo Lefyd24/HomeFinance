@@ -100,6 +100,9 @@ from app.schemas.investment import (
     NewsPageResponse,
     PortfolioPositionResponse,
     PortfolioSnapshotResponse,
+    PriceBar,
+    SavedWatchCreate,
+    SavedWatchResponse,
     SymbolSearchResult,
 )
 from app.schemas.investment_analytics import (
@@ -264,6 +267,9 @@ __all__ = [
     "CompanyProfileResponse",
     "PortfolioPositionResponse",
     "PortfolioSnapshotResponse",
+    "PriceBar",
+    "SavedWatchCreate",
+    "SavedWatchResponse",
     "SymbolSearchResult",
     # Investment analytics (ticker comparison) schemas
     "BenchmarkOption",
