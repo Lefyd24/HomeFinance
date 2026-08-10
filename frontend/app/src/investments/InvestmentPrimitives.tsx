@@ -245,8 +245,18 @@ export function SyncStatusBadge({
  * The sidebar says which section you are in; the breadcrumb says where this
  * page sits within it and gives one click back to the portfolio. Used by every
  * page under `/investments` except the overview itself, which is the root.
+ *
+ * `parent` adds one extra clickable crumb between "Investments" and `current`
+ * — for pages with a drill-down state (e.g. company research after a symbol
+ * is picked: Investments › Company research › AAPL).
  */
-export function InvestmentsBreadcrumb({ current }: { current: string }) {
+export function InvestmentsBreadcrumb({
+  current,
+  parent,
+}: {
+  current: string
+  parent?: { label: string; onClick: () => void }
+}) {
   const { t } = useTranslation('investments')
   return (
     <Breadcrumb className="mb-3">
@@ -257,6 +267,18 @@ export function InvestmentsBreadcrumb({ current }: { current: string }) {
           </BreadcrumbLink>
         </BreadcrumbItem>
         <BreadcrumbSeparator />
+        {parent && (
+          <>
+            <BreadcrumbItem>
+              <BreadcrumbLink asChild>
+                <button type="button" onClick={parent.onClick}>
+                  {parent.label}
+                </button>
+              </BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+          </>
+        )}
         <BreadcrumbItem>
           <BreadcrumbPage>{current}</BreadcrumbPage>
         </BreadcrumbItem>
