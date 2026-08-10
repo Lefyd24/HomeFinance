@@ -28,13 +28,16 @@ import { EditInvestmentAccountDialog } from './EditInvestmentAccountDialog'
 import { RotateApiKeysDialog } from './RotateApiKeysDialog'
 import { AccountScopeRail } from './widgets/AccountScopeRail'
 import { ActivityTile } from './widgets/ActivityTile'
-import { AllocationTile } from './widgets/AllocationTile'
+import { CashFlowTile } from './widgets/CashFlowTile'
+import { CurrencyExposureTile } from './widgets/CurrencyExposureTile'
+import { EarnPositionsTile } from './widgets/EarnPositionsTile'
 import { HoldingsList } from './widgets/HoldingsList'
 import { MoversTile } from './widgets/MoversTile'
 import { PlainEnglishTile } from './widgets/PlainEnglishTile'
 import { PortfolioHeadline } from './widgets/PortfolioHeadline'
 import { PortfolioTicker } from './widgets/PortfolioTicker'
 import { PortfolioValueTile } from './widgets/PortfolioValueTile'
+import { TradingCostsTile } from './widgets/TradingCostsTile'
 import type { InvestmentAccount } from './investmentsApi'
 
 /** A broker will refuse a second sync immediately after the first anyway. */
@@ -92,6 +95,14 @@ export function InvestmentsPage() {
   const view = usePortfolioView(accounts, scope, range)
 
   const scopeLabel = view.accounts[0]?.name ?? ''
+
+  /**
+   * Which broker's tiles to show below the common ones. Only defined when
+   * exactly one account is in scope — a mix of providers has no single
+   * broker's data to be specific about, so the provider tiles disappear
+   * rather than picking one arbitrarily.
+   */
+  const providerScope = view.accounts.length === 1 ? view.accounts[0].provider : null
 
   const handleDelete = async (account: InvestmentAccount) => {
     const ok = await confirm({
@@ -177,61 +188,86 @@ export function InvestmentsPage() {
           )}
 
           {/*
-            The bento. One column on a phone, two once there's room to pair
-            tiles, twelve on a desktop so the value chart can take half a row
-            while allocation and movers split the rest.
-
-            The order is the mobile reading order, and it is deliberate: the
-            plain-English read comes second on a phone (right after the chart)
-            because on a small screen someone is glancing, not auditing — the
-            sentence is more use than the tables. `lg:order-*` restores the
-            desktop arrangement, where everything is visible at once anyway.
+            Two columns on desktop: the main column stacks the summary tiles,
+            the holdings sidebar runs the full height of whatever the main
+            column comes out to — a persistent "here's exactly what's in it"
+            panel rather than one tile competing for space with the rest.
+            Grid's default `align-items: stretch` is what makes the sidebar
+            match the main column's height with no explicit sizing needed.
+            Below `lg` there's no room for a sidebar, so it collapses to a
+            single stack with holdings last — the overview before the detail.
           */}
-          <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-12">
-            <PortfolioValueTile
-              history={view.history}
-              currency={view.totals?.currency ?? ''}
-              range={range}
-              onRangeChange={setRange}
-              loading={view.isHistoryLoading}
-              className="sm:col-span-2 lg:order-1 lg:col-span-6"
-            />
-            
-            {/* Second in the mobile reading order, right after the chart: on a
-                small screen someone is glancing, not auditing, so the sentence
-                is more use than the list. On desktop `order-5` puts it back
-                beside the holdings, to the right of them. */}
-            <PlainEnglishTile
-              insights={view.insights}
-              loading={view.isLoading}
-              className="sm:col-span-2 lg:order-5 lg:col-span-4"
-            />
-            <AllocationTile
-              positions={view.positions}
-              currency={view.totals?.currency ?? ''}
-              loading={view.isLoading}
-              className="lg:order-2 lg:col-span-3"
-            />
-            <MoversTile
-              positions={view.positions}
-              loading={view.isLoading}
-              className="lg:order-3 lg:col-span-3"
-            />
-            {/* `order-4` places it before the plain-English tile, so on desktop
-                the holdings sit on the left and the read-out beside them. */}
+          <div className="grid grid-cols-1 items-stretch gap-2.5 lg:grid-cols-[minmax(0,1fr)_22rem]">
+            <div className="flex flex-col gap-2.5">
+              <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-3">
+                <PortfolioValueTile
+                  history={view.history}
+                  currency={view.totals?.currency ?? ''}
+                  range={range}
+                  onRangeChange={setRange}
+                  loading={view.isHistoryLoading}
+                  className="sm:col-span-2"
+                />
+                <MoversTile positions={view.positions} loading={view.isLoading} />
+              </div>
+
+              {/* `ActivityTile`'s row-span-2 makes it match the combined
+                  height of the plain-English read and whichever
+                  provider-specific tile sits under it, per column. A 5-column
+                  split (3:2) gives activity a bit more room than a plain
+                  half-and-half would, since a transaction row needs more
+                  width per line than a sentence or a cost figure does. */}
+              <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-5 sm:grid-rows-2">
+                <PlainEnglishTile
+                  insights={view.insights}
+                  loading={view.isLoading}
+                  className="sm:col-span-3"
+                />
+                <ActivityTile
+                  transactions={view.transactions}
+                  loading={view.isLoading}
+                  className="sm:col-span-2 sm:row-span-2"
+                />
+                {providerScope === 'freedom24' && (
+                  <TradingCostsTile
+                    transactions={view.transactions}
+                    currency={view.totals?.currency ?? ''}
+                    loading={view.isLoading}
+                    className="sm:col-span-3"
+                  />
+                )}
+                {providerScope === 'binance' && (
+                  <CashFlowTile
+                    transactions={view.transactions}
+                    loading={view.isLoading}
+                    className="sm:col-span-3"
+                  />
+                )}
+              </div>
+
+              {/* Provider-specific: what's distinctive about *this* broker's
+                  data, as a full-width band rather than squeezed into the
+                  shape shared above. */}
+              {providerScope === 'freedom24' && (
+                <CurrencyExposureTile
+                  positions={view.positions}
+                  currency={view.totals?.currency ?? ''}
+                  loading={view.isLoading}
+                />
+              )}
+              {providerScope === 'binance' && (
+                <EarnPositionsTile accountId={view.accounts[0].id} />
+              )}
+            </div>
+
             <HoldingsList
               positions={view.positions}
               currency={view.totals?.currency ?? ''}
+              accounts={view.accounts}
               loading={view.isLoading}
-              className="sm:col-span-2 lg:order-4 lg:col-span-8"
-            />
-            <ActivityTile
-              transactions={view.transactions}
-              loading={view.isLoading}
-              className="sm:col-span-2 lg:order-6 lg:col-span-6 xl:col-span-12"
+              className="h-full"
             />
           </div>
-
         </>
       )}
 
@@ -265,12 +301,12 @@ function LoadingWorkspace() {
         ))}
       </div>
       <Skeleton className="h-20 w-full rounded-xl" />
-      <div className="grid grid-cols-1 gap-2.5 lg:grid-cols-12">
-        <Skeleton className="h-[16rem] w-full rounded-xl lg:col-span-6" />
-        <Skeleton className="h-[16rem] w-full rounded-xl lg:col-span-3" />
-        <Skeleton className="h-[16rem] w-full rounded-xl lg:col-span-3" />
-        <Skeleton className="h-64 w-full rounded-xl lg:col-span-8" />
-        <Skeleton className="h-64 w-full rounded-xl lg:col-span-4" />
+      <div className="grid grid-cols-1 gap-2.5 lg:grid-cols-[minmax(0,1fr)_22rem]">
+        <div className="flex flex-col gap-2.5">
+          <Skeleton className="h-[16rem] w-full rounded-xl" />
+          <Skeleton className="h-64 w-full rounded-xl" />
+        </div>
+        <Skeleton className="h-[32rem] w-full rounded-xl" />
       </div>
     </div>
   )

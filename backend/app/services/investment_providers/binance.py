@@ -45,6 +45,7 @@ from app.services.investment_providers.base import (
     InvestmentProvider,
     ProviderBalance,
     ProviderCandle,
+    ProviderEarnPosition,
     ProviderPosition,
     ProviderSymbol,
     ProviderTransaction,
@@ -70,6 +71,15 @@ def _as_float(value: Any, default: float = 0.0) -> float:
         return float(value)
     except (TypeError, ValueError):
         return default
+
+
+def _opt_float_binance(value: Any) -> Optional[float]:
+    if value is None or value == "":
+        return None
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return None
 
 
 def _ms(dt: datetime) -> int:
@@ -513,6 +523,79 @@ class BinanceProvider(InvestmentProvider):
                 except ValueError:
                     continue
         return datetime.now(timezone.utc)
+
+    # --------------------------------------------------------------------- earn
+
+    def get_earn_positions(self) -> list[ProviderEarnPosition]:
+        """Simple Earn balances — Binance's flexible/locked savings products.
+
+        Two separate list endpoints, each capped at `size=100` (no pagination:
+        a personal account's number of distinct earn positions is far below
+        that). Either call failing (e.g. the API key lacks Earn permission) is
+        logged and skipped rather than failing the whole lookup, since this is
+        best-effort decorative data like day-change, not core portfolio state.
+        """
+        positions: list[ProviderEarnPosition] = []
+        positions.extend(self._flexible_earn_positions())
+        positions.extend(self._locked_earn_positions())
+        return positions
+
+    def _flexible_earn_positions(self) -> list[ProviderEarnPosition]:
+        try:
+            response = self._client.get_simple_earn_flexible_product_position(size=100)
+        except BinanceAPIException as exc:
+            logger.warning("Binance flexible earn position lookup failed: %s", exc.message)
+            return []
+        rows = response.get("rows") if isinstance(response, dict) else None
+        if not isinstance(rows, list):
+            return []
+        result = []
+        for row in rows:
+            if not isinstance(row, dict) or not row.get("asset"):
+                continue
+            result.append(
+                ProviderEarnPosition(
+                    asset=str(row["asset"]),
+                    amount=_as_float(row.get("totalAmount")),
+                    kind="flexible",
+                    apr=_opt_float_binance(row.get("latestAnnualPercentageRate")),
+                    accrued_yield=_opt_float_binance(row.get("cumulativeTotalRewards")),
+                )
+            )
+        return result
+
+    def _locked_earn_positions(self) -> list[ProviderEarnPosition]:
+        try:
+            response = self._client.get_simple_earn_locked_product_position(size=100)
+        except BinanceAPIException as exc:
+            logger.warning("Binance locked earn position lookup failed: %s", exc.message)
+            return []
+        rows = response.get("rows") if isinstance(response, dict) else None
+        if not isinstance(rows, list):
+            return []
+        result = []
+        for row in rows:
+            if not isinstance(row, dict) or not row.get("asset"):
+                continue
+            redeem_date = row.get("redeemDate")
+            lock_end_time = None
+            if redeem_date:
+                try:
+                    lock_end_time = datetime.fromtimestamp(
+                        _as_float(redeem_date) / 1000, tz=timezone.utc
+                    )
+                except (TypeError, ValueError, OSError, OverflowError):
+                    lock_end_time = None
+            result.append(
+                ProviderEarnPosition(
+                    asset=str(row["asset"]),
+                    amount=_as_float(row.get("amount")),
+                    kind="locked",
+                    apr=_opt_float_binance(row.get("APY")),
+                    lock_end_time=lock_end_time,
+                )
+            )
+        return result
 
     # -------------------------------------------------------------------- search
 

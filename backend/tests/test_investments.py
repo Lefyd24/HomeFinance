@@ -86,6 +86,36 @@ class FakeProvider:
             day = date_cls.fromordinal(day.toordinal() + 1)
         return [c for c in candles if start <= c.date <= end]
 
+    def get_earn_positions(self):
+        # Mirrors the real Freedom24Provider: no earn/staking product exists,
+        # so the base class's NotImplementedError is what a real broker call
+        # would surface too.
+        raise NotImplementedError(f"{type(self).__name__} does not support earn positions")
+
+
+class FakeEarnProvider(FakeProvider):
+    """Stands in for Binance, which does support Simple Earn positions."""
+
+    def get_earn_positions(self):
+        from app.services.investment_providers.base import ProviderEarnPosition
+
+        return [
+            ProviderEarnPosition(
+                asset="USDT",
+                amount=100.0,
+                kind="flexible",
+                apr=0.025,
+                accrued_yield=1.5,
+            ),
+            ProviderEarnPosition(
+                asset="BNB",
+                amount=10.0,
+                kind="locked",
+                apr=0.08,
+                lock_end_time=datetime(2026, 6, 1),
+            ),
+        ]
+
 
 class FakeMultiCurrencyProvider(FakeProvider):
     """A USD account holding one EUR instrument, already converted by the provider."""
@@ -438,3 +468,53 @@ def test_investment_scheduled_rule_fires_once_per_period(client, db, monkeypatch
     rule.last_fired_at = now
     db.commit()
     assert ns.investment_scheduled_due(db, seed_user, rule, now) is None
+
+
+def test_earn_positions_returns_501_when_provider_unsupported(client, db, monkeypatch):
+    _patch_provider(monkeypatch, FakeProvider)
+
+    resp = client.post(
+        "/api/investments/accounts",
+        json={
+            "name": "Freedom24 Brokerage",
+            "provider": "freedom24",
+            "currency": "USD",
+            "public_key": "pub-123",
+            "private_key": "priv-456",
+        },
+    )
+    account_id = resp.json()["id"]
+
+    resp = client.get(f"/api/investments/accounts/{account_id}/earn")
+    assert resp.status_code == 501, resp.text
+
+
+def test_earn_positions_returns_positions_for_supporting_provider(client, db, monkeypatch):
+    _patch_provider(monkeypatch, FakeEarnProvider)
+
+    resp = client.post(
+        "/api/investments/accounts",
+        json={
+            "name": "Binance",
+            "provider": "binance",
+            "currency": "USD",
+            "public_key": "pub-123",
+            "private_key": "priv-456",
+        },
+    )
+    account_id = resp.json()["id"]
+
+    resp = client.get(f"/api/investments/accounts/{account_id}/earn")
+    assert resp.status_code == 200, resp.text
+    body = resp.json()
+    assert len(body) == 2
+
+    flexible = next(p for p in body if p["kind"] == "flexible")
+    assert flexible["asset"] == "USDT"
+    assert flexible["amount"] == 100.0
+    assert flexible["apr"] == 0.025
+    assert flexible["accrued_yield"] == 1.5
+
+    locked = next(p for p in body if p["kind"] == "locked")
+    assert locked["asset"] == "BNB"
+    assert locked["lock_end_time"] is not None

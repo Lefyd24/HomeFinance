@@ -5,11 +5,15 @@ import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { Cancel01Icon, ChartLineData01Icon, News01Icon } from '@hugeicons/core-free-icons'
 import { Button } from '@/components/ui/button'
+import { Skeleton } from '@/components/ui/skeleton'
 import { cn } from '@/lib/utils'
 import { formatCurrency, formatDate } from '../../lib/format'
+import { fmtPct } from '../research/researchFormat'
 import { DeltaAmount, DeltaPct } from '../InvestmentPrimitives'
 import { positionValue } from '../portfolioInsights'
-import type { PortfolioPosition } from '../investmentsApi'
+import { toYahooSymbol } from '../symbolMapping'
+import { useCompanyProfile } from '../useInvestments'
+import type { CompanyProfile, InvestmentProvider, PortfolioPosition } from '../investmentsApi'
 
 /**
  * One holding, opened out.
@@ -27,11 +31,14 @@ import type { PortfolioPosition } from '../investmentsApi'
 export function HoldingDetailCard({
   position,
   currency,
+  provider,
   onClose,
 }: {
   position: PortfolioPosition | null
   /** The scope's currency, for the converted-value row. */
   currency: string
+  /** The position's own broker, so its ticker can be translated for research lookups. */
+  provider: InvestmentProvider | null
   onClose: () => void
 }) {
   const { t } = useTranslation('investments')
@@ -60,6 +67,15 @@ export function HoldingDetailCard({
   useEffect(() => {
     if (open) cardRef.current?.focus()
   }, [open])
+
+  // Best-effort research enrichment — a broker ticker is translated to
+  // Yahoo's own convention first (see symbolMapping.ts; e.g. Freedom24's
+  // `VIO.GR` -> Yahoo's `VIO.AT`), but plenty of tickers (crypto pairs Yahoo
+  // doesn't list, unlisted bonds, an unmapped exchange) still won't resolve —
+  // `useCompanyProfile` already turns that into a quiet non-retrying miss
+  // rather than a visible error.
+  const yahooSymbol = position ? toYahooSymbol(position.symbol, provider) : null
+  const { data: profile, isLoading: profileLoading } = useCompanyProfile(yahooSymbol)
 
   const money = (value: number | null | undefined, cur = position?.currency ?? currency) =>
     value == null ? '—' : formatCurrency(value, cur)
@@ -201,6 +217,8 @@ export function HoldingDetailCard({
               />
             </dl>
 
+            <ResearchEnrichment loading={profileLoading} profile={profile ?? null} />
+
             <div className="mt-4 flex flex-wrap gap-2">
               <Button asChild size="sm" variant="secondary">
                 <Link to={`/investments/research?symbol=${encodeURIComponent(position.symbol)}`}>
@@ -244,6 +262,74 @@ function Row({ label, hint, value }: { label: string; hint: string; value: React
       </dt>
       <dd className="truncate tabular-nums">{value}</dd>
       <p className="text-[0.7rem] leading-snug text-muted-foreground">{hint}</p>
+    </div>
+  )
+}
+
+/**
+ * What the company-research endpoint adds beyond the broker's own fields —
+ * sector/beta/dividend for a stock, expense ratio/category/top holdings for a
+ * fund. Omitted entirely rather than shown empty: a crypto symbol or an
+ * unlisted bond routinely won't resolve on Yahoo, and that's an expected miss,
+ * not an error worth a placeholder for.
+ */
+function ResearchEnrichment({
+  loading,
+  profile,
+}: {
+  loading: boolean
+  profile: CompanyProfile | null
+}) {
+  const { t } = useTranslation('investments')
+
+  if (loading) {
+    return (
+      <div className="mt-4 flex flex-col gap-2">
+        <Skeleton className="h-3 w-24" />
+        <Skeleton className="h-10 w-full" />
+      </div>
+    )
+  }
+
+  if (!profile) return null
+
+  const isFund = profile.quote_type === 'etf' || profile.quote_type === 'mutual_fund'
+  const rows = isFund
+    ? [
+        { label: t('holding.research.expenseRatio'), value: fmtPct(profile.expense_ratio) },
+        { label: t('holding.research.category'), value: profile.category ?? '—' },
+        {
+          label: t('holding.research.topHolding'),
+          value: profile.top_holdings[0]
+            ? `${profile.top_holdings[0].symbol} (${fmtPct(profile.top_holdings[0].weight)})`
+            : '—',
+        },
+      ]
+    : [
+        { label: t('holding.research.sector'), value: profile.sector ?? '—' },
+        { label: t('holding.research.beta'), value: profile.beta != null ? profile.beta.toFixed(2) : '—' },
+        {
+          label: t('holding.research.dividendYield'),
+          value: profile.dividend_yield != null ? `${profile.dividend_yield.toFixed(2)}%` : '—',
+        },
+      ]
+
+  const hasAnyValue = rows.some((row) => row.value !== '—')
+  if (!hasAnyValue) return null
+
+  return (
+    <div className="mt-4 border-t border-border/60 pt-3">
+      <p className="mb-2 text-[0.6rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+        {t('holding.research.title')}
+      </p>
+      <div className="grid grid-cols-3 gap-x-2 gap-y-2 text-xs">
+        {rows.map((row) => (
+          <div key={row.label} className="flex min-w-0 flex-col gap-0.5">
+            <dt className="truncate text-[0.6rem] text-muted-foreground">{row.label}</dt>
+            <dd className="truncate font-medium tabular-nums">{row.value}</dd>
+          </div>
+        ))}
+      </div>
     </div>
   )
 }

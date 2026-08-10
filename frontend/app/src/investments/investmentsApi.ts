@@ -118,6 +118,18 @@ export interface InvestmentTransaction {
   date: string
 }
 
+export type EarnPositionKind = 'flexible' | 'locked'
+
+/** A yield-bearing balance outside the regular position list (Binance Simple Earn). */
+export interface EarnPosition {
+  asset: string
+  amount: number
+  kind: EarnPositionKind
+  apr: number | null
+  accrued_yield: number | null
+  lock_end_time: string | null
+}
+
 export interface PortfolioSnapshot {
   date: string
   total_value: number
@@ -197,6 +209,15 @@ export function getInvestmentPositions(accountId: number): Promise<PortfolioPosi
 
 export function getInvestmentTransactions(accountId: number): Promise<InvestmentTransaction[]> {
   return apiFetch<InvestmentTransaction[]>(`/investments/accounts/${accountId}/transactions`)
+}
+
+/**
+ * Yield-bearing balances outside the regular position list. Live-fetched, not
+ * every provider has these — a provider without one (Freedom24) answers 501,
+ * which `useEarnPositions` treats as "no earn positions" rather than an error.
+ */
+export function getEarnPositions(accountId: number): Promise<EarnPosition[]> {
+  return apiFetch<EarnPosition[]>(`/investments/accounts/${accountId}/earn`)
 }
 
 export function getInvestmentHistory(

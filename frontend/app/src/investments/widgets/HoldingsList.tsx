@@ -1,35 +1,14 @@
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { motion, useReducedMotion } from 'motion/react'
-import { HugeiconsIcon } from '@hugeicons/react'
-import { ArrowDown01Icon, ArrowUp01Icon } from '@hugeicons/core-free-icons'
 import { Skeleton } from '@/components/ui/skeleton'
 import { cn } from '@/lib/utils'
 import { formatCurrency } from '../../lib/format'
 import { DeltaPct } from '../InvestmentPrimitives'
-import { positionPnl, positionValue } from '../portfolioInsights'
+import { positionValue } from '../portfolioInsights'
 import { HoldingDetailCard } from './HoldingDetailCard'
 import { Tile, TileEmpty } from './Tile'
-import type { PortfolioPosition } from '../investmentsApi'
-
-type SortKey = 'value' | 'day' | 'pnl' | 'return' | 'symbol'
-type SortDir = 'asc' | 'desc'
-
-const SORTS: Array<{ key: SortKey; labelKey: string }> = [
-  { key: 'value', labelKey: 'detail.table.marketValue' },
-  { key: 'day', labelKey: 'detail.table.dayChange' },
-  { key: 'pnl', labelKey: 'detail.table.unrealizedPnl' },
-  { key: 'return', labelKey: 'detail.table.returnPct' },
-  { key: 'symbol', labelKey: 'detail.table.symbol' },
-]
-
-const READ: Record<SortKey, (p: PortfolioPosition) => number | null> = {
-  value: (p) => positionValue(p),
-  day: (p) => p.day_change_pct,
-  pnl: (p) => positionPnl(p),
-  return: (p) => p.unrealized_return_pct,
-  symbol: () => null,
-}
+import type { InvestmentAccount, PortfolioPosition } from '../investmentsApi'
 
 /**
  * Every holding, as rows that fit.
@@ -42,46 +21,37 @@ const READ: Record<SortKey, (p: PortfolioPosition) => number | null> = {
  * from a phone to a wide desktop, and the remaining detail moves into a card
  * you open by clicking the row.
  *
- * Losing the columns loses the ability to compare a field down the page, so
- * sorting replaces it: pick the field, and the order answers the same question
- * a column of numbers would have.
+ * Fixed order — largest holding first — rather than a sort control: this is
+ * a persistent sidebar now, not a tile competing for space, and a sort chip
+ * row is one more control fighting a narrow column for width.
  */
 export function HoldingsList({
   positions,
   currency,
+  accounts,
   loading,
   className,
 }: {
   positions: PortfolioPosition[]
   /** The scope's currency, for the weight bar and converted values. */
   currency: string
+  /** So the detail card can look up each position's own broker for research lookups. */
+  accounts: InvestmentAccount[]
   loading: boolean
   className?: string
 }) {
   const { t } = useTranslation('investments')
+  const providerByAccountId = useMemo(
+    () => new Map(accounts.map((account) => [account.id, account.provider])),
+    [accounts],
+  )
   const reduced = useReducedMotion()
-  const [sortKey, setSortKey] = useState<SortKey>('value')
-  const [sortDir, setSortDir] = useState<SortDir>('desc')
   const [openId, setOpenId] = useState<string | null>(null)
 
-  const sorted = useMemo(() => {
-    const rows = [...positions]
-    const factor = sortDir === 'asc' ? 1 : -1
-    if (sortKey === 'symbol') {
-      return rows.sort((a, b) => factor * a.symbol.localeCompare(b.symbol))
-    }
-    const read = READ[sortKey]
-    return rows.sort((a, b) => {
-      const av = read(a)
-      const bv = read(b)
-      // Holdings with no quote sort to the bottom either way rather than
-      // pretending to be zero and landing in the middle of the list.
-      if (av == null && bv == null) return 0
-      if (av == null) return 1
-      if (bv == null) return -1
-      return factor * (av - bv)
-    })
-  }, [positions, sortKey, sortDir])
+  const sorted = useMemo(
+    () => [...positions].sort((a, b) => positionValue(b) - positionValue(a)),
+    [positions],
+  )
 
   const total = useMemo(
     () => positions.reduce((sum, position) => sum + positionValue(position), 0),
@@ -93,16 +63,6 @@ export function HoldingsList({
     [sorted, openId],
   )
 
-  const toggle = (key: SortKey) => {
-    if (key === sortKey) {
-      setSortDir((dir) => (dir === 'asc' ? 'desc' : 'asc'))
-    } else {
-      setSortKey(key)
-      // Numbers are most useful biggest-first; names are most useful A–Z.
-      setSortDir(key === 'symbol' ? 'asc' : 'desc')
-    }
-  }
-
   return (
     <>
       <Tile
@@ -113,7 +73,18 @@ export function HoldingsList({
             {t('card.holdings', { count: positions.length })}
           </span>
         }
-        footer={positions.length > 0 ? t('holding.openHint') : undefined}
+        footer={
+          positions.length > 0 ? (
+            <div className="flex items-center justify-between">
+              <span className="text-[0.65rem] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                {t('card.totalValue')}
+              </span>
+              <span className="font-heading text-sm font-semibold tabular-nums">
+                {formatCurrency(total, currency)}
+              </span>
+            </div>
+          ) : undefined
+        }
       >
         {loading ? (
           <div className="flex flex-col gap-2">
@@ -124,63 +95,27 @@ export function HoldingsList({
         ) : positions.length === 0 ? (
           <TileEmpty>{t('detail.noPositions')}</TileEmpty>
         ) : (
-          <div className="flex flex-col gap-2">
-            {/* The sort control replaces the column headers a table would have
-                had. Scrolls sideways on a phone rather than wrapping to two
-                rows and pushing the list down. */}
-            <div className="-mx-1 flex items-center gap-1 overflow-x-auto px-1 pb-0.5">
-              <span className="shrink-0 text-[0.6rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                {t('holding.sortBy')}
-              </span>
-              {SORTS.map((sort) => {
-                const active = sortKey === sort.key
-                return (
-                  <button
-                    key={sort.key}
-                    type="button"
-                    onClick={() => toggle(sort.key)}
-                    aria-pressed={active}
-                    className={cn(
-                      // Taller on touch, where these chips are the only way to
-                      // reorder the list and a 20px target is a miss waiting
-                      // to happen.
-                      'inline-flex h-8 shrink-0 items-center gap-0.5 rounded-full px-2.5 text-[0.65rem] font-medium transition-colors sm:h-6 sm:px-2',
-                      'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60',
-                      active
-                        ? 'bg-primary/12 text-primary'
-                        : 'text-muted-foreground hover:bg-muted hover:text-foreground',
-                    )}
-                  >
-                    {t(sort.labelKey)}
-                    {active && (
-                      <HugeiconsIcon
-                        icon={sortDir === 'asc' ? ArrowUp01Icon : ArrowDown01Icon}
-                        strokeWidth={2.25}
-                        className="size-3 shrink-0"
-                      />
-                    )}
-                  </button>
-                )
-              })}
-            </div>
-
-            <ul className="flex flex-col">
-              {sorted.map((position) => (
-                <HoldingRow
-                  key={`${position.account_id}-${position.id}`}
-                  position={position}
-                  currency={currency}
-                  total={total}
-                  animate={!reduced}
-                  onOpen={() => setOpenId(`${position.account_id}-${position.id}`)}
-                />
-              ))}
-            </ul>
-          </div>
+          <ul className="flex flex-col">
+            {sorted.map((position) => (
+              <HoldingRow
+                key={`${position.account_id}-${position.id}`}
+                position={position}
+                currency={currency}
+                total={total}
+                animate={!reduced}
+                onOpen={() => setOpenId(`${position.account_id}-${position.id}`)}
+              />
+            ))}
+          </ul>
         )}
       </Tile>
 
-      <HoldingDetailCard position={open} currency={currency} onClose={() => setOpenId(null)} />
+      <HoldingDetailCard
+        position={open}
+        currency={currency}
+        provider={open ? providerByAccountId.get(open.account_id) ?? null : null}
+        onClose={() => setOpenId(null)}
+      />
     </>
   )
 }

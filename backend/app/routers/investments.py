@@ -25,6 +25,7 @@ from app.schemas import (
     CompanyHistoryResponse,
     CompanyProfileResponse,
     ComparisonResponse,
+    EarnPositionResponse,
     InvestmentAccountCreate,
     InvestmentAccountResponse,
     InvestmentCredentialUpdate,
@@ -334,6 +335,39 @@ def get_investment_transactions(
         .all()
     )
     return transactions
+
+
+@router.get("/accounts/{account_id}/earn", response_model=List[EarnPositionResponse])
+def get_investment_earn_positions(
+    account_id: int,
+    current_user: User = Depends(get_current_user_authenticated),
+    db: Session = Depends(get_db),
+):
+    """Yield-bearing balances outside the regular position list (e.g. Binance Simple Earn).
+
+    Live-fetched from the broker on every call rather than persisted — same
+    treatment as company-research data — since a provider without an
+    equivalent product (Freedom24) simply has none to store.
+    """
+    account = _get_investment_account(db, account_id, current_user)
+    try:
+        provider = get_provider_for_account(account)
+        positions = provider.get_earn_positions()
+    except NotImplementedError as exc:
+        raise HTTPException(status_code=status.HTTP_501_NOT_IMPLEMENTED, detail=str(exc))
+    except Exception as exc:  # noqa: BLE001 - surface the broker's own error message
+        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=str(exc))
+    return [
+        EarnPositionResponse(
+            asset=p.asset,
+            amount=p.amount,
+            kind=p.kind,
+            apr=p.apr,
+            accrued_yield=p.accrued_yield,
+            lock_end_time=p.lock_end_time,
+        )
+        for p in positions
+    ]
 
 
 @router.get("/accounts/{account_id}/history", response_model=List[PortfolioSnapshotResponse])

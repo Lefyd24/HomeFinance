@@ -1,23 +1,22 @@
+import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { Refresh01Icon } from '@hugeicons/core-free-icons'
 import { Button } from '@/components/ui/button'
 import { formatCurrency, formatDate } from '../../lib/format'
 import { cn } from '@/lib/utils'
-import { DeltaPct, Metric, SyncStatusBadge } from '../InvestmentPrimitives'
+import { DeltaPct, SyncStatusBadge } from '../InvestmentPrimitives'
 import type { PortfolioTotals } from '../portfolioInsights'
 import type { InvestmentAccount } from '../investmentsApi'
 
 /**
  * The one line that answers "how am I doing" before anything else loads.
  *
- * It replaces the old hero card, which spent a large tinted panel restating
- * three numbers. Here the numbers themselves are the banner: a single strip
- * across the top of the workspace, with the allocation split as a thin bar
- * underneath rather than its own labelled block.
- *
- * It also owns sync, because sync is scoped the same way the figures are: with
- * one account selected the button refreshes that account, and only that one.
+ * Four figures, each its own labeled cell — a row of distinct stat cards
+ * rather than a dense wrap of labels, so the eye can land on "today" or
+ * "cash" without having to first read every label to its left. The
+ * allocation split stays underneath as a thin bar, and sync stays folded
+ * into the corner: it's maintenance, not the point of the page.
  */
 export function PortfolioTicker({
   totals,
@@ -46,27 +45,21 @@ export function PortfolioTicker({
   const cashPct = Math.max(0, 100 - investedPct)
 
   return (
-    <section className="flex flex-col gap-2.5 rounded-xl border border-border bg-card px-3 py-2.5 shadow-sm">
-      {/*
-        A two-up grid on a phone rather than a wrapping flex row: wrapping made
-        the four figures land in a ragged 2-1-1 that read as three groups. A
-        grid keeps them aligned in columns whatever the widths turn out to be,
-        and only becomes a single row once there is space for one.
-      */}
-      <div className="grid grid-cols-2 items-end gap-x-4 gap-y-3 sm:flex sm:flex-wrap sm:gap-x-9">
-        <Metric
-          label={t('ticker.totalValue')}
-          value={money(totals.value)}
-          size="lg"
-          hint={scopeLabel}
-        />
-        <Metric
-          label={t('ticker.today')}
-          value={
-            totals.dayChange != null ? (
-              <span className="inline-flex items-baseline gap-2">
+    <section className="flex flex-col gap-3 rounded-xl border border-border bg-card p-3 shadow-sm">
+      <div className="flex flex-wrap items-start justify-between gap-2">
+        <div className="grid flex-1 grid-cols-2 gap-2.5 sm:grid-cols-4 sm:gap-0 sm:divide-x sm:divide-border/60">
+          <StatCell label={t('ticker.totalValue')} hint={scopeLabel}>
+            <span className="font-heading text-xl font-semibold tabular-nums tracking-tight sm:text-2xl">
+              {money(totals.value)}
+            </span>
+          </StatCell>
+
+          <StatCell label={t('ticker.today')}>
+            {totals.dayChange != null ? (
+              <span className="inline-flex flex-wrap items-baseline gap-1.5">
                 <span
                   className={cn(
+                    'font-heading text-lg font-semibold tabular-nums',
                     totals.dayChange > 0 && 'text-flow-in',
                     totals.dayChange < 0 && 'text-flow-out',
                   )}
@@ -74,39 +67,37 @@ export function PortfolioTicker({
                   {totals.dayChange > 0 ? '+' : ''}
                   {money(totals.dayChange)}
                 </span>
-                <DeltaPct pct={totals.dayChangePct} className="text-sm" />
+                <DeltaPct pct={totals.dayChangePct} className="text-xs" />
               </span>
             ) : (
-              <span className="text-muted-foreground">—</span>
-            )
-          }
-          hint={totals.dayChange == null ? t('ticker.noQuote') : undefined}
-        />
-        <Metric
-          label={t('ticker.allTime')}
-          value={
-            <span className="inline-flex items-baseline gap-2">
+              <span className="text-sm text-muted-foreground">{t('ticker.noQuote')}</span>
+            )}
+          </StatCell>
+
+          <StatCell label={t('ticker.allTime')}>
+            <span className="inline-flex flex-wrap items-baseline gap-1.5">
               <span
-                className={cn(totals.pnl > 0 && 'text-flow-in', totals.pnl < 0 && 'text-flow-out')}
+                className={cn(
+                  'font-heading text-lg font-semibold tabular-nums',
+                  totals.pnl > 0 && 'text-flow-in',
+                  totals.pnl < 0 && 'text-flow-out',
+                )}
               >
                 {totals.pnl > 0 ? '+' : ''}
                 {money(totals.pnl)}
               </span>
-              <DeltaPct pct={totals.returnPct} className="text-sm" />
+              <DeltaPct pct={totals.returnPct} className="text-xs" />
             </span>
-          }
-        />
-        <Metric
-          label={t('ticker.cash')}
-          value={money(totals.cash)}
-          size="sm"
-          hint={t('ticker.cashShare', { pct: cashPct.toFixed(0) })}
-        />
+          </StatCell>
 
-        {/* Sync is maintenance, not the point of the page, so it stays pale —
-            and on a phone it shrinks further rather than spanning the row,
-            where a full-width button would outrank the figures above it. */}
-        <div className="col-span-2 flex flex-col items-end gap-1 sm:ms-auto">
+          <StatCell label={t('ticker.cash')} hint={t('ticker.cashShare', { pct: cashPct.toFixed(0) })}>
+            <span className="font-heading text-lg font-semibold tabular-nums">{money(totals.cash)}</span>
+          </StatCell>
+        </div>
+
+        {/* Sync is maintenance, not the point of the page, so it stays pale and
+            tucked in the corner rather than spanning the row. */}
+        <div className="flex flex-col items-end gap-1">
           <Button
             variant="secondary"
             size="sm"
@@ -156,5 +147,25 @@ export function PortfolioTicker({
         />
       </div>
     </section>
+  )
+}
+
+function StatCell({
+  label,
+  hint,
+  children,
+}: {
+  label: string
+  hint?: string
+  children: ReactNode
+}) {
+  return (
+    <div className="flex min-w-0 flex-col gap-1 px-0 sm:px-3.5 sm:first:pl-0">
+      <span className="text-[0.625rem] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+        {label}
+      </span>
+      {children}
+      {hint && <span className="truncate text-[0.65rem] text-muted-foreground">{hint}</span>}
+    </div>
   )
 }

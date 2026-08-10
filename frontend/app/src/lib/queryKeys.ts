@@ -18,6 +18,7 @@ export const queryKeys = {
   investmentTransactions: (accountId: number) => ['investmentTransactions', accountId] as const,
   investmentHistory: (accountId: number, range?: object) =>
     ['investmentHistory', accountId, range] as const,
+  investmentEarnPositions: (accountId: number) => ['investmentEarnPositions', accountId] as const,
   // Market data is not account-scoped — see investmentsApi.searchSymbols.
   investmentSymbolSearch: (query: string, provider?: string) =>
     ['investmentSymbolSearch', provider ?? 'yahoo', query] as const,

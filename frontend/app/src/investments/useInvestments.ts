@@ -63,6 +63,23 @@ export function useInvestmentTransactions(accountId: number | null) {
   })
 }
 
+/**
+ * Yield-bearing balances outside the regular position list. A provider with
+ * no such product (Freedom24) answers 501 — treated as "no earn positions"
+ * rather than a fetch error, so the tile can render an empty state quietly.
+ */
+export function useEarnPositions(accountId: number | null) {
+  return useQuery({
+    queryKey: queryKeys.investmentEarnPositions(accountId ?? -1),
+    queryFn: () => investmentsApi.getEarnPositions(accountId as number),
+    enabled: accountId != null,
+    retry: (count, error) => {
+      if (error instanceof ApiError && error.status === 501) return false
+      return count < 2
+    },
+  })
+}
+
 export function useInvestmentHistory(
   accountId: number | null,
   range?: { start_date?: string; end_date?: string },

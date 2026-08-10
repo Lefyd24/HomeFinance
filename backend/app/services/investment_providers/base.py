@@ -105,6 +105,21 @@ class ProviderCandle:
     close: float
 
 
+@dataclass
+class ProviderEarnPosition:
+    """One yield-bearing balance held outside the regular spot position list.
+
+    Live-fetched, never persisted — same treatment as company-research data.
+    """
+
+    asset: str
+    amount: float
+    kind: str  # "flexible" | "locked"
+    apr: Optional[float] = None
+    accrued_yield: Optional[float] = None
+    lock_end_time: Optional[datetime] = None
+
+
 class InvestmentProvider(ABC):
     """Adapter interface a brokerage integration implements.
 
@@ -158,3 +173,7 @@ class InvestmentProvider(ABC):
     ) -> list[ProviderCandle]:
         """Daily OHLC bars for `symbol`. Optional — used to backfill portfolio charts."""
         raise NotImplementedError(f"{type(self).__name__} does not support candles")
+
+    def get_earn_positions(self) -> list[ProviderEarnPosition]:
+        """Yield-bearing balances (staking, savings/earn products). Optional — see search_symbols."""
+        raise NotImplementedError(f"{type(self).__name__} does not support earn positions")

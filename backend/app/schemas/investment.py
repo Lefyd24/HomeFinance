@@ -317,6 +317,16 @@ class CompanyProfileResponse(BaseModel):
     model_config = {"populate_by_name": True}
 
 
+class EarnPositionResponse(BaseModel):
+    """A yield-bearing balance held outside the regular position list (e.g. Binance Simple Earn)."""
+    asset: str
+    amount: float
+    kind: str  # "flexible" | "locked"
+    apr: Optional[float] = None
+    accrued_yield: Optional[float] = None
+    lock_end_time: Optional[datetime] = None
+
+
 class InvestmentSyncResult(BaseModel):
     account_id: int
     sync_status: str

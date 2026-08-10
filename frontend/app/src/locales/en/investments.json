@@ -40,6 +40,20 @@
     "quotedCount": "Based on {{quoted}} of {{total}} holdings with a live quote",
     "noQuotes": "No live quotes right now.",
     "noMovers": "Nothing moved today.",
+    "currencyExposure": "Currency exposure",
+    "singleCurrency": "Everything is in {{currency}} — no FX exposure to track.",
+    "tradingCosts": "Trading costs",
+    "tradingCostsCount": "{{count}} recent",
+    "totalCommissions": "Total commissions paid",
+    "noTradingCosts": "No trading costs recorded.",
+    "cashFlow": "Cash flow",
+    "noCashFlow": "No deposits or withdrawals recorded.",
+    "earnPositions": "Earn positions",
+    "earnFlexible": "Flexible",
+    "earnLocked": "Locked",
+    "earnApr": "{{pct}} APR",
+    "earnUnlocks": "Unlocks {{date}}",
+    "noEarnPositions": "No Simple Earn positions right now.",
     "noInsights": "Not enough here to say anything useful yet.",
     "activityMore": "{{count}} more not shown",
     "activityMore_other": "{{count}} more not shown"
@@ -61,6 +75,15 @@
       "costBasis": "The total you originally paid for this holding.",
       "weight": "How much of your invested money sits here.",
       "pricedAt": "When this price was last refreshed."
+    },
+    "research": {
+      "title": "From company research",
+      "sector": "Sector",
+      "beta": "Beta",
+      "dividendYield": "Dividend yield",
+      "expenseRatio": "Expense ratio",
+      "category": "Category",
+      "topHolding": "Top holding"
     }
   },
   "insights": {
