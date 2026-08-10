@@ -151,13 +151,65 @@ class NewsPageResponse(BaseModel):
 
 
 class PriceBar(BaseModel):
-    """One daily OHLCV bar, for the company research page's mini price chart."""
+    """One daily OHLCV bar with optional moving-average overlays, for the research chart."""
     date: str
     open: Optional[float] = None
     high: Optional[float] = None
     low: Optional[float] = None
     close: Optional[float] = None
     volume: Optional[float] = None
+    sma50: Optional[float] = None
+    sma200: Optional[float] = None
+
+
+class HorizonStats(BaseModel):
+    """Risk/return over one fixed lookback. Independent of the chart's selected range."""
+    horizon: str  # "1y" | "3y" | "5y"
+    annualized_return: Optional[float] = None
+    volatility: Optional[float] = None
+    sharpe: Optional[float] = None
+    sortino: Optional[float] = None
+    max_drawdown: Optional[float] = None
+    days_under_water: Optional[int] = None
+    beta: Optional[float] = None
+    alpha: Optional[float] = None
+    up_capture: Optional[float] = None
+    down_capture: Optional[float] = None
+
+
+class RollingPoint(BaseModel):
+    date: str
+    value: Optional[float] = None
+
+
+class HistogramBin(BaseModel):
+    """One bucket of the daily-return distribution. Bounds are decimal returns."""
+    lower: float
+    upper: float
+    count: int
+
+
+class CompanyHistoryResponse(BaseModel):
+    """Price bars plus range-scoped analytics, served from the cached market-data layer."""
+    symbol: str
+    period: str
+    currency: Optional[str] = None
+    benchmark_symbol: str
+    bars: list[PriceBar] = Field(default_factory=list)
+    horizons: list[HorizonStats] = Field(default_factory=list)
+    rolling_volatility: list[RollingPoint] = Field(default_factory=list)
+    rolling_beta: list[RollingPoint] = Field(default_factory=list)
+    rolling_sharpe: list[RollingPoint] = Field(default_factory=list)
+    return_histogram: list[HistogramBin] = Field(default_factory=list)
+    return_observations: int = 0
+
+
+class EarningsSurprise(BaseModel):
+    """One quarter of actual-vs-estimate EPS, for the research page's earnings block."""
+    quarter: str
+    eps_actual: Optional[float] = None
+    eps_estimate: Optional[float] = None
+    surprise_pct: Optional[float] = None
 
 
 class CompanyProfileResponse(BaseModel):
@@ -193,19 +245,39 @@ class CompanyProfileResponse(BaseModel):
     day_change_pct: Optional[float] = None
     target_mean_price: Optional[float] = None
     recommendation: Optional[str] = None
+    first_trade_date: Optional[str] = None
 
     # Valuation (stocks)
     price_to_book: Optional[float] = None
     ev_to_ebitda: Optional[float] = None
     ev_to_sales: Optional[float] = None
+    peg_ratio: Optional[float] = None
+    price_to_sales: Optional[float] = None
     fcf_yield: Optional[float] = None
+    # Profitability
     roe: Optional[float] = None
-    debt_to_equity: Optional[float] = None
+    return_on_assets: Optional[float] = None
     gross_margin: Optional[float] = None
+    operating_margin: Optional[float] = None
+    profit_margin: Optional[float] = None
     revenue_growth: Optional[float] = None
-    payout_ratio: Optional[float] = None
-    book_value: Optional[float] = None
     earnings_growth: Optional[float] = None
+    payout_ratio: Optional[float] = None
+    # Balance sheet
+    debt_to_equity: Optional[float] = None
+    debt_to_ebitda: Optional[float] = None
+    current_ratio: Optional[float] = None
+    quick_ratio: Optional[float] = None
+    total_cash: Optional[float] = None
+    total_debt: Optional[float] = None
+    book_value: Optional[float] = None
+    # Earnings & estimates
+    total_revenue: Optional[float] = None
+    ebitda: Optional[float] = None
+    trailing_eps: Optional[float] = None
+    forward_eps: Optional[float] = None
+    analyst_count: Optional[int] = None
+    earnings_history: list[EarningsSurprise] = Field(default_factory=list)
 
     # Fund-specific (ETF / mutual fund)
     expense_ratio: Optional[float] = None
@@ -216,13 +288,6 @@ class CompanyProfileResponse(BaseModel):
     # Crypto-specific
     circulating_supply: Optional[float] = None
     volume_24h: Optional[float] = None
-
-    # Price history + computed performance/risk (1y)
-    price_history: Optional[list[PriceBar]] = None
-    one_year_return: Optional[float] = None
-    one_year_volatility: Optional[float] = None
-    max_drawdown_1y: Optional[float] = None
-    sharpe_1y: Optional[float] = None
 
     model_config = {"populate_by_name": True}
 

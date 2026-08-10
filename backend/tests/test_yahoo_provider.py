@@ -3,6 +3,7 @@
 from datetime import datetime
 from unittest.mock import MagicMock, patch
 
+import pandas as pd
 import pytest
 
 from app.services.investment_providers.yahoo import YahooFinanceMarketData, _story_cache
@@ -106,17 +107,13 @@ def test_get_news_story_missing(yahoo):
         yahoo.get_news_story("missing")
 
 
-def test_company_profile_maps_info(yahoo):
+def test_get_company_profile_maps_fields(yahoo):
     info = {
         "symbol": "AAPL",
         "longName": "Apple Inc.",
-        "shortName": "Apple Inc.",
+        "shortName": "Apple",
         "sector": "Technology",
         "industry": "Consumer Electronics",
-        "website": "https://www.apple.com",
-        "longBusinessSummary": "Makes devices.",
-        "marketCap": 3_000_000_000_000,
-        "trailingPE": 30.1,
         "currency": "USD",
         "exchange": "NMS",
         "quoteType": "EQUITY",
@@ -127,18 +124,93 @@ def test_company_profile_maps_info(yahoo):
         "country": "United States",
         "recommendationKey": "buy",
         "targetMeanPrice": 220.0,
+        # New fundamentals
+        "pegRatio": 2.53,
+        "priceToSalesTrailing12Months": 9.8,
+        "returnOnAssets": 0.27,
+        "operatingMargins": 0.326,
+        "profitMargins": 0.276,
+        "currentRatio": 1.003,
+        "quickRatio": 0.812,
+        "totalCash": 62_399_000_576,
+        "totalDebt": 84_343_996_416,
+        "totalRevenue": 466_822_987_776,
+        "ebitda": 167_959_003_136,
+        "trailingEps": 8.71,
+        "forwardEps": 9.51,
+        "numberOfAnalystOpinions": 41,
+        "firstTradeDateMilliseconds": 345479400000,
     }
     with patch("app.services.investment_providers.yahoo.yf.Ticker") as ticker_cls:
         ticker_cls.return_value.info = info
+        ticker_cls.return_value.earnings_history = pd.DataFrame(
+            {
+                "epsActual": [2.01, 2.02],
+                "epsEstimate": [1.94275, 1.89243],
+                "surprisePercent": [0.0346, 0.0674],
+            },
+            index=pd.to_datetime(["2026-03-31", "2026-06-30"]),
+        )
         profile = yahoo.get_company_profile("aapl")
 
     assert profile["symbol"] == "AAPL"
     assert profile["name"] == "Apple Inc."
-    assert profile["sector"] == "Technology"
     assert profile["quote_type"] == "stock"
-    assert profile["current_price"] == 190.0
     assert profile["day_change_pct"] == pytest.approx(2.70, abs=0.01)
-    assert profile["employees"] == 160000
+
+    # New fundamentals are mapped.
+    assert profile["peg_ratio"] == pytest.approx(2.53)
+    assert profile["price_to_sales"] == pytest.approx(9.8)
+    assert profile["return_on_assets"] == pytest.approx(0.27)
+    assert profile["operating_margin"] == pytest.approx(0.326)
+    assert profile["profit_margin"] == pytest.approx(0.276)
+    assert profile["current_ratio"] == pytest.approx(1.003)
+    assert profile["quick_ratio"] == pytest.approx(0.812)
+    assert profile["total_cash"] == pytest.approx(62_399_000_576)
+    assert profile["total_debt"] == pytest.approx(84_343_996_416)
+    assert profile["total_revenue"] == pytest.approx(466_822_987_776)
+    assert profile["ebitda"] == pytest.approx(167_959_003_136)
+    assert profile["trailing_eps"] == pytest.approx(8.71)
+    assert profile["forward_eps"] == pytest.approx(9.51)
+    assert profile["analyst_count"] == 41
+
+    # debt_to_ebitda is derived, not read.
+    assert profile["debt_to_ebitda"] == pytest.approx(84_343_996_416 / 167_959_003_136)
+
+    # firstTradeDateMilliseconds -> ISO date string.
+    assert profile["first_trade_date"] == "1980-12-12"
+
+    # Earnings surprises, oldest-first, capped at 4.
+    assert [e["quarter"] for e in profile["earnings_history"]] == ["2026-03-31", "2026-06-30"]
+    assert profile["earnings_history"][1]["eps_actual"] == pytest.approx(2.02)
+    assert profile["earnings_history"][1]["surprise_pct"] == pytest.approx(0.0674)
+
+    # Price history and 1y performance are gone — they now live on /company/{symbol}/history.
+    assert "price_history" not in profile
+    assert "one_year_return" not in profile
+    assert "sharpe_1y" not in profile
+
+
+def test_get_company_profile_survives_missing_optional_data(yahoo):
+    """A thin quote (no fundamentals, earnings_history raising) must still return a profile."""
+    info = {"symbol": "XYZ", "shortName": "Xyz", "quoteType": "EQUITY", "currentPrice": 10.0}
+
+    class _Boom:
+        @property
+        def earnings_history(self):
+            raise RuntimeError("no earnings data")
+
+    _Boom.info = info
+
+    with patch("app.services.investment_providers.yahoo.yf.Ticker") as ticker_cls:
+        ticker_cls.return_value = _Boom()
+        profile = yahoo.get_company_profile("xyz")
+
+    assert profile["symbol"] == "XYZ"
+    assert profile["peg_ratio"] is None
+    assert profile["debt_to_ebitda"] is None
+    assert profile["first_trade_date"] is None
+    assert profile["earnings_history"] == []
 
 
 def test_safe_float_rejects_nan_and_inf():

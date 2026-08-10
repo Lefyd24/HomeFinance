@@ -168,13 +168,15 @@ export function useNews(options?: {
   offset?: number
   language?: string
   provider?: investmentsApi.MarketDataProviderId
+  /** Extra gate on top of provider readiness — e.g. "only once scrolled into view". */
+  enabled?: boolean
 }) {
   const provider = options?.provider ?? investmentsApi.DEFAULT_MARKET_DATA_PROVIDER
   const providerReady = investmentsApi.isMarketDataProviderReady(provider)
   return useQuery({
     queryKey: queryKeys.investmentNews({ ...options, provider }),
     queryFn: () => investmentsApi.getNews({ ...options, provider }),
-    enabled: providerReady,
+    enabled: providerReady && (options?.enabled ?? true),
     staleTime: 60_000,
   })
 }
@@ -200,6 +202,32 @@ export function useCompanyProfile(symbol: string | null) {
     enabled: trimmed.length > 0,
     staleTime: 5 * 60_000,
     // Missing tickers are a permanent 404 from Yahoo — don't hammer retries.
+    retry: (count, error) => {
+      if (error instanceof ApiError && (error.status === 404 || error.status === 400)) return false
+      return count < 2
+    },
+  })
+}
+
+/**
+ * Chart bars and risk analytics for the research page.
+ *
+ * Separate from `useCompanyProfile` so changing the chart range refetches only
+ * the (cached, cheap) price series — never the slow `ticker.info` payload.
+ * `placeholderData` keeps the previous range's bars on screen while the next
+ * range loads, so the chart never collapses to a skeleton mid-interaction.
+ */
+export function useCompanyHistory(
+  symbol: string | null,
+  period: investmentsApi.HistoryPeriod = '1y',
+) {
+  const trimmed = symbol?.trim() ?? ''
+  return useQuery({
+    queryKey: queryKeys.investmentCompanyHistory(trimmed, period),
+    queryFn: () => investmentsApi.getCompanyHistory(trimmed, period),
+    enabled: trimmed.length > 0,
+    staleTime: 5 * 60_000,
+    placeholderData: (previous) => previous,
     retry: (count, error) => {
       if (error instanceof ApiError && (error.status === 404 || error.status === 400)) return false
       return count < 2

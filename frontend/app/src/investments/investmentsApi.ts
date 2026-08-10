@@ -279,11 +279,62 @@ export function getNewsStory(
 
 export interface PriceBar {
   date: string
-  open: number
-  high: number
-  low: number
-  close: number
-  volume: number
+  open: number | null
+  high: number | null
+  low: number | null
+  close: number | null
+  volume: number | null
+  sma50: number | null
+  sma200: number | null
+}
+
+export interface EarningsSurprise {
+  quarter: string
+  eps_actual: number | null
+  eps_estimate: number | null
+  surprise_pct: number | null
+}
+
+export interface HorizonStats {
+  horizon: string
+  annualized_return: number | null
+  volatility: number | null
+  sharpe: number | null
+  sortino: number | null
+  max_drawdown: number | null
+  days_under_water: number | null
+  beta: number | null
+  alpha: number | null
+  up_capture: number | null
+  down_capture: number | null
+}
+
+export interface RollingPoint {
+  date: string
+  value: number | null
+}
+
+export interface HistogramBin {
+  lower: number
+  upper: number
+  count: number
+}
+
+export const HISTORY_PERIODS = ['1m', '3m', '6m', 'ytd', '1y', '5y', 'max'] as const
+export type HistoryPeriod = (typeof HISTORY_PERIODS)[number]
+
+export interface CompanyHistory {
+  symbol: string
+  period: HistoryPeriod
+  currency: string | null
+  benchmark_symbol: string
+  bars: PriceBar[]
+  horizons: HorizonStats[]
+  rolling_volatility: RollingPoint[]
+  rolling_beta: RollingPoint[]
+  rolling_sharpe: RollingPoint[]
+  return_histogram: HistogramBin[]
+  return_observations: number
 }
 
 export interface CompanyProfile {
@@ -318,18 +369,38 @@ export interface CompanyProfile {
   day_change_pct: number | null
   target_mean_price: number | null
   recommendation: string | null
-  // Valuation (stocks)
+  first_trade_date: string | null
+  // Valuation
   price_to_book: number | null
   ev_to_ebitda: number | null
   ev_to_sales: number | null
+  peg_ratio: number | null
+  price_to_sales: number | null
   fcf_yield: number | null
+  // Profitability
   roe: number | null
-  debt_to_equity: number | null
+  return_on_assets: number | null
   gross_margin: number | null
+  operating_margin: number | null
+  profit_margin: number | null
   revenue_growth: number | null
-  payout_ratio: number | null
-  book_value: number | null
   earnings_growth: number | null
+  payout_ratio: number | null
+  // Balance sheet
+  debt_to_equity: number | null
+  debt_to_ebitda: number | null
+  current_ratio: number | null
+  quick_ratio: number | null
+  total_cash: number | null
+  total_debt: number | null
+  book_value: number | null
+  // Earnings & estimates
+  total_revenue: number | null
+  ebitda: number | null
+  trailing_eps: number | null
+  forward_eps: number | null
+  analyst_count: number | null
+  earnings_history: EarningsSurprise[]
   // Fund-specific
   expense_ratio: number | null
   aum: number | null
@@ -338,12 +409,6 @@ export interface CompanyProfile {
   // Crypto-specific
   circulating_supply: number | null
   volume_24h: number | null
-  // Performance & history
-  price_history: PriceBar[] | null
-  one_year_return: number | null
-  one_year_volatility: number | null
-  max_drawdown_1y: number | null
-  sharpe_1y: number | null
 }
 
 export function getCompanyProfile(
@@ -353,6 +418,16 @@ export function getCompanyProfile(
   const params = new URLSearchParams({ provider })
   return apiFetch<CompanyProfile>(
     `/investments/company/${encodeURIComponent(symbol)}?${params}`,
+  )
+}
+
+export function getCompanyHistory(
+  symbol: string,
+  period: HistoryPeriod = '1y',
+): Promise<CompanyHistory> {
+  const params = new URLSearchParams({ provider: 'yahoo', period })
+  return apiFetch<CompanyHistory>(
+    `/investments/company/${encodeURIComponent(symbol)}/history?${params}`,
   )
 }
 

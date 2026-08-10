@@ -22,6 +22,7 @@ from app.models import (
 )
 from app.schemas import (
     BenchmarkOption,
+    CompanyHistoryResponse,
     CompanyProfileResponse,
     ComparisonResponse,
     InvestmentAccountCreate,
@@ -42,7 +43,7 @@ from app.schemas import (
     SymbolSearchResult,
     TechnicalResponse,
 )
-from app.services import comparison_service, technical_service
+from app.services import comparison_service, company_history_service, technical_service
 from app.services.investment_sync_service import (
     create_credential,
     get_provider_for_account,
@@ -531,6 +532,37 @@ def get_company_profile(
     except LookupError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc))
     except Exception as exc:  # noqa: BLE001 - surface Yahoo's own error message
+        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=str(exc))
+
+
+@router.get("/company/{symbol}/history", response_model=CompanyHistoryResponse)
+def get_company_history(
+    symbol: str,
+    period: str = Query("1y", pattern="^(1m|3m|6m|ytd|1y|5y|max)$"),
+    provider: str = Query(DEFAULT_MARKET_DATA_PROVIDER),
+    current_user: User = Depends(get_current_user_authenticated),
+    db: Session = Depends(get_db),
+):
+    """Price bars plus risk/return analytics for the research page's charts.
+
+    Split from `/company/{symbol}` so changing the chart range never re-fetches
+    the (slow) `ticker.info` payload. Prices come from the cached market-data
+    layer, so repeat range switches are served from SQLite.
+    """
+    name = _normalize_market_provider(provider)
+    if name != "yahoo":
+        raise HTTPException(
+            status_code=status.HTTP_501_NOT_IMPLEMENTED,
+            detail="Company research is only available via Yahoo Finance.",
+        )
+    _ = current_user
+    try:
+        return company_history_service.build_company_history(db, symbol, period=period)
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc))
+    except SymbolNotFound as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc))
+    except Exception as exc:  # noqa: BLE001 - surface the provider's own error message
         raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=str(exc))
 
 
