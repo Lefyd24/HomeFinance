@@ -153,6 +153,87 @@ def _earnings_surprises(ticker: "yf.Ticker", limit: int = 4) -> list[dict[str, A
     return rows
 
 
+_EMPTY_FUND_HOLDINGS: dict[str, Any] = {
+    "fund_family": None,
+    "top_holdings": [],
+    "sector_weightings": [],
+    "asset_classes": None,
+}
+
+
+def _fund_holdings(ticker: "yf.Ticker") -> dict[str, Any]:
+    """Top holdings, sector mix and asset-class split for an ETF/mutual fund.
+
+    Sourced from yfinance's `Ticker.funds_data` scraper (yfinance >= 1.5),
+    which is separate from `ticker.info` and can legitimately be unavailable
+    for thin or delisted funds — every sub-fetch is independently best-effort
+    so one missing piece doesn't blank the rest.
+    """
+    try:
+        funds = ticker.funds_data
+    except Exception:  # noqa: BLE001 - optional enrichment
+        logger.debug("Yahoo funds_data unavailable for %s", getattr(ticker, "ticker", "?"), exc_info=True)
+        return dict(_EMPTY_FUND_HOLDINGS)
+
+    fund_family: Optional[str] = None
+    try:
+        overview = funds.fund_overview or {}
+        fund_family = overview.get("family")
+    except Exception:  # noqa: BLE001 - optional enrichment
+        pass
+
+    top_holdings: list[dict[str, Any]] = []
+    try:
+        frame = funds.top_holdings
+        if frame is not None and not frame.empty:
+            for symbol, row in frame.iterrows():
+                top_holdings.append(
+                    {
+                        "symbol": str(symbol),
+                        "name": row.get("Name"),
+                        "weight": _safe_float(row.get("Holding Percent")),
+                    }
+                )
+    except Exception:  # noqa: BLE001 - optional enrichment
+        pass
+
+    sector_weightings: list[dict[str, Any]] = []
+    try:
+        weights = funds.sector_weightings or {}
+        sector_weightings = sorted(
+            (
+                {"sector": sector, "weight": weight}
+                for sector, weight in ((s, _safe_float(w)) for s, w in weights.items())
+                if weight is not None
+            ),
+            key=lambda item: item["weight"],
+            reverse=True,
+        )
+    except Exception:  # noqa: BLE001 - optional enrichment
+        pass
+
+    asset_classes: Optional[dict[str, Any]] = None
+    try:
+        classes = funds.asset_classes or {}
+        if classes:
+            asset_classes = {
+                "stock": _safe_float(classes.get("stockPosition")),
+                "bond": _safe_float(classes.get("bondPosition")),
+                "cash": _safe_float(classes.get("cashPosition")),
+                "preferred": _safe_float(classes.get("preferredPosition")),
+                "other": _safe_float(classes.get("otherPosition")),
+            }
+    except Exception:  # noqa: BLE001 - optional enrichment
+        pass
+
+    return {
+        "fund_family": fund_family,
+        "top_holdings": top_holdings,
+        "sector_weightings": sector_weightings,
+        "asset_classes": asset_classes,
+    }
+
+
 class YahooFinanceMarketData:
     """Market-data-only client. Not registered as a brokerage sync provider."""
 
@@ -328,6 +409,7 @@ class YahooFinanceMarketData:
             "target_mean_price": _safe_float(info.get("targetMeanPrice")),
             "recommendation": info.get("recommendationKey"),
             "first_trade_date": _first_trade_date(info),
+            **_EMPTY_FUND_HOLDINGS,
         }
 
         if kind == "stock":
@@ -386,6 +468,7 @@ class YahooFinanceMarketData:
                     "yield_": _safe_float(info.get("yield")),
                 }
             )
+            profile.update(_fund_holdings(ticker))
         elif kind == "crypto":
             profile.update(
                 {

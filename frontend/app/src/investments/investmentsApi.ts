@@ -295,6 +295,25 @@ export interface EarningsSurprise {
   surprise_pct: number | null
 }
 
+export interface EtfHolding {
+  symbol: string
+  name: string | null
+  weight: number | null
+}
+
+export interface SectorWeight {
+  sector: string
+  weight: number
+}
+
+export interface AssetClassMix {
+  stock: number | null
+  bond: number | null
+  cash: number | null
+  preferred: number | null
+  other: number | null
+}
+
 export interface HorizonStats {
   horizon: string
   annualized_return: number | null
@@ -406,6 +425,10 @@ export interface CompanyProfile {
   aum: number | null
   category: string | null
   yield_: number | null
+  fund_family: string | null
+  top_holdings: EtfHolding[]
+  sector_weightings: SectorWeight[]
+  asset_classes: AssetClassMix | null
   // Crypto-specific
   circulating_supply: number | null
   volume_24h: number | null

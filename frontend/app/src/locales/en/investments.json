@@ -382,7 +382,18 @@
     "newsTitle": "Latest news",
     "viewAllNews": "View all",
     "newsEmpty": "No recent news for this symbol.",
-    "newsUnavailable": "News couldn't be loaded right now."
+    "newsUnavailable": "News couldn't be loaded right now.",
+    "compositionTitle": "Fund composition",
+    "holdingsTitle": "Top holdings",
+    "sectorWeightings": "Sector weightings",
+    "assetMix": "Asset mix",
+    "assetClasses": {
+      "stock": "Stocks",
+      "bond": "Bonds",
+      "cash": "Cash",
+      "preferred": "Preferred",
+      "other": "Other"
+    }
   },
   "edit": {
     "title": "Edit investment account",

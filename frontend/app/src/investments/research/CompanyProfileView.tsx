@@ -7,6 +7,7 @@ import type { CompanyProfile, HistoryPeriod } from '../investmentsApi'
 import { AboutCard } from './AboutCard'
 import { CompanyFactsCard } from './CompanyFactsCard'
 import { CompanyNewsCard } from './CompanyNewsCard'
+import { FundCompositionCard, TopHoldingsCard } from './FundHoldingsCard'
 import {
   BalanceSheetTable,
   EarningsTable,
@@ -48,6 +49,7 @@ export function CompanyProfileView({
   const { data: history, isLoading: historyLoading } = useCompanyHistory(profile.symbol, period)
   const currency = profile.currency ?? 'USD'
   const isStock = profile.quote_type === 'stock'
+  const isFund = profile.quote_type === 'etf' || profile.quote_type === 'mutual_fund'
 
   return (
     <div className="grid grid-cols-1 gap-3 md:grid-cols-6 lg:grid-cols-12">
@@ -99,6 +101,38 @@ export function CompanyProfileView({
           <BalanceSheetTable profile={profile} className="md:col-span-6 lg:col-span-6" />
           <EarningsTable profile={profile} className="md:col-span-6 lg:col-span-6" />
         </>
+      ) : isFund ? (
+        <>
+          <FundCompositionCard profile={profile} className="md:col-span-6 lg:col-span-7" />
+          <Card size="sm" className="md:col-span-6 lg:col-span-12">
+            <CardHeader>
+              <CardTitle className="text-sm font-semibold text-muted-foreground">
+                {t('research.valuationTitle')}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                <Metric
+                  label={t('research.expenseRatio')}
+                  value={fmtPct(profile.expense_ratio, { decimals: 2 })}
+                  size="sm"
+                />
+                <Metric
+                  label={t('research.aum')}
+                  value={fmtCompactMoney(profile.aum, currency)}
+                  size="sm"
+                />
+                <Metric label={t('research.category')} value={profile.category ?? '—'} size="sm" />
+                <Metric
+                  label={t('research.yield')}
+                  value={fmtPct(profile.yield_, { decimals: 2 })}
+                  size="sm"
+                />
+              </div>
+            </CardContent>
+          </Card>
+          <TopHoldingsCard profile={profile} className="md:col-span-6 lg:col-span-12" />
+        </>
       ) : (
         <Card size="sm" className="md:col-span-6 lg:col-span-7">
           <CardHeader>
@@ -108,48 +142,17 @@ export function CompanyProfileView({
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-              {profile.quote_type === 'etf' || profile.quote_type === 'mutual_fund' ? (
-                <>
-                  <Metric
-                    label={t('research.expenseRatio')}
-                    value={fmtPct(profile.expense_ratio, { decimals: 2 })}
-                    size="sm"
-                  />
-                  <Metric
-                    label={t('research.aum')}
-                    value={fmtCompactMoney(profile.aum, currency)}
-                    size="sm"
-                  />
-                  <Metric
-                    label={t('research.category')}
-                    value={profile.category ?? '—'}
-                    size="sm"
-                  />
-                  <Metric
-                    label={t('research.yield')}
-                    value={fmtPct(profile.yield_, { decimals: 2 })}
-                    size="sm"
-                  />
-                </>
-              ) : (
-                <>
-                  <Metric
-                    label={t('research.stats.marketCap')}
-                    value={fmtCompactMoney(profile.market_cap, currency)}
-                    size="sm"
-                  />
-                  <Metric
-                    label={t('research.circulatingSupply')}
-                    value={fmtInt(profile.circulating_supply)}
-                    size="sm"
-                  />
-                  <Metric
-                    label={t('research.volume24h')}
-                    value={fmtInt(profile.volume_24h)}
-                    size="sm"
-                  />
-                </>
-              )}
+              <Metric
+                label={t('research.stats.marketCap')}
+                value={fmtCompactMoney(profile.market_cap, currency)}
+                size="sm"
+              />
+              <Metric
+                label={t('research.circulatingSupply')}
+                value={fmtInt(profile.circulating_supply)}
+                size="sm"
+              />
+              <Metric label={t('research.volume24h')} value={fmtInt(profile.volume_24h)} size="sm" />
             </div>
           </CardContent>
         </Card>

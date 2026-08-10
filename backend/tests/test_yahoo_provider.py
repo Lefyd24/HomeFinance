@@ -213,6 +213,97 @@ def test_get_company_profile_survives_missing_optional_data(yahoo):
     assert profile["earnings_history"] == []
 
 
+def test_get_company_profile_maps_etf_holdings(yahoo):
+    info = {
+        "symbol": "VOO",
+        "shortName": "Vanguard S&P 500 ETF",
+        "quoteType": "ETF",
+        "currentPrice": 500.0,
+        "totalAssets": 900_000_000_000,
+        "category": "Large Blend",
+        "annualReportExpenseRatio": 0.0003,
+        "yield": 0.012,
+    }
+
+    class _FundsData:
+        fund_overview = {
+            "categoryName": "Large Blend",
+            "family": "Vanguard",
+            "legalType": "Exchange Traded Fund",
+        }
+        top_holdings = pd.DataFrame(
+            {"Name": ["NVIDIA Corp", "Apple Inc"], "Holding Percent": [0.0749, 0.0657]},
+            index=pd.Index(["NVDA", "AAPL"], name="Symbol"),
+        )
+        sector_weightings = {"technology": 0.386, "financial_services": 0.114}
+        asset_classes = {
+            "stockPosition": 0.9957,
+            "bondPosition": 0.0,
+            "cashPosition": 0.0022,
+            "preferredPosition": 0.0,
+            "otherPosition": 0.002,
+        }
+
+    with patch("app.services.investment_providers.yahoo.yf.Ticker") as ticker_cls:
+        ticker_cls.return_value.info = info
+        ticker_cls.return_value.funds_data = _FundsData()
+        ticker_cls.return_value.earnings_history = pd.DataFrame()
+        profile = yahoo.get_company_profile("voo")
+
+    assert profile["quote_type"] == "etf"
+    assert profile["fund_family"] == "Vanguard"
+
+    assert [h["symbol"] for h in profile["top_holdings"]] == ["NVDA", "AAPL"]
+    assert profile["top_holdings"][0]["name"] == "NVIDIA Corp"
+    assert profile["top_holdings"][0]["weight"] == pytest.approx(0.0749)
+
+    weights = {w["sector"]: w["weight"] for w in profile["sector_weightings"]}
+    assert weights["technology"] == pytest.approx(0.386)
+    assert weights["financial_services"] == pytest.approx(0.114)
+
+    assert profile["asset_classes"]["stock"] == pytest.approx(0.9957)
+    assert profile["asset_classes"]["bond"] == pytest.approx(0.0)
+    assert profile["asset_classes"]["cash"] == pytest.approx(0.0022)
+
+
+def test_get_company_profile_stock_has_no_fund_holdings(yahoo):
+    """A plain stock never calls funds_data — top_holdings etc. stay empty."""
+    info = {"symbol": "AAPL", "shortName": "Apple", "quoteType": "EQUITY", "currentPrice": 190.0}
+
+    with patch("app.services.investment_providers.yahoo.yf.Ticker") as ticker_cls:
+        ticker_cls.return_value.info = info
+        ticker_cls.return_value.earnings_history = pd.DataFrame()
+        # No `funds_data` attribute at all — accessing it would raise AttributeError
+        # if the stock branch ever touched it, which is exactly what this guards.
+        del ticker_cls.return_value.funds_data
+        profile = yahoo.get_company_profile("aapl")
+
+    assert profile["fund_family"] is None
+    assert profile["top_holdings"] == []
+    assert profile["sector_weightings"] == []
+    assert profile["asset_classes"] is None
+
+
+def test_get_company_profile_etf_survives_funds_data_failure(yahoo):
+    """funds_data can legitimately raise (delisted/thin ETFs) — profile must still return."""
+    info = {"symbol": "THIN", "shortName": "Thin ETF", "quoteType": "ETF", "currentPrice": 10.0}
+
+    class _BoomFunds:
+        @property
+        def fund_overview(self):
+            raise RuntimeError("no fund data")
+
+    with patch("app.services.investment_providers.yahoo.yf.Ticker") as ticker_cls:
+        ticker_cls.return_value.info = info
+        ticker_cls.return_value.earnings_history = pd.DataFrame()
+        ticker_cls.return_value.funds_data = _BoomFunds()
+        profile = yahoo.get_company_profile("thin")
+
+    assert profile["symbol"] == "THIN"
+    assert profile["fund_family"] is None
+    assert profile["top_holdings"] == []
+
+
 def test_safe_float_rejects_nan_and_inf():
     from app.services.investment_providers.yahoo import _safe_float
     import math

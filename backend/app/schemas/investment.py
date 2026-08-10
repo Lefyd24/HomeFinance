@@ -212,6 +212,27 @@ class EarningsSurprise(BaseModel):
     surprise_pct: Optional[float] = None
 
 
+class EtfHolding(BaseModel):
+    """One constituent of an ETF/mutual fund's top holdings, per yfinance's `funds_data`."""
+    symbol: str
+    name: Optional[str] = None
+    weight: Optional[float] = None
+
+
+class SectorWeight(BaseModel):
+    sector: str
+    weight: float
+
+
+class AssetClassMix(BaseModel):
+    """Stock/bond/cash split of a fund's portfolio. Fractions, not percentages."""
+    stock: Optional[float] = None
+    bond: Optional[float] = None
+    cash: Optional[float] = None
+    preferred: Optional[float] = None
+    other: Optional[float] = None
+
+
 class CompanyProfileResponse(BaseModel):
     """Company / instrument research snapshot from a market-data provider."""
     symbol: str
@@ -284,6 +305,10 @@ class CompanyProfileResponse(BaseModel):
     aum: Optional[float] = None
     category: Optional[str] = None
     yield_: Optional[float] = Field(None, alias="yield", serialization_alias="yield")
+    fund_family: Optional[str] = None
+    top_holdings: list[EtfHolding] = Field(default_factory=list)
+    sector_weightings: list[SectorWeight] = Field(default_factory=list)
+    asset_classes: Optional[AssetClassMix] = None
 
     # Crypto-specific
     circulating_supply: Optional[float] = None

@@ -90,9 +90,11 @@ from app.schemas.invite import (
     UserAdminRead,
 )
 from app.schemas.investment import (
+    AssetClassMix,
     CompanyHistoryResponse,
     CompanyProfileResponse,
     EarningsSurprise,
+    EtfHolding,
     HistogramBin,
     HorizonStats,
     InvestmentAccountCreate,
@@ -108,6 +110,7 @@ from app.schemas.investment import (
     RollingPoint,
     SavedWatchCreate,
     SavedWatchResponse,
+    SectorWeight,
     SymbolSearchResult,
 )
 from app.schemas.investment_analytics import (
@@ -269,9 +272,11 @@ __all__ = [
     "InvestmentTransactionResponse",
     "NewsItemResponse",
     "NewsPageResponse",
+    "AssetClassMix",
     "CompanyHistoryResponse",
     "CompanyProfileResponse",
     "EarningsSurprise",
+    "EtfHolding",
     "HistogramBin",
     "HorizonStats",
     "PortfolioPositionResponse",
@@ -280,6 +285,7 @@ __all__ = [
     "RollingPoint",
     "SavedWatchCreate",
     "SavedWatchResponse",
+    "SectorWeight",
     "SymbolSearchResult",
     # Investment analytics (ticker comparison) schemas
     "BenchmarkOption",
