@@ -124,7 +124,8 @@ def _horizon(
         return HorizonStats(horizon=label)
 
     own = R.simple_returns(prices)
-    rf_periodic = rf_series.reindex(own.index).ffill().bfill()
+    rf_annual = rf_series.reindex(own.index).ffill().bfill()
+    rf_periodic = (1 + rf_annual) ** (1 / ppy) - 1
     rf_ann_avg = float(rf_series.mean())
     mar = (1 + rf_ann_avg) ** (1 / ppy) - 1
 
@@ -244,7 +245,8 @@ def build_company_history(
     else:
         rolling_beta = pd.Series(dtype=float)
 
-    rf_periodic_full = rf_series.reindex(own_full.index).ffill().bfill()
+    rf_annual_full = rf_series.reindex(own_full.index).ffill().bfill()
+    rf_periodic_full = (1 + rf_annual_full) ** (1 / ppy) - 1
     excess = own_full - rf_periodic_full
     roll_mean = excess.rolling(ROLLING_SHARPE_WINDOW, min_periods=ROLLING_SHARPE_WINDOW).mean()
     roll_std = excess.rolling(ROLLING_SHARPE_WINDOW, min_periods=ROLLING_SHARPE_WINDOW).std(ddof=1)

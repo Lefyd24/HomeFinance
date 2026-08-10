@@ -205,8 +205,8 @@ def _build_comparison_uncached(
         last_price = float(own_close.iloc[-1]) if len(own_close) else None
         own_ret = R.simple_returns(own_close) if len(own_close) >= 2 else pd.Series(dtype=float)
 
-        rf_periodic = rf_series.reindex(own_ret.index).ffill().bfill()
-        rf_periodic_scalar = (1 + rf_ann_avg) ** (1 / ppy) - 1
+        rf_annual = rf_series.reindex(own_ret.index).ffill().bfill()
+        rf_periodic = (1 + rf_annual) ** (1 / ppy) - 1
 
         instrument_warnings: list[str] = []
         if aligned_days < MIN_ALIGNED_DAYS or len(own_ret) < MIN_ALIGNED_DAYS:
