@@ -37,11 +37,10 @@ export function Tile({
    */
   bodyStyle?: CSSProperties
   /**
-   * Let content escape the tile's bounds. `.glass-panel` clips its children so
-   * the inner highlight follows the rounded corner, which also clips a chart
-   * tooltip the moment it reaches an edge — so any tile hosting a chart has to
-   * opt out. The utility wins because Tailwind's utilities layer comes after
-   * the components layer `.glass-panel` is declared in.
+   * Let content escape the tile's bounds. The tile clips its children so
+     * the rounded corner is clean, which also clips a chart tooltip the
+     * moment it reaches an edge — so any tile hosting a chart has to opt
+     * out. `overflow-visible` wins when set.
    */
   allowOverflow?: boolean
   children: ReactNode
@@ -49,7 +48,7 @@ export function Tile({
   return (
     <section
       className={cn(
-        'glass-panel flex min-w-0 flex-col rounded-xl border border-border/80 p-3',
+        'flex min-w-0 flex-col overflow-hidden rounded-xl border border-border bg-card p-3 shadow-sm',
         allowOverflow && 'overflow-visible',
         className,
       )}

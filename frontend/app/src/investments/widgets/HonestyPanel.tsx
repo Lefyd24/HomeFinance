@@ -70,7 +70,7 @@ export function HonestyPanel({ deflated, resultKey }: { deflated: Deflated | nul
   const showDeflated = deflated != null && deflated.dsr != null
 
   return (
-    <div className="glass-panel flex flex-col gap-2 rounded-xl border border-border/80 p-3">
+    <div className="flex flex-col gap-2 rounded-xl border border-border bg-card p-3 shadow-sm">
       <button
         type="button"
         onClick={toggle}

@@ -84,7 +84,7 @@ export function TickerPicker({
   }
 
   return (
-    <div className="glass-panel flex flex-col gap-3 rounded-xl border border-border/80 p-3 sm:p-3.5">
+    <div className="flex flex-col gap-3 rounded-xl border border-border bg-card p-3 shadow-sm sm:p-3.5">
       {/* Selection + add trigger — the color legend for every other tile. Each
           chip is tinted with its own series color so the legend reads before
           a single number has loaded. */}

@@ -230,7 +230,7 @@ export function TechnicalPage() {
         />
       </div>
 
-      <div className="glass-panel flex flex-wrap items-center gap-3 rounded-xl border border-border/80 p-3">
+      <div className="flex flex-wrap items-center gap-3 rounded-xl border border-border bg-card p-3 shadow-sm">
         <TickerSelect symbol={symbol} onSelect={(next) => updateParams({ symbol: next })} />
         <ToggleGroup
           type="single"

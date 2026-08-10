@@ -136,7 +136,7 @@ export function InvestmentsPage() {
       {isLoading ? (
         <LoadingWorkspace />
       ) : accounts.length === 0 ? (
-        <Empty className="glass-panel border border-dashed py-14">
+        <Empty className="rounded-xl border border-dashed bg-card py-14 shadow-sm">
           <EmptyHeader>
             <EmptyMedia variant="icon">
               <HugeiconsIcon icon={ChartIncreaseIcon} strokeWidth={2} />

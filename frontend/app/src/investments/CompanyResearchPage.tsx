@@ -134,7 +134,7 @@ export function CompanyResearchPage() {
         <PageHeader title={t('research.title')} description={t('research.description')} className="mb-0" />
       </div>
 
-      <section className="flex flex-col gap-3 rounded-xl border border-border bg-muted/40 p-3 sm:p-3.5">
+      <section className="flex flex-col gap-3 rounded-xl border border-border bg-card p-3 sm:p-3.5">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <span className="text-[0.625rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
             {t('providers.label')}

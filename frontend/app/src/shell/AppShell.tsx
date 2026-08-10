@@ -181,7 +181,7 @@ function NavItemLink({
       {({ isActive }) => (
         <>
           {isActive && !collapsed && (
-            <span className="absolute inset-y-1.5 start-0 w-1 rounded-full bg-sidebar-primary" />
+            <span className="absolute inset-y-0 start-0 w-1 rounded-tl-4xl rounded-bl-4xl bg-sidebar-primary" />
           )}
           <HugeiconsIcon
             icon={item.icon}

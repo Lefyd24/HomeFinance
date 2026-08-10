@@ -58,21 +58,18 @@ export function AccountCard({
       className={cn(
         // `border-2` on both states, so selecting a card changes its colour and
         // not its size — a 1px stroke swap would nudge the whole rail.
-        'glass-panel relative flex shrink-0 snap-start flex-col rounded-xl border-2',
+        'relative flex shrink-0 snap-start flex-col overflow-hidden rounded-xl border-2 bg-card',
         // Narrower on phones so a second card peeks in and the row reads as
         // scrollable, rather than one card filling the viewport edge to edge.
-        'w-[13.5rem] sm:w-[16rem]',
+        'w-[13.5rem] sm:w-[18rem]',
         'transition-[box-shadow,border-color,opacity] duration-200 ease-out motion-reduce:transition-none',
         // 3px left accent: the card's trend in one glance before you read numbers.
-        'border-l-[3px]',
         trendPositive ? 'border-l-flow-in/70' : 'border-l-flow-out/60',
         selected
           ? cn(
               'border-primary [border-left-color:var(--color-primary)]',
-              'shadow-[-8px_8px_20px_-10px_var(--glass-shadow-depth)]',
-              'rtl:shadow-[8px_8px_20px_-10px_var(--glass-shadow-depth)]',
             )
-          : 'border-border/70 opacity-90 hover:border-primary/40 hover:opacity-100',
+          : 'border-border/70 opacity-70 hover:border-primary/40 hover:opacity-100',
       )}
     >
       {/* A real button covering the card rather than a click handler on the

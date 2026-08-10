@@ -15,8 +15,8 @@
 :root {
   --background: oklch(94.504% 0.01299 221.795 / 0.89);
   --foreground: oklch(18.591% 0.01009 220.193);
-  --card: oklch(100% 0.004 228 / 0.86);
-  --card-foreground: oklch(22% 0.016 224);
+  --card: oklch(100% 0.00011 271.152);
+  --card-foreground: oklch(11.162% 0.00685 225.019);
   --popover: oklch(99% 0.006 228 / 0.86);
   --popover-foreground: oklch(22% 0.016 224);
   --primary: oklch(51.5% 0.126 227);
@@ -69,6 +69,17 @@
   --canvas-glow-secondary: oklch(83% 0.10 178 / 0.16);
   --canvas-glow-accent: oklch(81% 0.10 282 / 0.14);
 
+  /* Investments mode gets a flatter room tone: neutral grey with a faint cyan
+     drift, no mesh motion. The actual body canvas and the shell well both read
+     from this token via `--aurora-canvas-bg`. */
+  --investment-canvas-bg: oklch(92.191% 0.0001 271.152);
+  --investment-canvas-gradient: linear-gradient(
+    135deg,
+    color-mix(in oklch, var(--investment-canvas-bg) 96%, white) 0%,
+    color-mix(in oklch, var(--investment-canvas-bg) 90%, oklch(90% 0.03 205)) 52%,
+    color-mix(in oklch, var(--investment-canvas-bg) 82%, oklch(89.709% 0.03162 196.781)) 100%
+  );
+
   /* Desktop shell scoop where sidebar meets the content well. */
   --shell-scoop-radius: 1.25rem;
   --shell-chrome: var(--glass-surface-strong);
@@ -113,7 +124,7 @@
 .dark {
   --background: oklch(15.227% 0.01252 216.022);
   --foreground: oklch(97% 0.007 220);
-  --card: oklch(24% 0.018 224);
+  --card: oklch(25.499% 0.0233 230.527);
   --card-foreground: oklch(97% 0.007 220);
   --popover: oklch(22.806% 0.01517 226.968);
   --popover-foreground: oklch(97% 0.007 220);
@@ -159,6 +170,14 @@
   --canvas-glow-primary: oklch(54% 0.12 230 / 0.2);
   --canvas-glow-secondary: oklch(52% 0.09 174 / 0.12);
   --canvas-glow-accent: oklch(50% 0.11 283 / 0.12);
+
+  --investment-canvas-bg: oklch(18.5% 0.01 228);
+  --investment-canvas-gradient: linear-gradient(
+    135deg,
+    color-mix(in oklch, var(--investment-canvas-bg) 94%, white) 0%,
+    color-mix(in oklch, var(--investment-canvas-bg) 88%, oklch(34% 0.04 205)) 52%,
+    color-mix(in oklch, var(--investment-canvas-bg) 80%, oklch(38% 0.05 195)) 100%
+  );
   --shell-chrome: var(--glass-surface-strong);
   --aurora-canvas-bg: var(--background);
 
@@ -700,57 +719,12 @@
    * both themes, since each value is still derived from the theme's own tokens.
    */
   [data-section='investments'] {
-    /* Pine aurora — same mesh mechanism as the rest of the app, but pulled off
-       the cerulean/terracotta canvas onto a forest-green ramp so the mood, not
-       just the sidebar, reads as a different room.
-       Two things that look like they shouldn't matter, matter:
-       1. This overrides `--aurora-gradient` directly rather than only the
-          `--aurora-color-*` variables it's built from — the build's CSS
-          minifier inlines those into `--aurora-gradient`'s value at the point
-          it's *defined* (:root), so redeclaring just the ingredients further
-          down the tree never reaches the already-inlined gradient.
-       2. The aurora is painted over `--aurora-canvas-bg`, and a second wash of
-          the same colour is layered back on top of it afterwards (see
-          `.shell-main-bg::after`) — mixing the aurora colours against the
-          ordinary blue `--background` (as the rest of the app does) pulls a
-          green aurora straight back toward blue no matter how green its own
-          input hue is, since that blue keeps getting reintroduced. Mixing
-          against `--aurora-canvas-bg` (recoloured green just below) instead
-          keeps both layers agreeing on hue. */
-    /* A little more chroma than plain light --background (94.5% L / 0.013 C)
-       so it doesn't read as a pale near-gray, but lightness stays close to it
-       — darker canvases hurt contrast for body text, which is why this
-       backed off from an earlier, noticeably darker attempt. */
-    --aurora-canvas-bg: oklch(93% 0.022 152 / 0.9);
-    --aurora-color-1: color-mix(in oklch, oklch(38% 0.11 152) 50%, var(--aurora-canvas-bg));
-    --aurora-color-2: color-mix(in oklch, oklch(64% 0.15 155) 46%, var(--aurora-canvas-bg));
-    --aurora-color-3: color-mix(in oklch, oklch(48% 0.12 165) 42%, var(--aurora-canvas-bg));
-    --aurora-color-4: color-mix(in oklch, oklch(80% 0.09 95) 36%, var(--aurora-canvas-bg));
-    --aurora-color-5: color-mix(in oklch, oklch(54% 0.13 145) 46%, var(--aurora-canvas-bg));
-    --aurora-gradient: repeating-linear-gradient(
-      100deg,
-      var(--aurora-color-1) 10%,
-      var(--aurora-color-2) 15%,
-      var(--aurora-color-3) 20%,
-      var(--aurora-color-4) 25%,
-      var(--aurora-color-5) 30%
-    );
-    --aurora-opacity: 0.5;
-
+    --aurora-canvas-bg: var(--investment-canvas-bg);
+    --aurora-opacity: 1;
+    --background: var(--investment-canvas-bg);
     --radius: 0.5rem;
-    --glass-border: oklch(55% 0.05 155 / 0.3);
+     --glass-border: oklch(45.702% 0.03922 313.153 / 0.25);
     --shell-scoop-radius: 1rem;
-
-    /* Sidebar, topbar and footer all read `--glass-surface-strong` through
-       `.glass-bar` (same value, so they were never actually different
-       colours) — but each sits over a different stretch of the aurora, and
-       backdrop-filter samples whatever is directly behind it, so glassy
-       translucency made the three bleed different amounts of aurora through
-       and look inconsistent. Full opacity (alpha 1) removes the glass effect
-       outright — backdrop-filter has nothing left to show through an opaque
-       background — so all three are simply solid white, no aurora bleed,
-       no per-position variance. */
-    --glass-surface-strong: oklch(99% 0.006 152 / 1);
 
     /* Pine — the investments sidebar's own hover/selected colour, standing in
        for --sidebar-primary/-accent so the nav rail (not the whole app) reads
@@ -758,44 +732,40 @@
        color-mix off --background: a deep pine reads as text on the near-white
        light sidebar, but the same dark value would vanish against the dark
        sidebar, so dark mode gets a lighter, brighter pine instead. */
-    --sidebar-primary: oklch(33% 0.075 155);
+    --sidebar-primary: oklch(38.928% 0.17465 317.169);
     --sidebar-primary-foreground: oklch(97% 0.02 155);
-    --sidebar-accent: oklch(91% 0.045 155 / 0.65);
-    --sidebar-accent-foreground: oklch(26% 0.07 155);
-    --sidebar-ring: oklch(45% 0.09 155);
+    --sidebar-accent: oklch(87.348% 0.05171 319.817 / 0.65);
+    --sidebar-accent-foreground: oklch(22.254% 0.10229 319.23);
+    --sidebar-ring: oklch(36.107% 0.11928 319.114);
   }
 
   .dark [data-section='investments'] {
-    /* Redeclares the full aurora chain rather than just `--aurora-canvas-bg`
-       — same inlining trap as the light block's comment above: the build
-       tool resolves `--aurora-color-*`'s nested `var(--aurora-canvas-bg)`
-       using the value in scope where `--aurora-color-*` is *defined*, so a
-       dark-only override of `--aurora-canvas-bg` alone would never reach
-       `--aurora-gradient`. Dark --background is
-       oklch(15.227% 0.01252 216.022) — same L/C, hue swapped to green. */
-    --aurora-canvas-bg: oklch(15.227% 0.01252 155);
-    --aurora-color-1: color-mix(in oklch, oklch(42% 0.14 150) 55%, var(--aurora-canvas-bg));
-    --aurora-color-2: color-mix(in oklch, oklch(68% 0.14 155) 48%, var(--aurora-canvas-bg));
-    --aurora-color-3: color-mix(in oklch, oklch(52% 0.13 165) 45%, var(--aurora-canvas-bg));
-    --aurora-color-4: color-mix(in oklch, oklch(78% 0.09 130) 38%, var(--aurora-canvas-bg));
-    --aurora-color-5: color-mix(in oklch, oklch(58% 0.11 145) 48%, var(--aurora-canvas-bg));
-    --aurora-gradient: repeating-linear-gradient(
-      100deg,
-      var(--aurora-color-1) 10%,
-      var(--aurora-color-2) 15%,
-      var(--aurora-color-3) 20%,
-      var(--aurora-color-4) 25%,
-      var(--aurora-color-5) 30%
-    );
-    /* Same reasoning as the light block: full opacity removes the glass
-       effect outright, so sidebar/topbar/footer are solid dark, no aurora
-       bleed-through, no per-position variance. */
-    --glass-surface-strong: oklch(17% 0.014 152 / 1);
-    --sidebar-primary: oklch(76% 0.1 155);
-    --sidebar-primary-foreground: oklch(20% 0.03 155);
-    --sidebar-accent: oklch(32% 0.05 155 / 0.55);
-    --sidebar-accent-foreground: oklch(92% 0.05 155);
-    --sidebar-ring: oklch(70% 0.1 155);
+    --aurora-canvas-bg: var(--investment-canvas-bg);
+    --aurora-opacity: 1;
+    --glass-border: oklch(69.009% 0.03136 325.794 / 0.18);
+    --sidebar-primary: oklch(70.513% 0.22564 322.059);
+    --sidebar-primary-foreground: oklch(16.547% 0.04036 320.39);
+    --sidebar-accent: oklch(26.966% 0.0414 326.613 / 0.72);
+    --sidebar-accent-foreground: oklch(89.544% 0.03153 322.454);
+    --sidebar-ring: oklch(56.742% 0.14516 320.735);
+  }
+
+  [data-section='investments'] .app-canvas::before,
+  [data-section='investments'] .shell-main-bg::before {
+    background-color: var(--investment-canvas-bg);
+    background-image: var(--investment-canvas-gradient);
+    background-size: 100% 100%;
+    background-position: 0 0;
+    opacity: 1;
+    filter: none;
+    animation: none;
+    mask-image: none;
+    -webkit-mask-image: none;
+  }
+
+  [data-section='investments'] .app-canvas::after,
+  [data-section='investments'] .shell-main-bg::after {
+    background: color-mix(in oklch, var(--investment-canvas-bg) 20%, transparent);
   }
 
   @supports not ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {

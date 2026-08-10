@@ -33,7 +33,7 @@ function ScenarioCard({ scenario }: { scenario: ScenarioSummary }) {
     <Link
       to={`/investments/scenarios/${scenario.id}`}
       className={cn(
-        'glass-panel relative flex flex-col gap-2.5 rounded-xl border-2 border-l-[3px] p-3',
+        'relative flex flex-col gap-2.5 rounded-xl border-2 border-l-[3px] p-3 bg-card shadow-sm',
         'transition-[box-shadow,border-color,opacity] duration-200 ease-out motion-reduce:transition-none',
         positive ? 'border-l-flow-in/70' : 'border-l-flow-out/60',
         'border-border/70 opacity-90 hover:border-primary/40 hover:opacity-100',
@@ -180,7 +180,7 @@ export function ScenarioLibraryPage() {
           ))}
         </div>
       ) : !scenarios || scenarios.length === 0 ? (
-        <Empty className="glass-panel border border-dashed py-14">
+        <Empty className="rounded-xl border border-dashed bg-card py-14 shadow-sm">
           <EmptyHeader>
             <EmptyMedia variant="icon">
               <HugeiconsIcon icon={FlashIcon} strokeWidth={2} />
@@ -190,11 +190,11 @@ export function ScenarioLibraryPage() {
           </EmptyHeader>
           <EmptyContent>
             <div className="grid w-full max-w-lg grid-cols-2 gap-3 opacity-40">
-              <div className="glass-panel rounded-xl border border-dashed border-border/70 p-3">
+              <div className="rounded-xl border border-dashed border-border/70 bg-card p-3 shadow-sm">
                 <p className="text-sm font-medium">{t('scenarios.empty.exampleOne.name')}</p>
                 <p className="text-xs text-muted-foreground">{t('scenarios.empty.exampleOne.detail')}</p>
               </div>
-              <div className="glass-panel rounded-xl border border-dashed border-border/70 p-3">
+              <div className="rounded-xl border border-dashed border-border/70 bg-card p-3 shadow-sm">
                 <p className="text-sm font-medium">{t('scenarios.empty.exampleTwo.name')}</p>
                 <p className="text-xs text-muted-foreground">{t('scenarios.empty.exampleTwo.detail')}</p>
               </div>

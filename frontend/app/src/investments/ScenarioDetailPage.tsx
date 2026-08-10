@@ -139,12 +139,12 @@ export function ScenarioDetailPage() {
         <Badge variant="secondary">{t(`scenarios.status.${scenario.status}`)}</Badge>
       </div>
 
-      <div className="glass-panel flex items-start gap-2 rounded-xl border border-border/80 p-3 text-xs text-muted-foreground">
+      <div className="flex items-start gap-2 rounded-xl border border-border bg-card p-3 shadow-sm text-xs text-muted-foreground">
         <HugeiconsIcon icon={LockIcon} strokeWidth={2} className="mt-0.5 size-3.5 shrink-0" />
         <span>{t('scenarios.detail.lockedNotice')}</span>
       </div>
 
-      <div className="glass-panel flex flex-col gap-2 rounded-xl border border-border/80 p-3">
+      <div className="flex flex-col gap-2 rounded-xl border border-border bg-card p-3 shadow-sm">
         <Field>
           <FieldLabel htmlFor="scenario-note" className="flex items-center gap-1.5">
             <HugeiconsIcon icon={PencilEdit02Icon} strokeWidth={2} className="size-3.5" />
@@ -168,7 +168,7 @@ export function ScenarioDetailPage() {
       </div>
 
       {scenario.status === 'error' ? (
-        <Empty className="glass-panel border border-dashed py-10">
+        <Empty className="rounded-xl border border-dashed bg-card py-10 shadow-sm">
           <EmptyHeader>
             <EmptyTitle>{t('scenarios.detail.errorTitle')}</EmptyTitle>
             <EmptyDescription>{scenario.last_error ?? ''}</EmptyDescription>
@@ -194,7 +194,7 @@ export function ScenarioDetailPage() {
               job, and that written history — not a recomputation of it — is
               what "audit trail" means for this feature. */}
           {scenario.kind === 'forward' && scenario.result.series.length > 0 && (
-            <Collapsible className="glass-panel rounded-xl border border-border/80 p-3">
+            <Collapsible className="overflow-hidden rounded-xl border border-border bg-card p-3 shadow-sm">
               <CollapsibleTrigger asChild>
                 <Button variant="ghost" size="sm" className="w-fit px-0 text-xs text-muted-foreground">
                   {t('scenarios.detail.dailyTable')}
@@ -232,7 +232,7 @@ export function ScenarioDetailPage() {
           )}
         </>
       ) : (
-        <Empty className="glass-panel border border-dashed py-10">
+        <Empty className="rounded-xl border border-dashed bg-card py-10 shadow-sm">
           <EmptyHeader>
             <EmptyTitle>{t('scenarios.detail.noResultTitle')}</EmptyTitle>
           </EmptyHeader>

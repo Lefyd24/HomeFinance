@@ -46,7 +46,7 @@ export function PortfolioTicker({
   const cashPct = Math.max(0, 100 - investedPct)
 
   return (
-    <section className="glass-panel flex flex-col gap-2.5 rounded-xl border border-border/80 px-3 py-2.5">
+    <section className="flex flex-col gap-2.5 rounded-xl border border-border bg-card px-3 py-2.5 shadow-sm">
       {/*
         A two-up grid on a phone rather than a wrapping flex row: wrapping made
         the four figures land in a ragged 2-1-1 that read as three groups. A

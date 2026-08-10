@@ -15,7 +15,7 @@ export function TrackRecordTile({ trackRecord, loading }: { trackRecord: TrackRe
 
   if (loading) {
     return (
-      <div className="glass-panel rounded-xl border border-border/80 p-3">
+      <div className="overflow-hidden rounded-xl border border-border bg-card p-3 shadow-sm">
         <Skeleton className="h-24 w-full rounded-lg" />
       </div>
     )

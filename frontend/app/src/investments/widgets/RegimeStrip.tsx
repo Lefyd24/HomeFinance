@@ -109,7 +109,7 @@ export function RegimeStrip({
     : t('technical.regime.squeezeNo')
 
   return (
-    <section className="glass-panel flex flex-col gap-4 rounded-xl border border-border/80 p-4 sm:p-5">
+    <section className="flex flex-col gap-4 rounded-xl border border-border bg-card p-4 shadow-sm sm:p-5">
       <div className="flex flex-col gap-2.5">
         <div className="flex flex-wrap items-center gap-2.5">
           <span

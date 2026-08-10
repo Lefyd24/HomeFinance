@@ -341,7 +341,7 @@ export function ComparisonPage() {
               return (
                 <div
                   key={instrument.symbol}
-                  className="glass-panel flex flex-col gap-2.5 rounded-xl border border-border/80 p-3"
+                  className="flex flex-col gap-2.5 rounded-xl border border-border bg-card p-3 shadow-sm"
                 >
                   <div className="flex items-center justify-between gap-2">
                     <span className="inline-flex min-w-0 items-center gap-1.5">
@@ -411,7 +411,7 @@ export function ComparisonPage() {
 
           {/* Verdict strip */}
           {comparison.head_to_head && (
-            <div className="glass-panel rounded-xl border border-border/80 p-3 text-sm">
+            <div className="rounded-xl border border-border bg-card p-3 shadow-sm text-sm">
               {t(`compare.verdict.${comparison.head_to_head.verdict_key}`, {
                 leader: comparison.head_to_head.leader,
                 runnerUp: comparison.head_to_head.runner_up,
@@ -464,7 +464,7 @@ export function ComparisonPage() {
 
           {/* Stress episodes */}
           {nonBenchmarkInstruments.some((i) => i.stress.length > 0) && (
-            <div className="glass-panel flex flex-col gap-2 rounded-xl border border-border/80 p-3">
+            <div className="flex flex-col gap-2 rounded-xl border border-border bg-card p-3 shadow-sm">
               <h2 className="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
                 {t('compare.tiles.stress')}
               </h2>

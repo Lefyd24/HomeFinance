@@ -111,7 +111,7 @@ export function BacktestResultView({
       </div>
 
       {!spec_resolved.period_too_short ? (
-        <p className="glass-panel rounded-xl border border-border/80 p-3 text-sm leading-relaxed">
+        <p className="rounded-xl border border-border bg-card p-3 shadow-sm text-sm leading-relaxed">
           {benchmark
             ? t('backtest.sentence.base', {
                 amount: formatCurrency(scenario.total_invested, currency),
@@ -144,7 +144,7 @@ export function BacktestResultView({
           )}
         </p>
       ) : (
-        <p className="glass-panel rounded-xl border border-amber-500/30 bg-amber-500/10 p-3 text-sm text-amber-700 dark:text-amber-400">
+        <p className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-3 shadow-sm text-sm text-amber-700 dark:text-amber-400">
           {t('backtest.warnings.periodTooShort')}
         </p>
       )}
