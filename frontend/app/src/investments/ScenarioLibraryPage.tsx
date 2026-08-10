@@ -111,19 +111,22 @@ export function ScenarioLibraryPage() {
 
   return (
     <PageContainer wide className="flex flex-col gap-5">
-      <InvestmentsBreadcrumb current={t('scenarios.title')} />
-      <PageHeader
-        title={t('scenarios.title')}
-        description={t('scenarios.description')}
-        action={
-          <Button asChild size="sm">
-            <Link to="/investments/backtest">
-              <HugeiconsIcon icon={FlashIcon} strokeWidth={2} data-icon="inline-start" />
-              {t('scenarios.newScenario')}
-            </Link>
-          </Button>
-        }
-      />
+      <div>
+        <InvestmentsBreadcrumb current={t('scenarios.title')} />
+        <PageHeader
+          title={t('scenarios.title')}
+          description={t('scenarios.description')}
+          className="mb-0"
+          action={
+            <Button asChild size="sm">
+              <Link to="/investments/backtest">
+                <HugeiconsIcon icon={FlashIcon} strokeWidth={2} data-icon="inline-start" />
+                {t('scenarios.newScenario')}
+              </Link>
+            </Button>
+          }
+        />
+      </div>
 
       <TrackRecordTile trackRecord={trackRecord} loading={trackRecordLoading} />
 

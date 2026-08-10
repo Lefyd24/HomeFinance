@@ -17,7 +17,6 @@ import {
   Idea01Icon,
   Notification03Icon,
   News01Icon,
-  Search01Icon,
   FlashIcon,
   Album02Icon,
 } from '@hugeicons/core-free-icons'
@@ -91,13 +90,6 @@ export const MARKET_NEWS_NAV_ITEM: NavItem = {
   icon: News01Icon,
 }
 
-export const TICKER_SEARCH_NAV_ITEM: NavItem = {
-  labelKey: 'items.tickerSearch',
-  dockLabelKey: 'dock.search',
-  to: '/investments/search',
-  icon: Search01Icon,
-}
-
 export const COMPANY_RESEARCH_NAV_ITEM: NavItem = {
   labelKey: 'items.companyResearch',
   dockLabelKey: 'dock.research',
@@ -144,7 +136,6 @@ export const INVESTMENTS_NAV_GROUPS: NavGroup[] = [
     groupKey: 'groups.market',
     items: [
       MARKET_NEWS_NAV_ITEM,
-      TICKER_SEARCH_NAV_ITEM,
       COMPANY_RESEARCH_NAV_ITEM,
       TICKER_COMPARE_NAV_ITEM,
       TECHNICAL_ANALYSIS_NAV_ITEM,
@@ -158,19 +149,19 @@ export const INVESTMENTS_NAV_GROUPS: NavGroup[] = [
 
 /**
  * The investments dock. Three primary slots plus a "More" slot that opens onto
- * the rest — Research, Compare, Backtest, and Scenario Library. The dock keeps
- * the top three high-traffic destinations (Overview, News, Search); everything
- * else lives in the More sheet, the same pattern the main app uses.
+ * the rest — Compare, Backtest, and Scenario Library. The dock keeps the top
+ * three high-traffic destinations (Overview, News, Research — search lives at
+ * the top of Research now); everything else lives in the More sheet, the same
+ * pattern the main app uses.
  */
 export const INVESTMENTS_DOCK_NAV_ITEMS: NavItem[] = [
   INVESTMENTS_OVERVIEW_NAV_ITEM,
   MARKET_NEWS_NAV_ITEM,
-  TICKER_SEARCH_NAV_ITEM,
+  COMPANY_RESEARCH_NAV_ITEM,
 ]
 
 /** Investments destinations not shown in the dock — lights up the "More" slot. */
 export const INVESTMENTS_SECONDARY_NAV_ITEMS: NavItem[] = [
-  COMPANY_RESEARCH_NAV_ITEM,
   TICKER_COMPARE_NAV_ITEM,
   TECHNICAL_ANALYSIS_NAV_ITEM,
   BACKTEST_NAV_ITEM,
@@ -181,7 +172,7 @@ export const INVESTMENTS_SECONDARY_NAV_ITEMS: NavItem[] = [
 export const INVESTMENTS_MORE_NAV_GROUPS: NavGroup[] = [
   {
     groupKey: 'groups.market',
-    items: [COMPANY_RESEARCH_NAV_ITEM, TICKER_COMPARE_NAV_ITEM, TECHNICAL_ANALYSIS_NAV_ITEM],
+    items: [TICKER_COMPARE_NAV_ITEM, TECHNICAL_ANALYSIS_NAV_ITEM],
   },
   {
     groupKey: 'groups.sandbox',
@@ -301,7 +292,6 @@ export const MORE_NAV_ICON = MoreHorizontalCircleIcon
  */
 export const ALL_NAV_ITEMS: NavItem[] = [
   MARKET_NEWS_NAV_ITEM,
-  TICKER_SEARCH_NAV_ITEM,
   COMPANY_RESEARCH_NAV_ITEM,
   TICKER_COMPARE_NAV_ITEM,
   TECHNICAL_ANALYSIS_NAV_ITEM,

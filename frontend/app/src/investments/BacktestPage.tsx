@@ -54,8 +54,10 @@ export function BacktestPage() {
 
   return (
     <PageContainer wide className="flex flex-col gap-5">
-      <InvestmentsBreadcrumb current={t('backtest.title')} />
-      <PageHeader title={t('backtest.title')} description={t('backtest.description')} />
+      <div>
+        <InvestmentsBreadcrumb current={t('backtest.title')} />
+        <PageHeader title={t('backtest.title')} description={t('backtest.description')} className="mb-0" />
+      </div>
 
       <BacktestForm
         benchmarkOptions={benchmarkOptions ?? []}

@@ -586,24 +586,58 @@ function DesktopSidebar({
         </AnimatePresence>
       </ScrollArea>
 
-      {collapsed && (
-        <div className="shrink-0 border-t border-sidebar-border p-2 flex justify-center">
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon-sm"
-                onClick={onToggle}
-                aria-label={t('sidebar.expand')}
-              >
-                <HugeiconsIcon icon={SidebarLeftIcon} strokeWidth={2} className="rtl:rotate-180" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="right">{t('sidebar.expandTooltip')}</TooltipContent>
-          </Tooltip>
+      {(section || collapsed) && (
+        <div
+          className={cn(
+            'shrink-0 p-2 flex flex-col gap-2',
+            collapsed && 'items-center',
+          )}
+        >
+          {section && <SidebarBackToDashboard collapsed={collapsed} />}
+          {collapsed && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  onClick={onToggle}
+                  aria-label={t('sidebar.expand')}
+                >
+                  <HugeiconsIcon icon={SidebarLeftIcon} strokeWidth={2} className="rtl:rotate-180" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="right">{t('sidebar.expandTooltip')}</TooltipContent>
+            </Tooltip>
+          )}
         </div>
       )}
     </aside>
+  )
+}
+
+/**
+ * The way out of the investments sub-app, placed at the foot of the sidebar
+ * rather than the top bar — leaving is a destination like any other nav
+ * entry, so it lives where the rest of the nav lives.
+ */
+function SidebarBackToDashboard({ collapsed }: { collapsed: boolean }) {
+  const { t } = useTranslation('nav')
+  const link = (
+    <Button asChild size={collapsed ? 'icon-sm' : 'sm'} className={collapsed ? undefined : 'w-full'}>
+      <NavLink to={PRIMARY_NAV_ITEMS[0].to}>
+        <HugeiconsIcon icon={ArrowLeft01Icon} strokeWidth={2.25} className="size-4 shrink-0 rtl:rotate-180" />
+        {!collapsed && t('backToDashboard')}
+      </NavLink>
+    </Button>
+  )
+
+  if (!collapsed) return link
+
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>{link}</TooltipTrigger>
+      <TooltipContent side="right">{t('backToDashboard')}</TooltipContent>
+    </Tooltip>
   )
 }
 
@@ -664,7 +698,9 @@ function InvestmentsNavButton() {
 }
 
 /**
- * The way out of the investments sub-app, and deliberately the mirror image of
+ * The mobile way out of the investments sub-app (the desktop equivalent lives
+ * at the foot of the sidebar — see `SidebarBackToDashboard`, there being no
+ * sidebar to put it in on a phone). Deliberately the mirror image of
  * `InvestmentsNavButton` — same noise blob, same pill, arrow reversed. One
  * control takes you in, the other takes you out, and they read as a pair.
  *
@@ -1004,7 +1040,6 @@ function DesktopTopBar({ inInvestments }: { inInvestments: boolean }) {
 
   return (
     <header className="shell-topbar glass-bar hidden lg:flex sticky top-0 z-20 h-14 shrink-0 items-center gap-3 px-4">
-      {inInvestments && <BackToDashboardButton />}
       <div className="min-w-0">
         <p className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
           {inInvestments ? t('investmentsSection') : t('workspace')}
@@ -1047,7 +1082,7 @@ export function AppShell() {
   const section = inInvestments ? 'investments' : undefined
 
   return (
-    <div className="app-canvas h-dvh flex overflow-hidden">
+    <div data-section={section} className="app-canvas h-dvh flex overflow-hidden">
       <DesktopSidebar
         collapsed={collapsed}
         onToggle={() => setCollapsed((v) => !v)}

@@ -1,4 +1,4 @@
-import { Navigate, Route, Routes } from 'react-router-dom'
+import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { RequireAuth } from './auth/RequireAuth'
 import { AppShell } from './shell/AppShell'
 import { LoginPage } from './routes/LoginPage'
@@ -20,7 +20,6 @@ import { ImportWizardPage } from './import/ImportWizardPage'
 import { DocumentsPage } from './documents/DocumentsPage'
 import { InvestmentsPage } from './investments/InvestmentsPage'
 import { MarketNewsPage } from './investments/MarketNewsPage'
-import { TickerSearchPage } from './investments/TickerSearchPage'
 import { CompanyResearchPage } from './investments/CompanyResearchPage'
 import { ComparisonPage } from './investments/ComparisonPage'
 import { TechnicalPage } from './investments/TechnicalPage'
@@ -36,6 +35,16 @@ import { RulesPage } from './rules/RulesPage'
 import { PrivacyPage } from './legal/PrivacyPage'
 import { TermsPage } from './legal/TermsPage'
 import { AdminPage } from './admin/AdminPage'
+
+/**
+ * Ticker Search was merged into Company Research (the search box now lives at
+ * the top of `/investments/research`). Old bookmarks/links land here and get
+ * sent on, keeping whatever query string (symbol, q, provider) they carried.
+ */
+function LegacyTickerSearchRedirect() {
+  const location = useLocation()
+  return <Navigate to={{ pathname: '/investments/research', search: location.search }} replace />
+}
 
 function App() {
   return (
@@ -73,7 +82,7 @@ function App() {
           <Route path="/documents" element={<DocumentsPage />} />
           <Route path="/investments" element={<InvestmentsPage />} />
           <Route path="/investments/news" element={<MarketNewsPage />} />
-          <Route path="/investments/search" element={<TickerSearchPage />} />
+          <Route path="/investments/search" element={<LegacyTickerSearchRedirect />} />
           <Route path="/investments/research" element={<CompanyResearchPage />} />
           <Route path="/investments/compare" element={<ComparisonPage />} />
           <Route path="/investments/technical" element={<TechnicalPage />} />

@@ -309,6 +309,7 @@
     "watchedDescription": "Companies you're tracking. Click one to see full research, or start a new search.",
     "newResearch": "New research",
     "backToWatchlist": "Back to watchlist",
+    "backToResults": "Back to results",
     "lastUpdated": "Updated {{when}}",
     "priceToBook": "P/B",
     "evToEbitda": "EV/EBITDA",

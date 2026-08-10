@@ -100,36 +100,39 @@ export function ScenarioDetailPage() {
 
   return (
     <PageContainer wide className="flex flex-col gap-5">
-      <InvestmentsBreadcrumb current={scenario.name} />
-      <PageHeader
-        title={scenario.name}
-        description={t('scenarios.detail.subtitle', {
-          symbol: scenario.symbol,
-          date: formatDate(scenario.start_date),
-        })}
-        action={
-          <div className="flex flex-wrap items-center gap-2">
-            {scenario.kind === 'forward' && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => void handleRebuild()}
-                disabled={rebuildScenario.isPending}
-              >
-                <HugeiconsIcon icon={Refresh01Icon} strokeWidth={2} data-icon="inline-start" />
-                {t('scenarios.detail.rebuild')}
+      <div>
+        <InvestmentsBreadcrumb current={scenario.name} />
+        <PageHeader
+          title={scenario.name}
+          description={t('scenarios.detail.subtitle', {
+            symbol: scenario.symbol,
+            date: formatDate(scenario.start_date),
+          })}
+          className="mb-0"
+          action={
+            <div className="flex flex-wrap items-center gap-2">
+              {scenario.kind === 'forward' && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => void handleRebuild()}
+                  disabled={rebuildScenario.isPending}
+                >
+                  <HugeiconsIcon icon={Refresh01Icon} strokeWidth={2} data-icon="inline-start" />
+                  {t('scenarios.detail.rebuild')}
+                </Button>
+              )}
+              <Button variant="outline" size="sm" onClick={() => void handleToggleStatus()}>
+                {scenario.status === 'closed' ? t('scenarios.detail.reopen') : t('scenarios.detail.close')}
               </Button>
-            )}
-            <Button variant="outline" size="sm" onClick={() => void handleToggleStatus()}>
-              {scenario.status === 'closed' ? t('scenarios.detail.reopen') : t('scenarios.detail.close')}
-            </Button>
-            <Button variant="outline" size="sm" onClick={() => void handleDelete()}>
-              <HugeiconsIcon icon={Delete02Icon} strokeWidth={2} data-icon="inline-start" />
-              {t('scenarios.detail.delete')}
-            </Button>
-          </div>
-        }
-      />
+              <Button variant="outline" size="sm" onClick={() => void handleDelete()}>
+                <HugeiconsIcon icon={Delete02Icon} strokeWidth={2} data-icon="inline-start" />
+                {t('scenarios.detail.delete')}
+              </Button>
+            </div>
+          }
+        />
+      </div>
 
       <div className="flex flex-wrap items-center gap-2">
         <Badge variant="outline">{t(`scenarios.kind.${scenario.kind}`)}</Badge>

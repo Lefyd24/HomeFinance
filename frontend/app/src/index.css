@@ -72,6 +72,13 @@
   /* Desktop shell scoop where sidebar meets the content well. */
   --shell-scoop-radius: 1.25rem;
   --shell-chrome: var(--glass-surface-strong);
+  /* The canvas fill the aurora paints on top of (and the wash overlaid back
+     on top of the aurora, see `.shell-main-bg::after`) — split from
+     `--background` so a section can recolour what's *behind* the aurora too.
+     Otherwise the aurora blends with, and the wash re-tints back toward, the
+     ordinary blue `--background`, which pulls a differently-coloured aurora
+     straight back toward blue no matter what colour the aurora itself is. */
+  --aurora-canvas-bg: var(--background);
 
   /* Tab strips sit on the mesh canvas — need a solid lift off --background. */
   --tabs-list-bg: oklch(100% 0.004 228 / 0.96);
@@ -153,6 +160,7 @@
   --canvas-glow-secondary: oklch(52% 0.09 174 / 0.12);
   --canvas-glow-accent: oklch(50% 0.11 283 / 0.12);
   --shell-chrome: var(--glass-surface-strong);
+  --aurora-canvas-bg: var(--background);
 
   --tabs-list-bg: oklch(27% 0.022 224 / 0.92);
   --tabs-list-border: color-mix(in oklch, var(--glass-border) 55%, var(--border));
@@ -282,7 +290,7 @@
   .app-canvas {
     position: relative;
     isolation: isolate;
-    background-color: var(--background);
+    background-color: var(--aurora-canvas-bg);
   }
 
   /* Aurora mesh — animated gradient replaces the old ffflux SVG as the body fill. */
@@ -292,7 +300,7 @@
     z-index: -2;
     inset: -10px;
     pointer-events: none;
-    background-color: var(--background);
+    background-color: var(--aurora-canvas-bg);
     background-image: var(--aurora-gradient);
     background-size: 300% 200%;
     background-position: 50% 50%;
@@ -309,7 +317,7 @@
     z-index: -1;
     inset: 0;
     pointer-events: none;
-    background: color-mix(in oklch, var(--background) 22%, transparent);
+    background: color-mix(in oklch, var(--aurora-canvas-bg) 22%, transparent);
   }
 
   .glass-panel,
@@ -544,7 +552,7 @@
     }
 
     .app-canvas::after {
-      background: var(--background);
+      background: var(--aurora-canvas-bg);
     }
 
     .glass-panel,
@@ -645,7 +653,7 @@
     overflow: hidden;
     border-start-start-radius: inherit;
     border-end-start-radius: inherit;
-    background-color: var(--background);
+    background-color: var(--aurora-canvas-bg);
   }
 
   .shell-main-bg::before {
@@ -666,7 +674,7 @@
     content: '';
     position: absolute;
     inset: 0;
-    background: color-mix(in oklch, var(--background) 22%, transparent);
+    background: color-mix(in oklch, var(--aurora-canvas-bg) 22%, transparent);
   }
 
   .shell-main-scroll {
@@ -692,16 +700,102 @@
    * both themes, since each value is still derived from the theme's own tokens.
    */
   [data-section='investments'] {
-    --aurora-color-1: color-mix(in oklch, var(--chart-4) 52%, var(--background));
-    --aurora-color-2: color-mix(in oklch, var(--chart-5) 44%, var(--background));
-    --aurora-color-3: color-mix(in oklch, var(--primary) 40%, var(--background));
-    --aurora-color-4: color-mix(in oklch, var(--secondary) 30%, var(--background));
-    --aurora-color-5: color-mix(in oklch, var(--chart-3) 44%, var(--background));
+    /* Pine aurora — same mesh mechanism as the rest of the app, but pulled off
+       the cerulean/terracotta canvas onto a forest-green ramp so the mood, not
+       just the sidebar, reads as a different room.
+       Two things that look like they shouldn't matter, matter:
+       1. This overrides `--aurora-gradient` directly rather than only the
+          `--aurora-color-*` variables it's built from — the build's CSS
+          minifier inlines those into `--aurora-gradient`'s value at the point
+          it's *defined* (:root), so redeclaring just the ingredients further
+          down the tree never reaches the already-inlined gradient.
+       2. The aurora is painted over `--aurora-canvas-bg`, and a second wash of
+          the same colour is layered back on top of it afterwards (see
+          `.shell-main-bg::after`) — mixing the aurora colours against the
+          ordinary blue `--background` (as the rest of the app does) pulls a
+          green aurora straight back toward blue no matter how green its own
+          input hue is, since that blue keeps getting reintroduced. Mixing
+          against `--aurora-canvas-bg` (recoloured green just below) instead
+          keeps both layers agreeing on hue. */
+    /* A little more chroma than plain light --background (94.5% L / 0.013 C)
+       so it doesn't read as a pale near-gray, but lightness stays close to it
+       — darker canvases hurt contrast for body text, which is why this
+       backed off from an earlier, noticeably darker attempt. */
+    --aurora-canvas-bg: oklch(93% 0.022 152 / 0.9);
+    --aurora-color-1: color-mix(in oklch, oklch(38% 0.11 152) 50%, var(--aurora-canvas-bg));
+    --aurora-color-2: color-mix(in oklch, oklch(64% 0.15 155) 46%, var(--aurora-canvas-bg));
+    --aurora-color-3: color-mix(in oklch, oklch(48% 0.12 165) 42%, var(--aurora-canvas-bg));
+    --aurora-color-4: color-mix(in oklch, oklch(80% 0.09 95) 36%, var(--aurora-canvas-bg));
+    --aurora-color-5: color-mix(in oklch, oklch(54% 0.13 145) 46%, var(--aurora-canvas-bg));
+    --aurora-gradient: repeating-linear-gradient(
+      100deg,
+      var(--aurora-color-1) 10%,
+      var(--aurora-color-2) 15%,
+      var(--aurora-color-3) 20%,
+      var(--aurora-color-4) 25%,
+      var(--aurora-color-5) 30%
+    );
     --aurora-opacity: 0.5;
 
     --radius: 0.5rem;
-    --glass-border: oklch(63% 0.05 258 / 0.3);
+    --glass-border: oklch(55% 0.05 155 / 0.3);
     --shell-scoop-radius: 1rem;
+
+    /* Sidebar, topbar and footer all read `--glass-surface-strong` through
+       `.glass-bar` (same value, so they were never actually different
+       colours) — but each sits over a different stretch of the aurora, and
+       backdrop-filter samples whatever is directly behind it, so glassy
+       translucency made the three bleed different amounts of aurora through
+       and look inconsistent. Full opacity (alpha 1) removes the glass effect
+       outright — backdrop-filter has nothing left to show through an opaque
+       background — so all three are simply solid white, no aurora bleed,
+       no per-position variance. */
+    --glass-surface-strong: oklch(99% 0.006 152 / 1);
+
+    /* Pine — the investments sidebar's own hover/selected colour, standing in
+       for --sidebar-primary/-accent so the nav rail (not the whole app) reads
+       as a different room. Light and dark need separate values rather than a
+       color-mix off --background: a deep pine reads as text on the near-white
+       light sidebar, but the same dark value would vanish against the dark
+       sidebar, so dark mode gets a lighter, brighter pine instead. */
+    --sidebar-primary: oklch(33% 0.075 155);
+    --sidebar-primary-foreground: oklch(97% 0.02 155);
+    --sidebar-accent: oklch(91% 0.045 155 / 0.65);
+    --sidebar-accent-foreground: oklch(26% 0.07 155);
+    --sidebar-ring: oklch(45% 0.09 155);
+  }
+
+  .dark [data-section='investments'] {
+    /* Redeclares the full aurora chain rather than just `--aurora-canvas-bg`
+       — same inlining trap as the light block's comment above: the build
+       tool resolves `--aurora-color-*`'s nested `var(--aurora-canvas-bg)`
+       using the value in scope where `--aurora-color-*` is *defined*, so a
+       dark-only override of `--aurora-canvas-bg` alone would never reach
+       `--aurora-gradient`. Dark --background is
+       oklch(15.227% 0.01252 216.022) — same L/C, hue swapped to green. */
+    --aurora-canvas-bg: oklch(15.227% 0.01252 155);
+    --aurora-color-1: color-mix(in oklch, oklch(42% 0.14 150) 55%, var(--aurora-canvas-bg));
+    --aurora-color-2: color-mix(in oklch, oklch(68% 0.14 155) 48%, var(--aurora-canvas-bg));
+    --aurora-color-3: color-mix(in oklch, oklch(52% 0.13 165) 45%, var(--aurora-canvas-bg));
+    --aurora-color-4: color-mix(in oklch, oklch(78% 0.09 130) 38%, var(--aurora-canvas-bg));
+    --aurora-color-5: color-mix(in oklch, oklch(58% 0.11 145) 48%, var(--aurora-canvas-bg));
+    --aurora-gradient: repeating-linear-gradient(
+      100deg,
+      var(--aurora-color-1) 10%,
+      var(--aurora-color-2) 15%,
+      var(--aurora-color-3) 20%,
+      var(--aurora-color-4) 25%,
+      var(--aurora-color-5) 30%
+    );
+    /* Same reasoning as the light block: full opacity removes the glass
+       effect outright, so sidebar/topbar/footer are solid dark, no aurora
+       bleed-through, no per-position variance. */
+    --glass-surface-strong: oklch(17% 0.014 152 / 1);
+    --sidebar-primary: oklch(76% 0.1 155);
+    --sidebar-primary-foreground: oklch(20% 0.03 155);
+    --sidebar-accent: oklch(32% 0.05 155 / 0.55);
+    --sidebar-accent-foreground: oklch(92% 0.05 155);
+    --sidebar-ring: oklch(70% 0.1 155);
   }
 
   @supports not ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
@@ -719,7 +813,7 @@
     }
 
     .shell-main-bg {
-      background-color: var(--background);
+      background-color: var(--aurora-canvas-bg);
     }
 
     .shell-content-column {

@@ -189,43 +189,46 @@ export function TechnicalPage() {
 
   return (
     <PageContainer wide className="flex flex-col gap-5">
-      <InvestmentsBreadcrumb current={t('technical.title')} />
-      <PageHeader
-        title={t('technical.title')}
-        description={t('technical.description')}
-        action={
-          symbol ? (
-            profileLoading ? (
-              <div className="flex flex-col items-end gap-1.5">
-                <Skeleton className="h-5 w-32" />
-                <Skeleton className="h-8 w-24" />
-                <Skeleton className="h-4 w-16" />
-              </div>
-            ) : (
-              <div className="flex flex-col items-end gap-1">
-                {displayName && (
-                  <p className="max-w-56 truncate text-sm font-medium text-foreground/90">{displayName}</p>
-                )}
-                {lastPrice != null && (
-                  <span className="font-heading text-2xl font-semibold tabular-nums tracking-tight">
-                    {companyCurrency ? formatCurrency(lastPrice, companyCurrency) : lastPrice.toFixed(2)}
-                  </span>
-                )}
-                <div className="flex items-center gap-2">
-                  {profile?.market_cap != null && (
-                    <span className="text-xs text-muted-foreground">
-                      {formatCompact(profile.market_cap)}
+      <div>
+        <InvestmentsBreadcrumb current={t('technical.title')} />
+        <PageHeader
+          title={t('technical.title')}
+          description={t('technical.description')}
+          className="mb-0"
+          action={
+            symbol ? (
+              profileLoading ? (
+                <div className="flex flex-col items-end gap-1.5">
+                  <Skeleton className="h-5 w-32" />
+                  <Skeleton className="h-8 w-24" />
+                  <Skeleton className="h-4 w-16" />
+                </div>
+              ) : (
+                <div className="flex flex-col items-end gap-1">
+                  {displayName && (
+                    <p className="max-w-56 truncate text-sm font-medium text-foreground/90">{displayName}</p>
+                  )}
+                  {lastPrice != null && (
+                    <span className="font-heading text-2xl font-semibold tabular-nums tracking-tight">
+                      {companyCurrency ? formatCurrency(lastPrice, companyCurrency) : lastPrice.toFixed(2)}
                     </span>
                   )}
-                  {profile?.day_change_pct != null && (
-                    <DeltaPct pct={profile.day_change_pct} className="text-sm" />
-                  )}
+                  <div className="flex items-center gap-2">
+                    {profile?.market_cap != null && (
+                      <span className="text-xs text-muted-foreground">
+                        {formatCompact(profile.market_cap)}
+                      </span>
+                    )}
+                    {profile?.day_change_pct != null && (
+                      <DeltaPct pct={profile.day_change_pct} className="text-sm" />
+                    )}
+                  </div>
                 </div>
-              </div>
-            )
-          ) : undefined
-        }
-      />
+              )
+            ) : undefined
+          }
+        />
+      </div>
 
       <div className="glass-panel flex flex-wrap items-center gap-3 rounded-xl border border-border/80 p-3">
         <TickerSelect symbol={symbol} onSelect={(next) => updateParams({ symbol: next })} />

@@ -248,25 +248,28 @@ export function ComparisonPage() {
 
   return (
     <PageContainer wide className="flex flex-col gap-5">
-      <InvestmentsBreadcrumb current={t('compare.title')} />
-      <PageHeader
-        title={t('compare.title')}
-        description={t('compare.description')}
-        action={
-          <SavedComparisonsControl
-            symbols={symbols}
-            benchmark={benchmark}
-            period={period}
-            onLoad={(entry: SavedComparison) =>
-              updateParams({
-                symbols: entry.symbols,
-                benchmark: entry.benchmark,
-                period: parsePeriod(entry.period),
-              })
-            }
-          />
-        }
-      />
+      <div>
+        <InvestmentsBreadcrumb current={t('compare.title')} />
+        <PageHeader
+          title={t('compare.title')}
+          description={t('compare.description')}
+          className="mb-0"
+          action={
+            <SavedComparisonsControl
+              symbols={symbols}
+              benchmark={benchmark}
+              period={period}
+              onLoad={(entry: SavedComparison) =>
+                updateParams({
+                  symbols: entry.symbols,
+                  benchmark: entry.benchmark,
+                  period: parsePeriod(entry.period),
+                })
+              }
+            />
+          }
+        />
+      </div>
 
       <TickerPicker
         symbols={symbols}
