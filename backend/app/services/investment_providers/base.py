@@ -39,11 +39,35 @@ class ProviderPosition:
     fx_rate: float = 1.0
     market_value_base: Optional[float] = None
     cost_basis_base: Optional[float] = None
-    # Intraday move of the instrument itself, from the broker's quote feed.
+    # Intraday move, from the broker's quote feed. `previous_close` is a price
+    # per unit; `day_change` is **money** — what this holding's value moved by
+    # today, in `currency` — while `day_change_pct` is the instrument's own
+    # percentage move. Quote feeds report the price delta instead (Freedom24's
+    # `chg`, Binance's `priceChange`); providers must scale that to the
+    # position before setting `day_change` (see `day_change_amount`).
     previous_close: Optional[float] = None
     day_change: Optional[float] = None
     day_change_pct: Optional[float] = None
     exchange: Optional[str] = None
+
+
+def day_change_amount(
+    market_value: Optional[float], day_change_pct: Optional[float]
+) -> Optional[float]:
+    """The money a position's value moved today, from its percentage move.
+
+    Derived from the percentage rather than from the quote's price delta times
+    quantity: the percentage is unit-agnostic, so it stays correct for bonds
+    (priced as a percentage of face value) and for any instrument whose
+    "price" is not simply money per unit. A -100% move has no meaningful
+    previous value to divide by, so it yields the whole position.
+    """
+    if market_value is None or day_change_pct is None:
+        return None
+    if day_change_pct <= -100:
+        return -market_value
+    previous = market_value / (1 + day_change_pct / 100)
+    return round(market_value - previous, 2)
 
 
 @dataclass

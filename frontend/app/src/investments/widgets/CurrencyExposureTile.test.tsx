@@ -24,9 +24,12 @@ function position(overrides: Partial<PortfolioPosition> = {}): PortfolioPosition
     unrealized_pnl_base: 20,
     fx_rate: 1,
     day_change: 2,
+    day_change_base: 2,
     day_change_pct: 1.5,
     exchange: 'XETRA',
     weight_pct: 50,
+    fees_paid_base: null,
+    fee_count: 0,
     ...overrides,
   }
 }

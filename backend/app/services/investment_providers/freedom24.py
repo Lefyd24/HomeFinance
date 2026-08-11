@@ -40,6 +40,7 @@ from typing import Any, Optional
 from tradernet import Tradernet
 
 from app.services.investment_providers.base import (
+    day_change_amount as _day_change_amount,
     InvestmentProvider,
     ProviderBalance,
     ProviderCandle,
@@ -267,9 +268,26 @@ class Freedom24Provider(InvestmentProvider):
             # `bal_price_a` is the position's book value per unit; `price_a` is
             # the book value at the time it was opened.
             avg_price = _opt_float(_first(row, "bal_price_a", "price_a"))
-            current_price = _opt_float(_first(row, "mkt_price", "close_price"))
 
+            # `market_value` is the broker's own live valuation of the whole
+            # position and is the one figure its web portfolio agrees with.
             market_value = _opt_float(row.get("market_value"))
+
+            # NOT `mkt_price`. That field (and `close_price` beside it) belongs
+            # to the row's `sql_signal_tm` snapshot, which can be a session or
+            # more behind `market_value` — verified live on 2026-08-12, where
+            # INUV.US carried mkt_price 1.05 against market_value 0.91 on a
+            # quantity of 1. Rendering it as "current price" made the card
+            # contradict its own market value and the broker's page. The price
+            # per unit is therefore derived from the value the broker stands
+            # behind, so value = price x quantity always holds; the snapshot
+            # fields are only a last resort when there is no value to divide.
+            current_price = (
+                market_value / quantity
+                if market_value is not None and quantity
+                else _opt_float(_first(row, "mkt_price", "close_price"))
+            )
+
             if market_value is None:
                 market_value = quantity * (current_price or avg_price or 0.0)
 
@@ -315,6 +333,13 @@ class Freedom24Provider(InvestmentProvider):
         Best-effort: the portfolio response already carries everything needed
         for value and return, so a quote-feed failure costs the day-change
         column rather than failing the whole sync.
+
+        `chg` is the instrument's **price** move for the day, not the money the
+        holding gained — one share of a EUR 4 stock and thirty of them share
+        the same `chg`. `day_change` is a money amount (see ProviderPosition),
+        so it is re-derived from the percentage against this position's own
+        market value, which also keeps it right for bonds, whose price is
+        quoted as a percentage of face value rather than as money per unit.
         """
         if not positions:
             return
@@ -329,8 +354,10 @@ class Freedom24Provider(InvestmentProvider):
             if not quote:
                 continue
             position.previous_close = _opt_float(quote.get("ClosePrice"))
-            position.day_change = _opt_float(quote.get("chg"))
             position.day_change_pct = _opt_float(quote.get("pcp"))
+            position.day_change = _day_change_amount(
+                position.market_value, position.day_change_pct
+            )
             last_price = _opt_float(quote.get("ltp"))
             if position.current_price is None and last_price is not None:
                 position.current_price = last_price

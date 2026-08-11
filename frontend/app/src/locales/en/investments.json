@@ -63,15 +63,10 @@
     "open": "Open {{symbol}}",
     "openHint": "Select a holding for full detail",
     "close": "Close",
-    "dayChangeAmount": "Today",
     "costBasis": "Cost basis",
     "pricedAt": "Priced",
     "hints": {
-      "quantity": "How many units you hold.",
-      "avgPrice": "What you paid per unit on average.",
       "currentPrice": "What one unit is worth right now.",
-      "dayChange": "How much the price moved today.",
-      "dayChangeAmount": "What today's move is worth in money.",
       "costBasis": "The total you originally paid for this holding.",
       "weight": "How much of your invested money sits here.",
       "pricedAt": "When this price was last refreshed."
@@ -84,6 +79,80 @@
       "expenseRatio": "Expense ratio",
       "category": "Category",
       "topHolding": "Top holding"
+    },
+    "breakdown": {
+      "paidTitle": "What you paid",
+      "costFormula": "{{quantity}} × {{price}} at your average price.",
+      "fees": "Commission paid",
+      "feesHint_one": "{{count}} charge on this holding's trades.",
+      "feesHint_other": "{{count}} charges on this holding's trades.",
+      "feesNone": "The broker reported no commission on this holding.",
+      "totalPaid": "Total out of pocket",
+      "totalPaidHint": "Cost plus commission — what actually left the account.",
+      "nowTitle": "Where that leaves you",
+      "grossReturn": "Return before fees",
+      "netReturn": "Return after fees",
+      "netReturnHint": "The same gain with the commission taken off it.",
+      "todayTitle": "Today",
+      "todayPrice": "Price move",
+      "todayValue": "Your holding"
+    },
+    "history": {
+      "chartTitle": "Value since you bought it",
+      "investedLine": "Money paid in",
+      "investedLabel": "Cost of investment",
+      "openedMarker": "Opened",
+      "subtitle": "{{name}} · held since {{date}} · {{account}}",
+      "netReturnHint": "The same return with the commission taken off.",
+      "noSeries": "Not enough price history yet to draw this position.",
+      "emptyTitle": "No history for this holding",
+      "emptyDescription": "There are no trades recorded under this ticker on this account.",
+      "dailyTable": "Day-by-day figures",
+      "sourceYahoo": "Priced from Yahoo Finance's daily closes for {{ticker}}, matched to your broker's ticker and confirmed against the currency it trades in. Quantities come from your own trades; the last point is the latest synced valuation, and historical figures use today's exchange rate.",
+      "sourceBroker": "This ticker could not be matched to a Yahoo Finance listing, so the line uses the broker's own daily closes — which may not reach back as far. Quantities come from your own trades, and the last point is the latest synced valuation.",
+      "sourceNone": "No daily price series could be found for this ticker, on Yahoo Finance or from the broker, so there is nothing to chart yet.",
+      "legendValue": "Your holding",
+      "legendAhead": "Ahead of what you paid",
+      "legendBehind": "Behind what you paid",
+      "notHeldYet": "You did not hold this yet.",
+      "rangeLabel": "Chart range",
+      "range": {
+        "entry": "Since entry",
+        "1m": "1M",
+        "3m": "3M",
+        "6m": "6M",
+        "1y": "1Y",
+        "5y": "5Y",
+        "max": "Max"
+      },
+      "matchTitle": "Ticker match",
+      "currencyConfirmed": "{{currency}} confirmed",
+      "currencyMismatch": "broker {{broker}} vs {{yahoo}}",
+      "matchFallback": "Unmatched — using broker prices",
+      "matchNone": "No price series found",
+      "rejectCurrency": "rejected: priced in {{currency}}, your broker reports {{broker}}",
+      "rejectNoData": "rejected: Yahoo Finance lists no prices for it",
+      "rejectError": "rejected: the lookup failed",
+      "bandHeight": "Band height",
+      "viewLabel": "Chart basis",
+      "viewPrice": "Per unit",
+      "viewValue": "Total",
+      "marketPriceLine": "Market price",
+      "avgCostLine": "Your average cost",
+      "unitsHeld_one": "{{count}} unit held, worth",
+      "unitsHeld_other": "{{count}} units held, worth",
+      "investedHint": "What you paid for the units you still hold.",
+      "marketValueHint": "What those units are worth today.",
+      "grossReturnHint": "Value now against cost — before commission."
+    },
+    "list": {
+      "today": "Today",
+      "total": "Total"
+    },
+    "actions": {
+      "history": "Full history",
+      "research": "Research",
+      "technical": "Technical"
     }
   },
   "insights": {
@@ -367,10 +436,19 @@
     "rangeLabel": "Chart range",
     "chartEmpty": "No price history available for this range.",
     "ranges": {
-      "1m": "1M", "3m": "3M", "6m": "6M", "ytd": "YTD", "1y": "1Y", "5y": "5Y", "max": "Max"
+      "1m": "1M",
+      "3m": "3M",
+      "6m": "6M",
+      "ytd": "YTD",
+      "1y": "1Y",
+      "5y": "5Y",
+      "max": "Max"
     },
     "series": {
-      "close": "Close", "volume": "Volume", "sma50": "SMA 50", "sma200": "SMA 200"
+      "close": "Close",
+      "volume": "Volume",
+      "sma50": "SMA 50",
+      "sma200": "SMA 200"
     },
     "rollingTitle": "Rolling risk",
     "distributionTitle": "Daily returns",

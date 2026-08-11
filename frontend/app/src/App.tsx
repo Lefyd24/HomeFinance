@@ -26,6 +26,7 @@ import { TechnicalPage } from './investments/TechnicalPage'
 import { BacktestPage } from './investments/BacktestPage'
 import { ScenarioLibraryPage } from './investments/ScenarioLibraryPage'
 import { ScenarioDetailPage } from './investments/ScenarioDetailPage'
+import { HoldingHistoryPage } from './investments/HoldingHistoryPage'
 import { AdvisorPage } from './advisor/AdvisorPage'
 import { AiAdvisorPage } from './ai-advisor/AiAdvisorPage'
 import { NotificationsPage } from './notifications/NotificationsPage'
@@ -89,6 +90,13 @@ function App() {
           <Route path="/investments/backtest" element={<BacktestPage />} />
           <Route path="/investments/scenarios" element={<ScenarioLibraryPage />} />
           <Route path="/investments/scenarios/:id" element={<ScenarioDetailPage />} />
+          {/* A real holding's own journey page — the counterpart to a
+              scenario's. Account plus ticker, because the same symbol can be
+              held at two brokers with different cost bases. */}
+          <Route
+            path="/investments/holdings/:accountId/:symbol"
+            element={<HoldingHistoryPage />}
+          />
           <Route path="/advisor" element={<AdvisorPage />} />
           <Route path="/ai-advisor" element={<AiAdvisorPage />} />
           <Route path="/notifications" element={<NotificationsPage />} />

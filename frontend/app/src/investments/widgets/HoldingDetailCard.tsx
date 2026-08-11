@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import { HugeiconsIcon } from '@hugeicons/react'
-import { Cancel01Icon, ChartLineData01Icon, News01Icon } from '@hugeicons/core-free-icons'
+import { Cancel01Icon, Time04Icon } from '@hugeicons/core-free-icons'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { cn } from '@/lib/utils'
@@ -21,9 +21,14 @@ import type { CompanyProfile, InvestmentProvider, PortfolioPosition } from '../i
  * One holding, opened out.
  *
  * The list behind it shows the four things you scan for; everything else about
- * a position — quantity, average price, exchange, the converted value, the
- * links out to research and news — lives here, so the list never has to grow a
- * column to accommodate a field most rows don't need.
+ * a position lives here. Laid out as three ledgers rather than a grid of
+ * loose fields, because the questions a holding has to answer are sequential,
+ * not parallel: what did this cost me, what is it worth now, and what did it
+ * do today. A grid made every figure look equally important and left the
+ * reader to work out which ones add up to which — so cost basis, commission
+ * and total paid now sit in one column that visibly sums, and the return is
+ * shown twice: before fees (what the broker calls your return) and after them
+ * (what actually happened to your money).
  *
  * It grows out of the row you clicked rather than appearing over it: the card
  * and the row share a `layoutId`, so the transition says "this row, larger"
@@ -37,7 +42,7 @@ export function HoldingDetailCard({
   onClose,
 }: {
   position: PortfolioPosition | null
-  /** The scope's currency, for the converted-value row. */
+  /** The scope's currency, for the converted-value and commission rows. */
   currency: string
   /** The position's own broker, so its ticker can be translated for research lookups. */
   provider: InvestmentProvider | null
@@ -82,6 +87,21 @@ export function HoldingDetailCard({
 
   const money = (value: number | null | undefined, cur = position?.currency ?? currency) =>
     value == null ? '—' : formatBalance(value, cur, hidden)
+  /** Commission is only ever reported in the account's currency — see the API type. */
+  const base = (value: number | null | undefined) =>
+    value == null ? '—' : formatBalance(value, currency, hidden)
+
+  // Everything in the "after fees" line is in the account's currency, so the
+  // gross return has to come from the base-currency column too rather than
+  // from the position's own — mixing the two would silently add a EUR
+  // commission to a USD gain.
+  const grossPnl = position?.unrealized_pnl_base ?? position?.unrealized_pnl ?? null
+  const costBase = position?.cost_basis_base ?? position?.cost_basis ?? null
+  const feesPaid = position?.fees_paid_base ?? null
+  const hasFees = feesPaid != null && feesPaid > 0
+  const totalPaid = costBase != null && hasFees ? costBase + feesPaid : null
+  const netPnl = grossPnl != null && hasFees ? grossPnl - feesPaid : null
+  const netPct = netPnl != null && totalPaid ? (netPnl / totalPaid) * 100 : null
 
   // Portalled to <body>: the shell's content column carries a backdrop-filter
   // for its glass surface, and any backdrop-filter/filter/transform ancestor
@@ -189,41 +209,81 @@ export function HoldingDetailCard({
               </div>
             </div>
 
-            {/* Each field carries a one-line gloss. The abbreviations here are
-                the ones a brokerage statement assumes you already know — "cost
-                basis", "weight" — and this card is the place with room to say
-                what they mean instead of leaving them to be guessed at. */}
-            <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
-              <Row
-                label={t('detail.table.quantity')}
-                hint={t('holding.hints.quantity')}
-                value={position.quantity}
+            {/* What it cost. Reads top to bottom as a sum: the price paid, the
+                commission on top of it, and the line the two add up to — the
+                number that actually left the account. */}
+            <Ledger title={t('holding.breakdown.paidTitle')}>
+              <LedgerRow
+                label={t('holding.costBasis')}
+                hint={t('holding.breakdown.costFormula', {
+                  quantity: position.quantity,
+                  price: money(position.avg_price),
+                })}
+                value={money(position.cost_basis)}
               />
-              <Row
-                label={t('detail.table.avgPrice')}
-                hint={t('holding.hints.avgPrice')}
-                value={money(position.avg_price)}
+              <LedgerRow
+                label={t('holding.breakdown.fees')}
+                hint={
+                  hasFees
+                    ? t('holding.breakdown.feesHint', { count: position.fee_count })
+                    : t('holding.breakdown.feesNone')
+                }
+                value={hasFees ? base(feesPaid) : '—'}
               />
-              <Row
+              {totalPaid != null && (
+                <LedgerRow
+                  label={t('holding.breakdown.totalPaid')}
+                  hint={t('holding.breakdown.totalPaidHint')}
+                  value={base(totalPaid)}
+                  emphasis
+                />
+              )}
+            </Ledger>
+
+            {/* Market value and the gross return are the headline above, so
+                neither is restated here — this section only adds what the
+                headline cannot say: the price behind the value, and the return
+                once the commission above is taken off it. */}
+            <Ledger title={t('holding.breakdown.nowTitle')}>
+              <LedgerRow
                 label={t('detail.table.currentPrice')}
                 hint={t('holding.hints.currentPrice')}
                 value={money(position.current_price)}
               />
-              <Row
-                label={t('detail.table.dayChange')}
-                hint={t('holding.hints.dayChange')}
+              {netPnl != null && (
+                <LedgerRow
+                  label={t('holding.breakdown.netReturn')}
+                  hint={t('holding.breakdown.netReturnHint')}
+                  value={
+                    <span className="flex items-baseline justify-end gap-2">
+                      <DeltaAmount amount={netPnl} format={(v) => base(v)} />
+                      <DeltaPct pct={netPct} className="text-xs" />
+                    </span>
+                  }
+                  emphasis
+                />
+              )}
+            </Ledger>
+
+            {/* Today, on its own: an intraday move belongs nowhere near the
+                since-you-bought-it figures, which is exactly the confusion the
+                old flat grid invited. The section heading already says when,
+                so the rows say what rather than repeating "today" twice more. */}
+            <Ledger title={t('holding.breakdown.todayTitle')}>
+              <LedgerRow
+                label={t('holding.breakdown.todayPrice')}
                 value={<DeltaPct pct={position.day_change_pct} className="text-sm" />}
               />
-              <Row
-                label={t('holding.dayChangeAmount')}
-                hint={t('holding.hints.dayChangeAmount')}
+              <LedgerRow
+                label={t('holding.breakdown.todayValue')}
                 value={<DeltaAmount amount={position.day_change} format={(v) => money(v)} />}
               />
-              <Row
-                label={t('holding.costBasis')}
-                hint={t('holding.hints.costBasis')}
-                value={money(position.cost_basis)}
-              />
+            </Ledger>
+
+            {/* Quantity and average price are already spelled out as the cost
+                line's working ("10 × 1.00 at your average price"), so only the
+                two facts that appear nowhere else are left. */}
+            <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-3 border-t border-border/60 pt-3 text-sm">
               <Row
                 label={t('detail.table.weight')}
                 hint={t('holding.hints.weight')}
@@ -238,31 +298,27 @@ export function HoldingDetailCard({
 
             <ResearchEnrichment loading={profileLoading} profile={profile ?? null} />
 
-            <div className="mt-4 flex flex-wrap gap-2">
-              <Button asChild size="sm" variant="secondary">
+            {/* One short row rather than four full-width chips wrapping onto
+                two lines. The icon and the solid fill are spent on the one
+                action this card exists to lead to; the two research links are
+                bare labels, which is all the width they were earning. */}
+            <div className="mt-4 flex flex-wrap items-center gap-1.5">
+              <Button asChild size="xs">
+                <Link
+                  to={`/investments/holdings/${position.account_id}/${encodeURIComponent(position.symbol)}`}
+                >
+                  <HugeiconsIcon icon={Time04Icon} strokeWidth={2} data-icon="inline-start" />
+                  {t('holding.actions.history')}
+                </Link>
+              </Button>
+              <Button asChild size="xs" variant="outline">
                 <Link to={`/investments/research?symbol=${encodeURIComponent(position.symbol)}`}>
-                  <HugeiconsIcon
-                    icon={ChartLineData01Icon}
-                    strokeWidth={2}
-                    data-icon="inline-start"
-                  />
-                  {t('research.title')}
+                  {t('holding.actions.research')}
                 </Link>
               </Button>
-              <Button asChild size="sm" variant="secondary">
+              <Button asChild size="xs" variant="outline">
                 <Link to={`/investments/technical?symbol=${encodeURIComponent(position.symbol)}`}>
-                  <HugeiconsIcon
-                    icon={ChartLineData01Icon}
-                    strokeWidth={2}
-                    data-icon="inline-start"
-                  />
-                  {t('technical.title')}
-                </Link>
-              </Button>
-              <Button asChild size="sm" variant="secondary">
-                <Link to={`/investments/news?symbol=${encodeURIComponent(position.symbol)}`}>
-                  <HugeiconsIcon icon={News01Icon} strokeWidth={2} data-icon="inline-start" />
-                  {t('news.title')}
+                  {t('holding.actions.technical')}
                 </Link>
               </Button>
             </div>
@@ -271,6 +327,61 @@ export function HoldingDetailCard({
       )}
     </AnimatePresence>,
     document.body,
+  )
+}
+
+/** A titled run of rows that reads as one calculation. */
+function Ledger({ title, children }: { title: string; children: ReactNode }) {
+  return (
+    <section className="mt-4">
+      <h4 className="mb-1.5 text-[0.6rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+        {title}
+      </h4>
+      <dl className="flex flex-col">{children}</dl>
+    </section>
+  )
+}
+
+/**
+ * Label and gloss on the left, figure on the right. `emphasis` marks the line
+ * the ones above it add up to — a top border and heavier type, the way a
+ * statement marks a subtotal.
+ */
+function LedgerRow({
+  label,
+  hint,
+  value,
+  emphasis = false,
+}: {
+  label: string
+  hint?: string
+  value: ReactNode
+  emphasis?: boolean
+}) {
+  return (
+    <div
+      className={cn(
+        'flex items-start justify-between gap-3 py-1',
+        emphasis && 'mt-1 border-t border-border/60 pt-2',
+      )}
+    >
+      <dt className="min-w-0 flex-1">
+        <span className={cn('block text-sm leading-tight', emphasis && 'font-medium')}>
+          {label}
+        </span>
+        {hint && (
+          <span className="block text-[0.7rem] leading-snug text-muted-foreground">{hint}</span>
+        )}
+      </dt>
+      <dd
+        className={cn(
+          'shrink-0 text-end text-sm tabular-nums leading-tight',
+          emphasis && 'font-semibold',
+        )}
+      >
+        {value}
+      </dd>
+    </div>
   )
 }
 

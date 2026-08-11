@@ -80,10 +80,18 @@ class PortfolioPositionResponse(BaseModel):
     cost_basis_base: Optional[float] = None
     unrealized_pnl_base: Optional[float] = None
     fx_rate: float = 1.0
+    # `day_change` is money (what the holding's value moved by today) in the
+    # position's own currency; `day_change_base` restates it in the account's.
     day_change: Optional[float] = None
+    day_change_base: Optional[float] = None
     day_change_pct: Optional[float] = None
     exchange: Optional[str] = None
     weight_pct: Optional[float] = None
+    # Commission actually charged on the trades that built this position, in
+    # the account's currency — brokers routinely bill a fee in the account
+    # currency for a trade in another, so there is no single native figure.
+    fees_paid_base: Optional[float] = None
+    fee_count: int = 0
 
     class Config:
         from_attributes = True
@@ -114,6 +122,56 @@ class PortfolioSnapshotResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class PositionHistoryPoint(BaseModel):
+    """One day of a real holding, all money figures in the account's currency.
+
+    `value`/`invested` are null on days outside ownership (before the first buy,
+    after a full sale) so the chart leaves a gap instead of drawing a zero;
+    `price` spans the whole window either way.
+    """
+    date: date
+    quantity: float
+    price: Optional[float] = None
+    value: Optional[float] = None
+    # Net cash actually paid in for the units still held on this date — the
+    # real-money equivalent of a scenario's invested-capital line.
+    invested: Optional[float] = None
+    fees: float
+
+
+class PositionHistoryResponse(BaseModel):
+    symbol: str
+    name: Optional[str] = None
+    currency: str
+    # How the series was produced. "reconstructed" = the account's own trades
+    # marked to a real daily price series; see position_history_service.
+    basis: str = "reconstructed"
+    # Which price series that was: "yahoo:<ticker>" once the broker ticker has
+    # been mapped and confirmed, "broker" when it fell back to the broker's own
+    # candles, "none" when neither could price it.
+    price_source: str = "none"
+    # The window charted, and the ticker mapping behind it — returned so the
+    # page can show its working rather than ask to be believed.
+    range: str = "entry"
+    start: Optional[date] = None
+    end: Optional[date] = None
+    mapped_symbol: Optional[str] = None
+    mapped_currency: Optional[str] = None
+    native_currency: Optional[str] = None
+    # (candidate ticker, outcome, currency Yahoo reports) per attempt.
+    mapping_checked: list[tuple[str, str, Optional[str]]] = Field(default_factory=list)
+    opened_on: Optional[date] = None
+    quantity: float = 0
+    market_value: float = 0
+    cost_basis: float = 0
+    fees_paid: float = 0
+    realized_pnl: float = 0
+    unrealized_pnl: float = 0
+    unrealized_return_pct: Optional[float] = None
+    buy_dates: list[date] = Field(default_factory=list)
+    series: list[PositionHistoryPoint] = Field(default_factory=list)
 
 
 class SymbolSearchResult(BaseModel):

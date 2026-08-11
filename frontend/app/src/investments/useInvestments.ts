@@ -55,6 +55,33 @@ export function useInvestmentPositions(accountId: number | null) {
   })
 }
 
+/**
+ * One holding's journey. Rebuilt from the trade tape and the broker's daily
+ * closes on the server, which can mean a broker round-trip the first time a
+ * symbol is asked for — hence the longer stale time than the position rows it
+ * expands on.
+ */
+export function usePositionHistory(
+  accountId: number | null,
+  symbol: string | null,
+  range: investmentsApi.PositionHistoryRange = 'entry',
+) {
+  const ticker = symbol?.trim() ?? ''
+  return useQuery({
+    queryKey: queryKeys.investmentPositionHistory(accountId ?? -1, ticker, range),
+    queryFn: () => investmentsApi.getPositionHistory(accountId as number, ticker, range),
+    // Switching range should redraw, not blank the page back to a skeleton.
+    placeholderData: (previous) => previous,
+    enabled: accountId != null && ticker.length > 0,
+    staleTime: 5 * 60_000,
+    // A symbol that was never traded is a permanent 404, not a blip.
+    retry: (count, error) => {
+      if (error instanceof ApiError && error.status === 404) return false
+      return count < 2
+    },
+  })
+}
+
 export function useInvestmentTransactions(accountId: number | null) {
   return useQuery({
     queryKey: queryKeys.investmentTransactions(accountId ?? -1),

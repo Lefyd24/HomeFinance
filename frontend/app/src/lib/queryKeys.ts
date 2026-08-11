@@ -16,6 +16,8 @@ export const queryKeys = {
   investmentAccounts: ['investmentAccounts'] as const,
   investmentPositions: (accountId: number) => ['investmentPositions', accountId] as const,
   investmentTransactions: (accountId: number) => ['investmentTransactions', accountId] as const,
+  investmentPositionHistory: (accountId: number, symbol: string, range: string) =>
+    ['investmentPositionHistory', accountId, symbol, range] as const,
   investmentHistory: (accountId: number, range?: object) =>
     ['investmentHistory', accountId, range] as const,
   investmentEarnPositions: (accountId: number) => ['investmentEarnPositions', accountId] as const,

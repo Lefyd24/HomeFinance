@@ -35,6 +35,8 @@ from app.schemas import (
     NewsPageResponse,
     PortfolioPositionResponse,
     PortfolioSnapshotResponse,
+    PositionHistoryPoint,
+    PositionHistoryResponse,
     PriceBar,
     SavedComparisonCreate,
     SavedComparisonResponse,
@@ -45,6 +47,7 @@ from app.schemas import (
     TechnicalResponse,
 )
 from app.services import comparison_service, company_history_service, technical_service
+from app.services.position_history_service import DEFAULT_RANGE, build_position_history
 from app.services.investment_sync_service import (
     create_credential,
     get_provider_for_account,
@@ -172,8 +175,52 @@ def _to_response(db: Session, account: Account) -> InvestmentAccountResponse:
     )
 
 
+def _fees_by_symbol(
+    db: Session, account: Account, positions: list[PortfolioPosition]
+) -> dict[str, tuple[float, int]]:
+    """symbol -> (commission paid in the account's currency, number of charges).
+
+    Fee rows carry the currency the broker billed in, which is often the
+    account's rather than the instrument's — a USD trade on a EUR account is
+    commonly charged in EUR. So a fee already in the account currency is taken
+    as-is, one in the instrument's currency is converted with that position's
+    own `fx_rate`, and anything else is counted unconverted rather than
+    dropped, since a missing fee reads as "free" and an approximate one does
+    not.
+
+    Attribution is by ticker, so a fee booked under an instrument's former
+    ticker (Freedom24 renames them — INLOT.GR became BYLOT.GR) stays with the
+    old symbol and is not counted against the position that succeeded it.
+    """
+    rate_by_currency = {
+        p.currency: (p.fx_rate if p.fx_rate else 1.0) for p in positions if p.currency
+    }
+    account_currency = (account.currency or "").upper()
+
+    totals: dict[str, tuple[float, int]] = {}
+    rows = (
+        db.query(InvestmentTransaction)
+        .filter(
+            InvestmentTransaction.account_id == account.id,
+            InvestmentTransaction.type == "fee",
+            InvestmentTransaction.symbol.isnot(None),
+        )
+        .all()
+    )
+    for row in rows:
+        currency = (row.currency or account_currency).upper()
+        amount = abs(row.amount or 0.0)
+        if currency != account_currency:
+            amount *= rate_by_currency.get(currency, 1.0)
+        paid, count = totals.get(row.symbol, (0.0, 0))
+        totals[row.symbol] = (paid + amount, count + 1)
+    return totals
+
+
 def _position_response(
-    position: PortfolioPosition, portfolio_value: float = 0.0
+    position: PortfolioPosition,
+    portfolio_value: float = 0.0,
+    fees: tuple[float, int] | None = None,
 ) -> PortfolioPositionResponse:
     cost_basis = position.cost_basis
     if cost_basis is None and position.avg_price is not None:
@@ -208,11 +255,18 @@ def _position_response(
         ),
         fx_rate=position.fx_rate if position.fx_rate is not None else 1.0,
         day_change=position.day_change,
+        day_change_base=(
+            round(position.day_change * (position.fx_rate or 1.0), 2)
+            if position.day_change is not None
+            else None
+        ),
         day_change_pct=position.day_change_pct,
         exchange=position.exchange,
         weight_pct=(
             round(market_value_base / portfolio_value * 100, 2) if portfolio_value else None
         ),
+        fees_paid_base=round(fees[0], 2) if fees else None,
+        fee_count=fees[1] if fees else 0,
     )
 
 
@@ -314,7 +368,73 @@ def get_investment_positions(
     # even when positions are priced in different currencies.
     portfolio_value = sum(_base_market_value(p) for p in positions)
     positions.sort(key=_base_market_value, reverse=True)
-    return [_position_response(p, portfolio_value) for p in positions]
+    fees = _fees_by_symbol(db, account, positions)
+    return [
+        _position_response(p, portfolio_value, fees.get(p.symbol)) for p in positions
+    ]
+
+
+@router.get(
+    "/accounts/{account_id}/positions/{symbol:path}/history",
+    response_model=PositionHistoryResponse,
+)
+def get_position_history(
+    account_id: int,
+    symbol: str,
+    current_user: User = Depends(get_current_user_authenticated),
+    db: Session = Depends(get_db),
+    range: str = Query(DEFAULT_RANGE, pattern="^(entry|1m|3m|6m|1y|5y|max)$"),
+):
+    """One holding's value and invested capital over time.
+
+    `range` picks the window: "entry" (the default) runs from a month before
+    the first buy, the rest are ordinary lookbacks from today and may well
+    start before the position existed — the pre-entry stretch is the point.
+
+    `:path` on the symbol because broker tickers contain dots ("INUV.US") and
+    slashes are not out of the question for a crypto pair.
+    """
+    account = _get_investment_account(db, account_id, current_user)
+    history = build_position_history(db, account, symbol, range_key=range)
+    if history.opened_on is None and not history.series:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No history for this position",
+        )
+    return PositionHistoryResponse(
+        symbol=history.symbol,
+        name=history.name,
+        currency=history.currency,
+        basis=history.basis,
+        price_source=history.price_source,
+        range=history.range,
+        start=history.start,
+        end=history.end,
+        mapped_symbol=history.mapped_symbol,
+        mapped_currency=history.mapped_currency,
+        native_currency=history.native_currency,
+        mapping_checked=history.mapping_checked,
+        opened_on=history.opened_on,
+        quantity=history.quantity,
+        market_value=history.market_value,
+        cost_basis=history.cost_basis,
+        fees_paid=history.fees_paid,
+        realized_pnl=history.realized_pnl,
+        unrealized_pnl=history.unrealized_pnl,
+        unrealized_return_pct=history.unrealized_return_pct,
+        buy_dates=history.buy_dates,
+        series=[
+            PositionHistoryPoint(
+                date=point.date,
+                quantity=point.quantity,
+                price=point.price,
+                value=point.value,
+                invested=point.invested,
+                fees=point.fees,
+            )
+            for point in history.series
+        ],
+    )
 
 
 @router.get("/accounts/{account_id}/transactions", response_model=List[InvestmentTransactionResponse])

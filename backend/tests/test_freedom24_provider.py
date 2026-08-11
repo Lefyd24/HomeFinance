@@ -240,8 +240,11 @@ def test_positions_read_cost_basis_market_value_and_return(provider):
     assert position.currency == "EUR"
     # bal_price_a, not price_avr/avg_price (which the API never sends).
     assert position.avg_price == 0.755
-    assert position.current_price == 1.11
     assert position.market_value == 3.29
+    # Derived from market_value, never read from `mkt_price`/`close_price`:
+    # those belong to the row's snapshot timestamp and routinely disagree with
+    # the value the broker actually stands behind.
+    assert position.current_price == pytest.approx(3.288 / 3)
     # open_bal, the broker's own book value for the whole position.
     assert position.cost_basis == 2.27
     assert position.exchange == "ATHEX"

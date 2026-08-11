@@ -193,9 +193,16 @@ function HoldingRow({
               {formatBalance(value, currency, hidden)}
             </span>
           )}
-          <span className="flex items-baseline gap-1.5">
+          {/* Two percentages side by side with only a dot between them read as
+              one number split in half — and they measure different spans of
+              time, which is exactly the thing a holdings list must not leave
+              ambiguous. Each now carries the period it belongs to. */}
+          <span className="flex items-baseline gap-1.5 text-[0.65rem] text-muted-foreground">
+            <span>{t('holding.list.today')}</span>
             <DeltaPct pct={position.day_change_pct} className="text-[0.7rem]" />
-            <span className="text-[0.7rem] text-muted-foreground">·</span>
+          </span>
+          <span className="flex items-baseline gap-1.5 text-[0.65rem] text-muted-foreground">
+            <span>{t('holding.list.total')}</span>
             <DeltaPct pct={position.unrealized_return_pct} className="text-[0.7rem]" />
           </span>
         </span>

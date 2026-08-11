@@ -9,6 +9,7 @@ from app.models import (
     PortfolioSnapshot,
 )
 from app.services import investment_sync_service
+from app.services import position_history_service
 from app.services import notification_service as ns
 from app.services.investment_providers.base import (
     ProviderBalance,
@@ -518,3 +519,322 @@ def test_earn_positions_returns_positions_for_supporting_provider(client, db, mo
     locked = next(p for p in body if p["kind"] == "locked")
     assert locked["asset"] == "BNB"
     assert locked["lock_end_time"] is not None
+
+
+class FakeFeeProvider(FakeProvider):
+    """A broker that bills its commission in the account's currency, as they do.
+
+    The trade is in USD on a USD account here; `FakeForeignFeeProvider` below
+    covers the case that actually needs converting.
+    """
+
+    def get_transactions(self, since=None):
+        return FakeProvider.get_transactions(self, since) + [
+            ProviderTransaction(
+                external_id="trade-1-fee",
+                type="fee",
+                symbol="AAPL.US",
+                quantity=None,
+                price=None,
+                amount=-2.5,
+                currency="USD",
+                date=datetime(2026, 1, 5),
+                raw_payload={"trade_id": "trade-1"},
+            ),
+            ProviderTransaction(
+                external_id="trade-2-fee",
+                type="fee",
+                symbol="AAPL.US",
+                quantity=None,
+                price=None,
+                amount=-1.5,
+                currency="USD",
+                date=datetime(2026, 1, 12),
+                raw_payload={"trade_id": "trade-2"},
+            ),
+            # A fee against a ticker that is no longer held must not land on
+            # any open position's total.
+            ProviderTransaction(
+                external_id="trade-3-fee",
+                type="fee",
+                symbol="SOLD.US",
+                quantity=None,
+                price=None,
+                amount=-9.0,
+                currency="USD",
+                date=datetime(2026, 1, 12),
+                raw_payload={"trade_id": "trade-3"},
+            ),
+        ]
+
+
+class FakeForeignFeeProvider(FakeMultiCurrencyProvider):
+    """A EUR instrument in a USD account, with the commission billed in EUR."""
+
+    def get_transactions(self, since=None):
+        return [
+            ProviderTransaction(
+                external_id="trade-1",
+                type="buy",
+                symbol="BYLOT.GR",
+                quantity=100,
+                price=8.0,
+                amount=-800.0,
+                currency="EUR",
+                date=datetime(2026, 1, 5),
+                raw_payload={},
+            ),
+            ProviderTransaction(
+                external_id="trade-1-fee",
+                type="fee",
+                symbol="BYLOT.GR",
+                quantity=None,
+                price=None,
+                amount=-10.0,
+                currency="EUR",
+                date=datetime(2026, 1, 5),
+                raw_payload={},
+            ),
+        ]
+
+
+def _no_yahoo_match(*args, **kwargs):
+    """Stand in for a ticker Yahoo has no confirmed listing for.
+
+    Also keeps the suite off the network: resolving for real would download
+    prices and symbol metadata from Yahoo.
+    """
+    from app.services.market_data import CandidateCheck, YahooListing
+
+    return YahooListing(symbol=None, currency=None, checked=[CandidateCheck("NOPE", "no-data")])
+
+
+def _connect(client, provider="freedom24", currency="USD"):
+    resp = client.post(
+        "/api/investments/accounts",
+        json={
+            "name": "Broker",
+            "provider": provider,
+            "currency": currency,
+            "public_key": "pub-123",
+            "private_key": "priv-456",
+        },
+    )
+    assert resp.status_code == 201, resp.text
+    return resp.json()["id"]
+
+
+def test_position_reports_commission_actually_charged_for_that_ticker(client, db, monkeypatch):
+    _patch_provider(monkeypatch, FakeFeeProvider)
+    account_id = _connect(client)
+
+    position = client.get(f"/api/investments/accounts/{account_id}/positions").json()[0]
+    assert position["symbol"] == "AAPL.US"
+    # Both AAPL charges, and neither the SOLD.US one nor the trade itself.
+    assert position["fees_paid_base"] == 4.0
+    assert position["fee_count"] == 2
+
+
+def test_foreign_currency_fee_is_converted_into_the_account_currency(client, db, monkeypatch):
+    _patch_provider(monkeypatch, FakeForeignFeeProvider)
+    account_id = _connect(client)
+
+    position = client.get(f"/api/investments/accounts/{account_id}/positions").json()[0]
+    # EUR 10 at the position's own 1.1 rate, because the account reports in USD.
+    assert position["fees_paid_base"] == 11.0
+    assert position["fee_count"] == 1
+
+
+class FakeMovingForeignProvider(FakeMultiCurrencyProvider):
+    """The EUR-in-a-USD-account position, with today's move attached."""
+
+    def get_positions(self):
+        positions = FakeMultiCurrencyProvider.get_positions(self)
+        positions[0].day_change = 1.5
+        positions[0].day_change_pct = 0.15
+        return positions
+
+
+def test_position_day_change_is_restated_in_the_account_currency(client, db, monkeypatch):
+    _patch_provider(monkeypatch, FakeMovingForeignProvider)
+    account_id = _connect(client)
+
+    position = client.get(f"/api/investments/accounts/{account_id}/positions").json()[0]
+    # FakeProvider's day_change of 1.5 is EUR; the account reports USD.
+    assert position["day_change"] == 1.5
+    assert position["day_change_base"] == 1.65
+
+
+def test_position_history_tracks_value_against_invested_capital(client, db, monkeypatch):
+    """The broker-candle fallback: this ticker resolves to nothing on Yahoo."""
+    _patch_provider(monkeypatch, FakeFeeProvider)
+    monkeypatch.setattr(position_history_service, "resolve_yahoo_listing", _no_yahoo_match)
+    account_id = _connect(client)
+
+    resp = client.get(f"/api/investments/accounts/{account_id}/positions/AAPL.US/history")
+    assert resp.status_code == 200, resp.text
+    body = resp.json()
+
+    assert body["currency"] == "USD"
+    assert body["basis"] == "reconstructed"
+    # The first buy, not an arbitrary window start.
+    assert body["opened_on"] == "2026-01-05"
+    assert body["buy_dates"] == ["2026-01-05"]
+    assert body["cost_basis"] == 750.0
+    assert body["fees_paid"] == 4.0
+
+    series = body["series"]
+    assert len(series) > 1
+    opening = next(p for p in series if p["date"] == "2026-01-05")
+    # 5 shares were bought that day at 150, so both lines start together.
+    assert opening["quantity"] == 5
+    assert opening["invested"] == 750.0
+    assert opening["value"] == 750.0
+    # Later bars mark the same 5 shares to the broker's own closes.
+    later = next(p for p in series if p["date"] == "2026-01-08")
+    assert later["invested"] == 750.0
+    assert later["value"] == 5 * 156.0
+    # The series ends on the live synced valuation, not on a stale close.
+    assert series[-1]["value"] == 1000.0
+
+
+def test_position_history_404s_for_a_symbol_never_traded(client, db, monkeypatch):
+    _patch_provider(monkeypatch, FakeProvider)
+    monkeypatch.setattr(position_history_service, "resolve_yahoo_listing", _no_yahoo_match)
+    account_id = _connect(client)
+
+    resp = client.get(f"/api/investments/accounts/{account_id}/positions/NOPE.US/history")
+    assert resp.status_code == 404
+
+
+def test_position_history_prices_from_yahoo_when_the_ticker_maps(client, db, monkeypatch):
+    """The normal path: a mapped Yahoo series, not the broker's own candles."""
+    import pandas as pd
+
+    _patch_provider(monkeypatch, FakeFeeProvider)
+    from app.services.market_data import CandidateCheck, YahooListing
+
+    monkeypatch.setattr(
+        position_history_service,
+        "resolve_yahoo_listing",
+        lambda *a, **k: YahooListing(
+            symbol="AAPL", currency="USD", checked=[CandidateCheck("AAPL", "matched", "USD")]
+        ),
+    )
+
+    frame = pd.DataFrame(
+        {"close": [150.0, 170.0, 190.0]},
+        index=pd.to_datetime(["2026-01-05", "2026-01-06", "2026-01-07"]),
+    )
+    monkeypatch.setattr(
+        position_history_service, "get_price_history", lambda *a, **k: {"AAPL": frame}
+    )
+
+    account_id = _connect(client)
+    body = client.get(
+        f"/api/investments/accounts/{account_id}/positions/AAPL.US/history"
+    ).json()
+
+    assert body["price_source"] == "yahoo:AAPL"
+    # Yahoo's closes, not the fake broker's (which prints 154 on the 6th).
+    marked = next(p for p in body["series"] if p["date"] == "2026-01-06")
+    assert marked["value"] == 5 * 170.0
+
+
+def _patch_yahoo(monkeypatch, frame):
+    from app.services.market_data import CandidateCheck, YahooListing
+
+    monkeypatch.setattr(
+        position_history_service,
+        "resolve_yahoo_listing",
+        lambda *a, **k: YahooListing(
+            symbol="AAPL",
+            currency="USD",
+            checked=[
+                CandidateCheck("AAPL.US", "no-data"),
+                CandidateCheck("AAPL", "matched", "USD"),
+            ],
+        ),
+    )
+    monkeypatch.setattr(
+        position_history_service, "get_price_history", lambda *a, **k: {"AAPL": frame}
+    )
+
+
+def test_position_history_shows_the_price_before_the_position_existed(client, db, monkeypatch):
+    """The window opens before the first buy, and those days have a price but no holding."""
+    import pandas as pd
+
+    _patch_provider(monkeypatch, FakeFeeProvider)
+    _patch_yahoo(
+        monkeypatch,
+        pd.DataFrame(
+            {"close": [100.0, 120.0, 150.0, 170.0]},
+            index=pd.to_datetime(["2026-01-02", "2026-01-03", "2026-01-05", "2026-01-06"]),
+        ),
+    )
+
+    account_id = _connect(client)
+    body = client.get(
+        f"/api/investments/accounts/{account_id}/positions/AAPL.US/history"
+    ).json()
+
+    assert body["range"] == "entry"
+    # A month of lead-in before the 5 Jan purchase, so the entry is not the
+    # left edge of the chart.
+    assert body["start"] < body["opened_on"]
+
+    before = next(p for p in body["series"] if p["date"] == "2026-01-03")
+    assert before["price"] == 120.0
+    # Not zero: there was no position, which is a gap, not a worthless holding.
+    assert before["value"] is None
+    assert before["invested"] is None
+
+    after = next(p for p in body["series"] if p["date"] == "2026-01-06")
+    assert after["value"] == 5 * 170.0
+    assert after["invested"] == 750.0
+
+
+def test_short_range_carries_the_quantity_bought_before_the_window(client, db, monkeypatch):
+    """A one-month view of an older holding must not replay from zero units."""
+    import pandas as pd
+
+    _patch_provider(monkeypatch, FakeFeeProvider)
+    _patch_yahoo(
+        monkeypatch,
+        pd.DataFrame({"close": [150.0]}, index=pd.to_datetime(["2026-01-05"])),
+    )
+
+    account_id = _connect(client)
+    body = client.get(
+        f"/api/investments/accounts/{account_id}/positions/AAPL.US/history?range=1m"
+    ).json()
+
+    assert body["range"] == "1m"
+    # The January buy is long outside this window, but its 5 units are not.
+    assert body["series"][-1]["quantity"] == 5
+    assert body["series"][-1]["value"] == 1000.0
+
+
+def test_position_history_reports_the_tickers_it_tried(client, db, monkeypatch):
+    """The mapping is a heuristic, so the page gets to show its working."""
+    import pandas as pd
+
+    _patch_provider(monkeypatch, FakeFeeProvider)
+    _patch_yahoo(
+        monkeypatch,
+        pd.DataFrame({"close": [150.0]}, index=pd.to_datetime(["2026-01-05"])),
+    )
+
+    account_id = _connect(client)
+    body = client.get(
+        f"/api/investments/accounts/{account_id}/positions/AAPL.US/history"
+    ).json()
+
+    assert body["mapped_symbol"] == "AAPL"
+    assert body["mapped_currency"] == "USD"
+    assert body["native_currency"] == "USD"
+    assert body["mapping_checked"] == [
+        ["AAPL.US", "no-data", None],
+        ["AAPL", "matched", "USD"],
+    ]

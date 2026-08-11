@@ -42,6 +42,7 @@ from binance import Client
 from binance.exceptions import BinanceAPIException
 
 from app.services.investment_providers.base import (
+    day_change_amount,
     InvestmentProvider,
     ProviderBalance,
     ProviderCandle,
@@ -292,7 +293,14 @@ class BinanceProvider(InvestmentProvider):
         return total_cost / held_qty
 
     def _attach_day_change(self, positions: list[ProviderPosition]) -> None:
-        """Intraday move from the 24h ticker, best-effort like Freedom24's quote feed."""
+        """Intraday move from the 24h ticker, best-effort like Freedom24's quote feed.
+
+        Crypto has no daily close, so this is a rolling 24-hour window rather
+        than a calendar day — `/api/v3/ticker/24hr`'s own definition. Its
+        `priceChange` is a price delta per unit, so the money figure is derived
+        from `priceChangePercent` against the position's value (see
+        `base.day_change_amount`) rather than stored as-is.
+        """
         if not positions:
             return
         try:
@@ -308,8 +316,10 @@ class BinanceProvider(InvestmentProvider):
             if not row:
                 continue
             position.previous_close = _as_float(row.get("prevClosePrice")) or None
-            position.day_change = _as_float(row.get("priceChange")) or None
             position.day_change_pct = _as_float(row.get("priceChangePercent")) or None
+            position.day_change = day_change_amount(
+                position.market_value, position.day_change_pct
+            )
 
     # -------------------------------------------------------------------- candles
 

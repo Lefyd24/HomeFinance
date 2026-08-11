@@ -88,10 +88,74 @@ export interface PortfolioPosition {
   cost_basis_base: number | null
   unrealized_pnl_base: number | null
   fx_rate: number
+  /** Money the holding's value moved today, in the position's own currency. */
   day_change: number | null
+  /** The same move in the account's currency. */
+  day_change_base: number | null
   day_change_pct: number | null
   exchange: string | null
   weight_pct: number | null
+  /**
+   * Commission actually charged on this ticker's trades, in the account's
+   * currency (brokers often bill a fee in a different currency from the trade,
+   * so there is no single native figure). Null when the broker reports none.
+   */
+  fees_paid_base: number | null
+  fee_count: number
+}
+
+/** How far back a holding's chart reaches. `entry` starts a month before the first buy. */
+export const POSITION_HISTORY_RANGES = ['entry', '1m', '3m', '6m', '1y', '5y', 'max'] as const
+export type PositionHistoryRange = (typeof POSITION_HISTORY_RANGES)[number]
+
+/** One day of a holding's life. All money figures in the account's currency. */
+export interface PositionHistoryPoint {
+  date: string
+  quantity: number
+  /** Per unit, across the whole window — the instrument had a price before you owned it. */
+  price: number | null
+  /** Null outside ownership, so the chart gaps rather than drawing a zero. */
+  value: number | null
+  /** Net cash actually paid in for the units still held that day. Null outside ownership. */
+  invested: number | null
+  fees: number
+}
+
+/** One ticker the mapper tried, and what happened to it. */
+export interface MappingCheck {
+  0: string
+  1: 'matched' | 'no-data' | 'currency' | 'error'
+  2: string | null
+}
+
+export interface PositionHistory {
+  symbol: string
+  name: string | null
+  currency: string
+  /** How the series was produced — see the backend's position_history_service. */
+  basis: string
+  /** `yahoo:<ticker>` once the broker ticker resolved, `broker`, or `none`. */
+  price_source: string
+  range: PositionHistoryRange
+  start: string | null
+  end: string | null
+  /** The Yahoo ticker that priced the series, once confirmed. */
+  mapped_symbol: string | null
+  /** The currency Yahoo reports for it, and the one the broker reports. */
+  mapped_currency: string | null
+  native_currency: string | null
+  /** Every candidate tried, in order: [ticker, outcome, currency]. */
+  mapping_checked: [string, 'matched' | 'no-data' | 'currency' | 'error', string | null][]
+  opened_on: string | null
+  quantity: number
+  market_value: number
+  cost_basis: number
+  fees_paid: number
+  realized_pnl: number
+  unrealized_pnl: number
+  unrealized_return_pct: number | null
+  buy_dates: string[]
+  series: PositionHistoryPoint[]
 }
 
 export type InvestmentTransactionType =
@@ -205,6 +269,22 @@ export function updateInvestmentAccount(
 
 export function getInvestmentPositions(accountId: number): Promise<PortfolioPosition[]> {
   return apiFetch<PortfolioPosition[]>(`/investments/accounts/${accountId}/positions`)
+}
+
+/**
+ * One holding's value and invested capital over time. The symbol goes in
+ * unencoded-slash-free but dot-bearing form ("INUV.US"); the route matches it
+ * as a path segment, so only the usual encoding applies.
+ */
+export function getPositionHistory(
+  accountId: number,
+  symbol: string,
+  range: PositionHistoryRange = 'entry',
+): Promise<PositionHistory> {
+  const params = new URLSearchParams({ range })
+  return apiFetch<PositionHistory>(
+    `/investments/accounts/${accountId}/positions/${encodeURIComponent(symbol)}/history?${params}`,
+  )
 }
 
 export function getInvestmentTransactions(accountId: number): Promise<InvestmentTransaction[]> {

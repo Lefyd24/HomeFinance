@@ -223,9 +223,12 @@ def test_full_trade_history_paginates_via_from_id(provider, monkeypatch):
 
 def test_day_change_attached_from_24h_ticker(provider):
     btc = next(p for p in provider.get_positions() if p.symbol == "BTC")
-    assert btc.day_change == 500.0
     assert btc.day_change_pct == 0.84
     assert btc.previous_close == 59500.0
+    # `priceChange` (500.0) is the move of *one* BTC. `day_change` is money —
+    # what this 0.6 BTC holding gained — so it is the percentage applied to the
+    # position's own value: 36000 - 36000/1.0084.
+    assert btc.day_change == pytest.approx(299.88, abs=0.01)
 
 
 def test_balance_splits_stablecoin_cash_from_positions(provider):
