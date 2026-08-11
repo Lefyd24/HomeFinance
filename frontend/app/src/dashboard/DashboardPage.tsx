@@ -118,10 +118,6 @@ function itemKey(item: DashboardAccountItem): string {
   return item.kind === 'account' ? `acc-${item.account.id}` : `inv-${item.account.id}`
 }
 
-function providerLabel(provider: string): string {
-  return provider.charAt(0).toUpperCase() + provider.slice(1)
-}
-
 export function DashboardPage() {
   const { t } = useTranslation('dashboard')
   const isDesktop = useMediaQuery('(min-width: 1024px)')
@@ -243,7 +239,13 @@ export function DashboardPage() {
     const daily: DashboardAccountItem[] = []
     const savings: DashboardAccountItem[] = []
     const investmentsManual: DashboardAccountItem[] = []
+    // A broker-linked investment account is the same underlying `Account` row
+    // the investments API also returns as an `InvestmentAccount` — the plain
+    // AccountResponse never serializes `provider`, so the only reliable way
+    // to tell "already covered by investmentsLinked" is by id, not by field.
+    const linkedInvestmentIds = new Set(investmentAccounts.map((account) => account.id))
     for (const account of accounts ?? []) {
+      if (account.type === 'investment' && linkedInvestmentIds.has(account.id)) continue
       const item: DashboardAccountItem = { kind: 'account', account }
       if (account.type === 'savings') savings.push(item)
       else if (account.type === 'investment') investmentsManual.push(item)
@@ -676,7 +678,6 @@ function Figure({
 }
 
 function AccountRow({ item }: { item: DashboardAccountItem }) {
-  const { t } = useTranslation('dashboard')
   const { hidden } = useBalanceVisibility()
   const account = item.account
   const type: AccountType = item.kind === 'investment' ? 'investment' : item.account.type
@@ -686,12 +687,7 @@ function AccountRow({ item }: { item: DashboardAccountItem }) {
     item.kind === 'investment'
       ? `/investments?account=${account.id}`
       : `/transactions?account_id=${account.id}`
-  // A linked account has no ledger — its subtitle names the broker instead
-  // of the account type, which is always "Investment" and so redundant here.
-  const subtitle =
-    item.kind === 'investment'
-      ? `${providerLabel(item.account.provider)} · ${t('accounts.linked')}`
-      : meta.label
+  const subtitle = meta.label
 
   return (
     <Item asChild size="xs" className="rounded-lg transition-colors hover:bg-primary/10">
