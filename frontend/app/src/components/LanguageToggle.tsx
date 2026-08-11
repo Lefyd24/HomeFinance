@@ -6,7 +6,9 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuGroup,
-  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 
@@ -30,16 +32,17 @@ export function LanguageToggle() {
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="min-w-36">
         <DropdownMenuGroup>
-          {LANGUAGES.map((lng) => (
-            <DropdownMenuItem
-              key={lng}
-              onClick={() => void i18n.changeLanguage(lng)}
-              data-active={current === lng}
-              className="data-[active=true]:font-semibold"
-            >
-              {t(`common:languages.${lng}`)}
-            </DropdownMenuItem>
-          ))}
+          <DropdownMenuLabel>{t('languageToggle.changeLanguage')}</DropdownMenuLabel>
+          <DropdownMenuRadioGroup
+            value={current}
+            onValueChange={(lng) => void i18n.changeLanguage(lng)}
+          >
+            {LANGUAGES.map((lng) => (
+              <DropdownMenuRadioItem key={lng} value={lng}>
+                {t(`common:languages.${lng}`)}
+              </DropdownMenuRadioItem>
+            ))}
+          </DropdownMenuRadioGroup>
         </DropdownMenuGroup>
       </DropdownMenuContent>
     </DropdownMenu>

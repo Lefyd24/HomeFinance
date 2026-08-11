@@ -1,4 +1,5 @@
 import { useEffect, useRef, type ReactNode } from 'react'
+import { createPortal } from 'react-dom'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
@@ -82,13 +83,29 @@ export function HoldingDetailCard({
   const money = (value: number | null | undefined, cur = position?.currency ?? currency) =>
     value == null ? '—' : formatBalance(value, cur, hidden)
 
-  return (
+  // Portalled to <body>: the shell's content column carries a backdrop-filter
+  // for its glass surface, and any backdrop-filter/filter/transform ancestor
+  // silently opens a new CSS stacking context. Rendered in place, this
+  // overlay's `fixed` box would still cover the viewport visually, but its
+  // z-50 would only ever be compared against other elements *inside* that
+  // stacking context — never against the mobile dock or the quick-add FAB,
+  // which sit outside it as their own fixed, z-indexed siblings. No z-index
+  // set here could ever paint over them. Escaping to `document.body` puts
+  // this overlay back in the root stacking context, where z-50 actually wins.
+  return createPortal(
     <AnimatePresence>
       {position && (
         // Bottom-anchored on a phone so the card opens within thumb reach and
         // the close control isn't stranded at the top of a tall screen;
-        // centred once there's room for it to float.
-        <div className="fixed inset-0 z-50 flex items-end justify-center p-0 sm:items-center sm:p-4">
+        // centred once there's room for it to float. `data-section` re-applies
+        // the investments room's tint/radius tokens (`index.css`'s
+        // `[data-section='investments']` block) that this element would
+        // otherwise lose by portalling out from under `AppShell`'s scoped
+        // wrapper — this card only ever opens from inside investments.
+        <div
+          data-section="investments"
+          className="fixed inset-0 z-50 flex items-end justify-center p-0 sm:items-center sm:p-4"
+        >
           <motion.button
             type="button"
             initial={{ opacity: 0 }}
@@ -252,7 +269,8 @@ export function HoldingDetailCard({
           </motion.div>
         </div>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body,
   )
 }
 

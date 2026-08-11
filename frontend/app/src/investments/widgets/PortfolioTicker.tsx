@@ -48,10 +48,15 @@ export function PortfolioTicker({
 
   return (
     <section className="flex flex-col gap-3 rounded-xl border border-border bg-card p-3 shadow-sm">
-      <div className="flex flex-wrap items-start justify-between gap-2">
-        <div className="grid flex-1 grid-cols-2 gap-2.5 sm:grid-cols-4 sm:gap-0 sm:divide-x sm:divide-border/60">
+      {/* Stacked on a phone — the sync control used to share a row with the
+          stat grid via `flex-wrap`, which on a narrow viewport left the grid
+          only as much width as the button didn't take, squeezing every cell
+          until its label and value both wrapped. Full-width rows for each
+          fix that without touching anything above `sm`. */}
+      <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-2">
+        <div className="grid grid-cols-2 gap-x-3 gap-y-3 sm:flex-1 sm:grid-cols-4 sm:gap-0 sm:divide-x sm:divide-border/60">
           <StatCell label={t('ticker.totalValue')} hint={scopeLabel}>
-            <span className="font-heading text-xl font-semibold tabular-nums tracking-tight sm:text-2xl">
+            <span className="font-heading text-lg font-semibold tabular-nums tracking-tight sm:text-2xl">
               {money(totals.value)}
             </span>
           </StatCell>
@@ -98,14 +103,15 @@ export function PortfolioTicker({
         </div>
 
         {/* Sync is maintenance, not the point of the page, so it stays pale and
-            tucked in the corner rather than spanning the row. */}
-        <div className="flex flex-col items-end gap-1">
+            tucked in the corner on desktop — but a corner-sized tap target is
+            too small to chase on a phone, so it goes full-width there instead. */}
+        <div className="flex flex-col items-stretch gap-1 border-t border-border/60 pt-3 sm:items-end sm:border-t-0 sm:pt-0">
           <Button
             variant="secondary"
             size="sm"
             onClick={onSync}
             disabled={syncing || syncDisabled}
-            className="h-7 max-w-full px-2 text-[0.7rem] font-normal text-secondary-foreground sm:h-8 sm:px-3 sm:text-xs"
+            className="h-9 max-w-full justify-center px-2 text-[0.7rem] font-normal text-secondary-foreground sm:h-8 sm:justify-start sm:px-3 sm:text-xs"
           >
             <HugeiconsIcon
               icon={Refresh01Icon}
@@ -121,7 +127,7 @@ export function PortfolioTicker({
                   : t('ticker.syncAll')}
             </span>
           </Button>
-          <span className="flex items-center justify-end gap-1.5 text-[0.65rem] text-muted-foreground">
+          <span className="flex items-center justify-center gap-1.5 text-[0.65rem] text-muted-foreground sm:justify-end">
             {single && <SyncStatusBadge status={single.sync_status} iconOnly />}
             {single
               ? single.last_synced_at
@@ -163,7 +169,7 @@ function StatCell({
 }) {
   return (
     <div className="flex min-w-0 flex-col gap-1 px-0 sm:px-3.5 sm:first:pl-0">
-      <span className="text-[0.625rem] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+      <span className="truncate text-[0.625rem] font-semibold uppercase tracking-[0.1em] text-muted-foreground sm:tracking-[0.14em]">
         {label}
       </span>
       {children}

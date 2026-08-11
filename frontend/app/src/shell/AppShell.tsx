@@ -755,7 +755,13 @@ function NavActions({ inInvestments }: { inInvestments: boolean }) {
           which the top bar renders at its start. */}
       {!inInvestments && <InvestmentsNavButton />}
       <BalanceVisibilityToggle />
-      <NotificationsMenu />
+      {/* The mobile top bar is already tight (back button, section label,
+          five action icons); notifications stays reachable from the user
+          menu's "Notifications" entry, so the bell itself only needs the
+          room it has on desktop. */}
+      <div className="hidden lg:block">
+        <NotificationsMenu />
+      </div>
       <LanguageToggle />
       <ThemeToggle />
       <UserMenu align="end" side="bottom" />

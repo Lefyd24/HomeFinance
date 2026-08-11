@@ -2,13 +2,15 @@ import { useEffect, useState } from 'react'
 import { useTheme } from 'next-themes'
 import { useTranslation } from 'react-i18next'
 import { HugeiconsIcon } from '@hugeicons/react'
-import { Moon02Icon, Sun03Icon } from '@hugeicons/core-free-icons'
+import { ComputerIcon, Moon02Icon, Sun03Icon } from '@hugeicons/core-free-icons'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuGroup,
-  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 
@@ -39,17 +41,21 @@ export function ThemeToggle() {
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="min-w-36">
         <DropdownMenuGroup>
-          <DropdownMenuItem onClick={() => setTheme('light')}>
-            <HugeiconsIcon icon={Sun03Icon} strokeWidth={2} />
-            {t('common:theme.light')}
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => setTheme('dark')}>
-            <HugeiconsIcon icon={Moon02Icon} strokeWidth={2} />
-            {t('common:theme.dark')}
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => setTheme('system')}>
-            {t('common:theme.system')}
-          </DropdownMenuItem>
+          <DropdownMenuLabel>{t('themeToggle.changeTheme')}</DropdownMenuLabel>
+          <DropdownMenuRadioGroup value={theme ?? 'system'} onValueChange={setTheme}>
+            <DropdownMenuRadioItem value="light">
+              <HugeiconsIcon icon={Sun03Icon} strokeWidth={2} />
+              {t('common:theme.light')}
+            </DropdownMenuRadioItem>
+            <DropdownMenuRadioItem value="dark">
+              <HugeiconsIcon icon={Moon02Icon} strokeWidth={2} />
+              {t('common:theme.dark')}
+            </DropdownMenuRadioItem>
+            <DropdownMenuRadioItem value="system">
+              <HugeiconsIcon icon={ComputerIcon} strokeWidth={2} />
+              {t('common:theme.system')}
+            </DropdownMenuRadioItem>
+          </DropdownMenuRadioGroup>
         </DropdownMenuGroup>
       </DropdownMenuContent>
     </DropdownMenu>

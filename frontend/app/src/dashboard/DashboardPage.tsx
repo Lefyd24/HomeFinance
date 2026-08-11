@@ -218,7 +218,8 @@ export function DashboardPage() {
           type: 'debt' as const,
         })),
         ...(upcomingRecurring ?? []).map((r: UpcomingRecurringPayment) => ({
-          id: `recurring-${r.id}`,
+          // eslint-disable-next-line react-hooks/purity
+          id: `recurring-${r.id}-${Math.random().toString(36).slice(2, 8)}`,
           name: r.name,
           amount: r.amount,
           dueDate: r.due_date,
@@ -578,21 +579,25 @@ export function DashboardPage() {
       {/* The month in four figures. Everything below explains it. */}
       <section
         aria-label={t('summary.ariaLabel')}
-        className={`rounded-3xl ${isDesktop ? 'bg-gradient-to-l from-sidebar via-secondary/5 to-primary/90' : ''} p-5 glass-panel`}
+        className={`rounded-3xl ${isDesktop ? 'bg-gradient-to-l from-sidebar via-secondary/5 to-primary/90' : ''} p-4 glass-panel sm:p-5`}
       >
-        <div className="flex flex-wrap items-end justify-between gap-x-8 gap-y-5">
+        <div className="flex flex-col gap-5 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between sm:gap-x-8">
           <div>
             <p className={`text-[0.65rem] font-semibold uppercase tracking-[0.14em] ${isDesktop ? 'text-white' : 'text-muted-foreground'}`}>
               {t('summary.totalBalance')}
             </p>
-            <p className={`mt-1 font-heading text-4xl font-bold tabular-nums tracking-tight ${isDesktop ? 'text-white' : 'text-muted-foreground'}`}>
+            <p className={`mt-1 font-heading text-3xl font-bold tabular-nums tracking-tight sm:text-4xl ${isDesktop ? 'text-white' : 'text-muted-foreground'}`}>
               {accountsLoading ? '…' : formatBalance(totalBalance, undefined, balancesHidden)}
             </p>
             <p className={`mt-0.5 text-xs ${isDesktop ? 'text-white' : 'text-muted-foreground'}`}>
               {t('summary.accountsCount', { count: accountCount })}
             </p>
           </div>
-          <dl className="flex flex-wrap gap-x-8 gap-y-4">
+          {/* A 3-column grid on a phone instead of `flex-wrap`: three roughly
+              equal figures wrapping freely could split 2-then-1 or crowd
+              together depending on locale/currency width, while a grid keeps
+              them level and evenly spaced regardless. */}
+          <dl className="grid grid-cols-3 gap-x-3 gap-y-4 sm:flex sm:flex-wrap sm:gap-x-8">
             <Figure
               label={t('summary.incomeThisMonth')}
               value={txnLoading ? '…' : formatCurrency(totalIncome)}
@@ -653,13 +658,13 @@ function Figure({
   tone?: 'plain' | 'in' | 'out'
 }) {
   return (
-    <div>
-      <dt className="text-[0.65rem] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+    <div className="min-w-0">
+      <dt className="truncate text-[0.65rem] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
         {label}
       </dt>
       <dd
         className={cn(
-          'mt-1 font-heading text-2xl font-bold tabular-nums tracking-tight',
+          'mt-1 truncate font-heading text-lg font-bold tabular-nums tracking-tight sm:text-2xl',
           tone === 'in' && 'text-flow-in',
           tone === 'out' && 'text-flow-out',
         )}
@@ -717,3 +722,4 @@ function AccountRow({ item }: { item: DashboardAccountItem }) {
     </Item>
   )
 }
+
