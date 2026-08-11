@@ -10,6 +10,7 @@ import * as transactionsApi from '../transactions/transactionsApi'
 import * as debtsApi from '../debts/debtsApi'
 import * as recurringApi from '../recurring/recurringApi'
 import * as reportsApi from './reportsApi'
+import { BalanceVisibilityProvider } from '../ui/BalanceVisibilityContext'
 import { DashboardPage } from './DashboardPage'
 
 vi.mock('echarts-for-react', () => ({
@@ -21,7 +22,9 @@ function renderPage() {
   return render(
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
-        <DashboardPage />
+        <BalanceVisibilityProvider>
+          <DashboardPage />
+        </BalanceVisibilityProvider>
       </BrowserRouter>
     </QueryClientProvider>,
   )

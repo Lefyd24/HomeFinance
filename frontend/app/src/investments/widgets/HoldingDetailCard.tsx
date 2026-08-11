@@ -7,7 +7,8 @@ import { Cancel01Icon, ChartLineData01Icon, News01Icon } from '@hugeicons/core-f
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { cn } from '@/lib/utils'
-import { formatCurrency, formatDate } from '../../lib/format'
+import { formatBalance, formatDate } from '../../lib/format'
+import { useBalanceVisibility } from '../../ui/BalanceVisibilityContext'
 import { fmtPct } from '../research/researchFormat'
 import { DeltaAmount, DeltaPct } from '../InvestmentPrimitives'
 import { positionValue } from '../portfolioInsights'
@@ -42,6 +43,7 @@ export function HoldingDetailCard({
   onClose: () => void
 }) {
   const { t } = useTranslation('investments')
+  const { hidden } = useBalanceVisibility()
   const reduced = useReducedMotion()
   const cardRef = useRef<HTMLDivElement>(null)
   const open = position != null
@@ -78,7 +80,7 @@ export function HoldingDetailCard({
   const { data: profile, isLoading: profileLoading } = useCompanyProfile(yahooSymbol)
 
   const money = (value: number | null | undefined, cur = position?.currency ?? currency) =>
-    value == null ? '—' : formatCurrency(value, cur)
+    value == null ? '—' : formatBalance(value, cur, hidden)
 
   return (
     <AnimatePresence>
@@ -156,7 +158,7 @@ export function HoldingDetailCard({
                 {/* Only worth restating when it isn't the scope's own currency. */}
                 {position.currency !== currency && (
                   <span className="text-xs text-muted-foreground">
-                    {formatCurrency(positionValue(position), currency)}
+                    {formatBalance(positionValue(position), currency, hidden)}
                   </span>
                 )}
               </div>

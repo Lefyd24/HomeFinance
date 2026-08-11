@@ -21,7 +21,13 @@
   "accounts": {
     "title": "Accounts",
     "hint": "",
-    "empty": "No accounts yet. Add one on the Accounts page."
+    "empty": "No accounts yet. Add one on the Accounts page.",
+    "linked": "Linked",
+    "groups": {
+      "daily": "Daily",
+      "savings": "Savings",
+      "investments": "Investments"
+    }
   },
   "due": {
     "title": "Due in 30 days",

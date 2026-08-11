@@ -74,6 +74,10 @@
   "themeToggle": {
     "changeTheme": "Αλλαγή θέματος"
   },
+  "balanceToggle": {
+    "hide": "Απόκρυψη υπολοίπων",
+    "show": "Εμφάνιση υπολοίπων"
+  },
   "languageToggle": {
     "changeLanguage": "Αλλαγή γλώσσας"
   },

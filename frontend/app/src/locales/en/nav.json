@@ -74,6 +74,10 @@
   "themeToggle": {
     "changeTheme": "Change theme"
   },
+  "balanceToggle": {
+    "hide": "Hide balances",
+    "show": "Show balances"
+  },
   "languageToggle": {
     "changeLanguage": "Change language"
   },

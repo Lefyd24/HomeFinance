@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ThemeProvider } from '@/components/theme-provider'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { AuthProvider } from '../auth/AuthContext'
+import { BalanceVisibilityProvider } from '../ui/BalanceVisibilityContext'
 import { AppShell } from './AppShell'
 
 function renderShell(path: string, content: string) {
@@ -15,11 +16,13 @@ function renderShell(path: string, content: string) {
         <TooltipProvider>
           <MemoryRouter initialEntries={[path]}>
             <AuthProvider>
-              <Routes>
-                <Route element={<AppShell />}>
-                  <Route path={path} element={<p>{content}</p>} />
-                </Route>
-              </Routes>
+              <BalanceVisibilityProvider>
+                <Routes>
+                  <Route element={<AppShell />}>
+                    <Route path={path} element={<p>{content}</p>} />
+                  </Route>
+                </Routes>
+              </BalanceVisibilityProvider>
             </AuthProvider>
           </MemoryRouter>
         </TooltipProvider>

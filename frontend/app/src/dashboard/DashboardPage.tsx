@@ -19,17 +19,28 @@ import { needsReauth } from '../bank-sync/connectionHealth'
 import { useBudgets } from '../budgets/useBudgets'
 import { useCategories } from '../categories/useCategories'
 import { useGoals } from '../goals/useGoals'
+import { useInvestmentAccounts } from '../investments/useInvestments'
 import { useTransactions } from '../transactions/useTransactions'
 import { queryKeys } from '../lib/queryKeys'
-import { formatCurrency, formatDate, currentMonthRange } from '../lib/format'
+import { formatBalance, formatCurrency, formatDate, currentMonthRange } from '../lib/format'
 import { PageContainer } from '../ui/PageContainer'
 import { PageHeader } from '../ui/PageHeader'
 import { ProgressBar, progressVariantForPercent } from '../ui/ProgressBar'
 import { useMediaQuery } from '../ui/useMediaQuery'
+import { useBalanceVisibility } from '../ui/BalanceVisibilityContext'
 import { Amount, CategoryChip, flowOfType, flowRail } from '../ui/money'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
+import { Separator } from '@/components/ui/separator'
+import {
+  Item,
+  ItemActions,
+  ItemContent,
+  ItemDescription,
+  ItemMedia,
+  ItemTitle,
+} from '@/components/ui/item'
 import { getSpendingReport } from './reportsApi'
 import { listUpcomingDebtPayments, type UpcomingDebtPayment } from '../debts/debtsApi'
 import {
@@ -37,8 +48,9 @@ import {
   type UpcomingRecurringPayment,
 } from '../recurring/recurringApi'
 import { SpendingChart } from './SpendingChart'
-import type { Account } from '../accounts/accountsApi'
+import type { Account, AccountType } from '../accounts/accountsApi'
 import { AccountIcon, getAccountTypeMeta } from '../accounts/bankIcons'
+import type { InvestmentAccount } from '../investments/investmentsApi'
 import { cn } from '@/lib/utils'
 
 /** Consistent frame for every panel on the page: title, optional link, body. */
@@ -92,9 +104,28 @@ function EmptyLine({ children }: { children: ReactNode }) {
   return <p className="py-6 text-center text-sm text-muted-foreground">{children}</p>
 }
 
+/**
+ * A row in the balances panel points at either a plain `Account` (its
+ * transactions live in the ledger) or a broker-linked `InvestmentAccount`
+ * (its own table, no ledger transactions at all) — carrying the tag through
+ * lets `AccountRow` pick the right destination and subtitle per row.
+ */
+type DashboardAccountItem =
+  | { kind: 'account'; account: Account }
+  | { kind: 'investment'; account: InvestmentAccount }
+
+function itemKey(item: DashboardAccountItem): string {
+  return item.kind === 'account' ? `acc-${item.account.id}` : `inv-${item.account.id}`
+}
+
+function providerLabel(provider: string): string {
+  return provider.charAt(0).toUpperCase() + provider.slice(1)
+}
+
 export function DashboardPage() {
   const { t } = useTranslation('dashboard')
   const isDesktop = useMediaQuery('(min-width: 1024px)')
+  const { hidden: balancesHidden } = useBalanceVisibility()
   const monthRange = currentMonthRange()
 
   // Active only: a deactivated account is one the user has told us to stop
@@ -111,6 +142,12 @@ export function DashboardPage() {
   const { data: budgets, isLoading: budgetsLoading } = useBudgets()
   const { data: goals, isLoading: goalsLoading } = useGoals()
   const { data: categories = [] } = useCategories()
+  // Linked (broker-synced) investment accounts live in their own table, not
+  // in `accounts` — they still belong in the balances panel, just grouped
+  // with the manually-tracked investment accounts and routed to the
+  // investments workspace instead of the transaction ledger they don't have.
+  const { data: investmentAccounts = [], isLoading: investmentAccountsLoading } =
+    useInvestmentAccounts()
 
   const { data: txnData, isLoading: txnLoading } = useTransactions({
     ...monthRange,
@@ -195,6 +232,50 @@ export function DashboardPage() {
 
   const upcomingTotal = upcomingPayments.reduce((sum, p) => sum + p.amount, 0)
 
+  // Three categories a household actually thinks in, not the five account
+  // types the schema stores: checking/cash/credit read as one "spending
+  // money" bucket day to day, so only savings and investments get split out.
+  // Investments themselves mix two sources — manual `Account` rows and
+  // broker-linked `InvestmentAccount` rows — merged here into one bucket
+  // since both are "money invested" from the household's point of view.
+  const accountGroups = useMemo(() => {
+    const daily: DashboardAccountItem[] = []
+    const savings: DashboardAccountItem[] = []
+    const investmentsManual: DashboardAccountItem[] = []
+    for (const account of accounts ?? []) {
+      const item: DashboardAccountItem = { kind: 'account', account }
+      if (account.type === 'savings') savings.push(item)
+      else if (account.type === 'investment') investmentsManual.push(item)
+      else daily.push(item)
+    }
+    const investmentsLinked: DashboardAccountItem[] = investmentAccounts
+      .filter((account) => account.is_active)
+      .map((account) => ({ kind: 'investment' as const, account }))
+
+    return [
+      {
+        key: 'daily',
+        label: t('accounts.groups.daily'),
+        meta: getAccountTypeMeta('checking'),
+        items: daily,
+      },
+      {
+        key: 'savings',
+        label: t('accounts.groups.savings'),
+        meta: getAccountTypeMeta('savings'),
+        items: savings,
+      },
+      {
+        key: 'investments',
+        label: t('accounts.groups.investments'),
+        meta: getAccountTypeMeta('investment'),
+        // Linked accounts first — they're the ones actively tracked by a
+        // sync, so they're the more likely reason someone opens this group.
+        items: [...investmentsLinked, ...investmentsManual],
+      },
+    ].filter((group) => group.items.length > 0)
+  }, [accounts, investmentAccounts, t])
+
   // Built once, placed twice below: DOM order for phones (single column, top
   // to bottom) versus the two independent desktop columns need a different
   // sequence, and a plain CSS grid can't reorder without coupling row heights
@@ -203,22 +284,41 @@ export function DashboardPage() {
     <Panel
       key="accounts"
       title={t('accounts.title')}
-      hint={accountsLoading ? undefined : t('accounts.hint')}
+      hint={accountsLoading || investmentAccountsLoading ? undefined : t('accounts.hint')}
       icon={WalletIcon}
       to="/accounts"
     >
-      {accountsLoading ? (
+      {accountsLoading || investmentAccountsLoading ? (
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
           {[1, 2, 3, 4].map((i) => (
             <Skeleton key={i} className="h-12 w-full" />
           ))}
         </div>
-      ) : (accounts?.length ?? 0) === 0 ? (
+      ) : accountGroups.length === 0 ? (
         <EmptyLine>{t('accounts.empty')}</EmptyLine>
       ) : (
-        <div className="grid grid-cols-1 gap-x-6 sm:grid-cols-2">
-          {accounts?.map((account) => (
-            <AccountRow key={account.id} account={account} />
+        // All categories visible at once — a thin labeled rule per group
+        // rather than a full panel each, so three categories cost three
+        // one-line headers, not three separated cards.
+        <div className="flex flex-col gap-2">
+          {accountGroups.map((group, index) => (
+            <div key={group.key}>
+              {index > 0 && <Separator className="mb-2" />}
+              <div className="mb-1 flex items-center gap-1.5 px-1">
+                <span className={cn('size-1.5 shrink-0 rounded-full', group.meta.fill)} />
+                <p className="truncate text-[0.65rem] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+                  {group.label}
+                </p>
+                <span className="text-[0.65rem] text-muted-foreground/60">
+                  {group.items.length}
+                </span>
+              </div>
+              <div className="grid grid-cols-1 gap-x-4 gap-y-0.5 sm:grid-cols-2">
+                {group.items.map((item) => (
+                  <AccountRow key={itemKey(item)} item={item} />
+                ))}
+              </div>
+            </div>
           ))}
         </div>
       )}
@@ -486,7 +586,7 @@ export function DashboardPage() {
               {t('summary.totalBalance')}
             </p>
             <p className={`mt-1 font-heading text-4xl font-bold tabular-nums tracking-tight ${isDesktop ? 'text-white' : 'text-muted-foreground'}`}>
-              {accountsLoading ? '…' : formatCurrency(totalBalance)}
+              {accountsLoading ? '…' : formatBalance(totalBalance, undefined, balancesHidden)}
             </p>
             <p className={`mt-0.5 text-xs ${isDesktop ? 'text-white' : 'text-muted-foreground'}`}>
               {t('summary.accountsCount', { count: accountCount })}
@@ -570,35 +670,50 @@ function Figure({
   )
 }
 
-function AccountRow({ account }: { account: Account }) {
-  const meta = getAccountTypeMeta(account.type)
+function AccountRow({ item }: { item: DashboardAccountItem }) {
+  const { t } = useTranslation('dashboard')
+  const { hidden } = useBalanceVisibility()
+  const account = item.account
+  const type: AccountType = item.kind === 'investment' ? 'investment' : item.account.type
+  const meta = getAccountTypeMeta(type)
   const balance = account.balance ?? 0
+  const href =
+    item.kind === 'investment'
+      ? `/investments?account=${account.id}`
+      : `/transactions?account_id=${account.id}`
+  // A linked account has no ledger — its subtitle names the broker instead
+  // of the account type, which is always "Investment" and so redundant here.
+  const subtitle =
+    item.kind === 'investment'
+      ? `${providerLabel(item.account.provider)} · ${t('accounts.linked')}`
+      : meta.label
 
   return (
-    <Link
-      to={`/transactions?account_id=${account.id}`}
-      className="flex items-center gap-2.5 py-2 px-1 transition-colors hover:bg-primary/10"
-    >
-      <AccountIcon
-        icon={account.icon}
-        type={account.type}
-        className="size-8 rounded-lg"
-        imageClassName="size-6"
-      />
-      <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-medium" title={account.name}>
-          {account.name}
-        </p>
-        <p className={cn('text-xs', meta.text)}>{meta.label}</p>
-      </div>
-      <p
-        className={cn(
-          'shrink-0 text-sm font-semibold tabular-nums',
-          balance >= 0 ? 'text-foreground' : 'text-flow-out',
-        )}
-      >
-        {formatCurrency(balance, account.currency)}
-      </p>
-    </Link>
+    <Item asChild size="xs" className="rounded-lg transition-colors hover:bg-primary/10">
+      <Link to={href}>
+        <ItemMedia>
+          <AccountIcon
+            icon={account.icon}
+            type={type}
+            className="size-8 rounded-lg"
+            imageClassName="size-6"
+          />
+        </ItemMedia>
+        <ItemContent>
+          <ItemTitle title={account.name}>{account.name}</ItemTitle>
+          <ItemDescription className={meta.text}>{subtitle}</ItemDescription>
+        </ItemContent>
+        <ItemActions>
+          <span
+            className={cn(
+              'shrink-0 text-sm font-semibold tabular-nums',
+              balance >= 0 ? 'text-foreground' : 'text-flow-out',
+            )}
+          >
+            {formatBalance(balance, account.currency, hidden)}
+          </span>
+        </ItemActions>
+      </Link>
+    </Item>
   )
 }

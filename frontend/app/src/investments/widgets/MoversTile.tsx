@@ -2,7 +2,8 @@ import { useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Skeleton } from '@/components/ui/skeleton'
-import { formatCurrency } from '../../lib/format'
+import { formatBalance } from '../../lib/format'
+import { useBalanceVisibility } from '../../ui/BalanceVisibilityContext'
 import { DeltaBar, DeltaPct, deltaScale } from '../InvestmentPrimitives'
 import { topMovers } from '../portfolioInsights'
 import { Tile, TileEmpty } from './Tile'
@@ -25,6 +26,7 @@ export function MoversTile({
   className?: string
 }) {
   const { t } = useTranslation('investments')
+  const { hidden } = useBalanceVisibility()
   const movers = useMemo(() => topMovers(positions, 3), [positions])
 
   // One scale across gainers and losers alike, so a bar's length compares the
@@ -68,7 +70,7 @@ export function MoversTile({
                 <span className="flex shrink-0 items-baseline gap-2">
                   {position.day_change != null && (
                     <span className="tabular-nums text-muted-foreground">
-                      {formatCurrency(position.day_change, position.currency)}
+                      {formatBalance(position.day_change, position.currency, hidden)}
                     </span>
                   )}
                   <DeltaPct pct={position.day_change_pct} className="text-xs" />

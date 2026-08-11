@@ -3,6 +3,7 @@ import { render, screen, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ApiError } from '../../lib/apiClient'
 import * as investmentsApi from '../investmentsApi'
+import { BalanceVisibilityProvider } from '../../ui/BalanceVisibilityContext'
 import { EarnPositionsTile } from './EarnPositionsTile'
 import type { EarnPosition } from '../investmentsApi'
 
@@ -10,7 +11,9 @@ function renderTile(accountId = 1) {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   return render(
     <QueryClientProvider client={queryClient}>
-      <EarnPositionsTile accountId={accountId} />
+      <BalanceVisibilityProvider>
+        <EarnPositionsTile accountId={accountId} />
+      </BalanceVisibilityProvider>
     </QueryClientProvider>,
   )
 }

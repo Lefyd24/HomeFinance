@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import { PortfolioTicker } from './PortfolioTicker'
+import { BalanceVisibilityProvider } from '../../ui/BalanceVisibilityContext'
 import type { PortfolioTotals } from '../portfolioInsights'
 import type { InvestmentAccount } from '../investmentsApi'
 
@@ -52,14 +53,16 @@ function account(overrides: Partial<InvestmentAccount> = {}): InvestmentAccount 
 describe('PortfolioTicker', () => {
   it('shows total value, today, all-time and cash as distinct stat cells', () => {
     render(
-      <PortfolioTicker
-        totals={totals()}
-        scopeLabel="Broker"
-        accounts={[account()]}
-        onSync={vi.fn()}
-        syncing={false}
-        syncDisabled={false}
-      />,
+      <BalanceVisibilityProvider>
+        <PortfolioTicker
+          totals={totals()}
+          scopeLabel="Broker"
+          accounts={[account()]}
+          onSync={vi.fn()}
+          syncing={false}
+          syncDisabled={false}
+        />
+      </BalanceVisibilityProvider>,
     )
     expect(screen.getByText(/10\.000/)).toBeInTheDocument()
     expect(screen.getByText(/\+50/)).toBeInTheDocument()
@@ -69,14 +72,16 @@ describe('PortfolioTicker', () => {
 
   it("falls back to a no-quote message when today's change is unknown", () => {
     render(
-      <PortfolioTicker
-        totals={totals({ dayChange: null, dayChangePct: null })}
-        scopeLabel="Broker"
-        accounts={[account()]}
-        onSync={vi.fn()}
-        syncing={false}
-        syncDisabled={false}
-      />,
+      <BalanceVisibilityProvider>
+        <PortfolioTicker
+          totals={totals({ dayChange: null, dayChangePct: null })}
+          scopeLabel="Broker"
+          accounts={[account()]}
+          onSync={vi.fn()}
+          syncing={false}
+          syncDisabled={false}
+        />
+      </BalanceVisibilityProvider>,
     )
     expect(screen.getByText(/no live quote/i)).toBeInTheDocument()
   })

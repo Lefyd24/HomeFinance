@@ -1,7 +1,8 @@
 import { useTranslation } from 'react-i18next'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Badge } from '@/components/ui/badge'
-import { formatCurrency, formatDate } from '../../lib/format'
+import { formatBalance, formatDate } from '../../lib/format'
+import { useBalanceVisibility } from '../../ui/BalanceVisibilityContext'
 import { useEarnPositions } from '../useInvestments'
 import { Tile, TileEmpty } from './Tile'
 
@@ -20,6 +21,7 @@ export function EarnPositionsTile({
   className?: string
 }) {
   const { t } = useTranslation('investments')
+  const { hidden } = useBalanceVisibility()
   const { data, isLoading } = useEarnPositions(accountId)
   const positions = data ?? []
 
@@ -44,7 +46,7 @@ export function EarnPositionsTile({
                 {t(position.kind === 'locked' ? 'tiles.earnLocked' : 'tiles.earnFlexible')}
               </Badge>
               <span className="shrink-0 tabular-nums text-muted-foreground">
-                {formatCurrency(position.amount, position.asset)}
+                {formatBalance(position.amount, position.asset, hidden)}
               </span>
               <span className="shrink-0 text-end text-muted-foreground">
                 {position.apr != null

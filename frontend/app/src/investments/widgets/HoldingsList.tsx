@@ -3,7 +3,8 @@ import { useTranslation } from 'react-i18next'
 import { motion, useReducedMotion } from 'motion/react'
 import { Skeleton } from '@/components/ui/skeleton'
 import { cn } from '@/lib/utils'
-import { formatCurrency } from '../../lib/format'
+import { formatBalance } from '../../lib/format'
+import { useBalanceVisibility } from '../../ui/BalanceVisibilityContext'
 import { DeltaPct } from '../InvestmentPrimitives'
 import { positionValue } from '../portfolioInsights'
 import { HoldingDetailCard } from './HoldingDetailCard'
@@ -41,6 +42,7 @@ export function HoldingsList({
   className?: string
 }) {
   const { t } = useTranslation('investments')
+  const { hidden } = useBalanceVisibility()
   const providerByAccountId = useMemo(
     () => new Map(accounts.map((account) => [account.id, account.provider])),
     [accounts],
@@ -80,7 +82,7 @@ export function HoldingsList({
                 {t('card.totalValue')}
               </span>
               <span className="font-heading text-sm font-semibold tabular-nums">
-                {formatCurrency(total, currency)}
+                {formatBalance(total, currency, hidden)}
               </span>
             </div>
           ) : undefined
@@ -102,6 +104,7 @@ export function HoldingsList({
                 position={position}
                 currency={currency}
                 total={total}
+                hidden={hidden}
                 animate={!reduced}
                 onOpen={() => setOpenId(`${position.account_id}-${position.id}`)}
               />
@@ -124,12 +127,14 @@ function HoldingRow({
   position,
   currency,
   total,
+  hidden,
   animate,
   onOpen,
 }: {
   position: PortfolioPosition
   currency: string
   total: number
+  hidden: boolean
   animate: boolean
   onOpen: () => void
 }) {
@@ -180,12 +185,12 @@ function HoldingRow({
             the list even though this is not a table. */}
         <span className="flex shrink-0 flex-col items-end gap-0.5">
           <span className="text-sm font-medium tabular-nums leading-tight">
-            {formatCurrency(position.market_value, position.currency)}
+            {formatBalance(position.market_value, position.currency, hidden)}
           </span>
           {/* Only worth restating when it isn't the scope's own currency. */}
           {position.currency !== currency && (
             <span className="text-[0.65rem] tabular-nums text-muted-foreground">
-              {formatCurrency(value, currency)}
+              {formatBalance(value, currency, hidden)}
             </span>
           )}
           <span className="flex items-baseline gap-1.5">

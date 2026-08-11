@@ -3,7 +3,8 @@ import { useTranslation } from 'react-i18next'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { Refresh01Icon } from '@hugeicons/core-free-icons'
 import { Button } from '@/components/ui/button'
-import { formatCurrency, formatDate } from '../../lib/format'
+import { formatBalance, formatDate } from '../../lib/format'
+import { useBalanceVisibility } from '../../ui/BalanceVisibilityContext'
 import { cn } from '@/lib/utils'
 import { DeltaPct, SyncStatusBadge } from '../InvestmentPrimitives'
 import type { PortfolioTotals } from '../portfolioInsights'
@@ -37,8 +38,9 @@ export function PortfolioTicker({
   syncDisabled: boolean
 }) {
   const { t } = useTranslation('investments')
+  const { hidden } = useBalanceVisibility()
   const single = accounts.length === 1 ? accounts[0] : null
-  const money = (value: number) => formatCurrency(value, totals.currency)
+  const money = (value: number) => formatBalance(value, totals.currency, hidden)
 
   const investedPct =
     totals.value > 0 ? Math.min(100, Math.max(0, (totals.invested / totals.value) * 100)) : 0

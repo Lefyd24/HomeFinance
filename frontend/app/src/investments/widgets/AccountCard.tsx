@@ -16,7 +16,8 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { cn } from '@/lib/utils'
-import { formatCurrency } from '../../lib/format'
+import { formatBalance } from '../../lib/format'
+import { useBalanceVisibility } from '../../ui/BalanceVisibilityContext'
 import { AccountIcon } from '../../accounts/bankIcons'
 import { DeltaPill, SyncStatusBadge } from '../InvestmentPrimitives'
 import type { InvestmentAccount } from '../investmentsApi'
@@ -50,7 +51,8 @@ export function AccountCard({
   syncDisabled: boolean
 }) {
   const { t } = useTranslation('investments')
-  const money = (value: number) => formatCurrency(value, account.currency)
+  const { hidden } = useBalanceVisibility()
+  const money = (value: number) => formatBalance(value, account.currency, hidden)
   const trendPositive = (account.total_return_pct ?? 0) >= 0
 
   return (

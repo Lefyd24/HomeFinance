@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useSearchParams } from 'react-router-dom'
 import { toast } from 'sonner'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { Add01Icon, ChartIncreaseIcon } from '@hugeicons/core-free-icons'
@@ -69,7 +70,16 @@ export function InvestmentsPage() {
   const { confirm, confirmDialog } = useConfirm()
 
   const [dialogOpen, setDialogOpen] = useState(false)
-  const [requestedScope, setRequestedScope] = useState<PortfolioScope | null>(null)
+  // A dashboard account row links here with `?account=<id>` so the workspace
+  // opens already scoped to the account that was clicked, rather than
+  // defaulting to the first one and making the user re-pick it.
+  const [searchParams] = useSearchParams()
+  const initialAccountId = Number(searchParams.get('account'))
+  const [requestedScope, setRequestedScope] = useState<PortfolioScope | null>(
+    Number.isInteger(initialAccountId) && initialAccountId > 0
+      ? { kind: 'account', id: initialAccountId }
+      : null,
+  )
   const [range, setRange] = useState<HistoryRangeKey>('6m')
   const [editingAccount, setEditingAccount] = useState<InvestmentAccount | null>(null)
   const [rotatingAccount, setRotatingAccount] = useState<InvestmentAccount | null>(null)

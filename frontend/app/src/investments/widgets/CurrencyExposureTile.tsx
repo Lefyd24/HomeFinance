@@ -1,7 +1,8 @@
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Skeleton } from '@/components/ui/skeleton'
-import { formatCurrency } from '../../lib/format'
+import { formatBalance } from '../../lib/format'
+import { useBalanceVisibility } from '../../ui/BalanceVisibilityContext'
 import { positionValue } from '../portfolioInsights'
 import { Tile, TileEmpty } from './Tile'
 import type { PortfolioPosition } from '../investmentsApi'
@@ -35,6 +36,7 @@ export function CurrencyExposureTile({
   className?: string
 }) {
   const { t } = useTranslation('investments')
+  const { hidden } = useBalanceVisibility()
 
   const rows = useMemo(() => {
     const byCurrency = new Map<string, { value: number; count: number }>()
@@ -88,7 +90,7 @@ export function CurrencyExposureTile({
               <span className="shrink-0 tabular-nums text-muted-foreground">
                 {row.pct.toFixed(1)}%
               </span>
-              <span className="shrink-0 tabular-nums">{formatCurrency(row.value, currency)}</span>
+              <span className="shrink-0 tabular-nums">{formatBalance(row.value, currency, hidden)}</span>
             </li>
           ))}
         </ul>

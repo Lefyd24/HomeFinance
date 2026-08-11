@@ -59,6 +59,14 @@ export function formatDate(value: string | Date, options?: Intl.DateTimeFormatOp
   )
 }
 
+/** Masked stand-in for `formatCurrency`, in dot count roughly matching a real figure's width. */
+const BALANCE_MASK = '*****'
+
+/** `formatCurrency`, or a fixed-width mask when the caller is hiding balances. */
+export function formatBalance(amount: number, currency: string | undefined, hidden: boolean): string {
+  return hidden ? BALANCE_MASK : formatCurrency(amount, currency)
+}
+
 export function formatSignedCurrency(amount: number, type: 'income' | 'expense' | 'transfer', currency = 'EUR') {
   const formatted = formatCurrency(amount, currency)
   if (type === 'income') return `+${formatted}`

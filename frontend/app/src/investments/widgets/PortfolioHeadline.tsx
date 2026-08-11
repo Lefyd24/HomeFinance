@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next'
-import { formatCurrency } from '../../lib/format'
+import { formatBalance } from '../../lib/format'
+import { useBalanceVisibility } from '../../ui/BalanceVisibilityContext'
 import { DeltaPill } from '../InvestmentPrimitives'
 import type { PortfolioTotals } from '../portfolioInsights'
 
@@ -18,6 +19,7 @@ import type { PortfolioTotals } from '../portfolioInsights'
  */
 export function PortfolioHeadline({ totals }: { totals: PortfolioTotals }) {
   const { t } = useTranslation('investments')
+  const { hidden } = useBalanceVisibility()
 
   return (
     <div className="flex flex-col items-end gap-0.5 text-end">
@@ -28,7 +30,7 @@ export function PortfolioHeadline({ totals }: { totals: PortfolioTotals }) {
           squeeze the page title beside them. */}
       <div className="flex flex-col items-end gap-1 min-[380px]:flex-row min-[380px]:items-baseline min-[380px]:gap-2">
         <span className="font-heading text-lg font-semibold leading-none tabular-nums tracking-tight sm:text-2xl">
-          {formatCurrency(totals.value, totals.currency)}
+          {formatBalance(totals.value, totals.currency, hidden)}
         </span>
         <DeltaPill pct={totals.returnPct} />
       </div>

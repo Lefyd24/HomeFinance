@@ -8,6 +8,7 @@ import { TooltipProvider } from '@/components/ui/tooltip'
 import { Toaster } from '@/components/ui/sonner'
 import App from './App.tsx'
 import { AuthProvider } from './auth/AuthContext.tsx'
+import { BalanceVisibilityProvider } from './ui/BalanceVisibilityContext.tsx'
 import { ApiError } from './lib/apiClient'
 import { ensureServiceWorker } from './notifications/pushNotifications'
 import './i18n/config'
@@ -45,8 +46,10 @@ createRoot(document.getElementById('root')!).render(
           <TooltipProvider>
             <BrowserRouter>
               <AuthProvider>
-                <App />
-                <Toaster richColors closeButton position="top-center" />
+                <BalanceVisibilityProvider>
+                  <App />
+                  <Toaster richColors closeButton position="top-center" />
+                </BalanceVisibilityProvider>
               </AuthProvider>
             </BrowserRouter>
           </TooltipProvider>

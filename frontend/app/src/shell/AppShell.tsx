@@ -40,6 +40,7 @@ import {
 import { TransactionFormDialog } from '../transactions/TransactionFormDialog'
 import { ThemeToggle } from '@/components/ThemeToggle'
 import { LanguageToggle } from '@/components/LanguageToggle'
+import { BalanceVisibilityToggle } from '@/components/BalanceVisibilityToggle'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import {
@@ -753,6 +754,7 @@ function NavActions({ inInvestments }: { inInvestments: boolean }) {
       {/* Already inside investments — the way in is replaced by the way out,
           which the top bar renders at its start. */}
       {!inInvestments && <InvestmentsNavButton />}
+      <BalanceVisibilityToggle />
       <NotificationsMenu />
       <LanguageToggle />
       <ThemeToggle />

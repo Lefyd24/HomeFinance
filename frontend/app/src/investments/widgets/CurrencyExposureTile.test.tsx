@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 import { CurrencyExposureTile } from './CurrencyExposureTile'
+import { BalanceVisibilityProvider } from '../../ui/BalanceVisibilityContext'
 import type { PortfolioPosition } from '../investmentsApi'
 
 function position(overrides: Partial<PortfolioPosition> = {}): PortfolioPosition {
@@ -33,14 +34,16 @@ function position(overrides: Partial<PortfolioPosition> = {}): PortfolioPosition
 describe('CurrencyExposureTile', () => {
   it('groups positions by currency and ranks by exposure', () => {
     render(
-      <CurrencyExposureTile
-        positions={[
-          position({ id: 1, currency: 'USD', market_value_base: 300 }),
-          position({ id: 2, currency: 'EUR', market_value_base: 100 }),
-        ]}
-        currency="EUR"
-        loading={false}
-      />,
+      <BalanceVisibilityProvider>
+        <CurrencyExposureTile
+          positions={[
+            position({ id: 1, currency: 'USD', market_value_base: 300 }),
+            position({ id: 2, currency: 'EUR', market_value_base: 100 }),
+          ]}
+          currency="EUR"
+          loading={false}
+        />
+      </BalanceVisibilityProvider>,
     )
     const rows = screen.getAllByRole('listitem')
     expect(rows).toHaveLength(2)
@@ -51,11 +54,13 @@ describe('CurrencyExposureTile', () => {
 
   it('shows a quiet message when everything is already in one currency', () => {
     render(
-      <CurrencyExposureTile
-        positions={[position({ currency: 'EUR' })]}
-        currency="EUR"
-        loading={false}
-      />,
+      <BalanceVisibilityProvider>
+        <CurrencyExposureTile
+          positions={[position({ currency: 'EUR' })]}
+          currency="EUR"
+          loading={false}
+        />
+      </BalanceVisibilityProvider>,
     )
     expect(screen.queryByRole('listitem')).not.toBeInTheDocument()
     expect(screen.getByText(/EUR/)).toBeInTheDocument()
