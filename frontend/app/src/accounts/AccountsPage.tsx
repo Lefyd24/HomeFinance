@@ -396,48 +396,70 @@ function AccountCard({
   const sharePct = Math.round(share * 100)
 
   return (
+    /*
+     * The account card is the one surface in the app that isn't a white panel:
+     * a deep, fully opaque field in its own type's hue, carrying white text —
+     * the same construction as the portfolio's primary contact card. Because
+     * the field is dark in both themes, everything inside it is written in
+     * white/alpha rather than in theme tokens, which would flip on it.
+     */
     <article
       className={cn(
-        'glass-panel flex h-full flex-col rounded-xl border',
+        'group relative flex h-full flex-col overflow-hidden rounded-2xl text-white shadow-card',
+        'transition-[transform,box-shadow] duration-300 hover:-translate-y-1 hover:shadow-card-hover',
+        meta.gradient,
         // Legible, but visibly not part of the working set.
         !account.is_active && 'opacity-65 saturate-50',
       )}
     >
-      <div className="flex flex-1 flex-col gap-2 p-3.5">
+      {/* Two blurred blobs light the field so it reads as a lit surface rather
+          than a flat fill. Purely decorative, and behind everything. */}
+      <span
+        aria-hidden
+        className={cn(
+          'pointer-events-none absolute -end-10 -top-12 size-40 rounded-full blur-2xl',
+          meta.glow,
+        )}
+      />
+      <span
+        aria-hidden
+        className="pointer-events-none absolute -bottom-14 end-8 size-32 rounded-full bg-white/10 blur-2xl"
+      />
+      <div className="relative flex flex-1 flex-col gap-2 p-3.5">
         <div className="flex items-center gap-2.5">
           <AccountIcon
             icon={account.icon ?? (account.provider === 'freedom24' ? 'freedom24.svg' : null)}
             type={account.type}
-            className="size-10 rounded-lg shadow-[inset_0_1px_0_0_rgba(255,255,255,0.7)] ring-1 ring-white/45 dark:ring-white/12"
+            className="size-10 rounded-xl bg-white/15 text-white shadow-none ring-1 ring-white/25"
             imageClassName="size-7"
           />
           <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-medium leading-tight tracking-tight" title={account.name}>
+            <p className="truncate text-sm font-semibold leading-tight tracking-tight" title={account.name}>
               {account.name}
             </p>
             <div className="mt-0.5 flex flex-wrap items-center gap-1">
-              <span className={cn('text-[0.65rem] font-medium', meta.text)}>{meta.label}</span>
-              <span className="text-[0.65rem] text-muted-foreground/80">·</span>
-              <span className="text-[0.65rem] font-medium tabular-nums text-muted-foreground">
+              <span className="text-[0.65rem] font-medium text-white/75">{meta.label}</span>
+              <span className="text-[0.65rem] text-white/40">·</span>
+              <span className="text-[0.65rem] font-medium tabular-nums text-white/75">
                 {account.currency}
               </span>
               {account.provider && (
                 <>
-                  <span className="text-[0.65rem] text-muted-foreground/80">·</span>
-                  <span className="text-[0.65rem] font-medium text-flow-move">{t('card.synced')}</span>
+                  <span className="text-[0.65rem] text-white/40">·</span>
+                  <span className="text-[0.65rem] font-medium text-white/75">{t('card.synced')}</span>
                 </>
               )}
               {!account.is_active && (
                 <>
-                  <span className="text-[0.65rem] text-muted-foreground/80">·</span>
-                  <span className="text-[0.65rem] text-muted-foreground">{t('card.inactive')}</span>
+                  <span className="text-[0.65rem] text-white/40">·</span>
+                  <span className="text-[0.65rem] text-white/75">{t('card.inactive')}</span>
                 </>
               )}
               {account.is_linked && (
                 <>
-                  <span className="text-[0.65rem] text-muted-foreground/80">·</span>
+                  <span className="text-[0.65rem] text-white/40">·</span>
                   <span
-                    className="text-[0.65rem] font-medium text-flow-in"
+                    className="text-[0.65rem] font-medium text-white/90"
                     title={
                       account.last_synced_at
                         ? t('card.lastSyncedAt', {
@@ -457,7 +479,7 @@ function AccountCard({
               <Button
                 variant="ghost"
                 size="icon-sm"
-                className="-mr-1 size-7 shrink-0 opacity-70"
+                className="-me-1 size-7 shrink-0 text-white/70 hover:bg-white/15 hover:text-white"
                 aria-label={t('card.actionsLabel')}
               >
                 <HugeiconsIcon icon={MoreVerticalIcon} strokeWidth={2} className="size-4" />
@@ -515,31 +537,33 @@ function AccountCard({
           </DropdownMenu>
         </div>
 
-        <div className="flex items-end justify-between gap-2">
+        <div className="mt-2 flex items-end justify-between gap-2">
           <div className="min-w-0">
-            <p className="text-[0.6rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+            <p className="text-[0.6rem] font-semibold uppercase tracking-[0.18em] text-white/60">
               {liability ? t('card.outstanding') : t('card.balance')}
             </p>
+            {/* On a dark field the flow hues are too dark to read, so polarity
+                is carried by a light tint of the same hue instead. */}
             <p
               className={cn(
-                'font-heading text-2xl font-semibold leading-none tabular-nums tracking-tight',
-                liability ? 'text-flow-out' : balance >= 0 ? 'text-foreground' : 'text-destructive',
+                'mt-0.5 text-2xl font-semibold leading-none tabular-nums tracking-tight',
+                liability ? 'text-rose-100' : balance >= 0 ? 'text-white' : 'text-rose-200',
               )}
             >
               {formatCurrency(balance, account.currency)}
             </p>
           </div>
           {!liability && shareOf > 0 && (
-            <span className="shrink-0 text-[0.65rem] font-medium tabular-nums text-muted-foreground">
+            <span className="shrink-0 text-[0.65rem] font-medium tabular-nums text-white/70">
               {t('card.sharePct', { percent: sharePct })}
             </span>
           )}
         </div>
 
         {!liability && shareOf > 0 && (
-          <div className="h-0.5 w-full overflow-hidden rounded-full bg-foreground/[0.06] shadow-[inset_0_1px_2px_rgba(0,0,0,0.08)] dark:bg-white/[0.08]">
+          <div className="h-1 w-full overflow-hidden rounded-full bg-white/15">
             <div
-              className={cn('h-full rounded-full opacity-90', meta.fill)}
+              className="h-full rounded-full bg-white/85"
               style={{ width: `${Math.max(share * 100, 2)}%` }}
             />
           </div>
@@ -547,13 +571,13 @@ function AccountCard({
 
         <div className="flex items-center justify-between gap-2 pt-0.5">
           {account.description ? (
-            <p className="line-clamp-1 min-w-0 text-xs text-muted-foreground">{account.description}</p>
+            <p className="line-clamp-1 min-w-0 text-xs text-white/65">{account.description}</p>
           ) : (
             <span className="min-w-0 flex-1" aria-hidden />
           )}
           <Link
             to={`/transactions?account_id=${account.id}`}
-            className="shrink-0 text-[0.65rem] font-medium text-muted-foreground transition-colors hover:text-foreground"
+            className="shrink-0 text-[0.65rem] font-medium text-white/70 transition-colors hover:text-white"
           >
             {t('card.transactions')}
           </Link>
