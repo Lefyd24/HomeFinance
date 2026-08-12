@@ -111,7 +111,7 @@ export function BacktestResultView({
       </div>
 
       {!spec_resolved.period_too_short ? (
-        <p className="rounded-xl border border-border bg-card p-3 shadow-sm text-sm leading-relaxed">
+        <p className="rounded-xl bg-card p-3 shadow-card text-sm leading-relaxed">
           {benchmark
             ? t('backtest.sentence.base', {
                 amount: formatCurrency(scenario.total_invested, currency),

@@ -14,14 +14,14 @@ export function ProgressBar({
     variant === 'destructive'
       ? 'bg-destructive'
       : variant === 'warning'
-        ? 'bg-amber-500'
+        ? 'bg-warning'
         : variant === 'success'
-          ? 'bg-emerald-500'
+          ? 'bg-success'
           : 'bg-primary'
 
   return (
     <div
-      className={cn('h-2 w-full overflow-hidden rounded-full bg-muted border border-border', className)}
+      className={cn('h-2 w-full overflow-hidden rounded-full bg-muted', className)}
       role="progressbar"
       aria-valuenow={Math.round(clamped)}
       aria-valuemin={0}

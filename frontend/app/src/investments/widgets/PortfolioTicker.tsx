@@ -47,7 +47,7 @@ export function PortfolioTicker({
   const cashPct = Math.max(0, 100 - investedPct)
 
   return (
-    <section className="flex flex-col gap-3 rounded-xl border border-border bg-card p-3 shadow-sm">
+    <section className="flex flex-col gap-3 rounded-xl bg-card p-3 shadow-card">
       {/* Stacked on a phone — the sync control used to share a row with the
           stat grid via `flex-wrap`, which on a narrow viewport left the grid
           only as much width as the button didn't take, squeezing every cell

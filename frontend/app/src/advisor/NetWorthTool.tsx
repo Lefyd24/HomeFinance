@@ -6,7 +6,7 @@ import { HugeiconsIcon } from '@hugeicons/react'
 import { ChartLineData01Icon, Clock01Icon, ChartUpIcon } from '@hugeicons/core-free-icons'
 import { Button } from '@/components/ui/button'
 import { formatCurrency, formatDate } from '../lib/format'
-import { baseAxisStyle, compactNumber, seriesHoverSafe, tooltipStyle, useChartTheme } from '../reports/chartTheme'
+import { baseAxisStyle, compactNumber, polarityItemStyle, polarityLineStyle, seriesHoverSafe, tooltipStyle, useChartTheme } from '../reports/chartTheme'
 import { ToolPanel, EmptyResults, InfoBanner } from './ToolPanel'
 import * as advisorApi from './advisorApi'
 import type { NetWorth, NetWorthHistoryEntry, NetWorthProjection } from './advisorApi'
@@ -104,8 +104,8 @@ export function NetWorthTool() {
           data: [projection.current_net_worth, ...projection.projections.map((p) => p.projected_net_worth)],
           smooth: true,
           areaStyle: { opacity: 0.15 },
-          itemStyle: { color: theme.positive },
-          lineStyle: { width: 2, color: theme.positive },
+          itemStyle: polarityItemStyle(theme, 'positive'),
+          lineStyle: polarityLineStyle(theme, 'positive'),
         },
       ],
     }

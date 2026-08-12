@@ -426,7 +426,7 @@ function DocumentCard({
       tabIndex={0}
       onClick={onOpen}
       onKeyDown={(e) => e.key === 'Enter' && onOpen()}
-      className="group/card relative flex cursor-pointer flex-col items-center gap-2.5 rounded-xl border border-border bg-card p-4 text-center transition-all hover:-translate-y-0.5 hover:border-primary/35 hover:shadow-md"
+      className="group/card relative flex cursor-pointer flex-col items-center gap-2.5 rounded-xl bg-card p-4 text-center shadow-card transition-all hover:-translate-y-0.5 hover:shadow-card-hover"
     >
       <div className="absolute end-2 top-2 opacity-0 transition-opacity group-hover/card:opacity-100 group-focus-within/card:opacity-100">
         <DocumentActionsMenu onEdit={onEdit} onDelete={onDelete} />
@@ -460,7 +460,7 @@ function DocumentRow({
       tabIndex={0}
       onClick={onOpen}
       onKeyDown={(e) => e.key === 'Enter' && onOpen()}
-      className="group/row flex cursor-pointer items-center gap-3 rounded-lg border border-border bg-card px-3 py-2 transition-colors hover:bg-muted/50"
+      className="group/row flex cursor-pointer items-center gap-3 rounded-lg bg-card px-3 py-2 shadow-xs transition-colors hover:bg-muted/50"
     >
       <span className={cn('flex size-9 shrink-0 items-center justify-center rounded-lg', meta.className)}>
         <meta.icon size={17} />

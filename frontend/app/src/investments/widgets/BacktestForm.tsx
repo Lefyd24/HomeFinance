@@ -130,7 +130,7 @@ export function BacktestForm({
   }
 
   return (
-    <div className="flex flex-col gap-4 rounded-xl border border-border bg-card p-3 shadow-sm sm:p-4">
+    <div className="flex flex-col gap-4 rounded-xl bg-card p-3 shadow-card sm:p-4">
       <Field>
         <FieldLabel>{t('backtest.form.mode')}</FieldLabel>
         <ToggleGroup

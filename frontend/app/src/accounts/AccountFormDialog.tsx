@@ -164,7 +164,7 @@ export function AccountFormDialog({ open, onOpenChange, account }: AccountFormDi
     >
       <form id="account-form" onSubmit={onSubmit} className="flex flex-col gap-4" noValidate>
         {/* Live preview, carrying the same type rule the real card uses. */}
-        <div className="overflow-hidden rounded-xl border border-border bg-card">
+        <div className="overflow-hidden rounded-xl bg-card shadow-card">
           <div className={cn('h-1 w-full', typeMeta.fill)} aria-hidden />
           <div className="flex items-center gap-3 p-4">
             <AccountIcon

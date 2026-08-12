@@ -4,7 +4,7 @@ import { Bar, BarChart, CartesianGrid, Cell, ReferenceLine, XAxis, YAxis } from 
 import { ChartContainer, ChartTooltip, type ChartConfig } from '@/components/ui/chart'
 import { Skeleton } from '@/components/ui/skeleton'
 import { cn } from '@/lib/utils'
-import { polarityColor, useChartMotion } from '../chartConfig'
+import { polarityColor, polarityGlow, useChartMotion } from '../chartConfig'
 import { Tile, TileEmpty } from './Tile'
 import type { InstrumentComparison } from '../comparisonApi'
 
@@ -105,6 +105,7 @@ export function ReturnsChart({
                   key={row.symbol}
                   fill={polarityColor(row.value)}
                   fillOpacity={row.isBenchmark ? 0.45 : 1}
+                  style={row.isBenchmark ? undefined : { filter: polarityGlow(row.value) }}
                 />
               ))}
             </Bar>

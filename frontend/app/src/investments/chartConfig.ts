@@ -47,6 +47,23 @@ export function polarityColor(value: number | null | undefined): string {
 }
 
 /**
+ * The halo that goes with `polarityColor`, as an SVG filter.
+ *
+ * The ECharts half of the app gets this from `polarityItemStyle`'s
+ * `shadowBlur`; recharts has no equivalent, so a `drop-shadow()` on the mark
+ * stands in. Flat values get nothing — a glow means "this moved".
+ *
+ * Use it on marks with room around them (a bar in a ranked list, a single
+ * line), not on dense series where neighbouring halos would smear together.
+ */
+export function polarityGlow(value: number | null | undefined): string | undefined {
+  if (value == null || value === 0) return undefined
+  return value > 0
+    ? 'drop-shadow(0 0 5px var(--flow-in-glow))'
+    : 'drop-shadow(0 0 5px var(--flow-out-glow))'
+}
+
+/**
  * The portfolio history chart: what the money is doing, split into the part
  * that is invested and the part sitting in cash.
  */

@@ -3,10 +3,12 @@
  *
  * Colour is assigned by the job it does, not by series index:
  *
- * - **Polarity** (money in vs money out, surplus vs shortfall) uses the app's
- *   own `--success` / `--destructive` tokens so a chart and the numbers beside
- *   it never disagree. Position and a legend always carry the same meaning, so
- *   nothing depends on hue alone.
+ * - **Polarity** (money in vs money out, surplus vs shortfall) uses the
+ *   `--chart-positive` / `--chart-negative` tokens — the saturated, glowing
+ *   siblings of the `--success` / `--destructive` text colours, so a chart and
+ *   the numbers beside it read as the same hue without a 12px label having to
+ *   carry chart-strength saturation. Position and a legend always carry the
+ *   same meaning too, so nothing depends on hue alone.
  * - **Identity** (categories, merchants, accounts — many series at once) uses a
  *   fixed eight-slot categorical palette validated for colour-vision
  *   deficiency. Slots are assigned in order and never cycled: a ninth series
@@ -83,18 +85,30 @@ export function createChartTheme(isDark: boolean): ChartTheme {
 
   return {
     isDark,
-    positive: syncedCssVar('--success', isDark, '#16a34a', '#4ade80'),
-    negative: syncedCssVar('--destructive', isDark, '#dc2626', '#f87171'),
-    neutral: syncedCssVar('--primary', isDark, '#0e7490', '#5eead4'),
+    positive: syncedCssVar('--chart-positive', isDark, '#00a250', '#3ee98a'),
+    negative: syncedCssVar('--chart-negative', isDark, '#e6162c', '#ff5c57'),
+    positiveGlow: syncedCssVar(
+      '--chart-positive-glow',
+      isDark,
+      'rgba(0,162,80,0.42)',
+      'rgba(62,233,138,0.45)',
+    ),
+    negativeGlow: syncedCssVar(
+      '--chart-negative-glow',
+      isDark,
+      'rgba(230,22,44,0.42)',
+      'rgba(255,92,87,0.45)',
+    ),
+    neutral: syncedCssVar('--primary', isDark, '#1e3a5f', '#38bdf8'),
     ink: syncedCssVar('--foreground', isDark, '#0f172a', '#f8fafc'),
     muted: syncedCssVar('--muted-foreground', isDark, '#64748b', '#94a3b8'),
     grid: isDark ? 'rgba(255,255,255,0.10)' : 'rgba(15,23,42,0.09)',
     axis: isDark ? 'rgba(255,255,255,0.18)' : 'rgba(15,23,42,0.16)',
-    surface: syncedCssVar('--card', isDark, '#ffffff', '#1a1a19'),
+    surface: syncedCssVar('--card', isDark, '#ffffff', '#141d29'),
     categorical,
     sequential: isDark
-      ? ['#184f95', '#256abf', '#3987e5', '#6da7ec', '#b7d3f6']
-      : ['#cde2fb', '#9ec5f4', '#5598e7', '#2a78d6', '#1c5cab'],
+      ? ['#16304f', '#23507f', '#2f74b8', '#3399ff', '#7ec3ff']
+      : ['#dbeafe', '#a9cdf7', '#5f9ae8', '#2f74b8', '#1e3a5f'],
     seriesColor: (index: number) => categorical[index] ?? overflow,
   }
 }
@@ -104,6 +118,8 @@ function chartThemeFingerprint(theme: ChartTheme): string {
     theme.isDark,
     theme.positive,
     theme.negative,
+    theme.positiveGlow,
+    theme.negativeGlow,
     theme.neutral,
     theme.ink,
     theme.muted,
@@ -119,6 +135,36 @@ export const seriesHoverSafe = {
     lineStyle: { opacity: 1 },
     areaStyle: { opacity: 1 },
   },
+}
+
+/**
+ * Item style for a polarity mark (a bar, a point, an area).
+ *
+ * Polarity is the one thing on a finance chart you should be able to read
+ * before you read anything else, so gains and losses carry a soft halo in their
+ * own hue on top of the (already saturated) `--chart-positive` /
+ * `--chart-negative` fill. The glow is a shadow, not a second series, so it
+ * costs nothing in layout and disappears cleanly on export.
+ */
+export function polarityItemStyle(theme: ChartTheme, polarity: 'positive' | 'negative') {
+  const positive = polarity === 'positive'
+  return {
+    color: positive ? theme.positive : theme.negative,
+    shadowBlur: 12,
+    shadowColor: positive ? theme.positiveGlow : theme.negativeGlow,
+    shadowOffsetY: 1,
+  }
+}
+
+/** The same treatment for a line series, where the glow tracks the stroke. */
+export function polarityLineStyle(theme: ChartTheme, polarity: 'positive' | 'negative') {
+  const positive = polarity === 'positive'
+  return {
+    color: positive ? theme.positive : theme.negative,
+    width: 2,
+    shadowBlur: 14,
+    shadowColor: positive ? theme.positiveGlow : theme.negativeGlow,
+  }
 }
 
 const noBlurState = {
@@ -199,6 +245,10 @@ export interface ChartTheme {
   positive: string
   /** Money out, shortfall, "over budget". */
   negative: string
+  /** Halo painted behind a positive mark — see `polarityItemStyle`. */
+  positiveGlow: string
+  /** Halo painted behind a negative mark — see `polarityItemStyle`. */
+  negativeGlow: string
   /** Derived/aggregate series that is neither in nor out — net lines, totals. */
   neutral: string
   ink: string

@@ -27,7 +27,7 @@ export function ReportFilterBar({ filters }: { filters: ReportFilters }) {
     // Pinned to the top of the page scroller with its own opaque chrome. It was
     // already sticky, but fully transparent, so page content slid visibly through
     // it and it read as scrolling along with everything else.
-    <div className="glass-bar sticky top-0 z-20 -mx-3 mb-6 border-b px-3 py-2.5 sm:-mx-4 sm:px-4 lg:-mx-6 lg:px-6">
+    <div className="glass-bar sticky top-0 z-20 -mx-3 mb-6 px-3 py-2.5 sm:-mx-4 sm:px-4 lg:-mx-6 lg:px-6">
       {/* One row at every width. It used to wrap, which stacked the three filters
           into a block on a phone. Nothing is collapsed or hidden — all three keep
           their labels — and the group scrolls if a long custom range needs it. */}

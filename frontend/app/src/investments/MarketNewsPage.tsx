@@ -176,7 +176,7 @@ export function MarketNewsPage() {
         />
       </div>
 
-      <section className="flex flex-col gap-3 rounded-xl border border-border bg-card p-3 shadow-sm sm:p-3.5">
+      <section className="flex flex-col gap-3 rounded-xl bg-card p-3 shadow-card sm:p-3.5">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <span className="text-[0.625rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
             {t('providers.label')}

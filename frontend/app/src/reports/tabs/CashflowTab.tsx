@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { cn } from '@/lib/utils'
 import { Chart, ChartFrame } from '../ChartFrame'
-import { baseAxisStyle, compactNumber, tooltipStyle, useChartTheme, seriesHoverSafe } from '../chartTheme'
+import { baseAxisStyle, compactNumber, polarityItemStyle, tooltipStyle, useChartTheme, seriesHoverSafe } from '../chartTheme'
 import { formatCurrency } from '../../lib/format'
 import { getBalanceHistory, type CashflowReport } from '../reportsPageApi'
 import { formatPeriodLabel } from '../periodLabels'
@@ -110,7 +110,7 @@ export function CashflowTab({
           data: deltas.map((value, index) => ({
             value,
             itemStyle: {
-              color: rows[index].net >= 0 ? theme.positive : theme.negative,
+              ...polarityItemStyle(theme, rows[index].net >= 0 ? 'positive' : 'negative'),
               borderRadius: 4,
             },
           })),

@@ -148,7 +148,7 @@ export function AccountIcon({
     return (
       <div
         className={cn(
-          'flex size-12 items-center justify-center overflow-hidden rounded-xl bg-white/80 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.9)] ring-1 ring-white/40 backdrop-blur-sm shrink-0 dark:bg-white/10 dark:ring-white/15',
+          'flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-white shadow-xs dark:bg-white/10',
           className,
         )}
       >
@@ -160,8 +160,8 @@ export function AccountIcon({
   return (
     <div
       className={cn(
-        'flex size-12 items-center justify-center rounded-xl shrink-0',
-        'shadow-[inset_0_1px_0_0_rgba(255,255,255,0.5)] ring-1 ring-white/35 backdrop-blur-sm dark:ring-white/10',
+        'flex size-12 shrink-0 items-center justify-center rounded-2xl',
+        'shadow-xs',
         meta.tint,
         className,
       )}

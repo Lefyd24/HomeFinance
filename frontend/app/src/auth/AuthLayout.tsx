@@ -20,11 +20,14 @@ export function AuthLayout({
     <div className="app-canvas flex min-h-dvh flex-col lg:flex-row">
       <div
         className="relative hidden overflow-hidden lg:flex lg:w-[44%] lg:flex-col lg:justify-between xl:w-[42%]"
+        /* The same deep-navy field the portfolio's primary contact card uses:
+           navy body, one sky-lit corner, one shadowed one, over a faint dot
+           grid. Kept inline because it is one bespoke surface, not a token. */
         style={{
-          backgroundColor: 'oklch(29% 0.07 227)',
+          backgroundColor: 'oklch(28.2% 0.057 255)',
           backgroundImage: `
-            radial-gradient(circle at 78% 15%, oklch(46% 0.10 224 / 0.65) 0%, transparent 55%),
-            radial-gradient(circle at 12% 90%, oklch(18% 0.06 230 / 0.7) 0%, transparent 50%),
+            radial-gradient(circle at 78% 15%, oklch(58% 0.13 246 / 0.55) 0%, transparent 55%),
+            radial-gradient(circle at 12% 90%, oklch(17% 0.04 257 / 0.75) 0%, transparent 50%),
             radial-gradient(oklch(100% 0 0 / 0.1) 1.5px, transparent 1.5px)
           `,
           backgroundSize: '100% 100%, 100% 100%, 28px 28px',
@@ -106,7 +109,7 @@ export function BrandPanelTrust({ children }: { children: ReactNode }) {
   )
 }
 
-/** Auth form field wrapper: solid, high-contrast well distinct from the glassy page behind it. */
+/** Auth form field wrapper: a solid, high-contrast well against the flat page canvas. */
 export function authFieldClass(hasError?: boolean) {
   return cn(
     'h-11 w-full items-center rounded-lg border bg-muted dark:bg-muted/70 transition-colors',

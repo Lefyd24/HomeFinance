@@ -152,7 +152,7 @@ export function HoldingHistoryPage() {
       <TickerMatchPanel history={history} />
 
       {history.series.length > 0 && (
-        <Collapsible className="overflow-hidden rounded-xl border border-border bg-card p-3 shadow-sm">
+        <Collapsible className="overflow-hidden rounded-xl bg-card p-3 shadow-card">
           <CollapsibleTrigger asChild>
             <Button variant="ghost" size="sm" className="w-fit px-0 text-xs text-muted-foreground">
               {t('holding.history.dailyTable')}
@@ -215,7 +215,7 @@ function TickerMatchPanel({ history }: { history: PositionHistory }) {
   const rejected = history.mapping_checked.filter(([, outcome]) => outcome !== 'matched')
 
   return (
-    <section className="flex flex-col gap-2 rounded-xl border border-border bg-card p-3 shadow-sm">
+    <section className="flex flex-col gap-2 rounded-xl bg-card p-3 shadow-card">
       <div className="flex flex-wrap items-center gap-2">
         <HugeiconsIcon
           icon={matched ? CheckmarkBadge01Icon : Alert02Icon}

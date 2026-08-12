@@ -664,15 +664,15 @@ function InvestmentsNavButton() {
         <NoiseBackground
           containerClassName="w-fit p-1.5 rounded-full mx-auto"
           gradientColors={[
-            'oklch(51.5% 0.126 227)',
-            'oklch(67.08% 0.175 40.64)',
-            'oklch(80% 0.09 205)',
+            'oklch(34.6% 0.074 256)',
+            'oklch(45% 0.108 250)',
+            'oklch(67.5% 0.176 252)',
           ]}
           noiseIntensity={0.08}
           speed={0.05}
         >
-          {/* Selected state colours the pill itself (a dark green, like the
-              neutral chrome's dark variant but tinted) rather than ringing
+          {/* Selected state colours the pill itself (deep navy, the same ink
+              the portfolio uses for its primary card) rather than ringing
               the outside — the noise blob stays the constant, brand-toned
               backdrop either way. */}
           <span
@@ -680,8 +680,8 @@ function InvestmentsNavButton() {
               'flex h-7 items-center gap-1.5 rounded-full px-2 text-xs font-semibold',
               isActive
                 ? cn(
-                    'bg-linear-to-r from-emerald-950 via-emerald-900 to-emerald-950 text-emerald-50',
-                    'shadow-[0px_2px_0px_0px_rgba(16,185,129,0.18)_inset,0px_0.5px_1px_0px_rgba(0,0,0,0.4)]',
+                    'bg-linear-to-r from-[#0f1f35] via-[#1e3a5f] to-[#0f1f35] text-slate-50',
+                    'shadow-[0px_2px_0px_0px_rgba(56,189,248,0.20)_inset,0px_0.5px_1px_0px_rgba(0,0,0,0.4)]',
                   )
                 : cn(
                     'text-neutral-900 bg-linear-to-r from-white via-neutral-100 to-white',
@@ -722,9 +722,9 @@ function BackToDashboardButton() {
       <NoiseBackground
         containerClassName="w-fit p-1.5 rounded-full mx-auto"
         gradientColors={[
-          'oklch(51.5% 0.126 227)',
-          'oklch(67.08% 0.175 40.64)',
-          'oklch(80% 0.09 205)',
+          'oklch(34.6% 0.074 256)',
+          'oklch(45% 0.108 250)',
+          'oklch(67.5% 0.176 252)',
         ]}
         noiseIntensity={0.08}
         speed={0.05}
@@ -808,7 +808,7 @@ function MobileTopBar({ inInvestments }: { inInvestments: boolean }) {
     // The padding — not a taller box — is what keeps the bar clear of the
     // status bar / notch in an installed PWA. index.html sets viewport-fit=cover,
     // so env(safe-area-inset-top) is a real value there and 0 in a browser tab.
-    <header className="glass-bar lg:hidden sticky top-0 z-30 shrink-0 border-b border-border pt-[env(safe-area-inset-top)]">
+    <header className="glass-bar lg:hidden sticky top-0 z-30 shrink-0 pt-[env(safe-area-inset-top)]">
       <div className="flex h-14 items-center gap-2 px-3">
         {inInvestments && <BackToDashboardButton />}
         <div className="min-w-0 flex-1">

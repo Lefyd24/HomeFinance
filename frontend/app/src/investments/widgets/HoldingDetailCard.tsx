@@ -103,9 +103,9 @@ export function HoldingDetailCard({
   const netPnl = grossPnl != null && hasFees ? grossPnl - feesPaid : null
   const netPct = netPnl != null && totalPaid ? (netPnl / totalPaid) * 100 : null
 
-  // Portalled to <body>: the shell's content column carries a backdrop-filter
-  // for its glass surface, and any backdrop-filter/filter/transform ancestor
-  // silently opens a new CSS stacking context. Rendered in place, this
+  // Portalled to <body>: the shell and the motion wrappers around this card
+  // carry filters and transforms, and any backdrop-filter/filter/transform
+  // ancestor silently opens a new CSS stacking context. Rendered in place, this
   // overlay's `fixed` box would still cover the viewport visually, but its
   // z-50 would only ever be compared against other elements *inside* that
   // stacking context — never against the mobile dock or the quick-add FAB,
@@ -147,7 +147,7 @@ export function HoldingDetailCard({
             transition={{ duration: reduced ? 0 : 0.3, type: reduced ? undefined : 'spring', bounce: 0.1 }}
             className={cn(
               'glass-panel relative z-10 flex max-h-[85dvh] w-full max-w-lg flex-col overflow-y-auto',
-              'border border-border p-4 shadow-xl outline-none',
+              'border p-4 shadow-raised outline-none',
               // A sheet rising from the bottom edge on a phone, a card on
               // larger screens. The safe-area padding keeps the last row clear
               // of the home indicator in an installed PWA.

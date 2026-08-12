@@ -187,8 +187,8 @@ export function BudgetDetailsSheet({ budget, open, onOpenChange }: BudgetDetails
                           key={period.label}
                           value={period.label}
                           className={cn(
-                            'overflow-hidden rounded-xl border border-border bg-card',
-                            current && 'border-primary/50',
+                            'overflow-hidden rounded-xl bg-card shadow-card',
+                            current && 'ring-1 ring-primary/50',
                           )}
                         >
                           <AccordionTrigger className="gap-2 rounded-none border-0 px-3 py-3 hover:no-underline focus-visible:border-0 focus-visible:ring-0 sm:px-4">
