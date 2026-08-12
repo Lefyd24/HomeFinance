@@ -3,12 +3,12 @@
 .gitignore
 
 # Python
-__pycache__/
-*.py[cod]
+**/__pycache__/
+**/*.py[cod]
 *$py.class
 *.so
 .Python
-.venv/
+**/.venv/
 env/
 venv/
 ENV/
@@ -16,7 +16,12 @@ env.bak/
 venv.bak/
 
 # Node.js
-node_modules/
+# NOTE: .dockerignore patterns are matched against the path relative to the
+# context root, so a bare `node_modules/` would only exclude the one at the
+# root — `**/` is what actually keeps frontend/app/node_modules (~650MB) out
+# of the build context. The image installs deps itself in the react-builder
+# stage; a host copy is both slow to transfer and wrong (host-native binaries).
+**/node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
@@ -36,9 +41,9 @@ frontend/app/dist
 Thumbs.db
 
 # Database (will be created in container)
-*.db
-*.sqlite
-*.sqlite3
+**/*.db
+**/*.sqlite
+**/*.sqlite3
 data/
 
 # Documentation
@@ -46,7 +51,7 @@ data/
 PLAN.md
 
 # Testing
-.pytest_cache/
+**/.pytest_cache/
 .coverage
 htmlcov/
 
