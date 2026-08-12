@@ -2,6 +2,8 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 @import "@fontsource-variable/instrument-sans";
+/* Numerals only — see `--font-numeric` and the `.tabular-nums` rule below. */
+@import "@fontsource-variable/inter";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -43,6 +45,7 @@
   --chart-4: oklch(67.5% 0.176 252);
   --chart-5: oklch(75.4% 0.139 233);
   --radius: 1rem;
+  --font-numeric: 'Inter Variable', ui-sans-serif, system-ui, sans-serif;
   --sidebar: oklch(100% 0 0);
   --sidebar-foreground: oklch(37.2% 0.039 257);
   --sidebar-primary: oklch(34.6% 0.074 256);
@@ -84,35 +87,72 @@
   /*
    * Elevation
    * ---------
-   * Three steps, each a stack of a contact shadow, a mid shadow, and a wide
-   * ambient one — that layering is what makes a card look lit rather than
-   * outlined. Tinted toward the canvas hue instead of pure black so shadows on
-   * a slate background stay cool rather than muddy.
+   * A card is modelled as a solid slab sitting above the canvas, not as a
+   * rectangle with a drop shadow. Three groups of layers, in this order:
+   *
+   *   1. EDGES — the thickness of the slab itself. `--shadow-rim` (dark mode
+   *      only), `--shadow-crown` on the top edge where it catches the light,
+   *      and `--shadow-base` shading the bottom edge from inside. Together
+   *      these are what make it read as an object with a side, rather than a
+   *      printed shape.
+   *   2. AMBIENT — zero-offset blurs at growing radius. A real object occludes
+   *      skylight from *every* direction, so left and right edges have to be
+   *      grounded exactly as much as the top and bottom are. This group is the
+   *      difference between a slab and two dark bands above and below a
+   *      rectangle; without it the sides float no matter how strong the
+   *      vertical shadows get.
+   *   3. DIRECT — the downward-offset stack, cast by a key light above:
+   *      contact, mid, and a wide soft one.
+   *
+   * Tinted toward the canvas hue instead of pure black so shadows on a slate
+   * background stay cool rather than muddy.
    */
   --shadow-tint: oklch(45% 0.06 256);
   --surface-border: transparent;
   /* Light mode needs no rim — the canvas is lighter than every surface on it,
      so the shadow alone draws the edge. Declared so `.dark` can just swap it. */
   --shadow-rim: 0 0 0 0 transparent;
+  /* The lit top edge. White in light mode; `.dark` swaps it for a dimmer one,
+     since a full-strength white line on a near-black card reads as a border. */
+  --shadow-crown: inset 0 1px 0 0 oklch(100% 0 0 / 0.9);
+  /* The shaded bottom edge — the underside of the slab, seen from just above. */
+  --shadow-base: inset 0 -1px 0 0 color-mix(in oklch, var(--shadow-tint) 12%, transparent);
   --surface-border-strong: color-mix(in oklch, var(--border) 70%, transparent);
   --shadow-xs:
     var(--shadow-rim),
-    0 1px 2px -1px color-mix(in oklch, var(--shadow-tint) 14%, transparent);
+    var(--shadow-crown),
+    0 0 2px 0 color-mix(in oklch, var(--shadow-tint) 10%, transparent),
+    0 1px 2px -1px color-mix(in oklch, var(--shadow-tint) 16%, transparent);
   --shadow-card:
     var(--shadow-rim),
-    0 1px 2px -1px color-mix(in oklch, var(--shadow-tint) 14%, transparent),
-    0 6px 14px -6px color-mix(in oklch, var(--shadow-tint) 20%, transparent),
-    0 18px 36px -20px color-mix(in oklch, var(--shadow-tint) 32%, transparent);
+    var(--shadow-crown),
+    var(--shadow-base),
+    0 0 3px 0 color-mix(in oklch, var(--shadow-tint) 14%, transparent),
+    0 0 14px -1px color-mix(in oklch, var(--shadow-tint) 20%, transparent),
+    0 0 38px -6px color-mix(in oklch, var(--shadow-tint) 28%, transparent),
+    0 2px 4px -2px color-mix(in oklch, var(--shadow-tint) 18%, transparent),
+    0 8px 16px -8px color-mix(in oklch, var(--shadow-tint) 24%, transparent),
+    0 20px 40px -20px color-mix(in oklch, var(--shadow-tint) 32%, transparent);
   --shadow-card-hover:
     var(--shadow-rim),
-    0 2px 4px -2px color-mix(in oklch, var(--shadow-tint) 12%, transparent),
-    0 10px 22px -10px color-mix(in oklch, var(--shadow-tint) 20%, transparent),
-    0 28px 54px -26px color-mix(in oklch, var(--shadow-tint) 30%, transparent);
+    var(--shadow-crown),
+    var(--shadow-base),
+    0 0 4px 0 color-mix(in oklch, var(--shadow-tint) 16%, transparent),
+    0 0 20px -1px color-mix(in oklch, var(--shadow-tint) 24%, transparent),
+    0 0 56px -8px color-mix(in oklch, var(--shadow-tint) 32%, transparent),
+    0 3px 6px -3px color-mix(in oklch, var(--shadow-tint) 20%, transparent),
+    0 12px 24px -10px color-mix(in oklch, var(--shadow-tint) 26%, transparent),
+    0 30px 58px -24px color-mix(in oklch, var(--shadow-tint) 34%, transparent);
   --shadow-raised:
     var(--shadow-rim),
-    0 2px 6px -3px color-mix(in oklch, var(--shadow-tint) 18%, transparent),
-    0 14px 32px -14px color-mix(in oklch, var(--shadow-tint) 26%, transparent),
-    0 40px 68px -34px color-mix(in oklch, var(--shadow-tint) 34%, transparent);
+    var(--shadow-crown),
+    var(--shadow-base),
+    0 0 5px 0 color-mix(in oklch, var(--shadow-tint) 18%, transparent),
+    0 0 26px -1px color-mix(in oklch, var(--shadow-tint) 28%, transparent),
+    0 0 70px -10px color-mix(in oklch, var(--shadow-tint) 36%, transparent),
+    0 3px 8px -3px color-mix(in oklch, var(--shadow-tint) 22%, transparent),
+    0 16px 34px -12px color-mix(in oklch, var(--shadow-tint) 30%, transparent),
+    0 42px 72px -30px color-mix(in oklch, var(--shadow-tint) 38%, transparent);
   --shadow-bar: 0 6px 20px -20px color-mix(in oklch, var(--shadow-tint) 40%, transparent);
 
   /* Kept for the two surfaces that are still deliberately translucent: the
@@ -197,24 +237,46 @@
   --surface-border: transparent;
   --surface-border-strong: oklch(100% 0 0 / 10%);
   --shadow-rim: 0 0 0 1px oklch(100% 0 0 / 7%);
+  --shadow-crown: inset 0 1px 0 0 oklch(100% 0 0 / 0.11);
+  /* No inset base in dark: the slab is already darker than its own shadow, so
+     shading its bottom edge from inside just muddies the corner. The rim
+     carries the bottom edge instead. */
+  --shadow-base: 0 0 0 0 transparent;
   --shadow-xs:
     var(--shadow-rim),
+    var(--shadow-crown),
+    0 0 2px 0 color-mix(in oklch, var(--shadow-tint) 35%, transparent),
     0 1px 2px -1px color-mix(in oklch, var(--shadow-tint) 45%, transparent);
   --shadow-card:
     var(--shadow-rim),
-    0 1px 2px -1px color-mix(in oklch, var(--shadow-tint) 40%, transparent),
-    0 6px 16px -8px color-mix(in oklch, var(--shadow-tint) 50%, transparent),
-    0 20px 40px -24px color-mix(in oklch, var(--shadow-tint) 65%, transparent);
+    var(--shadow-crown),
+    var(--shadow-base),
+    0 0 3px 0 color-mix(in oklch, var(--shadow-tint) 40%, transparent),
+    0 0 14px -2px color-mix(in oklch, var(--shadow-tint) 45%, transparent),
+    0 0 36px -8px color-mix(in oklch, var(--shadow-tint) 55%, transparent),
+    0 2px 4px -2px color-mix(in oklch, var(--shadow-tint) 45%, transparent),
+    0 8px 18px -8px color-mix(in oklch, var(--shadow-tint) 55%, transparent),
+    0 22px 44px -22px color-mix(in oklch, var(--shadow-tint) 68%, transparent);
   --shadow-card-hover:
     var(--shadow-rim),
-    0 2px 4px -2px color-mix(in oklch, var(--shadow-tint) 45%, transparent),
-    0 12px 26px -10px color-mix(in oklch, var(--shadow-tint) 55%, transparent),
-    0 30px 58px -26px color-mix(in oklch, var(--shadow-tint) 72%, transparent);
+    var(--shadow-crown),
+    var(--shadow-base),
+    0 0 4px 0 color-mix(in oklch, var(--shadow-tint) 45%, transparent),
+    0 0 20px -2px color-mix(in oklch, var(--shadow-tint) 52%, transparent),
+    0 0 52px -10px color-mix(in oklch, var(--shadow-tint) 62%, transparent),
+    0 3px 6px -3px color-mix(in oklch, var(--shadow-tint) 50%, transparent),
+    0 13px 27px -10px color-mix(in oklch, var(--shadow-tint) 60%, transparent),
+    0 32px 60px -24px color-mix(in oklch, var(--shadow-tint) 74%, transparent);
   --shadow-raised:
     var(--shadow-rim),
-    0 2px 6px -3px color-mix(in oklch, var(--shadow-tint) 50%, transparent),
-    0 16px 34px -14px color-mix(in oklch, var(--shadow-tint) 62%, transparent),
-    0 44px 72px -34px color-mix(in oklch, var(--shadow-tint) 78%, transparent);
+    var(--shadow-crown),
+    var(--shadow-base),
+    0 0 5px 0 color-mix(in oklch, var(--shadow-tint) 50%, transparent),
+    0 0 26px -2px color-mix(in oklch, var(--shadow-tint) 58%, transparent),
+    0 0 66px -12px color-mix(in oklch, var(--shadow-tint) 68%, transparent),
+    0 3px 8px -3px color-mix(in oklch, var(--shadow-tint) 55%, transparent),
+    0 17px 36px -12px color-mix(in oklch, var(--shadow-tint) 65%, transparent),
+    0 44px 74px -30px color-mix(in oklch, var(--shadow-tint) 80%, transparent);
   --shadow-bar: 0 8px 24px -20px color-mix(in oklch, var(--shadow-tint) 80%, transparent);
 
   --dock-surface: oklch(24% 0.028 256 / 0.62);
@@ -234,6 +296,18 @@
 @theme inline {
   --font-sans: 'Instrument Sans Variable', ui-sans-serif, system-ui, sans-serif;
   --font-heading: 'Instrument Sans Variable', ui-sans-serif, system-ui, sans-serif;
+  /*
+   * Figures keep Inter. Instrument Sans sets prose and headings, but Inter's
+   * tabular figures are narrower and more even, which is what you want in a
+   * column of balances you read by scanning rather than by reading. Available
+   * as a `font-numeric` utility, and applied automatically to `.tabular-nums`
+   * (see the rule in the base layer) — that class is already this codebase's
+   * marker for "this is a figure", in ~200 places.
+   *
+   * The family itself lives on `:root` so plain CSS can read it too; this key
+   * only exposes it to Tailwind, the same way the colour tokens do.
+   */
+  --font-numeric: var(--font-numeric);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -339,6 +413,22 @@
   html {
     @apply font-sans;
   }
+}
+
+/*
+ * Every figure in the app is already marked `tabular-nums`, so that class
+ * doubles as the hook for the numeric face. Tailwind's own `.tabular-nums`
+ * only sets `font-variant-numeric`, so there is nothing to conflict with
+ * there — this adds the family the utility never had an opinion about.
+ *
+ * Deliberately unlayered, for the same reason as the page-header rule above:
+ * plenty of figures are written `font-heading … tabular-nums` (a stat tile, a
+ * goal total), and a layered rule would lose to `font-heading` in the
+ * utilities layer, leaving exactly the biggest numbers on the page set in the
+ * heading face. Unlayered beats every layered rule regardless of specificity.
+ */
+.tabular-nums {
+  font-family: var(--font-numeric);
 }
 
 @layer components {
