@@ -59,8 +59,8 @@ export function DataTable<TData, TValue>({
       <Table>
         <TableHeader
           className={cn(
-            'bg-muted/70 [&_tr]:border-border',
-            stickyHeader && 'sticky top-0 z-10 backdrop-blur-sm',
+            'bg-muted [&_tr]:border-border',
+            stickyHeader && 'sticky top-0 z-10',
           )}
         >
           {table.getHeaderGroups().map((headerGroup) => (

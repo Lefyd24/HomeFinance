@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { cn } from '@/lib/utils'
 import { Chart, ChartFrame } from '../ChartFrame'
-import { baseAxisStyle, tooltipStyle, useChartTheme, MAX_SERIES, seriesHoverSafe } from '../chartTheme'
+import { baseAxisStyle, polarityItemStyle, tooltipStyle, useChartTheme, MAX_SERIES, seriesHoverSafe } from '../chartTheme'
 import { formatCurrency } from '../../lib/format'
 import { getCategoryBreakdown, getSpendingMom, getTopMerchants, getWeekdayHeatmap } from '../reportsPageApi'
 import { formatPeriodLabel } from '../periodLabels'
@@ -196,7 +196,7 @@ export function SpendingTab({ filters }: { filters: ReportFilters }) {
             value: point.change,
             itemStyle: {
               // More spend than last month is the unwelcome direction here.
-              color: point.change > 0 ? theme.negative : theme.positive,
+              ...polarityItemStyle(theme, point.change > 0 ? 'negative' : 'positive'),
               borderRadius: point.change >= 0 ? [4, 4, 0, 0] : [0, 0, 4, 4],
             },
             label: {

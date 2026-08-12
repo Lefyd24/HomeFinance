@@ -48,7 +48,7 @@ export function Tile({
   return (
     <section
       className={cn(
-        'flex min-w-0 flex-col overflow-hidden rounded-xl border border-border bg-card p-3 shadow-sm',
+        'flex min-w-0 flex-col overflow-hidden rounded-xl bg-card p-3 shadow-card',
         allowOverflow && 'overflow-visible',
         className,
       )}

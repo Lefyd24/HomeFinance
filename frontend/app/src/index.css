@@ -1,200 +1,239 @@
 @import 'tailwindcss';
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
-@import "@fontsource-variable/inter";
-@import "@fontsource-variable/montserrat";
+@import "@fontsource-variable/instrument-sans";
 
 @custom-variant dark (&:is(.dark *));
 
 /*
- * Crystalline finance palette
- * ---------------------------
- * Cerulean remains the product voice. The canvas is now a cool atmospheric
- * field so translucent surfaces have real colour and depth to refract.
+ * Ink & Navy — shared with the portfolio site
+ * -------------------------------------------
+ * One palette across both products: a flat slate canvas, white surfaces that
+ * are lifted by shadow rather than outlined by borders, and a deep navy as the
+ * product voice (its dark-mode counterpart is a bright sky, the same swap the
+ * portfolio makes).
+ *
+ * Surfaces are opaque. The only translucent things left in the app are the
+ * mobile dock and the modal scrims — places where you actually want to see the
+ * page moving underneath. Everywhere else, depth comes from `--shadow-*`.
  */
 :root {
-  --background: oklch(94.504% 0.01299 221.795 / 0.89);
-  --foreground: oklch(18.591% 0.01009 220.193);
-  --card: oklch(100% 0.00011 271.152);
-  --card-foreground: oklch(11.162% 0.00685 225.019);
-  --popover: oklch(99% 0.006 228 / 0.86);
-  --popover-foreground: oklch(22% 0.016 224);
-  --primary: oklch(51.5% 0.126 227);
-  --primary-foreground: oklch(96.92% 0.022 217.63);
-  --secondary: oklch(67.08% 0.175 40.64);
-  --secondary-foreground: oklch(98.427% 0.00385 106.918);
-  --muted: oklch(86.128% 0.02121 219.926);
-  --muted-foreground: oklch(22.755% 0.01181 205.851);
-  --accent: oklch(94.8% 0.012 220);
-  --accent-foreground: oklch(28% 0.03 222);
-  --destructive: oklch(54% 0.215 25);
-  --border: oklch(90% 0.005 85);
-  --input: oklch(90% 0.005 85);
-  --ring: oklch(62% 0.14 226);
-  --chart-1: oklch(84.43% 0.116 218.71);
-  --chart-2: oklch(77.62% 0.149 226.59);
-  --chart-3: oklch(65.75% 0.126 226.19);
-  --chart-4: oklch(64.06% 0.197 252.97);
-  --chart-5: oklch(44.32% 0.132 251.82);
-  --radius: 0.625rem;
-  --sidebar: oklch(99% 0.007 228 / 0.84);
-  --sidebar-foreground: oklch(22% 0.016 224);
-  --sidebar-primary: oklch(51.5% 0.126 227);
-  --sidebar-primary-foreground: oklch(96.92% 0.022 217.63);
-  --sidebar-accent: oklch(93% 0.011 220);
-  --sidebar-accent-foreground: oklch(28% 0.03 222);
-  --sidebar-border: oklch(89.5% 0.006 85);
-  --sidebar-ring: oklch(62% 0.14 226);
-  --success: oklch(52% 0.155 158);
-  --success-foreground: oklch(97% 0.02 160);
+  --background: oklch(98.2% 0.004 250);
+  --foreground: oklch(20.8% 0.04 262);
+  --card: oklch(100% 0 0);
+  --card-foreground: oklch(20.8% 0.04 262);
+  --popover: oklch(100% 0 0);
+  --popover-foreground: oklch(20.8% 0.04 262);
+  --primary: oklch(34.6% 0.074 256);
+  --primary-foreground: oklch(98.4% 0.003 248);
+  --secondary: oklch(96.8% 0.007 248);
+  --secondary-foreground: oklch(28.2% 0.057 255);
+  --muted: oklch(96.8% 0.007 248);
+  --muted-foreground: oklch(50% 0.038 257);
+  --accent: oklch(94.6% 0.011 250);
+  --accent-foreground: oklch(28.2% 0.057 255);
+  --destructive: oklch(57% 0.232 27);
+  --border: oklch(92.9% 0.013 255);
+  --input: oklch(92.9% 0.013 255);
+  --ring: oklch(45% 0.10 256);
+  /* Identity ramp: navy → sky, the portfolio's own gradient read as a scale. */
+  --chart-1: oklch(34.6% 0.074 256);
+  --chart-2: oklch(45% 0.108 250);
+  --chart-3: oklch(57% 0.142 244);
+  --chart-4: oklch(67.5% 0.176 252);
+  --chart-5: oklch(75.4% 0.139 233);
+  --radius: 1rem;
+  --sidebar: oklch(100% 0 0);
+  --sidebar-foreground: oklch(37.2% 0.039 257);
+  --sidebar-primary: oklch(34.6% 0.074 256);
+  --sidebar-primary-foreground: oklch(98.4% 0.003 248);
+  --sidebar-accent: oklch(96.8% 0.007 248);
+  --sidebar-accent-foreground: oklch(28.2% 0.057 255);
+  --sidebar-border: oklch(92.9% 0.013 255);
+  --sidebar-ring: oklch(45% 0.10 256);
+  --success: oklch(58% 0.185 152);
+  --success-foreground: oklch(98% 0.02 155);
   /* The third state between success and destructive: "close to the limit",
      "due soon". Distinct from both, and never used as a chart series colour. */
-  --warning: oklch(59% 0.16 70);
+  --warning: oklch(62% 0.175 68);
   --warning-foreground: oklch(99% 0.01 72);
 
   /* Flow colours — the direction money moved, not whether something is wrong.
      Kept separate from --destructive so an ordinary expense never reads as an
      alarm, and so a row rail, an amount, and a chip can share one hue. */
-  --flow-in: oklch(52% 0.155 158);
-  --flow-out: oklch(56% 0.203 22);
+  --flow-in: oklch(58% 0.185 152);
+  --flow-out: oklch(57% 0.232 27);
   --flow-move: oklch(52% 0.19 254);
 
-  --glass-surface: oklch(100% 0.006 228 / 0.78);
-  --glass-surface-strong: oklch(100% 0.004 228 / 0.88);
-  --glass-border: oklch(63% 0.035 226 / 0.22);
-  --glass-shadow: oklch(31% 0.035 226 / 0.16);
-  --glass-shadow-depth: oklch(31% 0.04 226 / 0.22);
-  --glass-highlight: oklch(100% 0 0 / 0.88);
-  --canvas-glow-primary: oklch(75% 0.11 225 / 0.22);
-  --canvas-glow-secondary: oklch(83% 0.10 178 / 0.16);
-  --canvas-glow-accent: oklch(81% 0.10 282 / 0.14);
+  /*
+   * Chart polarity — a stop brighter than the text tokens above.
+   * Text has to hold contrast against a white card at 12px; a bar or a line has
+   * mass, so it can carry the saturation that makes a gain read as a gain from
+   * across the room. `*-glow` is the halo ECharts paints behind the mark
+   * (see `polarityItemStyle` in `reports/chartTheme.ts`).
+   */
+  --chart-positive: oklch(62% 0.21 150);
+  --chart-negative: oklch(59% 0.245 26);
+  --chart-positive-glow: oklch(62% 0.21 150 / 0.42);
+  --chart-negative-glow: oklch(59% 0.245 26 / 0.42);
+  /* Same idea for the recharts side of the app (investments), where the halo
+     is an SVG drop-shadow rather than an ECharts shadowBlur. */
+  --flow-in-glow: oklch(62% 0.21 150 / 0.55);
+  --flow-out-glow: oklch(59% 0.245 26 / 0.55);
 
-  /* Investments mode gets a flatter room tone: neutral grey with a faint cyan
-     drift, no mesh motion. The actual body canvas and the shell well both read
-     from this token via `--aurora-canvas-bg`. */
-  --investment-canvas-bg: oklch(92.191% 0.0001 271.152);
-  --investment-canvas-gradient: linear-gradient(
-    135deg,
-    color-mix(in oklch, var(--investment-canvas-bg) 96%, white) 0%,
-    color-mix(in oklch, var(--investment-canvas-bg) 90%, oklch(90% 0.03 205)) 52%,
-    color-mix(in oklch, var(--investment-canvas-bg) 82%, oklch(89.709% 0.03162 196.781)) 100%
-  );
+  /*
+   * Elevation
+   * ---------
+   * Three steps, each a stack of a contact shadow, a mid shadow, and a wide
+   * ambient one — that layering is what makes a card look lit rather than
+   * outlined. Tinted toward the canvas hue instead of pure black so shadows on
+   * a slate background stay cool rather than muddy.
+   */
+  --shadow-tint: oklch(45% 0.06 256);
+  --surface-border: transparent;
+  /* Light mode needs no rim — the canvas is lighter than every surface on it,
+     so the shadow alone draws the edge. Declared so `.dark` can just swap it. */
+  --shadow-rim: 0 0 0 0 transparent;
+  --surface-border-strong: color-mix(in oklch, var(--border) 70%, transparent);
+  --shadow-xs:
+    var(--shadow-rim),
+    0 1px 2px -1px color-mix(in oklch, var(--shadow-tint) 14%, transparent);
+  --shadow-card:
+    var(--shadow-rim),
+    0 1px 2px -1px color-mix(in oklch, var(--shadow-tint) 14%, transparent),
+    0 6px 14px -6px color-mix(in oklch, var(--shadow-tint) 20%, transparent),
+    0 18px 36px -20px color-mix(in oklch, var(--shadow-tint) 32%, transparent);
+  --shadow-card-hover:
+    var(--shadow-rim),
+    0 2px 4px -2px color-mix(in oklch, var(--shadow-tint) 12%, transparent),
+    0 10px 22px -10px color-mix(in oklch, var(--shadow-tint) 20%, transparent),
+    0 28px 54px -26px color-mix(in oklch, var(--shadow-tint) 30%, transparent);
+  --shadow-raised:
+    var(--shadow-rim),
+    0 2px 6px -3px color-mix(in oklch, var(--shadow-tint) 18%, transparent),
+    0 14px 32px -14px color-mix(in oklch, var(--shadow-tint) 26%, transparent),
+    0 40px 68px -34px color-mix(in oklch, var(--shadow-tint) 34%, transparent);
+  --shadow-bar: 0 6px 20px -20px color-mix(in oklch, var(--shadow-tint) 40%, transparent);
+
+  /* Kept for the two surfaces that are still deliberately translucent: the
+     mobile dock and its lens. Nothing else reads these. */
+  --dock-surface: oklch(100% 0.004 250 / 0.72);
+  --dock-border: oklch(63% 0.035 256 / 0.18);
+
+  /* Investments mode gets a flatter, cooler room tone — a shade off the app
+     canvas rather than a different palette. */
+  --investment-canvas-bg: oklch(96.4% 0.006 250);
 
   /* Desktop shell scoop where sidebar meets the content well. */
   --shell-scoop-radius: 1.25rem;
-  --shell-chrome: var(--glass-surface-strong);
-  /* The canvas fill the aurora paints on top of (and the wash overlaid back
-     on top of the aurora, see `.shell-main-bg::after`) — split from
-     `--background` so a section can recolour what's *behind* the aurora too.
-     Otherwise the aurora blends with, and the wash re-tints back toward, the
-     ordinary blue `--background`, which pulls a differently-coloured aurora
-     straight back toward blue no matter what colour the aurora itself is. */
-  --aurora-canvas-bg: var(--background);
+  --shell-chrome: var(--sidebar);
+  /* The canvas fill behind the content well — split from `--background` so a
+     section can recolour what sits behind its pages without moving the rest of
+     the app's chrome with it. */
+  --canvas-bg: var(--background);
 
-  /* Tab strips sit on the mesh canvas — need a solid lift off --background. */
-  --tabs-list-bg: oklch(100% 0.004 228 / 0.96);
-  --tabs-list-border: color-mix(in oklch, var(--glass-border) 48%, var(--border));
-  --tabs-active-bg: oklch(100% 0 0);
-  --tabs-active-border: color-mix(in oklch, var(--primary) 22%, var(--border));
-  --tabs-inactive-foreground: oklch(34% 0.022 224);
-
-  /* Aurora mesh — replaces the ffflux SVG as the canvas/content-well fill.
-     Drawn from brand tokens (cerulean primary, cyan chart accent, terracotta
-     secondary, warm beige) but each pulled well back toward --background so
-     the effect reads as a quiet tint, not a loud gradient; re-tunes itself in
-     dark mode along with everything else. */
-  --aurora-color-1: color-mix(in oklch, var(--primary) 55%, var(--background));
-  --aurora-color-2: color-mix(in oklch, oklch(80% 0.09 205) 45%, var(--background));
-  --aurora-color-3: color-mix(in oklch, var(--secondary) 45%, var(--background));
-  --aurora-color-4: color-mix(in oklch, oklch(90% 0.035 85) 55%, var(--background));
-  --aurora-color-5: color-mix(in oklch, var(--chart-2) 45%, var(--background));
-  --aurora-gradient: repeating-linear-gradient(
-    100deg,
-    var(--aurora-color-1) 10%,
-    var(--aurora-color-2) 15%,
-    var(--aurora-color-3) 20%,
-    var(--aurora-color-4) 25%,
-    var(--aurora-color-5) 30%
-  );
-  --aurora-opacity: 0.6;
+  --tabs-list-bg: var(--secondary);
+  --tabs-list-border: transparent;
+  --tabs-active-bg: var(--card);
+  --tabs-active-border: transparent;
+  --tabs-inactive-foreground: oklch(44.5% 0.037 257);
 }
 
-/* Dark keeps the cerulean family but at low chroma — a quiet slate-blue room,
-   not a glowing console. Saturated cyan appears only on focus rings and charts. */
+/* Dark is the portfolio's ink-950 room: a near-black navy canvas, surfaces
+   lifted a few percent above it, and sky as the accent that replaces navy. */
 .dark {
-  --background: oklch(15.227% 0.01252 216.022);
-  --foreground: oklch(97% 0.007 220);
-  --card: oklch(25.499% 0.0233 230.527);
-  --card-foreground: oklch(97% 0.007 220);
-  --popover: oklch(22.806% 0.01517 226.968);
-  --popover-foreground: oklch(97% 0.007 220);
-  --primary: oklch(78% 0.115 228);
-  --primary-foreground: oklch(18% 0.020 222);
-  --secondary: oklch(40.445% 0.10486 40.965);
-  --secondary-foreground: oklch(97% 0.007 220);
-  --muted: oklch(30% 0.017 224);
-  --muted-foreground: oklch(82% 0.014 222);
-  --accent: oklch(32% 0.023 224);
-  --accent-foreground: oklch(97% 0.007 220);
-  --destructive: oklch(72% 0.175 21);
-  --border: oklch(1 0 0 / 16%);
-  --input: oklch(1 0 0 / 20%);
-  --ring: oklch(78% 0.115 228);
-  --chart-1: oklch(85% 0.060 218);
-  --chart-2: oklch(78% 0.088 222);
-  --chart-3: oklch(71% 0.104 227);
-  --chart-4: oklch(68% 0.115 248);
-  --chart-5: oklch(56% 0.105 252);
-  --sidebar: oklch(19.5% 0.016 224);
-  --sidebar-foreground: oklch(97% 0.007 220);
-  --sidebar-primary: oklch(79% 0.115 227);
-  --sidebar-primary-foreground: oklch(18% 0.020 222);
-  --sidebar-accent: oklch(26.538% 0.01387 220.166);
-  --sidebar-accent-foreground: oklch(97% 0.007 220);
-  --sidebar-border: oklch(1 0 0 / 16%);
-  --sidebar-ring: oklch(78% 0.115 228);
-  --success: oklch(83% 0.155 160);
-  --success-foreground: oklch(20% 0.035 160);
-  --warning: oklch(85% 0.145 80);
-  --warning-foreground: oklch(22% 0.040 76);
-  --flow-in: oklch(83% 0.155 160);
-  --flow-out: oklch(76% 0.165 20);
+  --background: oklch(14.8% 0.023 255);
+  --foreground: oklch(96.8% 0.007 248);
+  --card: oklch(20.5% 0.028 256);
+  --card-foreground: oklch(96.8% 0.007 248);
+  --popover: oklch(22.5% 0.03 256);
+  --popover-foreground: oklch(96.8% 0.007 248);
+  --primary: oklch(75.4% 0.139 233);
+  --primary-foreground: oklch(16% 0.03 256);
+  --secondary: oklch(26% 0.03 256);
+  --secondary-foreground: oklch(96.8% 0.007 248);
+  --muted: oklch(25% 0.028 256);
+  --muted-foreground: oklch(74% 0.028 253);
+  --accent: oklch(27.5% 0.032 256);
+  --accent-foreground: oklch(96.8% 0.007 248);
+  --destructive: oklch(70% 0.20 25);
+  --border: oklch(100% 0 0 / 9%);
+  --input: oklch(100% 0 0 / 15%);
+  --ring: oklch(75.4% 0.139 233);
+  --chart-1: oklch(45% 0.108 250);
+  --chart-2: oklch(57% 0.142 244);
+  --chart-3: oklch(67.5% 0.176 252);
+  --chart-4: oklch(75.4% 0.139 233);
+  --chart-5: oklch(85% 0.09 228);
+  --sidebar: oklch(17.5% 0.025 256);
+  --sidebar-foreground: oklch(90% 0.014 250);
+  --sidebar-primary: oklch(75.4% 0.139 233);
+  --sidebar-primary-foreground: oklch(16% 0.03 256);
+  --sidebar-accent: oklch(24.5% 0.03 256);
+  --sidebar-accent-foreground: oklch(96.8% 0.007 248);
+  --sidebar-border: oklch(100% 0 0 / 8%);
+  --sidebar-ring: oklch(75.4% 0.139 233);
+  --success: oklch(78% 0.19 155);
+  --success-foreground: oklch(18% 0.04 158);
+  --warning: oklch(84% 0.16 80);
+  --warning-foreground: oklch(22% 0.04 76);
+  --flow-in: oklch(78% 0.19 155);
+  --flow-out: oklch(72% 0.20 24);
   --flow-move: oklch(80% 0.125 248);
 
-  --glass-surface: oklch(22.417% 0.02085 217.816 / 0.56);
-  --glass-surface-strong: oklch(25% 0.022 224 / 0.78);
-  --glass-border: oklch(100% 0 0 / 0.13);
-  --glass-shadow: oklch(0% 0 0 / 0.38);
-  --glass-shadow-depth: oklch(0% 0 0 / 0.48);
-  --glass-highlight: oklch(100% 0 0 / 0.11);
-  --canvas-glow-primary: oklch(54% 0.12 230 / 0.2);
-  --canvas-glow-secondary: oklch(52% 0.09 174 / 0.12);
-  --canvas-glow-accent: oklch(50% 0.11 283 / 0.12);
+  --chart-positive: oklch(80% 0.215 153);
+  --chart-negative: oklch(70% 0.235 25);
+  --chart-positive-glow: oklch(80% 0.215 153 / 0.45);
+  --chart-negative-glow: oklch(70% 0.235 25 / 0.45);
+  --flow-in-glow: oklch(80% 0.215 153 / 0.6);
+  --flow-out-glow: oklch(70% 0.235 25 / 0.6);
 
-  --investment-canvas-bg: oklch(18.5% 0.01 228);
-  --investment-canvas-gradient: linear-gradient(
-    135deg,
-    color-mix(in oklch, var(--investment-canvas-bg) 94%, white) 0%,
-    color-mix(in oklch, var(--investment-canvas-bg) 88%, oklch(34% 0.04 205)) 52%,
-    color-mix(in oklch, var(--investment-canvas-bg) 80%, oklch(38% 0.05 195)) 100%
-  );
-  --shell-chrome: var(--glass-surface-strong);
-  --aurora-canvas-bg: var(--background);
+  /* On a near-black canvas a shadow alone can't separate two dark surfaces, so
+     every dark elevation step leads with a `0 0 0 1px` hairline rim. Baking it
+     into the shadow stack (rather than into `border-color`) means anything that
+     takes a `shadow-*` utility gets the rim for free, and light mode simply
+     omits that layer. */
+  --shadow-tint: oklch(0% 0 0);
+  --surface-border: transparent;
+  --surface-border-strong: oklch(100% 0 0 / 10%);
+  --shadow-rim: 0 0 0 1px oklch(100% 0 0 / 7%);
+  --shadow-xs:
+    var(--shadow-rim),
+    0 1px 2px -1px color-mix(in oklch, var(--shadow-tint) 45%, transparent);
+  --shadow-card:
+    var(--shadow-rim),
+    0 1px 2px -1px color-mix(in oklch, var(--shadow-tint) 40%, transparent),
+    0 6px 16px -8px color-mix(in oklch, var(--shadow-tint) 50%, transparent),
+    0 20px 40px -24px color-mix(in oklch, var(--shadow-tint) 65%, transparent);
+  --shadow-card-hover:
+    var(--shadow-rim),
+    0 2px 4px -2px color-mix(in oklch, var(--shadow-tint) 45%, transparent),
+    0 12px 26px -10px color-mix(in oklch, var(--shadow-tint) 55%, transparent),
+    0 30px 58px -26px color-mix(in oklch, var(--shadow-tint) 72%, transparent);
+  --shadow-raised:
+    var(--shadow-rim),
+    0 2px 6px -3px color-mix(in oklch, var(--shadow-tint) 50%, transparent),
+    0 16px 34px -14px color-mix(in oklch, var(--shadow-tint) 62%, transparent),
+    0 44px 72px -34px color-mix(in oklch, var(--shadow-tint) 78%, transparent);
+  --shadow-bar: 0 8px 24px -20px color-mix(in oklch, var(--shadow-tint) 80%, transparent);
 
-  --tabs-list-bg: oklch(27% 0.022 224 / 0.92);
-  --tabs-list-border: color-mix(in oklch, var(--glass-border) 55%, var(--border));
-  --tabs-active-bg: oklch(34% 0.024 224);
-  --tabs-active-border: color-mix(in oklch, var(--primary) 35%, var(--border));
-  --tabs-inactive-foreground: oklch(84% 0.014 222);
+  --dock-surface: oklch(24% 0.028 256 / 0.62);
+  --dock-border: oklch(100% 0 0 / 0.12);
 
-  --aurora-color-2: color-mix(in oklch, oklch(77.212% 0.12314 205.011) 40%, var(--background));
-  --aurora-color-4: color-mix(in oklch, oklch(83.737% 0.08356 79.39) 40%, var(--background));
-  --aurora-opacity: 0.62;
+  --investment-canvas-bg: oklch(12.8% 0.021 255);
+  --shell-chrome: var(--sidebar);
+  --canvas-bg: var(--background);
+
+  --tabs-list-bg: var(--secondary);
+  --tabs-list-border: transparent;
+  --tabs-active-bg: oklch(33% 0.034 256);
+  --tabs-active-border: transparent;
+  --tabs-inactive-foreground: oklch(80% 0.02 252);
 }
 
 @theme inline {
-  --font-sans: 'Inter Variable', sans-serif;
-  --font-heading: 'Inter Variable', sans-serif;
+  --font-sans: 'Instrument Sans Variable', ui-sans-serif, system-ui, sans-serif;
+  --font-heading: 'Instrument Sans Variable', ui-sans-serif, system-ui, sans-serif;
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -233,23 +272,20 @@
   --color-card: var(--card);
   --color-foreground: var(--foreground);
   --color-background: var(--background);
-  --radius-sm: calc(var(--radius) * 0.6);
-  --radius-md: calc(var(--radius) * 0.8);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) * 1.4);
-  --radius-2xl: calc(var(--radius) * 1.8);
-  --radius-3xl: calc(var(--radius) * 2.2);
-  --radius-4xl: calc(var(--radius) * 2.6);
+  --radius-sm: calc(var(--radius) * 0.4);
+  --radius-md: calc(var(--radius) * 0.6);
+  --radius-lg: calc(var(--radius) * 0.8);
+  --radius-xl: var(--radius);
+  --radius-2xl: calc(var(--radius) * 1.35);
+  --radius-3xl: calc(var(--radius) * 1.7);
+  --radius-4xl: calc(var(--radius) * 2);
 
-  --animate-aurora: aurora 240s linear infinite;
-  @keyframes aurora {
-    from {
-      background-position: 50% 50%;
-    }
-    to {
-      background-position: 130% 50%;
-    }
-  }
+  /* Elevation as utilities, so markup can say `shadow-card` / `shadow-raised`
+     instead of re-deriving a stack of box-shadows per component. */
+  --shadow-xs: var(--shadow-xs);
+  --shadow-card: var(--shadow-card);
+  --shadow-card-hover: var(--shadow-card-hover);
+  --shadow-raised: var(--shadow-raised);
 }
 
 /*
@@ -306,75 +342,73 @@
 }
 
 @layer components {
+  /* A flat canvas. No mesh, no animation — the page is the quiet ground that
+     the shadowed surfaces sit on. */
   .app-canvas {
     position: relative;
     isolation: isolate;
-    background-color: var(--aurora-canvas-bg);
+    background-color: var(--canvas-bg);
   }
 
-  /* Aurora mesh — animated gradient replaces the old ffflux SVG as the body fill. */
-  .app-canvas::before {
-    content: '';
-    position: fixed;
-    z-index: -2;
-    inset: -10px;
-    pointer-events: none;
-    background-color: var(--aurora-canvas-bg);
-    background-image: var(--aurora-gradient);
-    background-size: 300% 200%;
-    background-position: 50% 50%;
-    opacity: var(--aurora-opacity);
-    filter: blur(3px);
-    animation: var(--animate-aurora);
-    mask-image: radial-gradient(ellipse at 50% 0%, black 10%, transparent 70%);
-    -webkit-mask-image: radial-gradient(ellipse at 50% 0%, black 10%, transparent 70%);
+  /*
+   * Surfaces
+   * --------
+   * `.glass-panel` kept its name (it is spread across ~25 files) but stopped
+   * being glass: every panel is now an opaque card whose edge is drawn by
+   * `--shadow-card`, not by a border. The `border` utility that markup still
+   * carries resolves to `--surface-border`, which is transparent in light mode
+   * and a hairline rim in dark, where shadow alone can't separate two dark
+   * surfaces.
+   */
+  .glass-panel {
+    overflow: hidden;
+    background: var(--card);
+    border-color: var(--surface-border);
+    box-shadow: var(--shadow-card);
   }
 
-  .app-canvas::after {
-    content: '';
-    position: fixed;
-    z-index: -1;
-    inset: 0;
-    pointer-events: none;
-    background: color-mix(in oklch, var(--aurora-canvas-bg) 22%, transparent);
-  }
-
-  .glass-panel,
-  .glass-bar {
-    isolation: isolate;
-    background: var(--glass-surface);
-    -webkit-backdrop-filter: blur(14px) saturate(145%);
-    backdrop-filter: blur(14px) saturate(145%);
+  /* A panel you can click lifts on hover. Only elements that are themselves
+     interactive — a panel wrapped in a link gets this from the link, not from
+     every card on the page picking up a hover state it can't act on. */
+  a.glass-panel:hover,
+  button.glass-panel:hover,
+  [role='button'].glass-panel:hover,
+  a:hover > .glass-panel {
+    box-shadow: var(--shadow-card-hover);
   }
 
   .glass-panel {
-    overflow: hidden;
-    border-color: color-mix(in oklch, var(--glass-border) 72%, var(--border));
-    box-shadow:
-      inset 0 1px 0 color-mix(in oklch, white 58%, transparent),
-      inset 0 -1px 0 color-mix(in oklch, var(--glass-border) 24%, transparent),
-      0 0 16px -7px var(--glass-shadow),
-      0 4px 12px -9px var(--glass-shadow),
-      0 14px 34px -18px var(--glass-shadow-depth);
+    transition: box-shadow 200ms ease-out;
   }
 
+  @media (prefers-reduced-motion: reduce) {
+    .glass-panel {
+      transition: none;
+    }
+  }
+
+  /* Shell chrome and sticky bars: opaque, separated by a soft drop rather than
+     a rule. */
   .glass-bar {
-    background: var(--glass-surface-strong);
-    border-color: color-mix(in oklch, var(--glass-border) 62%, var(--border));
-    box-shadow:
-      inset 0 1px 0 color-mix(in oklch, white 44%, transparent),
-      inset 0 -1px 0 color-mix(in oklch, var(--glass-border) 20%, transparent),
-      0 0 14px -8px var(--glass-shadow),
-      0 8px 24px -18px var(--glass-shadow-depth);
-    -webkit-backdrop-filter: blur(16px) saturate(145%);
-    backdrop-filter: blur(16px) saturate(145%);
+    background: var(--shell-chrome);
+    border-color: var(--surface-border);
+    box-shadow: var(--shadow-bar);
+  }
+
+  /* Floating layers — dialogs, sheets, dropdowns, popovers. Opaque, and the
+     one place that uses the deepest elevation step. */
+  .glass-popover {
+    background: var(--popover);
+    isolation: isolate;
+    border-color: var(--surface-border-strong);
+    box-shadow: var(--shadow-raised);
   }
 
   /*
    * Mobile dock — "liquid glass"
    * ----------------------------
-   * A floating pill that reads as a single piece of thick glass sitting over
-   * the page, plus a lens that slides to whichever item is active.
+   * The one surface that stays glass, and the one where it earns its keep: it
+   * floats over live content, so seeing the page slide underneath is the point.
    *
    * The lens is one absolutely-positioned element rather than a background on
    * each item: only a single moving box can animate *between* slots, which is
@@ -386,15 +420,13 @@
     --dock-pad: 0.3125rem;
     --dock-slots: 4;
     isolation: isolate;
-    background: var(--glass-surface);
-    border-color: color-mix(in oklch, var(--glass-border) 70%, var(--border));
+    background: var(--dock-surface);
+    border-color: var(--dock-border);
     -webkit-backdrop-filter: blur(22px) saturate(180%);
     backdrop-filter: blur(22px) saturate(180%);
     box-shadow:
       inset 0 1px 0 color-mix(in oklch, white 52%, transparent),
-      inset 0 -1px 0 color-mix(in oklch, var(--glass-border) 26%, transparent),
-      0 2px 10px -6px var(--glass-shadow),
-      0 18px 40px -20px var(--glass-shadow-depth);
+      var(--shadow-raised);
     padding: var(--dock-pad);
   }
 
@@ -424,7 +456,7 @@
     box-shadow:
       inset 0 1px 1px color-mix(in oklch, white 70%, transparent),
       inset 0 -1px 2px color-mix(in oklch, white 28%, transparent),
-      0 2px 8px -4px var(--glass-shadow);
+      var(--shadow-xs);
   }
 
   .liquid-dock-lens[data-visible='false'] {
@@ -458,24 +490,11 @@
     opacity: 0.55;
   }
 
-  .glass-popover {
-    background: var(--glass-surface-strong);
-    isolation: isolate;
-    border-color: var(--glass-border);
-    box-shadow:
-      inset 0 1px 1px color-mix(in oklch, white 54%, transparent),
-      0 8px 24px color-mix(in oklch, var(--glass-shadow) 84%, transparent);
-    -webkit-backdrop-filter: blur(18px) saturate(175%) brightness(1.03);
-    backdrop-filter: blur(18px) saturate(175%) brightness(1.03);
-  }
-
   [data-slot="tabs-list"][data-variant="default"],
   [data-slot="tabs-list"][data-variant="line"] {
     background: var(--tabs-list-bg);
     border: 1px solid var(--tabs-list-border);
-    box-shadow:
-      inset 0 1px 0 color-mix(in oklch, white 52%, transparent),
-      0 1px 3px color-mix(in oklch, var(--glass-shadow) 35%, transparent);
+    box-shadow: none;
   }
 
   [data-slot="tabs-list"][data-variant="line"] {
@@ -493,7 +512,7 @@
     background: var(--primary);
     border-color: transparent;
     color: var(--primary-foreground);
-    box-shadow: none;
+    box-shadow: var(--shadow-xs);
   }
 
   [data-slot="tabs-list"][data-variant="line"] [data-slot="tabs-trigger"] {
@@ -515,9 +534,8 @@
     -ms-overflow-style: none;
     padding: 0.125rem;
     border-radius: var(--radius-lg);
-    background: color-mix(in oklch, var(--primary) 11%, var(--tabs-list-bg));
-    border: 1px solid color-mix(in oklch, var(--primary) 22%, var(--tabs-list-border));
-    box-shadow: inset 0 1px 0 color-mix(in oklch, white 40%, transparent);
+    background: color-mix(in oklch, var(--primary) 8%, var(--tabs-list-bg));
+    border: 1px solid transparent;
   }
 
   .report-filter-group::-webkit-scrollbar {
@@ -539,9 +557,6 @@
   }
 
   @supports not ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
-    .glass-panel,
-    .glass-bar,
-    .glass-popover,
     .liquid-dock {
       background: var(--card);
     }
@@ -557,26 +572,12 @@
     .liquid-dock-lens {
       transition: opacity 200ms ease-out;
     }
-
-    .app-canvas::before,
-    .shell-main-bg::before {
-      animation: none;
-      background-position: 50% 50%;
-    }
   }
 
   @media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
-    .app-canvas::before {
-      background-image: none;
-    }
-
-    .app-canvas::after {
-      background: var(--aurora-canvas-bg);
-    }
-
-    .glass-panel,
-    .glass-bar,
-    .glass-popover,
+    /* Only the dock is translucent now, so this block has one job. Panels also
+       get their rim back, since "more contrast" wants an edge, not just a
+       shadow. */
     .liquid-dock {
       background: var(--card);
       -webkit-backdrop-filter: none;
@@ -594,6 +595,12 @@
       opacity: 0.5;
     }
 
+    .glass-panel,
+    .glass-bar,
+    .glass-popover {
+      border-color: var(--border);
+    }
+
     [data-slot="tabs-list"] {
       background: var(--card);
       border-color: var(--border);
@@ -609,15 +616,6 @@
     }
   }
 
-  @media (max-width: 48rem) {
-    .glass-panel,
-    .glass-bar,
-    .glass-popover {
-      -webkit-backdrop-filter: blur(10px) saturate(145%);
-      backdrop-filter: blur(10px) saturate(145%);
-    }
-  }
-
   /*
    * Inverse-rounded shell junction (Resend-style)
    * ---------------------------------------------
@@ -625,25 +623,21 @@
    * the main well's start-edge radii leave concave scoops of that chrome.
    */
   .shell-sidebar.glass-bar {
-    box-shadow:
-      inset 0 1px 0 color-mix(in oklch, white 44%, transparent),
-      inset 0 -1px 0 color-mix(in oklch, var(--glass-border) 20%, transparent);
+    box-shadow: none;
   }
 
   .shell-content-column {
     background: var(--shell-chrome);
-    -webkit-backdrop-filter: blur(16px) saturate(145%);
-    backdrop-filter: blur(16px) saturate(145%);
   }
 
   .shell-topbar {
     border-bottom: none;
-    box-shadow: inset 0 1px 0 color-mix(in oklch, white 44%, transparent);
+    box-shadow: none;
   }
 
   .shell-footer {
     border-top: none;
-    box-shadow: inset 0 -1px 0 color-mix(in oklch, var(--glass-border) 20%, transparent);
+    box-shadow: none;
   }
 
   .shell-main {
@@ -652,17 +646,16 @@
     overflow: hidden;
     border-start-start-radius: var(--shell-scoop-radius);
     border-end-start-radius: var(--shell-scoop-radius);
-    /* Transparent so scoop corners reveal chrome; mesh lives on .shell-main-bg. */
+    /* Transparent so scoop corners reveal chrome; the fill lives on
+       `.shell-main-bg`. */
     background-color: transparent;
   }
 
   /*
-   * Static canvas fill for the content well. Sits on the non-scrolling shell
-   * frame so page content can scroll over it without moving the mesh. The
-   * aurora layer lives on ::before/::after rather than directly on this
-   * element so it can carry its own animated gradient plus a tint overlay;
-   * `.shell-main`'s `overflow: hidden` clips both to the scoop's rounded
-   * start-edge corners, which is what keeps the left corners rounded.
+   * Canvas fill for the content well. Sits on the non-scrolling shell frame so
+   * page content scrolls over a fixed ground. `.shell-main`'s `overflow:
+   * hidden` clips it to the scoop's rounded start-edge corners, which is what
+   * keeps the left corners rounded.
    */
   .shell-main-bg {
     position: absolute;
@@ -672,28 +665,7 @@
     overflow: hidden;
     border-start-start-radius: inherit;
     border-end-start-radius: inherit;
-    background-color: var(--aurora-canvas-bg);
-  }
-
-  .shell-main-bg::before {
-    content: '';
-    position: absolute;
-    inset: -10px;
-    background-image: var(--aurora-gradient);
-    background-size: 300% 200%;
-    background-position: 50% 50%;
-    opacity: var(--aurora-opacity);
-    filter: blur(3px);
-    animation: var(--animate-aurora);
-    mask-image: radial-gradient(ellipse at 100% 0%, black 10%, transparent 70%);
-    -webkit-mask-image: radial-gradient(ellipse at 100% 0%, black 10%, transparent 70%);
-  }
-
-  .shell-main-bg::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: color-mix(in oklch, var(--aurora-canvas-bg) 22%, transparent);
+    background-color: var(--canvas-bg);
   }
 
   .shell-main-scroll {
@@ -708,97 +680,42 @@
    * Section theming
    * ---------------------------------------------
    * The investments sub-app should feel like a different room, not a different
-   * app. Rather than fork components, it re-points the same tokens: the aurora
-   * swings off the cerulean/terracotta canvas toward the cooler indigo end of
-   * the chart ramp, corners tighten, and the glass edges firm up a little —
-   * the register of a trading surface rather than a household ledger.
+   * app. Rather than fork components, it re-points the same tokens: the canvas
+   * cools by a shade, corners tighten, and the nav rail takes the brighter end
+   * of the identity ramp — the register of a trading surface rather than a
+   * household ledger.
    *
-   * Because everything downstream (`.shell-main-bg::before`, every
-   * `.glass-panel`, every `rounded-*` utility resolving `--radius`) reads these
-   * variables, re-skinning the section costs one block and stays correct in
-   * both themes, since each value is still derived from the theme's own tokens.
+   * Because everything downstream (`.shell-main-bg`, every `.glass-panel`,
+   * every `rounded-*` utility resolving `--radius`) reads these variables,
+   * re-skinning the section costs one block and stays correct in both themes,
+   * since each value is still derived from the theme's own tokens.
    */
   [data-section='investments'] {
-    --aurora-canvas-bg: var(--investment-canvas-bg);
-    --aurora-opacity: 1;
+    --canvas-bg: var(--investment-canvas-bg);
     --background: var(--investment-canvas-bg);
-    --radius: 0.5rem;
-     --glass-border: oklch(45.702% 0.03922 313.153 / 0.25);
+    --radius: 0.625rem;
     --shell-scoop-radius: 1rem;
 
-    /* Pine — the investments sidebar's own hover/selected colour, standing in
-       for --sidebar-primary/-accent so the nav rail (not the whole app) reads
-       as a different room. Light and dark need separate values rather than a
-       color-mix off --background: a deep pine reads as text on the near-white
-       light sidebar, but the same dark value would vanish against the dark
-       sidebar, so dark mode gets a lighter, brighter pine instead. */
-    --sidebar-primary: oklch(38.928% 0.17465 317.169);
-    --sidebar-primary-foreground: oklch(97% 0.02 155);
-    --sidebar-accent: oklch(87.348% 0.05171 319.817 / 0.65);
-    --sidebar-accent-foreground: oklch(22.254% 0.10229 319.23);
-    --sidebar-ring: oklch(36.107% 0.11928 319.114);
+    --sidebar-primary: oklch(45% 0.108 250);
+    --sidebar-primary-foreground: oklch(98.4% 0.003 248);
+    --sidebar-accent: oklch(94.5% 0.018 246);
+    --sidebar-accent-foreground: oklch(34.6% 0.074 256);
+    --sidebar-ring: oklch(57% 0.142 244);
   }
 
   .dark [data-section='investments'] {
-    --aurora-canvas-bg: var(--investment-canvas-bg);
-    --aurora-opacity: 1;
-    --glass-border: oklch(69.009% 0.03136 325.794 / 0.18);
-    --sidebar-primary: oklch(70.513% 0.22564 322.059);
-    --sidebar-primary-foreground: oklch(16.547% 0.04036 320.39);
-    --sidebar-accent: oklch(26.966% 0.0414 326.613 / 0.72);
-    --sidebar-accent-foreground: oklch(89.544% 0.03153 322.454);
-    --sidebar-ring: oklch(56.742% 0.14516 320.735);
-  }
-
-  [data-section='investments'] .app-canvas::before,
-  [data-section='investments'] .shell-main-bg::before {
-    background-color: var(--investment-canvas-bg);
-    background-image: var(--investment-canvas-gradient);
-    background-size: 100% 100%;
-    background-position: 0 0;
-    opacity: 1;
-    filter: none;
-    animation: none;
-    mask-image: none;
-    -webkit-mask-image: none;
-  }
-
-  [data-section='investments'] .app-canvas::after,
-  [data-section='investments'] .shell-main-bg::after {
-    background: color-mix(in oklch, var(--investment-canvas-bg) 20%, transparent);
-  }
-
-  @supports not ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
-    .shell-content-column {
-      background: var(--card);
-      -webkit-backdrop-filter: none;
-      backdrop-filter: none;
-    }
-  }
-
-  @media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
-    .shell-main-bg::before,
-    .shell-main-bg::after {
-      display: none;
-    }
-
-    .shell-main-bg {
-      background-color: var(--aurora-canvas-bg);
-    }
-
-    .shell-content-column {
-      background: var(--card);
-      -webkit-backdrop-filter: none;
-      backdrop-filter: none;
-    }
+    --canvas-bg: var(--investment-canvas-bg);
+    --sidebar-primary: oklch(75.4% 0.139 233);
+    --sidebar-primary-foreground: oklch(16% 0.03 256);
+    --sidebar-accent: oklch(26% 0.033 250);
+    --sidebar-accent-foreground: oklch(90% 0.03 235);
+    --sidebar-ring: oklch(67.5% 0.176 252);
   }
 
   /* Scoop chrome is desktop-only; mobile keeps scrolling over app-canvas. */
   @media (max-width: 63.999rem) {
     .shell-content-column {
       background: transparent;
-      -webkit-backdrop-filter: none;
-      backdrop-filter: none;
     }
 
     .shell-main {

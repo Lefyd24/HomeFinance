@@ -2,7 +2,7 @@ import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { Chart, ChartFrame } from '../ChartFrame'
-import { baseAxisStyle, compactNumber, tooltipStyle, useChartTheme, MAX_SERIES, seriesHoverSafe } from '../chartTheme'
+import { baseAxisStyle, compactNumber, polarityItemStyle, tooltipStyle, useChartTheme, MAX_SERIES, seriesHoverSafe } from '../chartTheme'
 import { formatCurrency } from '../../lib/format'
 import { getCategoryBreakdown, getSavingsRate, type CashflowReport } from '../reportsPageApi'
 import type { ReportFilters } from '../useReportFilters'
@@ -79,7 +79,7 @@ export function OverviewTab({
           ...seriesHoverSafe,
           data: cashflow.income,
           barMaxWidth: 22,
-          itemStyle: { color: theme.positive, borderRadius: [4, 4, 0, 0] },
+          itemStyle: { ...polarityItemStyle(theme, 'positive'), borderRadius: [4, 4, 0, 0] },
         },
         {
           name: moneyOutLabel,
@@ -87,7 +87,7 @@ export function OverviewTab({
           ...seriesHoverSafe,
           data: cashflow.expenses,
           barMaxWidth: 22,
-          itemStyle: { color: theme.negative, borderRadius: [4, 4, 0, 0] },
+          itemStyle: { ...polarityItemStyle(theme, 'negative'), borderRadius: [4, 4, 0, 0] },
         },
         {
           name: netLabel,
@@ -192,7 +192,7 @@ export function OverviewTab({
           data: savings.rate.map((value) => ({
             value,
             itemStyle: {
-              color: value >= 0 ? theme.positive : theme.negative,
+              ...polarityItemStyle(theme, value >= 0 ? 'positive' : 'negative'),
               borderRadius: value >= 0 ? [4, 4, 0, 0] : [0, 0, 4, 4],
             },
           })),

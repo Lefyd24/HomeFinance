@@ -2,7 +2,7 @@ import { useMemo } from 'react'
 import ReactECharts from 'echarts-for-react'
 import { useTranslation } from 'react-i18next'
 import type { CashflowReport, NetWorthReport } from './reportsApi'
-import { baseAxisStyle, compactNumber, seriesHoverSafe, tooltipStyle, useChartTheme } from '../reports/chartTheme'
+import { baseAxisStyle, compactNumber, polarityItemStyle, seriesHoverSafe, tooltipStyle, useChartTheme } from '../reports/chartTheme'
 
 interface CashflowChartProps {
   cashflow: CashflowReport | undefined
@@ -69,14 +69,14 @@ export function CashflowChart({ cashflow, netWorth }: CashflowChartProps) {
           type: 'bar' as const,
           ...seriesHoverSafe,
           data: cashflow.income,
-          itemStyle: { color: theme.positive },
+          itemStyle: polarityItemStyle(theme, 'positive'),
         },
         {
           name: expensesLabel,
           type: 'bar' as const,
           ...seriesHoverSafe,
           data: cashflow.expenses,
-          itemStyle: { color: theme.negative },
+          itemStyle: polarityItemStyle(theme, 'negative'),
         },
         {
           name: netWorthLabel,

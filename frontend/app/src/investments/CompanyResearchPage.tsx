@@ -112,7 +112,7 @@ export function CompanyResearchPage() {
       </div>
 
       {!symbol && (
-        <section className="flex flex-col gap-3 rounded-xl border border-border bg-card p-3 sm:p-3.5">
+        <section className="flex flex-col gap-3 rounded-xl bg-card p-3 shadow-card sm:p-3.5">
           <form
             className="flex flex-col gap-2 sm:flex-row"
             onSubmit={(e) => {
@@ -290,7 +290,7 @@ function SearchResults({
         {results.map((result) => (
           <li
             key={`${result.symbol}-${result.isin ?? ''}`}
-            className="rounded-xl border border-border bg-card p-3"
+            className="rounded-xl bg-card p-3 shadow-card"
           >
             <button
               type="button"

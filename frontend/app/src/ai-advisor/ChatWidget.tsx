@@ -256,7 +256,7 @@ function EmptyState({
                   key={prompt}
                   type="button"
                   onClick={() => onPick(prompt)}
-                  className="rounded-full border border-border bg-card px-3.5 py-2 text-start text-sm text-foreground transition-colors hover:border-primary/40 hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+                  className="rounded-full bg-card px-3.5 py-2 text-start text-sm text-foreground shadow-xs transition-colors hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
                 >
                   {prompt}
                 </button>
