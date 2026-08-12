@@ -82,6 +82,29 @@ export function usePositionHistory(
   })
 }
 
+/**
+ * Pin (or unpin) the Yahoo ticker a holding is priced from.
+ *
+ * Every cached range of that holding's history is dropped on success, not just
+ * the one on screen: the mapping decides which instrument the whole chart is
+ * drawn from, so a stale "1Y" sitting in the cache would still be the old
+ * company's prices the next time the range is switched.
+ */
+export function usePositionSymbolMapping(accountId: number | null, symbol: string | null) {
+  const queryClient = useQueryClient()
+  const ticker = symbol?.trim() ?? ''
+  return useMutation({
+    mutationFn: (yahooSymbol: string | null) =>
+      yahooSymbol == null
+        ? investmentsApi.clearPositionSymbolMapping(accountId as number, ticker)
+        : investmentsApi.setPositionSymbolMapping(accountId as number, ticker, yahooSymbol),
+    onSuccess: () =>
+      queryClient.invalidateQueries({
+        queryKey: ['investmentPositionHistory', accountId ?? -1, ticker],
+      }),
+  })
+}
+
 export function useInvestmentTransactions(accountId: number | null) {
   return useQuery({
     queryKey: queryKeys.investmentTransactions(accountId ?? -1),

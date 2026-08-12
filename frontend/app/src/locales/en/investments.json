@@ -31,7 +31,6 @@
     "allocation": "Allocation",
     "movers": "Today's movers",
     "holdings": "Holdings",
-    "plainEnglish": "In plain English",
     "activity": "Recent activity",
     "invested": "Invested",
     "cash": "Cash",
@@ -54,7 +53,6 @@
     "earnApr": "{{pct}} APR",
     "earnUnlocks": "Unlocks {{date}}",
     "noEarnPositions": "No Simple Earn positions right now.",
-    "noInsights": "Not enough here to say anything useful yet.",
     "activityMore": "{{count}} more not shown",
     "activityMore_other": "{{count}} more not shown"
   },
@@ -143,7 +141,40 @@
       "unitsHeld_other": "{{count}} units held, worth",
       "investedHint": "What you paid for the units you still hold.",
       "marketValueHint": "What those units are worth today.",
-      "grossReturnHint": "Value now against cost — before commission."
+      "grossReturnHint": "Value now against cost — before commission.",
+      "viewCandles": "Candles",
+      "panelLabel": "Lower panel",
+      "panelPnl": "Profit / loss",
+      "panelDrawdown": "Drawdown",
+      "overlayMa": "MA 20/50",
+      "zoomHint": "Pinch or drag the bar under the chart to zoom into a window.",
+      "boughtMarker": "Bought",
+      "unitsHeldShort": "Held",
+      "candleUp": "Up day",
+      "candleDown": "Down day",
+      "stats": {
+        "periodReturn": "Window return",
+        "maxDrawdown": "Max drawdown",
+        "volatility": "Volatility",
+        "bestDay": "Best day",
+        "worstDay": "Worst day",
+        "upDays": "{{up}} of {{total}} days closed up"
+      },
+      "mapping": {
+        "manualBadge": "Chosen by you",
+        "autoBadge": "Matched automatically",
+        "changeAction": "Change",
+        "setAction": "Set ticker",
+        "resetAction": "Automatic",
+        "searchPlaceholder": "Search Yahoo Finance tickers",
+        "searchHint": "Type at least two characters, or the exact Yahoo ticker.",
+        "noResults": "Nothing found — the exact ticker still works.",
+        "useExact": "Use “{{ticker}}” exactly",
+        "saved": "Now priced from {{ticker}}.",
+        "reset": "Back to the automatic match.",
+        "rejected": "Yahoo Finance has no price history for {{ticker}}.",
+        "failed": "Could not save that ticker."
+      }
     },
     "list": {
       "today": "Today",

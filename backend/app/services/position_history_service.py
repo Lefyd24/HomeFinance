@@ -36,6 +36,7 @@ from app.models import (
     InvestmentTransaction,
     MarketPriceBar,
     PortfolioPosition,
+    PositionSymbolMap,
 )
 from app.services.investment_sync_service import get_provider_for_account
 from app.services.market_data import (
@@ -76,6 +77,22 @@ RANGES = (DEFAULT_RANGE, *RANGE_DAYS)
 
 
 @dataclass
+class Bar:
+    """One day the market printed, in the instrument's own currency.
+
+    Open/high/low ride along with the close because a close-only series can
+    only ever be drawn as a line, and a line hides the day's range — the thing
+    a candle exists to show. They are Optional because the broker fallback
+    doesn't always carry them and a cached bar may predate them.
+    """
+
+    close: float
+    open: Optional[float] = None
+    high: Optional[float] = None
+    low: Optional[float] = None
+
+
+@dataclass
 class PositionHistoryPoint:
     """One day on the chart.
 
@@ -85,6 +102,10 @@ class PositionHistoryPoint:
     when the honest statement is "there was nothing here yet". `price` is
     populated across the whole window regardless, since the instrument had a
     price long before anyone bought it.
+
+    `open`/`high`/`low` are only present on days that actually printed a bar —
+    they are never carried forward the way `price` is, because a candle drawn
+    from yesterday's range on a day with no session is a fabrication.
     """
 
     date: date
@@ -93,6 +114,9 @@ class PositionHistoryPoint:
     value: Optional[float]
     invested: Optional[float]
     fees: float
+    open: Optional[float] = None
+    high: Optional[float] = None
+    low: Optional[float] = None
 
 
 @dataclass
@@ -121,6 +145,9 @@ class PositionHistory:
     mapped_symbol: Optional[str] = None
     mapped_currency: Optional[str] = None
     native_currency: Optional[str] = None
+    # "manual" when the user pinned the ticker, "auto" when the heuristic
+    # found it, None when nothing resolved.
+    mapping_source: Optional[str] = None
     mapping_checked: list[tuple[str, str, Optional[str]]] = field(default_factory=list)
     buy_dates: list[date] = field(default_factory=list)
     series: list[PositionHistoryPoint] = field(default_factory=list)
@@ -130,13 +157,72 @@ def _cache_symbol(provider: str, symbol: str) -> str:
     return f"{symbol}{_CACHE_SUFFIX.get(provider, '-BRK')}"
 
 
-def _cached_closes(db: Session, cache_symbol: str) -> dict[date, float]:
+def get_symbol_override(db: Session, account_id: int, symbol: str) -> Optional[str]:
+    """The Yahoo ticker the user pinned for this holding, if any."""
+    row = (
+        db.query(PositionSymbolMap)
+        .filter(
+            PositionSymbolMap.account_id == account_id,
+            PositionSymbolMap.broker_symbol == symbol,
+        )
+        .first()
+    )
+    return row.yahoo_symbol if row else None
+
+
+def set_symbol_override(db: Session, account_id: int, symbol: str, yahoo_symbol: str) -> str:
+    """Pin a Yahoo ticker for this holding, replacing any earlier choice."""
+    normalized = yahoo_symbol.strip().upper()
+    row = (
+        db.query(PositionSymbolMap)
+        .filter(
+            PositionSymbolMap.account_id == account_id,
+            PositionSymbolMap.broker_symbol == symbol,
+        )
+        .first()
+    )
+    if row is None:
+        row = PositionSymbolMap(
+            account_id=account_id, broker_symbol=symbol, yahoo_symbol=normalized
+        )
+        db.add(row)
+    else:
+        row.yahoo_symbol = normalized
+    db.commit()
+    return normalized
+
+
+def clear_symbol_override(db: Session, account_id: int, symbol: str) -> bool:
+    """Drop the pin and go back to the heuristic. True if there was one."""
+    deleted = (
+        db.query(PositionSymbolMap)
+        .filter(
+            PositionSymbolMap.account_id == account_id,
+            PositionSymbolMap.broker_symbol == symbol,
+        )
+        .delete()
+    )
+    db.commit()
+    return bool(deleted)
+
+
+def _cached_closes(db: Session, cache_symbol: str) -> dict[date, Bar]:
     rows = (
-        db.query(MarketPriceBar.date, MarketPriceBar.close)
+        db.query(
+            MarketPriceBar.date,
+            MarketPriceBar.close,
+            MarketPriceBar.open,
+            MarketPriceBar.high,
+            MarketPriceBar.low,
+        )
         .filter(MarketPriceBar.symbol == cache_symbol)
         .all()
     )
-    return {row[0]: row[1] for row in rows if row[1]}
+    return {
+        row[0]: Bar(close=row[1], open=row[2], high=row[3], low=row[4])
+        for row in rows
+        if row[1]
+    }
 
 
 def _store_closes(db: Session, cache_symbol: str, candles, currency: Optional[str]) -> None:
@@ -164,8 +250,14 @@ def _store_closes(db: Session, cache_symbol: str, candles, currency: Optional[st
 
 
 def _yahoo_closes(
-    db: Session, symbol: str, provider: Optional[str], currency: Optional[str], start: date, end: date
-) -> tuple[dict[date, float], YahooListing]:
+    db: Session,
+    symbol: str,
+    provider: Optional[str],
+    currency: Optional[str],
+    start: date,
+    end: date,
+    override: Optional[str] = None,
+) -> tuple[dict[date, Bar], YahooListing]:
     """(closes, the mapping attempt) — closes are empty if nothing could be confirmed.
 
     The mapping is verified against the price cache and the instrument's
@@ -174,7 +266,7 @@ def _yahoo_closes(
     showing no chart at all.
     """
     listing = resolve_yahoo_listing(
-        db, symbol, provider, currency=currency, start=start, end=end
+        db, symbol, provider, currency=currency, start=start, end=end, override=override
     )
     if not listing.resolved:
         return {}, listing
@@ -191,17 +283,30 @@ def _yahoo_closes(
     if frame is None or frame.empty or "close" not in frame:
         return {}, listing
 
-    closes = {
-        (index.date() if hasattr(index, "date") else index): float(value)
-        for index, value in frame["close"].items()
-        if value == value  # NaN check
-    }
+    def _optional(row, column: str) -> Optional[float]:
+        if column not in frame:
+            return None
+        value = row.get(column)
+        return float(value) if value is not None and value == value else None  # NaN check
+
+    closes: dict[date, Bar] = {}
+    for index, row in frame.iterrows():
+        close = row.get("close")
+        if close is None or close != close:  # NaN check
+            continue
+        day = index.date() if hasattr(index, "date") else index
+        closes[day] = Bar(
+            close=float(close),
+            open=_optional(row, "open"),
+            high=_optional(row, "high"),
+            low=_optional(row, "low"),
+        )
     return closes, listing
 
 
 def _broker_closes(
     db: Session, account: Account, symbol: str, start: date, end: date, currency: Optional[str]
-) -> dict[date, float]:
+) -> dict[date, Bar]:
     """Daily closes from the broker itself, cached — the fallback when Yahoo can't be mapped.
 
     A broker failure is not fatal: whatever is already cached still draws a
@@ -228,7 +333,18 @@ def _broker_closes(
 
     if candles:
         _store_closes(db, cache_symbol, candles, currency)
-        closes.update({c.date: c.close for c in candles if c.close})
+        closes.update(
+            {
+                c.date: Bar(
+                    close=c.close,
+                    open=getattr(c, "open", None),
+                    high=getattr(c, "high", None),
+                    low=getattr(c, "low", None),
+                )
+                for c in candles
+                if c.close
+            }
+        )
     return closes
 
 
@@ -342,7 +458,13 @@ def build_position_history(
     start = _window_start(range_key, opened_on, today)
     native_currency = position.currency if position else None
     closes, listing = _yahoo_closes(
-        db, symbol, account.provider, native_currency, start, today
+        db,
+        symbol,
+        account.provider,
+        native_currency,
+        start,
+        today,
+        override=get_symbol_override(db, account.id, symbol),
     )
     price_source = f"yahoo:{listing.symbol}" if listing.resolved else "broker"
     if not closes:
@@ -393,8 +515,9 @@ def build_position_history(
         if day < start:
             continue  # state carried forward; the window has not opened yet
 
-        if day in closes:
-            last_price = closes[day] * fx_rate
+        bar = closes.get(day)
+        if bar is not None:
+            last_price = bar.close * fx_rate
         price = last_price
         # Held or not decides whether this day has a position at all. Before
         # the first buy the window is showing the instrument's price only, and
@@ -411,6 +534,9 @@ def build_position_history(
                 ),
                 invested=round(invested, 2) if held else None,
                 fees=round(fees_running, 2),
+                open=round(bar.open * fx_rate, 4) if bar and bar.open else None,
+                high=round(bar.high * fx_rate, 4) if bar and bar.high else None,
+                low=round(bar.low * fx_rate, 4) if bar and bar.low else None,
             )
         )
 
@@ -435,6 +561,7 @@ def build_position_history(
         mapped_symbol=listing.symbol,
         mapped_currency=listing.currency,
         native_currency=native_currency,
+        mapping_source=listing.source,
         mapping_checked=[(c.symbol, c.outcome, c.currency) for c in listing.checked],
         quantity=position.quantity if position else 0.0,
         market_value=round(market_value, 2),

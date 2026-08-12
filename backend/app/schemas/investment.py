@@ -134,6 +134,11 @@ class PositionHistoryPoint(BaseModel):
     date: date
     quantity: float
     price: Optional[float] = None
+    # The day's range, present only on days that actually printed a bar — what
+    # a candle view needs and a line view ignores.
+    open: Optional[float] = None
+    high: Optional[float] = None
+    low: Optional[float] = None
     value: Optional[float] = None
     # Net cash actually paid in for the units still held on this date — the
     # real-money equivalent of a scenario's invested-capital line.
@@ -160,6 +165,9 @@ class PositionHistoryResponse(BaseModel):
     mapped_symbol: Optional[str] = None
     mapped_currency: Optional[str] = None
     native_currency: Optional[str] = None
+    # "manual" when the user pinned the ticker, "auto" when the suffix
+    # heuristic found it — the page says which rather than implying certainty.
+    mapping_source: Optional[str] = None
     # (candidate ticker, outcome, currency Yahoo reports) per attempt.
     mapping_checked: list[tuple[str, str, Optional[str]]] = Field(default_factory=list)
     opened_on: Optional[date] = None
@@ -172,6 +180,22 @@ class PositionHistoryResponse(BaseModel):
     unrealized_return_pct: Optional[float] = None
     buy_dates: list[date] = Field(default_factory=list)
     series: list[PositionHistoryPoint] = Field(default_factory=list)
+
+
+class PositionSymbolMapUpdate(BaseModel):
+    """The Yahoo ticker to price a holding with, chosen by hand."""
+
+    yahoo_symbol: str = Field(min_length=1, max_length=50)
+
+
+class PositionSymbolMapResponse(BaseModel):
+    broker_symbol: str
+    # Null after a reset — the heuristic is back in charge.
+    yahoo_symbol: Optional[str] = None
+    # What Yahoo prices it in, so the caller can point out a disagreement with
+    # the broker's own currency without having to fetch the chart again.
+    currency: Optional[str] = None
+    source: Optional[str] = None
 
 
 class SymbolSearchResult(BaseModel):

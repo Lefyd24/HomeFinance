@@ -71,6 +71,34 @@ class PortfolioPosition(Base):
     account = relationship("Account", back_populates="portfolio_positions")
 
 
+class PositionSymbolMap(Base):
+    """A user-chosen Yahoo Finance ticker for one broker symbol.
+
+    `market_data.broker_symbols` guesses the mapping from a suffix table and
+    verifies the guess against price data and currency, which is right often
+    enough to chart from but not always: `.EU` covers several venues, a bare
+    ticker can collide with an unrelated US listing, and some instruments Yahoo
+    simply names differently. When the heuristic gets it wrong there has to be
+    a way to say so, and that override has to survive a sync — which is why it
+    lives here rather than as a column on `PortfolioPosition`, whose rows are
+    deleted and re-inserted wholesale every time the broker is polled.
+
+    One row per (account, broker symbol); absent means "use the heuristic".
+    """
+
+    __tablename__ = "position_symbol_maps"
+    __table_args__ = (
+        UniqueConstraint("account_id", "broker_symbol", name="uq_position_symbol_map_account_symbol"),
+    )
+
+    id = Column(Integer, primary_key=True, index=True)
+    account_id = Column(Integer, ForeignKey("accounts.id"), nullable=False)
+    broker_symbol = Column(String(50), nullable=False)
+    yahoo_symbol = Column(String(50), nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
 class PortfolioSnapshot(Base):
     """One row per account per sync day — powers the value-over-time chart.
 

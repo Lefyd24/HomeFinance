@@ -11,6 +11,7 @@ from app.models.investment import (
     InvestmentCredential,
     PortfolioPosition,
     PortfolioSnapshot,
+    PositionSymbolMap,
     InvestmentTransaction,
 )
 from app.models.investment_analytics import (
@@ -50,6 +51,7 @@ __all__ = [
     "InvestmentCredential",
     "PortfolioPosition",
     "PortfolioSnapshot",
+    "PositionSymbolMap",
     "InvestmentTransaction",
     "MarketPriceBar",
     "MarketSymbolMeta",

@@ -70,6 +70,10 @@ export function HoldingsList({
       <Tile
         title={t('tiles.holdings')}
         className={className}
+        // The panel is height-capped and sticky on desktop, so the rows scroll
+        // inside it rather than the tile growing past the fold; `min-h-0` is
+        // what lets a flex child actually shrink enough to do that.
+        bodyClassName="min-h-0 overflow-y-auto overscroll-contain"
         action={
           <span className="text-[0.65rem] text-muted-foreground">
             {t('card.holdings', { count: positions.length })}
@@ -167,18 +171,12 @@ function HoldingRow({
           )}
         </span>
 
-        {/* Share of the portfolio, as a bar plus its number. Hidden on the
-            narrowest screens, where the value and return matter more. */}
-        <span className="hidden w-24 shrink-0 flex-col gap-1 sm:flex">
-          <span className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
-            <span
-              className="block h-full rounded-full bg-chart-4 transition-[width] duration-500 motion-reduce:transition-none"
-              style={{ width: `${Math.min(100, share)}%` }}
-            />
-          </span>
-          <span className="text-[0.65rem] tabular-nums text-muted-foreground">
-            {share.toFixed(1)}%
-          </span>
+        {/* Share of the portfolio, as the number alone. The bar this replaced
+            spent a quarter of a narrow sidebar's width restating a figure that
+            is already right beside it, and in a list sorted by size the
+            ranking it drew was the row order. */}
+        <span className="shrink-0 text-[0.65rem] tabular-nums text-muted-foreground">
+          {share.toFixed(1)}%
         </span>
 
         {/* Figures. Fixed width and right-aligned so they form a column down

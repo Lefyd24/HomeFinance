@@ -17,6 +17,7 @@ import {
 import { PageContainer } from '../ui/PageContainer'
 import { PageHeader } from '../ui/PageHeader'
 import { useConfirm } from '../ui/useConfirm'
+import { useMediaQuery } from '../ui/useMediaQuery'
 import {
   useDeleteInvestmentAccount,
   useInvestmentAccounts,
@@ -34,7 +35,6 @@ import { CurrencyExposureTile } from './widgets/CurrencyExposureTile'
 import { EarnPositionsTile } from './widgets/EarnPositionsTile'
 import { HoldingsList } from './widgets/HoldingsList'
 import { MoversTile } from './widgets/MoversTile'
-import { PlainEnglishTile } from './widgets/PlainEnglishTile'
 import { PortfolioHeadline } from './widgets/PortfolioHeadline'
 import { PortfolioTicker } from './widgets/PortfolioTicker'
 import { PortfolioValueTile } from './widgets/PortfolioValueTile'
@@ -68,6 +68,9 @@ export function InvestmentsPage() {
   const deleteAccount = useDeleteInvestmentAccount()
   const syncAccount = useSyncInvestmentAccount()
   const { confirm, confirmDialog } = useConfirm()
+  // The rail is a different tree, not a different stylesheet, so the layout
+  // decision has to be made in JS — see `holdings` below.
+  const wide = useMediaQuery('(min-width: 1024px)')
 
   const [dialogOpen, setDialogOpen] = useState(false)
   // A dashboard account row links here with `?account=<id>` so the workspace
@@ -141,163 +144,199 @@ export function InvestmentsPage() {
   /** The scoped accounts that a "sync" from the header should actually refresh. */
   const syncable = view.accounts.filter((account) => !isOnCooldown(account.last_synced_at))
 
-  return (
-    <PageContainer wide className="flex flex-col gap-2.5">
-      <PageHeader
-        title={t('page.title')}
-        description={t('page.description')}
-        className="mb-0"
-        // The grand total, not a button: connecting an account is already
-        // offered by the rail below, and the header is the one place a
-        // portfolio-wide figure belongs now that everything else is scoped to
-        // a single account.
-        action={aggregate ? <PortfolioHeadline totals={aggregate} /> : undefined}
-      />
+  /**
+   * The holdings panel, in whichever of its two homes this viewport has.
+   *
+   * One instance rather than two hidden by CSS: it owns the open-holding
+   * dialog, and two mounted copies would be two dialogs.
+   */
+  const holdings = accounts.length > 0 && (
+    <HoldingsList
+      positions={view.positions}
+      currency={view.totals?.currency ?? ''}
+      accounts={view.accounts}
+      loading={view.isLoading}
+      // In the rail it *is* the rail: no card edges, no shadow, and the full
+      // height of the well, with only its own rows scrolling.
+      className={wide ? 'h-full rounded-none bg-transparent p-4 shadow-none' : undefined}
+    />
+  )
 
-      {isLoading ? (
-        <LoadingWorkspace />
-      ) : accounts.length === 0 ? (
-        <Empty className="rounded-xl border border-dashed bg-card py-14 shadow-sm">
-          <EmptyHeader>
-            <EmptyMedia variant="icon">
-              <HugeiconsIcon icon={ChartIncreaseIcon} strokeWidth={2} />
-            </EmptyMedia>
-            <EmptyTitle>{t('empty.title')}</EmptyTitle>
-            <EmptyDescription>{t('empty.description')}</EmptyDescription>
-          </EmptyHeader>
-          <EmptyContent>
-            <Button size="sm" onClick={() => setDialogOpen(true)}>
-              <HugeiconsIcon icon={Add01Icon} strokeWidth={2} data-icon="inline-start" />
-              {t('page.connectAccount')}
-            </Button>
-          </EmptyContent>
-        </Empty>
-      ) : (
-        <>
-          <AccountScopeRail
-            accounts={accounts}
-            scope={scope}
-            onScopeChange={setRequestedScope}
-            onConnect={() => setDialogOpen(true)}
-            onEdit={setEditingAccount}
-            onRotateKeys={setRotatingAccount}
-            onDelete={(account) => void handleDelete(account)}
-            onSync={(account) => void handleSync(account)}
-            syncingId={syncAccount.isPending ? syncAccount.variables : null}
+  return (
+    /*
+      A terminal's frame rather than a page that happens to be tall: the well
+      is exactly the height between the top bar and the footer, the left
+      column scrolls inside it, and the holdings rail does not move at all.
+      That is the point of a rail — "what am I actually holding" is the one
+      question on this page that should never require scrolling back to.
+
+      Below `lg` there is no room for a column beside anything, so the rail
+      disappears and the panel rejoins the stack directly under the headline
+      figures: on a phone the holdings are what the page is for, and burying
+      them under the activity feed put them two screens down.
+    */
+    <div className="lg:flex lg:h-[calc(100dvh-6rem)] lg:overflow-hidden">
+      <div className="min-w-0 flex-1 lg:overflow-y-auto lg:overscroll-contain">
+        <PageContainer wide className="flex flex-col gap-2.5">
+          <PageHeader
+            title={t('page.title')}
+            description={t('page.description')}
+            className="mb-0"
+            // The grand total, not a button: connecting an account is already
+            // offered by the rail below, and the header is the one place a
+            // portfolio-wide figure belongs now that everything else is scoped to
+            // a single account.
+            action={aggregate ? <PortfolioHeadline totals={aggregate} /> : undefined}
           />
 
-          {view.totals && (
-            <PortfolioTicker
-              totals={view.totals}
-              scopeLabel={scopeLabel}
-              accounts={view.accounts}
-              onSync={() => syncable.forEach((account) => void handleSync(account))}
-              syncing={syncAccount.isPending}
-              syncDisabled={syncable.length === 0}
-            />
+          {isLoading ? (
+            <LoadingWorkspace />
+          ) : accounts.length === 0 ? (
+            <Empty className="rounded-xl border border-dashed bg-card py-14 shadow-sm">
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <HugeiconsIcon icon={ChartIncreaseIcon} strokeWidth={2} />
+                </EmptyMedia>
+                <EmptyTitle>{t('empty.title')}</EmptyTitle>
+                <EmptyDescription>{t('empty.description')}</EmptyDescription>
+              </EmptyHeader>
+              <EmptyContent>
+                <Button size="sm" onClick={() => setDialogOpen(true)}>
+                  <HugeiconsIcon icon={Add01Icon} strokeWidth={2} data-icon="inline-start" />
+                  {t('page.connectAccount')}
+                </Button>
+              </EmptyContent>
+            </Empty>
+          ) : (
+            <>
+              <AccountScopeRail
+                accounts={accounts}
+                scope={scope}
+                onScopeChange={setRequestedScope}
+                onConnect={() => setDialogOpen(true)}
+                onEdit={setEditingAccount}
+                onRotateKeys={setRotatingAccount}
+                onDelete={(account) => void handleDelete(account)}
+                onSync={(account) => void handleSync(account)}
+                syncingId={syncAccount.isPending ? syncAccount.variables : null}
+              />
+
+              {view.totals && (
+                <PortfolioTicker
+                  totals={view.totals}
+                  scopeLabel={scopeLabel}
+                  accounts={view.accounts}
+                  onSync={() => syncable.forEach((account) => void handleSync(account))}
+                  syncing={syncAccount.isPending}
+                  syncDisabled={syncable.length === 0}
+                />
+              )}
+
+              {/*
+              The holdings panel is the page's fixed point, the way the order
+              book is in a trading terminal: it stays put in the right column
+              while everything else scrolls past it, so "what am I actually
+              holding" never needs scrolling back to. It sticks and scrolls
+              internally rather than growing with the page, which is why the
+              grid is `items-start` — a stretched item fills its row and has
+              nothing left to stick within.
+
+              Below `lg` there is no room for a column beside anything, so the
+              three blocks stack in DOM order: headline figures, then holdings,
+              then the slower-moving detail. Holdings sit second rather than
+              last because on a phone they are what the page is for, and the
+              explicit row/column placement above only applies from `lg` up.
+            */}
+              <div className="flex flex-col gap-2.5">
+                <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-3">
+                  <PortfolioValueTile
+                    history={view.history}
+                    currency={view.totals?.currency ?? ''}
+                    range={range}
+                    onRangeChange={setRange}
+                    loading={view.isHistoryLoading}
+                    className="sm:col-span-2"
+                  />
+                  <MoversTile positions={view.positions} loading={view.isLoading} />
+                </div>
+
+                {/* Only here when there is no rail to be in. */}
+                {!wide && holdings}
+
+                <div className="flex flex-col gap-2.5">
+                  {/* Activity needs more width per line than a cost figure does,
+                    so the 5-column split gives it three and the broker tile
+                    two — and all five when there is no broker tile to sit
+                    beside. */}
+                  <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-5">
+                    <ActivityTile
+                      transactions={view.transactions}
+                      loading={view.isLoading}
+                      className={providerScope ? 'sm:col-span-3' : 'sm:col-span-5'}
+                    />
+                    {providerScope === 'freedom24' && (
+                      <TradingCostsTile
+                        transactions={view.transactions}
+                        currency={view.totals?.currency ?? ''}
+                        loading={view.isLoading}
+                        className="sm:col-span-2"
+                      />
+                    )}
+                    {providerScope === 'binance' && (
+                      <CashFlowTile
+                        transactions={view.transactions}
+                        loading={view.isLoading}
+                        className="sm:col-span-2"
+                      />
+                    )}
+                  </div>
+
+                  {/* Provider-specific: what's distinctive about *this* broker's
+                    data, as a full-width band rather than squeezed into the
+                    shape shared above. */}
+                  {providerScope === 'freedom24' && (
+                    <CurrencyExposureTile
+                      positions={view.positions}
+                      currency={view.totals?.currency ?? ''}
+                      loading={view.isLoading}
+                    />
+                  )}
+                  {providerScope === 'binance' && (
+                    <EarnPositionsTile accountId={view.accounts[0].id} />
+                  )}
+                </div>
+              </div>
+            </>
           )}
 
-          {/*
-            Two columns on desktop: the main column stacks the summary tiles,
-            the holdings sidebar runs the full height of whatever the main
-            column comes out to — a persistent "here's exactly what's in it"
-            panel rather than one tile competing for space with the rest.
-            Grid's default `align-items: stretch` is what makes the sidebar
-            match the main column's height with no explicit sizing needed.
-            Below `lg` there's no room for a sidebar, so it collapses to a
-            single stack with holdings last — the overview before the detail.
-          */}
-          <div className="grid grid-cols-1 items-stretch gap-2.5 lg:grid-cols-[minmax(0,1fr)_22rem]">
-            <div className="flex flex-col gap-2.5">
-              <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-3">
-                <PortfolioValueTile
-                  history={view.history}
-                  currency={view.totals?.currency ?? ''}
-                  range={range}
-                  onRangeChange={setRange}
-                  loading={view.isHistoryLoading}
-                  className="sm:col-span-2"
-                />
-                <MoversTile positions={view.positions} loading={view.isLoading} />
-              </div>
-
-              {/* `ActivityTile`'s row-span-2 makes it match the combined
-                  height of the plain-English read and whichever
-                  provider-specific tile sits under it, per column. A 5-column
-                  split (3:2) gives activity a bit more room than a plain
-                  half-and-half would, since a transaction row needs more
-                  width per line than a sentence or a cost figure does. */}
-              <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-5 sm:grid-rows-2">
-                <PlainEnglishTile
-                  insights={view.insights}
-                  loading={view.isLoading}
-                  className="sm:col-span-3"
-                />
-                <ActivityTile
-                  transactions={view.transactions}
-                  loading={view.isLoading}
-                  className="sm:col-span-2 sm:row-span-2"
-                />
-                {providerScope === 'freedom24' && (
-                  <TradingCostsTile
-                    transactions={view.transactions}
-                    currency={view.totals?.currency ?? ''}
-                    loading={view.isLoading}
-                    className="sm:col-span-3"
-                  />
-                )}
-                {providerScope === 'binance' && (
-                  <CashFlowTile
-                    transactions={view.transactions}
-                    loading={view.isLoading}
-                    className="sm:col-span-3"
-                  />
-                )}
-              </div>
-
-              {/* Provider-specific: what's distinctive about *this* broker's
-                  data, as a full-width band rather than squeezed into the
-                  shape shared above. */}
-              {providerScope === 'freedom24' && (
-                <CurrencyExposureTile
-                  positions={view.positions}
-                  currency={view.totals?.currency ?? ''}
-                  loading={view.isLoading}
-                />
-              )}
-              {providerScope === 'binance' && (
-                <EarnPositionsTile accountId={view.accounts[0].id} />
-              )}
-            </div>
-
-            <HoldingsList
-              positions={view.positions}
-              currency={view.totals?.currency ?? ''}
-              accounts={view.accounts}
-              loading={view.isLoading}
-              className="h-full"
+          <ConnectInvestmentAccountDialog open={dialogOpen} onOpenChange={setDialogOpen} />
+          {editingAccount && (
+            <EditInvestmentAccountDialog
+              open={!!editingAccount}
+              onOpenChange={(open) => !open && setEditingAccount(null)}
+              account={editingAccount}
             />
-          </div>
-        </>
-      )}
+          )}
+          {rotatingAccount && (
+            <RotateApiKeysDialog
+              open={!!rotatingAccount}
+              onOpenChange={(open) => !open && setRotatingAccount(null)}
+              account={rotatingAccount}
+            />
+          )}
+          {confirmDialog}
+        </PageContainer>
+      </div>
 
-      <ConnectInvestmentAccountDialog open={dialogOpen} onOpenChange={setDialogOpen} />
-      {editingAccount && (
-        <EditInvestmentAccountDialog
-          open={!!editingAccount}
-          onOpenChange={(open) => !open && setEditingAccount(null)}
-          account={editingAccount}
-        />
+      {/* The rail itself. Rendered only when there is a portfolio to list,
+          and only wide enough to hold a symbol, a weight and two returns —
+          it is a reference column, not a second content area. */}
+      {wide && holdings && (
+        <aside className="hidden w-[21rem] shrink-0 border-s border-border/60 bg-card lg:block">
+          {holdings}
+        </aside>
       )}
-      {rotatingAccount && (
-        <RotateApiKeysDialog
-          open={!!rotatingAccount}
-          onOpenChange={(open) => !open && setRotatingAccount(null)}
-          account={rotatingAccount}
-        />
-      )}
-      {confirmDialog}
-    </PageContainer>
+    </div>
   )
 }
 
@@ -311,13 +350,8 @@ function LoadingWorkspace() {
         ))}
       </div>
       <Skeleton className="h-20 w-full rounded-xl" />
-      <div className="grid grid-cols-1 gap-2.5 lg:grid-cols-[minmax(0,1fr)_22rem]">
-        <div className="flex flex-col gap-2.5">
-          <Skeleton className="h-[16rem] w-full rounded-xl" />
-          <Skeleton className="h-64 w-full rounded-xl" />
-        </div>
-        <Skeleton className="h-[32rem] w-full rounded-xl" />
-      </div>
+      <Skeleton className="h-[16rem] w-full rounded-xl" />
+      <Skeleton className="h-64 w-full rounded-xl" />
     </div>
   )
 }

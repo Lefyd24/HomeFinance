@@ -114,6 +114,10 @@ export interface PositionHistoryPoint {
   quantity: number
   /** Per unit, across the whole window — the instrument had a price before you owned it. */
   price: number | null
+  /** The day's range. Only on days that actually printed a bar, so candles are never invented. */
+  open: number | null
+  high: number | null
+  low: number | null
   /** Null outside ownership, so the chart gaps rather than drawing a zero. */
   value: number | null
   /** Net cash actually paid in for the units still held that day. Null outside ownership. */
@@ -144,6 +148,8 @@ export interface PositionHistory {
   /** The currency Yahoo reports for it, and the one the broker reports. */
   mapped_currency: string | null
   native_currency: string | null
+  /** `manual` when you pinned the ticker yourself, `auto` when the heuristic found it. */
+  mapping_source: 'manual' | 'auto' | null
   /** Every candidate tried, in order: [ticker, outcome, currency]. */
   mapping_checked: [string, 'matched' | 'no-data' | 'currency' | 'error', string | null][]
   opened_on: string | null
@@ -156,6 +162,15 @@ export interface PositionHistory {
   unrealized_return_pct: number | null
   buy_dates: string[]
   series: PositionHistoryPoint[]
+}
+
+/** The result of pinning (or clearing) a holding's Yahoo ticker. */
+export interface PositionSymbolMapping {
+  broker_symbol: string
+  /** Null after a reset — the heuristic is back in charge. */
+  yahoo_symbol: string | null
+  currency: string | null
+  source: 'manual' | null
 }
 
 export type InvestmentTransactionType =
@@ -284,6 +299,33 @@ export function getPositionHistory(
   const params = new URLSearchParams({ range })
   return apiFetch<PositionHistory>(
     `/investments/accounts/${accountId}/positions/${encodeURIComponent(symbol)}/history?${params}`,
+  )
+}
+
+/**
+ * Pin the Yahoo ticker a holding's chart is priced from, overriding the
+ * server's suffix heuristic. Rejected with a 400 if Yahoo has no prices for
+ * it, so a typo can't quietly blank the chart.
+ */
+export function setPositionSymbolMapping(
+  accountId: number,
+  symbol: string,
+  yahooSymbol: string,
+): Promise<PositionSymbolMapping> {
+  return apiFetch<PositionSymbolMapping>(
+    `/investments/accounts/${accountId}/positions/${encodeURIComponent(symbol)}/mapping`,
+    { method: 'PUT', body: JSON.stringify({ yahoo_symbol: yahooSymbol }) },
+  )
+}
+
+/** Back to the heuristic. */
+export function clearPositionSymbolMapping(
+  accountId: number,
+  symbol: string,
+): Promise<PositionSymbolMapping> {
+  return apiFetch<PositionSymbolMapping>(
+    `/investments/accounts/${accountId}/positions/${encodeURIComponent(symbol)}/mapping`,
+    { method: 'DELETE' },
   )
 }
 

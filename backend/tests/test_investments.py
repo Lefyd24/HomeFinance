@@ -838,3 +838,123 @@ def test_position_history_reports_the_tickers_it_tried(client, db, monkeypatch):
         ["AAPL.US", "no-data", None],
         ["AAPL", "matched", "USD"],
     ]
+
+
+def test_pinned_ticker_overrides_the_heuristic_and_survives_a_reset(client, db, monkeypatch):
+    """The escape hatch for a wrong guess: choose the listing, and it sticks."""
+    import pandas as pd
+    from app.routers import investments as investments_router
+    from app.services.market_data import CandidateCheck, YahooListing
+
+    _patch_provider(monkeypatch, FakeFeeProvider)
+    # The endpoint verifies the choice against Yahoo before storing it; the
+    # verification itself is the one thing that would hit the network.
+    monkeypatch.setattr(
+        investments_router,
+        "check_yahoo_symbol",
+        lambda *a, **k: CandidateCheck("VIO.AT", "matched", "EUR"),
+    )
+
+    seen: dict = {}
+
+    def _listing(db_, symbol, provider, *, currency=None, start=None, end=None, override=None):
+        seen["override"] = override
+        if override:
+            return YahooListing(
+                symbol=override,
+                currency="EUR",
+                checked=[CandidateCheck(override, "matched", "EUR")],
+                source="manual",
+            )
+        return YahooListing(
+            symbol="AAPL", currency="USD", checked=[CandidateCheck("AAPL", "matched", "USD")]
+        )
+
+    monkeypatch.setattr(position_history_service, "resolve_yahoo_listing", _listing)
+    monkeypatch.setattr(
+        position_history_service,
+        "get_price_history",
+        lambda symbols, *a, **k: {
+            symbols[0]: pd.DataFrame(
+                {"close": [150.0]}, index=pd.to_datetime(["2026-01-05"])
+            )
+        },
+    )
+
+    account_id = _connect(client)
+    resp = client.put(
+        f"/api/investments/accounts/{account_id}/positions/AAPL.US/mapping",
+        json={"yahoo_symbol": "vio.at"},
+    )
+    assert resp.status_code == 200, resp.text
+    assert resp.json()["yahoo_symbol"] == "VIO.AT"
+
+    body = client.get(
+        f"/api/investments/accounts/{account_id}/positions/AAPL.US/history"
+    ).json()
+    assert seen["override"] == "VIO.AT"
+    assert body["mapped_symbol"] == "VIO.AT"
+    # "You told us" is a different claim from "we guessed", and the page says which.
+    assert body["mapping_source"] == "manual"
+
+    assert (
+        client.delete(
+            f"/api/investments/accounts/{account_id}/positions/AAPL.US/mapping"
+        ).json()["yahoo_symbol"]
+        is None
+    )
+    body = client.get(
+        f"/api/investments/accounts/{account_id}/positions/AAPL.US/history"
+    ).json()
+    assert seen["override"] is None
+    assert body["mapped_symbol"] == "AAPL"
+
+
+def test_a_ticker_yahoo_cannot_price_is_refused_rather_than_stored(client, db, monkeypatch):
+    """A typo must fail loudly here, not quietly blank the chart later."""
+    from app.routers import investments as investments_router
+    from app.services.market_data import CandidateCheck
+
+    _patch_provider(monkeypatch, FakeFeeProvider)
+    monkeypatch.setattr(
+        investments_router,
+        "check_yahoo_symbol",
+        lambda *a, **k: CandidateCheck("NOPE", "no-data"),
+    )
+
+    account_id = _connect(client)
+    resp = client.put(
+        f"/api/investments/accounts/{account_id}/positions/AAPL.US/mapping",
+        json={"yahoo_symbol": "NOPE"},
+    )
+
+    assert resp.status_code == 400
+    assert position_history_service.get_symbol_override(db, account_id, "AAPL.US") is None
+
+
+def test_a_pinned_ticker_is_not_second_guessed_on_currency(db, monkeypatch):
+    """The currency check exists to stop a *guess* pricing the wrong company.
+
+    Someone who has looked at both listings and chosen one is better informed
+    than the suffix table, so their choice is reported, not overruled.
+    """
+    import pandas as pd
+    from types import SimpleNamespace
+    from app.services.market_data import broker_symbols
+
+    monkeypatch.setattr(
+        broker_symbols,
+        "get_price_history",
+        lambda symbols, *a, **k: {symbols[0]: pd.DataFrame({"close": [1.0]})},
+    )
+    monkeypatch.setattr(
+        broker_symbols, "get_symbol_meta", lambda db_, symbol: SimpleNamespace(currency="USD")
+    )
+
+    listing = broker_symbols.resolve_yahoo_listing(
+        db, "VIO.GR", "freedom24", currency="EUR", override="VIO"
+    )
+
+    assert listing.symbol == "VIO"
+    assert listing.source == "manual"
+    assert listing.currency == "USD"

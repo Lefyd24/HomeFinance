@@ -1,6 +1,7 @@
 from app.services.market_data.broker_symbols import (
     CandidateCheck,
     YahooListing,
+    check_yahoo_symbol,
     resolve_yahoo_listing,
     resolve_yahoo_symbol,
     yahoo_candidates,
@@ -19,6 +20,7 @@ __all__ = [
     "MarketDataUnavailable",
     "CandidateCheck",
     "YahooListing",
+    "check_yahoo_symbol",
     "resolve_yahoo_listing",
     "resolve_yahoo_symbol",
     "yahoo_candidates",

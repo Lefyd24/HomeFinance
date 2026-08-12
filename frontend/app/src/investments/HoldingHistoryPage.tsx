@@ -1,23 +1,20 @@
 import { useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { HugeiconsIcon } from '@hugeicons/react'
-import { Alert02Icon, CheckmarkBadge01Icon } from '@hugeicons/core-free-icons'
-import { Badge } from '@/components/ui/badge'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from '@/components/ui/empty'
-import { cn } from '@/lib/utils'
 import { formatCurrency, formatDate } from '../lib/format'
 import { PageContainer } from '../ui/PageContainer'
 import { PageHeader } from '../ui/PageHeader'
 import { DeltaAmount, DeltaPct, InvestmentsBreadcrumb } from './InvestmentPrimitives'
 import { useInvestmentAccounts, usePositionHistory } from './useInvestments'
 import { PositionJourneyChart } from './widgets/PositionJourneyChart'
+import { TickerMatchPanel } from './widgets/TickerMatchPanel'
 import { Tile } from './widgets/Tile'
-import type { PositionHistory, PositionHistoryRange } from './investmentsApi'
+import type { PositionHistoryRange } from './investmentsApi'
 
 /**
  * One real holding, given the full page the scenario sandbox gives a
@@ -149,7 +146,7 @@ export function HoldingHistoryPage() {
         loading={isFetching}
       />
 
-      <TickerMatchPanel history={history} />
+      <TickerMatchPanel history={history} accountId={id} />
 
       {history.series.length > 0 && (
         <Collapsible className="overflow-hidden rounded-xl bg-card p-3 shadow-card">
@@ -158,7 +155,7 @@ export function HoldingHistoryPage() {
               {t('holding.history.dailyTable')}
             </Button>
           </CollapsibleTrigger>
-          <CollapsibleContent className="mt-2 max-h-80 overflow-y-auto">
+          <CollapsibleContent className="mt-2 max-h-80 overflow-auto">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -195,91 +192,6 @@ export function HoldingHistoryPage() {
         </Collapsible>
       )}
     </PageContainer>
-  )
-}
-
-/**
- * Which listing priced this chart, and how that was decided.
- *
- * A broker ticker has to be mapped onto Yahoo's before a market series can be
- * attached to a holding, and the mapping is a heuristic — `VIO.GR` could
- * plausibly be resolved to a US company called VIO. The backend rejects a
- * candidate whose currency disagrees with the broker's, but a check the user
- * can't see is a check they have to take on trust, so the result is stated
- * here with the currencies that were compared, and every rejected candidate is
- * listed underneath with the reason it lost.
- */
-function TickerMatchPanel({ history }: { history: PositionHistory }) {
-  const { t } = useTranslation('investments')
-  const matched = history.mapped_symbol != null
-  const rejected = history.mapping_checked.filter(([, outcome]) => outcome !== 'matched')
-
-  return (
-    <section className="flex flex-col gap-2 rounded-xl bg-card p-3 shadow-card">
-      <div className="flex flex-wrap items-center gap-2">
-        <HugeiconsIcon
-          icon={matched ? CheckmarkBadge01Icon : Alert02Icon}
-          strokeWidth={2}
-          className={cn('size-4 shrink-0', matched ? 'text-[var(--flow-in)]' : 'text-[var(--flow-out)]')}
-        />
-        <span className="text-xs font-medium">{t('holding.history.matchTitle')}</span>
-        {matched ? (
-          <>
-            <Badge variant="outline" className="font-mono text-[0.65rem]">
-              {history.symbol}
-            </Badge>
-            <span className="text-xs text-muted-foreground">→</span>
-            <Badge variant="secondary" className="font-mono text-[0.65rem]">
-              {history.mapped_symbol}
-            </Badge>
-            {history.mapped_currency && (
-              <Badge variant="outline" className="text-[0.65rem]">
-                {history.native_currency && history.native_currency !== history.mapped_currency
-                  ? t('holding.history.currencyMismatch', {
-                      broker: history.native_currency,
-                      yahoo: history.mapped_currency,
-                    })
-                  : t('holding.history.currencyConfirmed', { currency: history.mapped_currency })}
-              </Badge>
-            )}
-          </>
-        ) : (
-          <Badge variant="outline" className="text-[0.65rem]">
-            {history.price_source === 'broker'
-              ? t('holding.history.matchFallback')
-              : t('holding.history.matchNone')}
-          </Badge>
-        )}
-      </div>
-
-      <p className="text-xs text-muted-foreground">
-        {matched
-          ? t('holding.history.sourceYahoo', { ticker: history.mapped_symbol })
-          : history.price_source === 'broker'
-            ? t('holding.history.sourceBroker')
-            : t('holding.history.sourceNone')}
-      </p>
-
-      {rejected.length > 0 && (
-        <ul className="flex flex-col gap-0.5 border-t border-border/60 pt-2 text-[0.7rem] text-muted-foreground">
-          {rejected.map(([candidate, outcome, currency]) => (
-            <li key={`${candidate}-${outcome}`} className="flex flex-wrap items-baseline gap-1.5">
-              <span className="font-mono">{candidate}</span>
-              <span>
-                {outcome === 'currency'
-                  ? t('holding.history.rejectCurrency', {
-                      currency: currency ?? '—',
-                      broker: history.native_currency ?? '—',
-                    })
-                  : outcome === 'no-data'
-                    ? t('holding.history.rejectNoData')
-                    : t('holding.history.rejectError')}
-              </span>
-            </li>
-          ))}
-        </ul>
-      )}
-    </section>
   )
 }
 

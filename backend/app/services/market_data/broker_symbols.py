@@ -103,10 +103,50 @@ class YahooListing:
     symbol: Optional[str]
     currency: Optional[str]
     checked: list[CandidateCheck]
+    # "manual" when the user pinned this ticker themselves, "auto" when the
+    # suffix heuristic found it, None when nothing resolved. The page says
+    # which, because "we guessed" and "you told us" are not the same claim.
+    source: Optional[str] = None
 
     @property
     def resolved(self) -> bool:
         return self.symbol is not None
+
+
+def check_yahoo_symbol(
+    db: Session,
+    candidate: str,
+    *,
+    wanted_currency: Optional[str] = None,
+    enforce_currency: bool = True,
+    start: Optional[date] = None,
+    end: Optional[date] = None,
+) -> CandidateCheck:
+    """Try one Yahoo ticker and report what became of it.
+
+    Split out of `resolve_yahoo_listing` because the same question — does Yahoo
+    price this, and in what — is what the manual-mapping endpoint has to answer
+    before it stores anything. `enforce_currency=False` still *reports* a
+    disagreement (the caller shows it) without turning it into a rejection: a
+    user who has looked at both listings and picked one is better informed than
+    the suffix table is.
+    """
+    window_end = end or date.today()
+    window_start = start or (window_end - timedelta(days=365))
+    try:
+        get_price_history([candidate], window_start, window_end, db=db)
+        meta = get_symbol_meta(db, candidate)
+    except (SymbolNotFound, MarketDataUnavailable):
+        return CandidateCheck(candidate, "no-data")
+    except Exception:  # noqa: BLE001 - a bad candidate must not fail the request
+        logger.debug("Yahoo lookup failed for candidate %s", candidate, exc_info=True)
+        return CandidateCheck(candidate, "error")
+
+    found = (meta.currency or "").strip().upper() or None
+    wanted = (wanted_currency or "").strip().upper() or None
+    if enforce_currency and wanted and found and found != wanted:
+        return CandidateCheck(candidate, "currency", found)
+    return CandidateCheck(candidate, "matched", found)
 
 
 def resolve_yahoo_listing(
@@ -117,39 +157,60 @@ def resolve_yahoo_listing(
     currency: Optional[str] = None,
     start: Optional[date] = None,
     end: Optional[date] = None,
+    override: Optional[str] = None,
 ) -> YahooListing:
-    """`resolve_yahoo_symbol`, but keeping the reasoning for the UI to display."""
+    """`resolve_yahoo_symbol`, but keeping the reasoning for the UI to display.
+
+    `override` is a ticker the user chose by hand. It is tried first and, if
+    Yahoo prices it at all, wins — including against the currency check, which
+    exists to stop a *guess* charting the wrong company and has no business
+    overruling a deliberate choice. An override Yahoo has never heard of is
+    reported in `checked` and the heuristic carries on, so a typo degrades to
+    the old behaviour instead of a blank chart.
+    """
     wanted = (currency or "").strip().upper() or None
     window_end = end or date.today()
     window_start = start or (window_end - timedelta(days=365))
     checked: list[CandidateCheck] = []
 
-    for candidate in yahoo_candidates(symbol, provider):
-        try:
-            get_price_history([candidate], window_start, window_end, db=db)
-            meta = get_symbol_meta(db, candidate)
-        except (SymbolNotFound, MarketDataUnavailable):
-            checked.append(CandidateCheck(candidate, "no-data"))
-            continue
-        except Exception:  # noqa: BLE001 - a bad candidate must not fail the request
-            logger.debug("Yahoo lookup failed for candidate %s", candidate, exc_info=True)
-            checked.append(CandidateCheck(candidate, "error"))
-            continue
+    pinned = (override or "").strip().upper() or None
+    if pinned:
+        check = check_yahoo_symbol(
+            db,
+            pinned,
+            wanted_currency=wanted,
+            enforce_currency=False,
+            start=window_start,
+            end=window_end,
+        )
+        checked.append(check)
+        if check.outcome == "matched":
+            return YahooListing(
+                symbol=pinned, currency=check.currency, checked=checked, source="manual"
+            )
 
-        found = (meta.currency or "").strip().upper() or None
-        if wanted and found and found != wanted:
+    for candidate in yahoo_candidates(symbol, provider):
+        if candidate == pinned:
+            continue  # already tried, and it failed
+        check = check_yahoo_symbol(
+            db, candidate, wanted_currency=wanted, start=window_start, end=window_end
+        )
+        checked.append(check)
+        if check.outcome == "currency":
             logger.info(
                 "Skipping Yahoo candidate %s for %s: priced in %s, broker reports %s",
                 candidate,
                 symbol,
-                found,
+                check.currency,
                 wanted,
             )
-            checked.append(CandidateCheck(candidate, "currency", found))
+            continue
+        if check.outcome != "matched":
             continue
 
-        checked.append(CandidateCheck(candidate, "matched", found))
-        return YahooListing(symbol=candidate, currency=found, checked=checked)
+        return YahooListing(
+            symbol=candidate, currency=check.currency, checked=checked, source="auto"
+        )
 
     return YahooListing(symbol=None, currency=None, checked=checked)
 

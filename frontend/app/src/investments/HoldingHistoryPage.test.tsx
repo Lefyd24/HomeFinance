@@ -12,6 +12,8 @@ vi.mock('./widgets/PositionJourneyChart', () => ({
 
 const history = vi.hoisted(() => ({ current: null as PositionHistory | null }))
 
+const mapped = vi.hoisted(() => ({ mutateAsync: vi.fn().mockResolvedValue(undefined) }))
+
 vi.mock('./useInvestments', () => ({
   useInvestmentAccounts: () => ({ data: [{ id: 7, name: 'Freedom24' }] }),
   usePositionHistory: () => ({
@@ -20,6 +22,8 @@ vi.mock('./useInvestments', () => ({
     isError: false,
     isFetching: false,
   }),
+  useSymbolSearch: () => ({ data: [], isFetching: false }),
+  usePositionSymbolMapping: () => ({ mutateAsync: mapped.mutateAsync, isPending: false }),
 }))
 
 function build(overrides: Partial<PositionHistory> = {}): PositionHistory {
@@ -35,6 +39,7 @@ function build(overrides: Partial<PositionHistory> = {}): PositionHistory {
     mapped_symbol: 'VIO.AT',
     mapped_currency: 'EUR',
     native_currency: 'EUR',
+    mapping_source: 'auto',
     mapping_checked: [['VIO.AT', 'matched', 'EUR']],
     opened_on: '2026-08-10',
     quantity: 3,
@@ -100,5 +105,23 @@ describe('HoldingHistoryPage ticker match', () => {
 
     expect(screen.getByText(/Unmatched — using broker prices/)).toBeInTheDocument()
     expect(screen.getByText(/lists no prices for it/)).toBeInTheDocument()
+  })
+
+  it('says whether the match was guessed or chosen, and offers to change it', () => {
+    renderPage(build())
+
+    expect(screen.getByText('Matched automatically')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Change' })).toBeInTheDocument()
+  })
+
+  it('offers a way back to the heuristic only once a ticker has been pinned', () => {
+    const { unmount } = renderPage(build())
+    expect(screen.queryByRole('button', { name: 'Automatic' })).not.toBeInTheDocument()
+    unmount()
+
+    renderPage(build({ mapping_source: 'manual' }))
+
+    expect(screen.getByText('Chosen by you')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Automatic' })).toBeInTheDocument()
   })
 })

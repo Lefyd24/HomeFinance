@@ -30,8 +30,8 @@
   --primary-foreground: oklch(98.4% 0.003 248);
   --secondary: oklch(96.8% 0.007 248);
   --secondary-foreground: oklch(28.2% 0.057 255);
-  --muted: oklch(96.8% 0.007 248);
-  --muted-foreground: oklch(50% 0.038 257);
+  --muted: oklch(92.257% 0.00877 248.197);
+  --muted-foreground: oklch(40.161% 0.03847 257.309);
   --accent: oklch(94.6% 0.011 250);
   --accent-foreground: oklch(28.2% 0.057 255);
   --destructive: oklch(57% 0.232 27);
@@ -415,6 +415,142 @@
   }
   html {
     @apply font-sans;
+  }
+
+  /*
+   * Scrollbars
+   * ----------
+   * The app has scroll ports inside scroll ports (the content well, the
+   * holdings rail, a dozen tile bodies), so the default chrome scrollbar —
+   * grey, boxy, with a stepper arrow at each end — shows up often enough to
+   * count as part of the design rather than as the browser's business.
+   *
+   * Three deliberate choices:
+   *
+   * - **No arrows.** `::-webkit-scrollbar-button` is hidden. They are a
+   *   40-year-old affordance nobody clicks, and each one steals a square of
+   *   track at exactly the end where the thumb needs room to be grabbed.
+   * - **The thumb is `--primary`**, at partial opacity so it reads as chrome
+   *   until you reach for it, then goes solid on hover. It is `color-mix`ed
+   *   off the token rather than hardcoded, so it follows the theme *and* the
+   *   per-section reskin (`[data-section]` swaps `--primary`, and the
+   *   investments scrollbars turn with it).
+   * - **Tapered.** A thumb is a rectangle and CSS gives no way to change its
+   *   width along its own length, so the taper is painted: the fill runs the
+   *   length of the thumb and fades to transparent at both ends, which reads
+   *   as a bar thickest in the middle and thinning to nothing at the tips.
+   *   The gradient runs down for a vertical bar and across for a horizontal
+   *   one, hence the two rules.
+   *
+   * Firefox has no thumb pseudo-element to paint, so it gets the same colour
+   * through `scrollbar-color` and skips the taper — its scrollbars have no
+   * arrows to begin with.
+   */
+  /*
+   * Firefox only, and it has to be, not as a nicety.
+   *
+   * Chromium supports the standard `scrollbar-width`/`scrollbar-color`
+   * properties *and* treats them as exclusive with the `::-webkit-scrollbar`
+   * pseudo-elements: declare either standard property anywhere on an element
+   * and every webkit rule below is dropped for it. Setting them on `*` — the
+   * obvious thing to write — therefore silently turns the whole treatment
+   * back into a default grey bar with arrows. `@supports not selector(...)`
+   * fences them off to the engine that has no other way of being asked.
+   */
+  @supports not selector(::-webkit-scrollbar) {
+    * {
+      scrollbar-width: thin;
+      scrollbar-color: color-mix(in oklab, var(--primary) 45%, transparent) transparent;
+    }
+  }
+
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-button,
+  ::-webkit-scrollbar-corner {
+    display: none;
+    width: 0;
+    height: 0;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    /* No gutter and no inset: the fill runs the full width of the bar, so the
+       thumb reads as one clean stroke rather than a bar inside a channel. */
+    border: 0;
+    border-radius: 999px;
+  }
+
+  /* The lens. Five stops rather than two so the fill swells and thins along
+     the bar instead of stopping dead at an edge — the alpha ramp is doing the
+     work a shape would if a thumb could be one. */
+  ::-webkit-scrollbar-thumb:vertical {
+    background-image: linear-gradient(
+      to bottom,
+      transparent 0%,
+      color-mix(in oklab, var(--primary) 22%, transparent) 12%,
+      color-mix(in oklab, var(--primary) 48%, transparent) 50%,
+      color-mix(in oklab, var(--primary) 22%, transparent) 88%,
+      transparent 100%
+    );
+  }
+
+  ::-webkit-scrollbar-thumb:horizontal {
+    background-image: linear-gradient(
+      to right,
+      transparent 0%,
+      color-mix(in oklab, var(--primary) 22%, transparent) 12%,
+      color-mix(in oklab, var(--primary) 48%, transparent) 50%,
+      color-mix(in oklab, var(--primary) 22%, transparent) 88%,
+      transparent 100%
+    );
+  }
+
+  /*
+   * Reaching for it. Hovering the scrolling element (not the thumb — by then
+   * you have already found it) thickens the bar by giving back 1.5px of
+   * gutter, saturates the fill and lights a halo in the same hue. Chromium
+   * cannot transition scrollbar pseudo-elements, so this is a step change; it
+   * reads as the bar coming forward rather than as something animating.
+   */
+  :hover::-webkit-scrollbar-thumb {
+    box-shadow: 0 0 8px color-mix(in oklab, var(--primary) 25%, transparent);
+  }
+
+  :hover::-webkit-scrollbar-thumb:vertical {
+    background-image: linear-gradient(
+      to bottom,
+      transparent 0%,
+      color-mix(in oklab, var(--primary) 45%, transparent) 8%,
+      var(--primary) 50%,
+      color-mix(in oklab, var(--primary) 45%, transparent) 92%,
+      transparent 100%
+    );
+  }
+
+  :hover::-webkit-scrollbar-thumb:horizontal {
+    background-image: linear-gradient(
+      to right,
+      transparent 0%,
+      color-mix(in oklab, var(--primary) 45%, transparent) 8%,
+      var(--primary) 50%,
+      color-mix(in oklab, var(--primary) 45%, transparent) 92%,
+      transparent 100%
+    );
+  }
+
+  ::-webkit-scrollbar-thumb:active {
+    background-image: linear-gradient(
+      to bottom,
+      var(--primary) 0%,
+      var(--primary) 100%
+    );
   }
 }
 

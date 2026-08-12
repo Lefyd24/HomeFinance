@@ -283,7 +283,12 @@
       "infoBanner": "Estimated net worth over the past 12 months, based on your transaction history.",
       "changeLabel": "12-month change: ",
       "chartTitle": "Net worth history (estimated)",
-      "seriesNetWorth": "Net worth"
+      "seriesNetWorth": "Net worth",
+      "seriesChange": "Change that month",
+      "peak": "Peak",
+      "trough": "Low",
+      "average": "Average",
+      "chartHint": "The line is your net worth; the bars under it are what each month added or took away."
     },
     "projection": {
       "growthLabel": "Projected growth",
@@ -291,7 +296,10 @@
       "projectedIn12Months": "Projected net worth in 12 months:",
       "infoBanner": "This projection assumes your current savings rate continues.",
       "chartTitle": "Net worth projection",
-      "seriesProjectedNetWorth": "Projected net worth"
+      "seriesProjectedNetWorth": "Projected net worth",
+      "projectedBand": "Projected",
+      "todayLine": "Today",
+      "chartHint": "Dashed and shaded because it is arithmetic on your current savings rate, not a record of anything."
     },
     "health": {
       "excellent": "Excellent! Your debt-to-asset ratio is very healthy.",

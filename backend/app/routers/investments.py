@@ -37,6 +37,8 @@ from app.schemas import (
     PortfolioSnapshotResponse,
     PositionHistoryPoint,
     PositionHistoryResponse,
+    PositionSymbolMapResponse,
+    PositionSymbolMapUpdate,
     PriceBar,
     SavedComparisonCreate,
     SavedComparisonResponse,
@@ -47,14 +49,24 @@ from app.schemas import (
     TechnicalResponse,
 )
 from app.services import comparison_service, company_history_service, technical_service
-from app.services.position_history_service import DEFAULT_RANGE, build_position_history
+from app.services.position_history_service import (
+    DEFAULT_RANGE,
+    build_position_history,
+    clear_symbol_override,
+    set_symbol_override,
+)
 from app.services.investment_sync_service import (
     create_credential,
     get_provider_for_account,
     sync_account,
 )
 from app.services.investment_providers.yahoo import yahoo_market_data
-from app.services.market_data import BENCHMARKS, MarketDataUnavailable, SymbolNotFound
+from app.services.market_data import (
+    BENCHMARKS,
+    MarketDataUnavailable,
+    SymbolNotFound,
+    check_yahoo_symbol,
+)
 from app.utils.crypto import encrypt
 from app.utils.rate_limit import SlidingWindowRateLimiter
 from app.utils.security import get_current_user_authenticated
@@ -413,6 +425,7 @@ def get_position_history(
         mapped_symbol=history.mapped_symbol,
         mapped_currency=history.mapped_currency,
         native_currency=history.native_currency,
+        mapping_source=history.mapping_source,
         mapping_checked=history.mapping_checked,
         opened_on=history.opened_on,
         quantity=history.quantity,
@@ -428,6 +441,9 @@ def get_position_history(
                 date=point.date,
                 quantity=point.quantity,
                 price=point.price,
+                open=point.open,
+                high=point.high,
+                low=point.low,
                 value=point.value,
                 invested=point.invested,
                 fees=point.fees,
@@ -435,6 +451,81 @@ def get_position_history(
             for point in history.series
         ],
     )
+
+
+@router.put(
+    "/accounts/{account_id}/positions/{symbol:path}/mapping",
+    response_model=PositionSymbolMapResponse,
+)
+def set_position_symbol_mapping(
+    account_id: int,
+    symbol: str,
+    payload: PositionSymbolMapUpdate,
+    current_user: User = Depends(get_current_user_authenticated),
+    db: Session = Depends(get_db),
+):
+    """Pin the Yahoo ticker this holding's chart is priced from.
+
+    The suffix heuristic in `market_data.broker_symbols` is right most of the
+    time and unfixable when it isn't — `.EU` covers several venues, and a bare
+    ticker can land on an unrelated US listing. This is the escape hatch, and
+    it verifies before it stores: a ticker Yahoo has no prices for is rejected
+    here rather than accepted and silently ignored at chart time.
+
+    A currency disagreement is reported, not refused. The check exists to stop
+    a *guess* pricing a holding off the wrong company; someone who has looked
+    at both listings and chosen is better informed than the suffix table.
+    """
+    account = _get_investment_account(db, account_id, current_user)
+    candidate = payload.yahoo_symbol.strip().upper()
+    if not candidate:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="A ticker is required"
+        )
+
+    position = (
+        db.query(PortfolioPosition)
+        .filter(
+            PortfolioPosition.account_id == account.id,
+            PortfolioPosition.symbol == symbol,
+        )
+        .first()
+    )
+    check = check_yahoo_symbol(
+        db,
+        candidate,
+        wanted_currency=position.currency if position else None,
+        enforce_currency=False,
+    )
+    if check.outcome != "matched":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Yahoo Finance has no price history for {candidate}",
+        )
+
+    stored = set_symbol_override(db, account.id, symbol, candidate)
+    return PositionSymbolMapResponse(
+        broker_symbol=symbol,
+        yahoo_symbol=stored,
+        currency=check.currency,
+        source="manual",
+    )
+
+
+@router.delete(
+    "/accounts/{account_id}/positions/{symbol:path}/mapping",
+    response_model=PositionSymbolMapResponse,
+)
+def clear_position_symbol_mapping(
+    account_id: int,
+    symbol: str,
+    current_user: User = Depends(get_current_user_authenticated),
+    db: Session = Depends(get_db),
+):
+    """Drop the pinned ticker and hand this holding back to the heuristic."""
+    account = _get_investment_account(db, account_id, current_user)
+    clear_symbol_override(db, account.id, symbol)
+    return PositionSymbolMapResponse(broker_symbol=symbol, yahoo_symbol=None, source=None)
 
 
 @router.get("/accounts/{account_id}/transactions", response_model=List[InvestmentTransactionResponse])

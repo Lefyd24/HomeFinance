@@ -6,10 +6,50 @@ import { HugeiconsIcon } from '@hugeicons/react'
 import { ChartLineData01Icon, Clock01Icon, ChartUpIcon } from '@hugeicons/core-free-icons'
 import { Button } from '@/components/ui/button'
 import { formatCurrency, formatDate } from '../lib/format'
-import { baseAxisStyle, compactNumber, polarityItemStyle, polarityLineStyle, seriesHoverSafe, tooltipStyle, useChartTheme } from '../reports/chartTheme'
+import {
+  baseAxisStyle,
+  compactNumber,
+  normalizeChartOption,
+  polarityItemStyle,
+  polarityLineStyle,
+  seriesHoverSafe,
+  tooltipStyle,
+  useChartTheme,
+  type ChartTheme,
+} from '../reports/chartTheme'
+import { useMediaQuery } from '../ui/useMediaQuery'
 import { ToolPanel, EmptyResults, InfoBanner } from './ToolPanel'
 import * as advisorApi from './advisorApi'
 import type { NetWorth, NetWorthHistoryEntry, NetWorthProjection } from './advisorApi'
+
+/**
+ * Grid, tooltip and pointer shared by both charts.
+ *
+ * The old fixed percentage margins left a phone with about half its width for
+ * plot area once the axis labels had taken theirs; the padding is in pixels
+ * here and tighter on a small screen, and money is spelled out in the tooltip
+ * rather than shortened the way the axis has to be.
+ */
+function responsiveFrame(theme: ChartTheme, compact: boolean) {
+  return {
+    grid: {
+      left: compact ? 2 : 6,
+      right: compact ? 4 : 10,
+      top: 26,
+      bottom: 4,
+      containLabel: true,
+    },
+    tooltip: {
+      trigger: 'axis' as const,
+      ...tooltipStyle(theme),
+      valueFormatter: (value: number | null) => (value == null ? '—' : formatCurrency(value)),
+    },
+    axisPointer: {
+      lineStyle: { color: theme.axis, type: 'dashed' as const },
+      label: { backgroundColor: theme.surface, color: theme.ink, fontSize: 11 },
+    },
+  }
+}
 
 export function NetWorthTool() {
   const { t } = useTranslation('advisor')
@@ -56,60 +96,185 @@ export function NetWorthTool() {
   }
 
   const theme = useChartTheme()
+  const compact = !useMediaQuery('(min-width: 640px)')
 
+  /**
+   * Net worth month by month, with the month-on-month change underneath it.
+   *
+   * The line alone says where the number ended up and hides how it got there —
+   * a flat year and a year of one big gain against eleven small losses draw
+   * nearly the same curve. The bars are that missing half: one per month,
+   * green when the month added and red when it took away, on their own axis
+   * because a €400 monthly change and a €40,000 balance cannot share a scale.
+   */
   const historyChart = useMemo(() => {
     if (view !== 'history' || !history) return null
     const seriesName = t('netWorthTool.history.seriesNetWorth')
+    const changeName = t('netWorthTool.history.seriesChange')
+    const values = history.map((d) => d.net_worth)
+    const changes = values.map((value, index) => (index === 0 ? null : value - values[index - 1]!))
+    const average = values.reduce((sum, v) => sum + v, 0) / (values.length || 1)
+
     return {
-      tooltip: { trigger: 'axis' as const, ...tooltipStyle(theme) },
-      grid: { left: '3%', right: '4%', top: 20, bottom: '10%', containLabel: true },
+      ...responsiveFrame(theme, compact),
       xAxis: {
         type: 'category' as const,
         data: history.map((d) => formatDate(d.date, { month: 'short', year: '2-digit' })),
         ...baseAxisStyle(theme),
+        axisLabel: { color: theme.muted, fontSize: compact ? 9 : 11, hideOverlap: true },
       },
-      yAxis: { type: 'value' as const, ...baseAxisStyle(theme), axisLabel: { color: theme.muted, fontSize: 11, formatter: compactNumber } },
+      yAxis: [
+        {
+          type: 'value' as const,
+          scale: true,
+          ...baseAxisStyle(theme),
+          axisLabel: { color: theme.muted, fontSize: compact ? 9 : 11, formatter: compactNumber },
+        },
+        {
+          type: 'value' as const,
+          ...baseAxisStyle(theme),
+          splitLine: { show: false },
+          axisLabel: { show: false },
+          // Half the panel, so the bars read as a footnote to the line rather
+          // than competing with it.
+          max: (value: { max: number; min: number }) =>
+            Math.max(Math.abs(value.max), Math.abs(value.min)) * 2.6,
+          min: (value: { max: number; min: number }) =>
+            -Math.max(Math.abs(value.max), Math.abs(value.min)) * 2.6,
+        },
+      ],
       series: [
+        {
+          name: changeName,
+          type: 'bar' as const,
+          yAxisIndex: 1,
+          ...seriesHoverSafe,
+          data: changes.map((change) => ({
+            value: change,
+            itemStyle: {
+              color: (change ?? 0) >= 0 ? theme.positive : theme.negative,
+              opacity: 0.45,
+            },
+          })),
+          barMaxWidth: 14,
+        },
         {
           name: seriesName,
           type: 'line' as const,
           ...seriesHoverSafe,
-          data: history.map((d) => d.net_worth),
+          data: values,
           smooth: true,
-          areaStyle: { opacity: 0.15 },
+          symbolSize: 5,
+          areaStyle: { opacity: 0.14, color: theme.neutral },
           itemStyle: { color: theme.neutral },
           lineStyle: { width: 2, color: theme.neutral },
+          // The two months worth naming, and the level the year hovered
+          // around — read off the chart rather than hunted for in it.
+          markPoint: {
+            symbolSize: 42,
+            label: { fontSize: 9, color: theme.ink, formatter: (p: { value: number }) => compactNumber(p.value) },
+            itemStyle: { color: 'transparent', borderColor: theme.grid, borderWidth: 1 },
+            data: [
+              { type: 'max' as const, name: t('netWorthTool.history.peak') },
+              { type: 'min' as const, name: t('netWorthTool.history.trough') },
+            ],
+          },
+          markLine: {
+            silent: true,
+            symbol: 'none' as const,
+            lineStyle: { color: theme.muted, type: 'dashed' as const, opacity: 0.6 },
+            label: {
+              formatter: t('netWorthTool.history.average'),
+              fontSize: 9,
+              color: theme.muted,
+              position: 'insideEndTop' as const,
+            },
+            data: [{ yAxis: average }],
+          },
         },
       ],
     }
-  }, [view, history, theme, t])
+  }, [view, history, theme, t, compact])
 
+  /**
+   * Where the current savings rate lands you, drawn as an extension of today
+   * rather than as a chart of its own.
+   *
+   * Everything after "now" is dashed and sits on a shaded band, because it is
+   * arithmetic on an assumption, not a record of anything. The flat line at
+   * today's net worth is what makes the projection legible: the gap between
+   * the two lines at any month is what the saving is expected to add by then.
+   */
   const projectionChart = useMemo(() => {
     if (view !== 'projection' || !projection) return null
     const seriesName = t('netWorthTool.projection.seriesProjectedNetWorth')
+    const values = [
+      projection.current_net_worth,
+      ...projection.projections.map((p) => p.projected_net_worth),
+    ]
+    const labels = [
+      t('charts.now'),
+      ...projection.projections.map((p) => formatDate(p.date, { month: 'short' })),
+    ]
+    const positive = projection.total_growth >= 0
+
     return {
-      tooltip: { trigger: 'axis' as const, ...tooltipStyle(theme) },
-      grid: { left: '3%', right: '4%', top: 20, bottom: '10%', containLabel: true },
+      ...responsiveFrame(theme, compact),
       xAxis: {
         type: 'category' as const,
-        data: [t('charts.now'), ...projection.projections.map((p) => formatDate(p.date, { month: 'short' }))],
+        data: labels,
+        boundaryGap: false,
         ...baseAxisStyle(theme),
+        axisLabel: { color: theme.muted, fontSize: compact ? 9 : 11, hideOverlap: true },
       },
-      yAxis: { type: 'value' as const, ...baseAxisStyle(theme), axisLabel: { color: theme.muted, fontSize: 11, formatter: compactNumber } },
+      yAxis: {
+        type: 'value' as const,
+        scale: true,
+        ...baseAxisStyle(theme),
+        axisLabel: { color: theme.muted, fontSize: compact ? 9 : 11, formatter: compactNumber },
+      },
       series: [
         {
           name: seriesName,
           type: 'line' as const,
           ...seriesHoverSafe,
-          data: [projection.current_net_worth, ...projection.projections.map((p) => p.projected_net_worth)],
+          data: values,
           smooth: true,
-          areaStyle: { opacity: 0.15 },
-          itemStyle: polarityItemStyle(theme, 'positive'),
-          lineStyle: polarityLineStyle(theme, 'positive'),
+          showSymbol: false,
+          areaStyle: { opacity: 0.12 },
+          itemStyle: polarityItemStyle(theme, positive ? 'positive' : 'negative'),
+          lineStyle: {
+            ...polarityLineStyle(theme, positive ? 'positive' : 'negative'),
+            type: 'dashed' as const,
+          },
+          markArea: {
+            silent: true,
+            itemStyle: { color: theme.grid, opacity: 0.5 },
+            label: {
+              show: !compact,
+              position: 'insideTop' as const,
+              color: theme.muted,
+              fontSize: 10,
+              formatter: t('netWorthTool.projection.projectedBand'),
+            },
+            data: [[{ xAxis: labels[0] }, { xAxis: labels[labels.length - 1] }]],
+          },
+          markLine: {
+            silent: true,
+            symbol: 'none' as const,
+            lineStyle: { color: theme.muted, type: 'solid' as const, opacity: 0.5 },
+            label: {
+              formatter: t('netWorthTool.projection.todayLine'),
+              fontSize: 9,
+              color: theme.muted,
+              position: 'insideStartTop' as const,
+            },
+            data: [{ yAxis: projection.current_net_worth }],
+          },
         },
       ],
     }
-  }, [view, projection, theme, t])
+  }, [view, projection, theme, t, compact])
 
   let healthMessage = ''
   if (current) {
@@ -220,12 +385,28 @@ export function NetWorthTool() {
         historyChart ? (
           <>
             <h2 className="mb-2 font-heading text-lg font-semibold">{t('netWorthTool.history.chartTitle')}</h2>
-            <ReactECharts option={historyChart} style={{ height: 320, width: '100%' }} opts={{ renderer: 'svg' }} notMerge />
+            <ReactECharts
+              option={normalizeChartOption(historyChart)}
+              style={{ height: compact ? 260 : 340, width: '100%' }}
+              opts={{ renderer: 'svg' }}
+              notMerge
+            />
+            <p className="mt-1 text-[0.7rem] text-muted-foreground">
+              {t('netWorthTool.history.chartHint')}
+            </p>
           </>
         ) : projectionChart ? (
           <>
             <h2 className="mb-2 font-heading text-lg font-semibold">{t('netWorthTool.projection.chartTitle')}</h2>
-            <ReactECharts option={projectionChart} style={{ height: 320, width: '100%' }} opts={{ renderer: 'svg' }} notMerge />
+            <ReactECharts
+              option={normalizeChartOption(projectionChart)}
+              style={{ height: compact ? 260 : 340, width: '100%' }}
+              opts={{ renderer: 'svg' }}
+              notMerge
+            />
+            <p className="mt-1 text-[0.7rem] text-muted-foreground">
+              {t('netWorthTool.projection.chartHint')}
+            </p>
           </>
         ) : undefined
       }
