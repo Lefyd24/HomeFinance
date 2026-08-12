@@ -56,7 +56,11 @@ const TYPE_META: Record<
     plural: string
     /** Deep two-stop field behind the account card. */
     gradient: string
-    /** Blurred blob lighting one corner of that field. */
+    /**
+     * Colour of the light falling across the field's top-end corner. A plain
+     * colour rather than a class: it is consumed as a `radial-gradient` stop,
+     * not as a background utility (see `AccountCard`).
+     */
     glow: string
   }
 > = {
@@ -69,7 +73,7 @@ const TYPE_META: Record<
     ambient: 'bg-primary/30',
     text: 'text-primary',
     gradient: 'bg-gradient-to-br from-[#1e3a5f] to-[#0d1c30]',
-    glow: 'bg-sky-400/25',
+    glow: 'rgba(56, 189, 248, 0.30)',
   },
   savings: {
     label: 'Savings',
@@ -80,7 +84,7 @@ const TYPE_META: Record<
     ambient: 'bg-success/30',
     text: 'text-success',
     gradient: 'bg-gradient-to-br from-[#0d4a3d] to-[#052a22]',
-    glow: 'bg-emerald-300/25',
+    glow: 'rgba(110, 231, 183, 0.26)',
   },
   credit: {
     label: 'Credit',
@@ -91,7 +95,7 @@ const TYPE_META: Record<
     ambient: 'bg-flow-out/25',
     text: 'text-flow-out',
     gradient: 'bg-gradient-to-br from-[#6d1f2c] to-[#390e16]',
-    glow: 'bg-rose-300/25',
+    glow: 'rgba(253, 164, 175, 0.26)',
   },
   cash: {
     label: 'Cash',
@@ -102,7 +106,7 @@ const TYPE_META: Record<
     ambient: 'bg-warning/25',
     text: 'text-warning',
     gradient: 'bg-gradient-to-br from-[#6b3f12] to-[#3a2008]',
-    glow: 'bg-amber-300/25',
+    glow: 'rgba(252, 211, 77, 0.26)',
   },
   investment: {
     label: 'Investment',
@@ -113,7 +117,7 @@ const TYPE_META: Record<
     ambient: 'bg-flow-move/25',
     text: 'text-flow-move',
     gradient: 'bg-gradient-to-br from-[#2e2a6b] to-[#17143d]',
-    glow: 'bg-indigo-300/25',
+    glow: 'rgba(165, 180, 252, 0.28)',
   },
 }
 
@@ -142,7 +146,7 @@ export function getAccountTypeMeta(type: AccountType, t?: (key: string, defaultV
       ambient: 'bg-muted-foreground/20',
       text: 'text-muted-foreground',
       gradient: 'bg-gradient-to-br from-[#2b3442] to-[#151b24]',
-      glow: 'bg-slate-300/20',
+      glow: 'rgba(203, 213, 225, 0.22)',
     }
   }
   return {

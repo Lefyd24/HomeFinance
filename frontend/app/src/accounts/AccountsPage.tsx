@@ -412,18 +412,25 @@ function AccountCard({
         !account.is_active && 'opacity-65 saturate-50',
       )}
     >
-      {/* Two blurred blobs light the field so it reads as a lit surface rather
-          than a flat fill. Purely decorative, and behind everything. */}
+      {/*
+       * Two pools of light on the field, so it reads as a lit surface rather
+       * than a flat fill. Purely decorative, and behind everything.
+       *
+       * Drawn as radial gradients rather than as blurred circles pushed past
+       * the card's edge. A `filter: blur()` promotes its element to its own
+       * compositing layer, and the browser then applies the ancestor's
+       * `overflow: hidden` to that layer as a plain rectangle — so the blur
+       * bled into the square corners *outside* the rounded edge, which is
+       * exactly the leftover wedge this replaces. A gradient paints inside the
+       * box with no layer of its own, so the radius clips it correctly, and it
+       * costs no blur pass per card.
+       */}
       <span
         aria-hidden
-        className={cn(
-          'pointer-events-none absolute -end-10 -top-12 size-40 rounded-full blur-2xl',
-          meta.glow,
-        )}
-      />
-      <span
-        aria-hidden
-        className="pointer-events-none absolute -bottom-14 end-8 size-32 rounded-full bg-white/10 blur-2xl"
+        className="pointer-events-none absolute inset-0 rounded-[inherit]"
+        style={{
+          backgroundImage: `radial-gradient(60% 45% at 100% 0%, ${meta.glow}, transparent 72%), radial-gradient(55% 45% at 82% 108%, rgba(255,255,255,0.12), transparent 70%)`,
+        }}
       />
       <div className="relative flex flex-1 flex-col gap-2 p-3.5">
         <div className="flex items-center gap-2.5">
