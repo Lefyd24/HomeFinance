@@ -172,7 +172,20 @@ class Settings(BaseSettings):
     DEEPSEEK_API_KEY: str | None = None
     DEEPSEEK_BASE_URL: str = "https://api.deepseek.com"
     DEEPSEEK_MODEL: str = "deepseek-chat"
-    AI_CHAT_MAX_TOOL_ROUNDS: int = 6
+    # An advice-grade answer legitimately chains overview -> allocation -> risk ->
+    # surplus -> compare -> project, so the ceiling is higher than a plain Q&A needs.
+    AI_CHAT_MAX_TOOL_ROUNDS: int = 10
+    # Market-data tools are slower than the DB ones the agent started with.
+    AI_CHAT_TIMEOUT_SECONDS: float = 90.0
+    # Per-user cap on chat turns. Each turn can fan out into several tool rounds,
+    # so an unbounded loop in the UI would be a real bill.
+    AI_CHAT_PER_HOUR: int = 60
+    # A single oversized tool result can exhaust the context window and silently
+    # degrade the answer; results above this are truncated with a declared marker.
+    AI_TOOL_RESULT_MAX_CHARS: int = 20_000
+    # Feature-flagged like every other integration: off, the advisor keeps its
+    # original transactions/budgets/debts tool set and no portfolio tools.
+    AI_INVESTMENT_TOOLS_ENABLED: bool = True
 
     # Bank sync (Enable Banking — PSD2 account information)
     # Off by default: without a registered application and its private key the

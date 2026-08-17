@@ -48,7 +48,12 @@ from app.schemas import (
     SymbolSearchResult,
     TechnicalResponse,
 )
-from app.services import comparison_service, company_history_service, technical_service
+from app.services import (
+    comparison_service,
+    company_history_service,
+    portfolio_analytics_service,
+    technical_service,
+)
 from app.services.position_history_service import (
     DEFAULT_RANGE,
     build_position_history,
@@ -91,27 +96,10 @@ MARKET_DATA_PROVIDERS = ("yahoo", "freedom24", "binance")
 DEFAULT_MARKET_DATA_PROVIDER = "yahoo"
 
 
-def _base_market_value(position: PortfolioPosition) -> float:
-    """A position's market value in the account's currency.
-
-    Falls back to the native value for rows written before the base-currency
-    columns existed, and for single-currency accounts where they are equal.
-    """
-    return (
-        position.market_value_base
-        if position.market_value_base is not None
-        else position.market_value
-    )
-
-
-def _base_cost_basis(position: PortfolioPosition) -> Optional[float]:
-    if position.cost_basis_base is not None:
-        return position.cost_basis_base
-    if position.cost_basis is not None:
-        return position.cost_basis
-    if position.avg_price is not None:
-        return position.avg_price * position.quantity
-    return None
+# Pure position math, kept in the service layer so portfolio_analytics_service
+# (and through it the AI advisor's tools) can reuse it without importing a router.
+_base_market_value = portfolio_analytics_service.base_market_value
+_base_cost_basis = portfolio_analytics_service.base_cost_basis
 
 
 def _to_response(db: Session, account: Account) -> InvestmentAccountResponse:

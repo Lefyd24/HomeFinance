@@ -22,3 +22,6 @@ class AiChatRequest(BaseModel):
 
 class AiChatStatus(BaseModel):
     configured: bool
+    # Lets the UI show investment-flavoured suggestions only when the portfolio
+    # tools are actually registered.
+    investment_tools_enabled: bool = True

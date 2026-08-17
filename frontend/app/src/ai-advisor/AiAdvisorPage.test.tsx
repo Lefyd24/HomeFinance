@@ -37,7 +37,7 @@ function mockStream(events: ChatEvent[]) {
 describe('AiAdvisorPage', () => {
   beforeEach(() => {
     window.sessionStorage.clear()
-    vi.spyOn(aiChatApi, 'getChatStatus').mockResolvedValue({ configured: true })
+    vi.spyOn(aiChatApi, 'getChatStatus').mockResolvedValue({ configured: true, investment_tools_enabled: true })
   })
   afterEach(() => vi.restoreAllMocks())
 
@@ -98,7 +98,7 @@ describe('AiAdvisorPage', () => {
   })
 
   it('explains itself when the feature is not configured', async () => {
-    vi.spyOn(aiChatApi, 'getChatStatus').mockResolvedValue({ configured: false })
+    vi.spyOn(aiChatApi, 'getChatStatus').mockResolvedValue({ configured: false, investment_tools_enabled: true })
 
     renderPage()
 

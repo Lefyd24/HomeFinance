@@ -50,4 +50,7 @@ export const queryKeys = {
   scenarios: (filters?: object) => ['scenarios', filters ?? {}] as const,
   scenario: (id: number) => ['scenario', id] as const,
   scenarioTrackRecord: ['scenarioTrackRecord'] as const,
+  investorProfile: ['investorProfile'] as const,
+  investorProfileOptions: ['investorProfileOptions'] as const,
+  investorProfileRevisions: ['investorProfileRevisions'] as const,
 }

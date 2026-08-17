@@ -349,8 +349,24 @@
             "How much total debt do I have, and what should I pay off first?",
             "If I put an extra 200 a month at my debts, when am I clear?"
           ]
+        },
+        "portfolioHealth": {
+          "title": "Check the portfolio",
+          "prompts": [
+            "Am I too concentrated in any one holding?",
+            "How risky is my portfolio compared to the market?"
+          ]
+        },
+        "investDecision": {
+          "title": "Decide where it goes",
+          "prompts": [
+            "How much can I realistically invest each month?",
+            "Should I add to my biggest holding or buy a broad index fund?",
+            "Would I be better off paying down my debt than investing?"
+          ]
         }
-      }
+      },
+      "export": "Export"
     },
     "toolTrail": {
       "labels": {
@@ -360,9 +376,117 @@
         "getBudgetsStatus": "Reviewing your budgets",
         "getRecurringExpenses": "Checking recurring expenses",
         "getDebts": "Reviewing your debts",
-        "sendAnalysisEmail": "Sending the email"
+        "sendAnalysisEmail": "Sending the email",
+        "getInvestorProfile": "Checking your investor profile",
+        "updateInvestorProfile": "Updating your investor profile",
+        "getPortfolioOverview": "Reading your portfolio",
+        "getPositions": "Listing your holdings",
+        "getPortfolioAllocation": "Checking how your portfolio is spread",
+        "getPortfolioRisk": "Measuring portfolio risk",
+        "getInvestmentTransactions": "Reading your broker activity",
+        "getPositionHistory": "Tracing a holding's history",
+        "getWatchlist": "Checking your watchlist",
+        "searchSymbols": "Looking up the ticker",
+        "getCompanyResearch": "Researching",
+        "compareSymbols": "Comparing",
+        "getTechnical": "Reading the charts for",
+        "simulateSymbol": "Simulating outcomes for",
+        "getNetWorth": "Working out your net worth",
+        "getEmergencyFund": "Checking your emergency fund",
+        "getGoals": "Reviewing your goals",
+        "getInvestableSurplus": "Working out what you can invest",
+        "getRecurringCommitments": "Totalling your commitments",
+        "projectInvestment": "Projecting the growth",
+        "compareInvestVsPayoff": "Comparing investing against paying it off"
       },
       "usingFallback": "Using {{name}}"
+    },
+    "profileUpdate": {
+      "title": "The advisor updated your profile",
+      "undo": "Undo",
+      "undone": "(undone)",
+      "notSet": "not set",
+      "fields": {
+        "risk_tolerance": "Risk tolerance",
+        "primary_objective": "Primary objective",
+        "horizon_years": "Horizon (years)",
+        "liquidity_needs_months": "Liquidity needed (months)",
+        "target_allocation": "Target allocation",
+        "max_single_position_pct": "Max single position",
+        "excluded_sectors": "Excluded sectors",
+        "excluded_symbols": "Excluded symbols",
+        "income_stability": "Income stability",
+        "experience_level": "Experience",
+        "base_currency": "Base currency",
+        "tax_residency": "Tax residency",
+        "notes": "Notes"
+      }
+    },
+    "export": {
+      "title": "AI Advisor conversation",
+      "exportedAt": "Exported {{when}}",
+      "you": "You",
+      "advisor": "Advisor"
+    }
+  },
+  "investorProfile": {
+    "title": "Investor profile",
+    "description": "Who the AI advisor thinks you are. It reads this before every answer, and checks any suggestion against your limits. Leave a field blank if you'd rather it asked.",
+    "loading": "Loading…",
+    "notSetYet": "Nothing set yet. Until you fill this in, the advisor will ask before giving allocation advice rather than assuming.",
+    "choose": "Choose…",
+    "save": "Save profile",
+    "saving": "Saving…",
+    "saved": "Saved",
+    "saveFailed": "Could not save the profile.",
+    "allocationTotal": "Total: {{total}}% (should be about 100%)",
+    "fields": {
+      "riskTolerance": "Risk tolerance",
+      "primaryObjective": "Primary objective",
+      "horizonYears": "Investment horizon (years)",
+      "liquidityNeedsMonths": "Months of expenses to keep liquid",
+      "maxSinglePosition": "Maximum single position (%)",
+      "incomeStability": "Income stability",
+      "experienceLevel": "Investing experience",
+      "baseCurrency": "Base currency",
+      "taxResidency": "Tax residency",
+      "targetAllocation": "Target allocation",
+      "excludedSectors": "Excluded sectors",
+      "excludedSymbols": "Excluded symbols",
+      "notes": "Anything else the advisor should know"
+    },
+    "hints": {
+      "horizonYears": "How long before you'd need this money.",
+      "maxSinglePosition": "The advisor will flag any suggestion that pushes a holding past this.",
+      "targetAllocation": "The split you're aiming for. Percentages, adding up to about 100.",
+      "commaSeparated": "Comma separated",
+      "notes": "e.g. \"I already have a workplace pension\" or \"I don't want to hold individual stocks\""
+    },
+    "assetClasses": {
+      "equity": "Equity",
+      "bond": "Bonds",
+      "cash": "Cash",
+      "crypto": "Crypto",
+      "other": "Other"
+    },
+    "values": {
+      "conservative": "Conservative",
+      "moderate": "Moderate",
+      "balanced": "Balanced",
+      "growth": "Growth",
+      "aggressive": "Aggressive",
+      "preservation": "Preserve what I have",
+      "income": "Generate income",
+      "stable": "Stable",
+      "variable": "Variable",
+      "uncertain": "Uncertain",
+      "beginner": "Beginner",
+      "intermediate": "Intermediate",
+      "experienced": "Experienced"
+    },
+    "history": {
+      "title": "Change history",
+      "description": "Every change, including the ones the advisor made for you. Undo restores the previous value."
     }
   }
 }

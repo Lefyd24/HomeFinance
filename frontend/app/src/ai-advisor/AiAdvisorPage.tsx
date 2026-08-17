@@ -50,6 +50,7 @@ export function AiAdvisorPage() {
         disabled={statusLoading || unavailable}
         disabledReason={t('aiAdvisor.unavailableReason')}
         initialPrompt={initialPrompt}
+        showInvestmentPrompts={status?.investment_tools_enabled ?? false}
       />
     </div>
   )

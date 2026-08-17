@@ -1,9 +1,14 @@
 """DeepSeek-backed conversational agent with tool calling and streaming.
 
 `run_agent_stream` is a generator that yields small dicts describing what's
-happening (a streamed answer token, a tool call starting/finishing, or an
-error) so the router can forward each one to the browser as an SSE event in
-real time.
+happening (a streamed answer token, a tool call starting/finishing, a profile
+change, or an error) so the router can forward each one to the browser as an SSE
+event in real time.
+
+The tool registry is assembled from the `ai_tools*` modules, each of which keeps
+its JSON schemas beside its implementations. The security boundary is that no
+schema names `user_id` or an email recipient: those are injected here, from the
+authenticated user, so the model has no way to reach another user's data.
 """
 import json
 import logging
@@ -13,150 +18,40 @@ from openai import OpenAI
 from sqlalchemy.orm import Session
 
 from app.config import settings
-from app.services import ai_tools
+from app.services import ai_tools, ai_tools_investments, ai_tools_planning
 
 logger = logging.getLogger("app.ai")
 
-SYSTEM_PROMPT = (
-    "You are a financial advisor assistant embedded in a personal finance app. "
-    "You can only discuss the user's own finances (transactions, accounts, budgets, "
-    "recurring expenses, and debts) and general personal-finance advice. "
-    "Always use the provided tools to look up real numbers before answering questions "
-    "about the user's data — never guess or fabricate figures. Use the currency shown "
-    "in the account data. Be concise and use plain language. "
-    "Only call send_analysis_email_tool when the user explicitly asks you to email them "
-    "something; when you do, write analysis_text as a clear, well-organized summary."
-)
 
-AI_TOOLS = [
-    {
-        "type": "function",
-        "function": {
-            "name": "get_transactions_tool",
-            "description": (
-                "Look up the user's transactions. Use this to answer questions about "
-                "specific transactions, spending in a date range, or a search for a "
-                "merchant/description."
-            ),
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "start_date": {"type": "string", "format": "date", "description": "YYYY-MM-DD, inclusive"},
-                    "end_date": {"type": "string", "format": "date", "description": "YYYY-MM-DD, inclusive"},
-                    "type": {"type": "string", "enum": ["income", "expense", "transfer"]},
-                    "category_id": {"type": "integer"},
-                    "account_id": {"type": "integer"},
-                    "search": {"type": "string", "description": "Free-text search on the description"},
-                    "limit": {"type": "integer", "description": "Max rows to return, default 50, max 200"},
-                },
-            },
-        },
-    },
-    {
-        "type": "function",
-        "function": {
-            "name": "get_totals_tool",
-            "description": (
-                "Get the user's total income, expenses, and net for the given period. "
-                "Omit group_by for a single overall total. Pass group_by as day, month, "
-                "or year to get a period-keyed summary (e.g. monthly breakdown) plus overall totals."
-            ),
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "start_date": {"type": "string", "format": "date", "description": "YYYY-MM-DD, inclusive"},
-                    "end_date": {"type": "string", "format": "date", "description": "YYYY-MM-DD, inclusive"},
-                    "group_by": {
-                        "type": "string",
-                        "enum": ["day", "month", "year"],
-                        "description": "Optional. Group totals by day (YYYY-MM-DD), month (YYYY-MM), or year (YYYY).",
-                    },
-                },
-            },
-        },
-    },
-    {
-        "type": "function",
-        "function": {
-            "name": "get_account_balances_tool",
-            "description": "Get the user's account balances and total balance across all active accounts.",
-            "parameters": {"type": "object", "properties": {}},
-        },
-    },
-    {
-        "type": "function",
-        "function": {
-            "name": "get_budgets_status_tool",
-            "description": "Get the user's budgets with current-period spend, remaining amount, and percentage used.",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "active_only": {"type": "boolean", "description": "Default true"},
-                },
-            },
-        },
-    },
-    {
-        "type": "function",
-        "function": {
-            "name": "get_recurring_expenses_tool",
-            "description": "Get the user's recurring expenses (bills, subscriptions), optionally filtered to those due soon.",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "active_only": {"type": "boolean", "description": "Default true"},
-                    "upcoming_days": {"type": "integer", "description": "Only include expenses due within this many days"},
-                },
-            },
-        },
-    },
-    {
-        "type": "function",
-        "function": {
-            "name": "get_debts_tool",
-            "description": "Get the user's debts (loans, credit cards) with balances, interest rates, and next payment dates.",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "active_only": {"type": "boolean", "description": "Default true"},
-                },
-            },
-        },
-    },
-    {
-        "type": "function",
-        "function": {
-            "name": "send_analysis_email_tool",
-            "description": (
-                "Email the user a copy of an analysis you've prepared. Only call this when "
-                "the user explicitly asks to be emailed something. Always sends to the "
-                "user's own account email — you cannot choose a recipient."
-            ),
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "subject": {"type": "string", "description": "Email subject line"},
-                    "analysis_text": {"type": "string", "description": "The analysis body, in plain text paragraphs"},
-                },
-                "required": ["subject", "analysis_text"],
-            },
-        },
-    },
-]
+def _build_registry() -> tuple[list, dict[str, Callable]]:
+    modules = [ai_tools]
+    if settings.AI_INVESTMENT_TOOLS_ENABLED:
+        modules += [ai_tools_investments, ai_tools_planning]
 
-TOOL_DISPATCH: dict[str, Callable] = {
-    "get_transactions_tool": ai_tools.get_transactions_tool,
-    "get_totals_tool": ai_tools.get_totals_tool,
-    "get_account_balances_tool": ai_tools.get_account_balances_tool,
-    "get_budgets_status_tool": ai_tools.get_budgets_status_tool,
-    "get_recurring_expenses_tool": ai_tools.get_recurring_expenses_tool,
-    "get_debts_tool": ai_tools.get_debts_tool,
-    "send_analysis_email_tool": ai_tools.send_analysis_email_tool,
-}
+    schemas: list = []
+    dispatch: dict[str, Callable] = {}
+    for module in modules:
+        schemas.extend(module.TOOLS)
+        dispatch.update(module.DISPATCH)
+
+    # A schema without an implementation would fail only at the moment the model
+    # picked it, mid-conversation. Catch it at import instead.
+    declared = {schema["function"]["name"] for schema in schemas}
+    missing = declared - set(dispatch)
+    if missing:
+        raise RuntimeError(f"AI tools declared without an implementation: {sorted(missing)}")
+
+    return schemas, dispatch
+
+
+AI_TOOLS, TOOL_DISPATCH = _build_registry()
 
 # Tools that need the caller's identity injected server-side rather than
 # taking every argument straight from the model.
 _EMAIL_TOOL_NAME = "send_analysis_email_tool"
+
+#: Tools whose results the UI surfaces specially rather than as a plain receipt.
+_PROFILE_WRITE_TOOL = "update_investor_profile_tool"
 
 
 def _execute_tool(db: Session, user_id: int, user_email: str, name: str, args: dict) -> dict:
@@ -167,9 +62,63 @@ def _execute_tool(db: Session, user_id: int, user_email: str, name: str, args: d
         if name == _EMAIL_TOOL_NAME:
             return fn(db, user_id, **args, user_email=user_email)
         return fn(db, user_id, **args)
+    except TypeError as exc:
+        # Almost always the model inventing an argument. Naming it back lets the
+        # model correct itself on the next round instead of retrying identically.
+        logger.warning("Tool %s called with bad arguments %s: %s", name, args, exc)
+        return {"error": f"Invalid arguments for {name}: {exc}"}
     except Exception as exc:  # tool errors surface to the model, not as a broken stream
         logger.warning("Tool %s failed: %s", name, exc)
         return {"error": str(exc)}
+
+
+def _serialize_result(name: str, result: dict) -> str:
+    """JSON for the model, truncated if it would swamp the context window.
+
+    A five-symbol comparison or a long transaction list can run to tens of
+    thousands of characters; several of those in one conversation exhausts the
+    window and the answer degrades with no visible cause. Lists are cut from the
+    end and the cut is declared, so the model reports a partial list as partial.
+    """
+    limit = settings.AI_TOOL_RESULT_MAX_CHARS
+    payload = json.dumps(result, default=str)
+    if len(payload) <= limit:
+        return payload
+
+    trimmed = dict(result)
+    # Longest list first — that is nearly always the one doing the damage.
+    list_fields = sorted(
+        (k for k, v in trimmed.items() if isinstance(v, list)),
+        key=lambda k: len(trimmed[k]),
+        reverse=True,
+    )
+    for field in list_fields:
+        while len(trimmed[field]) > 1 and len(json.dumps(trimmed, default=str)) > limit:
+            trimmed[field] = trimmed[field][: max(1, len(trimmed[field]) // 2)]
+        trimmed[f"{field}_truncated_from"] = len(result[field])
+        if len(json.dumps(trimmed, default=str)) <= limit:
+            break
+
+    trimmed["truncated"] = True
+    trimmed["truncation_note"] = (
+        "This result was too large to send in full and was shortened. Treat the lists as "
+        "a sample, and say so if you summarise them."
+    )
+    payload = json.dumps(trimmed, default=str)
+
+    if len(payload) > limit:
+        # Nothing list-shaped to cut; refuse rather than blow the window.
+        logger.warning("Tool %s result of %d chars could not be truncated", name, len(payload))
+        return json.dumps(
+            {
+                "error": (
+                    "The result was too large to return. Ask for a narrower date range, "
+                    "fewer symbols, or a smaller limit."
+                ),
+                "size_chars": len(payload),
+            }
+        )
+    return payload
 
 
 def run_agent_stream(
@@ -185,8 +134,11 @@ def run_agent_stream(
     client = OpenAI(
         api_key=settings.DEEPSEEK_API_KEY,
         base_url=settings.DEEPSEEK_BASE_URL,
-        timeout=60.0,
+        timeout=settings.AI_CHAT_TIMEOUT_SECONDS,
     )
+
+    prompt_tokens = 0
+    completion_tokens = 0
 
     for _ in range(settings.AI_CHAT_MAX_TOOL_ROUNDS):
         try:
@@ -195,6 +147,7 @@ def run_agent_stream(
                 messages=messages,
                 tools=AI_TOOLS,
                 stream=True,
+                stream_options={"include_usage": True},
             )
         except Exception as exc:
             logger.warning("DeepSeek request failed: %s", exc)
@@ -207,6 +160,13 @@ def run_agent_stream(
 
         try:
             for chunk in stream:
+                # The usage-only chunk that `include_usage` appends carries no choices.
+                if getattr(chunk, "usage", None):
+                    prompt_tokens += chunk.usage.prompt_tokens or 0
+                    completion_tokens += chunk.usage.completion_tokens or 0
+                if not chunk.choices:
+                    continue
+
                 choice = chunk.choices[0]
                 delta = choice.delta
                 if choice.finish_reason:
@@ -256,16 +216,38 @@ def run_agent_stream(
                 result = _execute_tool(db, user_id, user_email, entry["name"], args)
                 yield {"type": "tool_call_result", "tool": entry["name"], "result": result}
 
+                # A profile write is the one thing the model does that outlasts
+                # the conversation, so it gets its own event and its own UI.
+                if entry["name"] == _PROFILE_WRITE_TOOL and result.get("updated"):
+                    yield {
+                        "type": "profile_update",
+                        "changes": result.get("changes", []),
+                        "reason": args.get("reason"),
+                    }
+
                 messages.append(
                     {
                         "role": "tool",
                         "tool_call_id": entry["id"],
-                        "content": json.dumps(result),
+                        "content": _serialize_result(entry["name"], result),
                     }
                 )
             continue
 
-        yield {"type": "done", "content": content_buf}
+        logger.info(
+            "AI chat completed for user %s: %d prompt tokens, %d completion tokens",
+            user_id,
+            prompt_tokens,
+            completion_tokens,
+        )
+        yield {
+            "type": "done",
+            "content": content_buf,
+            "usage": {"prompt_tokens": prompt_tokens, "completion_tokens": completion_tokens},
+        }
         return
 
+    logger.warning(
+        "AI chat hit the tool-round limit for user %s (%d prompt tokens)", user_id, prompt_tokens
+    )
     yield {"type": "error", "message": "Reached maximum tool-call rounds without a final answer."}

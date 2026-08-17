@@ -20,6 +20,7 @@ from app.models.investment_analytics import (
     SavedComparison,
     SavedWatch,
 )
+from app.models.investor_profile import InvestorProfile, InvestorProfileRevision
 from app.models.notification import (
     NotificationLog,
     NotificationRule,
@@ -57,6 +58,8 @@ __all__ = [
     "MarketSymbolMeta",
     "SavedComparison",
     "SavedWatch",
+    "InvestorProfile",
+    "InvestorProfileRevision",
     "NotificationLog",
     "NotificationRule",
     "NotificationSettings",

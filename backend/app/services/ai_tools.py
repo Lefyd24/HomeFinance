@@ -15,7 +15,7 @@ from sqlalchemy.orm import Session
 from app.models import Account, Budget, Debt, RecurringExpense
 from app.routers.budgets import calculate_budget_progress
 from app.routers.notifications import _get_or_create_settings
-from app.services import mail_service, email_templates
+from app.services import investor_profile_service, mail_service, email_templates
 from app.services.transaction_service import TransactionService
 
 MAX_TRANSACTIONS_LIMIT = 200
@@ -196,6 +196,64 @@ def get_debts_tool(db: Session, user_id: int, active_only: bool = True) -> dict:
     }
 
 
+def get_investor_profile_tool(db: Session, user_id: int) -> dict:
+    """The user's stated risk tolerance, horizon and constraints.
+
+    Also injected into the system prompt each turn; this tool exists so the model
+    can re-read it after changing it, and check a constraint mid-conversation.
+    """
+    profile = investor_profile_service.get_profile(db, user_id)
+    return investor_profile_service.to_dict(profile)
+
+
+def update_investor_profile_tool(
+    db: Session,
+    user_id: int,
+    updates: dict,
+    reason: str,
+) -> dict:
+    """Record a durable fact the user stated about their investing situation.
+
+    The only tool that writes anything the model chose. It is safe because
+    `investor_profile_service.apply_updates` owns the guardrails — a whitelist of
+    editable fields, per-field validation, and one revision row per change
+    carrying `reason`. The user sees every change and can undo it, so the model
+    cannot quietly reshape the basis of its own future advice.
+    """
+    if not isinstance(updates, dict) or not updates:
+        return {
+            "updated": False,
+            "error": "updates must be a non-empty object of field names to values.",
+        }
+    if not (reason or "").strip():
+        return {
+            "updated": False,
+            "error": "reason is required: quote what the user said that justifies this change.",
+        }
+
+    try:
+        result = investor_profile_service.apply_updates(
+            db, user_id, updates, source="agent", reason=reason.strip()
+        )
+    except investor_profile_service.ProfileValidationError as exc:
+        # Handed back to the model so it can correct itself and retry.
+        return {"updated": False, "error": str(exc)}
+
+    if not result["changes"]:
+        return {
+            "updated": False,
+            "note": "The profile already held those values; nothing changed.",
+            "profile": result["profile"],
+        }
+
+    return {
+        "updated": True,
+        "changes": result["changes"],
+        "profile": result["profile"],
+        "note": "The user has been shown this change and can undo it.",
+    }
+
+
 def send_analysis_email_tool(
     db: Session,
     user_id: int,
@@ -223,3 +281,191 @@ def send_analysis_email_tool(
 
     ok, err = mail_service.send_email_detailed(user_email, title, html, cfg, text=text)
     return {"sent": ok, "to": user_email, "error": err}
+
+
+# --- tool registration -----------------------------------------------------
+#
+# Schemas live beside their implementations so the two cannot drift apart.
+# `ai_service` concatenates the TOOLS/DISPATCH pairs from each ai_tools_* module.
+# No schema names `user_id` — that is the security boundary, and it holds only
+# because the parameter never appears here.
+
+TOOLS = [
+    {
+        "type": "function",
+        "function": {
+            "name": "get_transactions_tool",
+            "description": (
+                "Look up the user's transactions. Use this to answer questions about "
+                "specific transactions, spending in a date range, or a search for a "
+                "merchant/description."
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "start_date": {"type": "string", "format": "date", "description": "YYYY-MM-DD, inclusive"},
+                    "end_date": {"type": "string", "format": "date", "description": "YYYY-MM-DD, inclusive"},
+                    "type": {"type": "string", "enum": ["income", "expense", "transfer"]},
+                    "category_id": {"type": "integer"},
+                    "account_id": {"type": "integer"},
+                    "search": {"type": "string", "description": "Free-text search on the description"},
+                    "limit": {"type": "integer", "description": "Max rows to return, default 50, max 200"},
+                },
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "get_totals_tool",
+            "description": (
+                "Get the user's total income, expenses, and net for the given period. "
+                "Omit group_by for a single overall total. Pass group_by as day, month, "
+                "or year to get a period-keyed summary (e.g. monthly breakdown) plus overall totals."
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "start_date": {"type": "string", "format": "date", "description": "YYYY-MM-DD, inclusive"},
+                    "end_date": {"type": "string", "format": "date", "description": "YYYY-MM-DD, inclusive"},
+                    "group_by": {
+                        "type": "string",
+                        "enum": ["day", "month", "year"],
+                        "description": "Optional. Group totals by day (YYYY-MM-DD), month (YYYY-MM), or year (YYYY).",
+                    },
+                },
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "get_account_balances_tool",
+            "description": "Get the user's account balances and total balance across all active accounts.",
+            "parameters": {"type": "object", "properties": {}},
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "get_budgets_status_tool",
+            "description": "Get the user's budgets with current-period spend, remaining amount, and percentage used.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "active_only": {"type": "boolean", "description": "Default true"},
+                },
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "get_recurring_expenses_tool",
+            "description": "Get the user's recurring expenses (bills, subscriptions), optionally filtered to those due soon.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "active_only": {"type": "boolean", "description": "Default true"},
+                    "upcoming_days": {"type": "integer", "description": "Only include expenses due within this many days"},
+                },
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "get_debts_tool",
+            "description": "Get the user's debts (loans, credit cards) with balances, interest rates, and next payment dates.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "active_only": {"type": "boolean", "description": "Default true"},
+                },
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "get_investor_profile_tool",
+            "description": (
+                "Get the user's stated investing preferences: risk tolerance, horizon, "
+                "target allocation, maximum single position size, and any excluded sectors "
+                "or symbols. Call this to check a constraint before recommending a position."
+            ),
+            "parameters": {"type": "object", "properties": {}},
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "update_investor_profile_tool",
+            "description": (
+                "Record something the user has just told you about their investing "
+                "situation, so future advice reflects it. Only call this when the user "
+                "actually said it in this conversation — never to save an inference you "
+                "drew from their behaviour. The user is shown every change and can undo it."
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "updates": {
+                        "type": "object",
+                        "description": (
+                            "Fields to set. Allowed: risk_tolerance (conservative|moderate|"
+                            "balanced|growth|aggressive), primary_objective (preservation|"
+                            "income|balanced|growth), horizon_years (integer), "
+                            "liquidity_needs_months (integer), target_allocation (object of "
+                            "asset class to percentage, using equity/bond/cash/crypto/other, "
+                            "summing to 100), max_single_position_pct (number), "
+                            "excluded_sectors (list of strings), excluded_symbols (list of "
+                            "tickers), income_stability (stable|variable|uncertain), "
+                            "experience_level (beginner|intermediate|experienced), "
+                            "base_currency, tax_residency (two-letter code), notes."
+                        ),
+                    },
+                    "reason": {
+                        "type": "string",
+                        "description": (
+                            "Why this change is justified, quoting or paraphrasing what the "
+                            "user said. Shown to the user alongside the change."
+                        ),
+                    },
+                },
+                "required": ["updates", "reason"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "send_analysis_email_tool",
+            "description": (
+                "Email the user a copy of an analysis you've prepared. Only call this when "
+                "the user explicitly asks to be emailed something. Always sends to the "
+                "user's own account email — you cannot choose a recipient."
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "subject": {"type": "string", "description": "Email subject line"},
+                    "analysis_text": {"type": "string", "description": "The analysis body, in plain text paragraphs"},
+                },
+                "required": ["subject", "analysis_text"],
+            },
+        },
+    },
+]
+
+DISPATCH = {
+    "get_transactions_tool": get_transactions_tool,
+    "get_totals_tool": get_totals_tool,
+    "get_account_balances_tool": get_account_balances_tool,
+    "get_budgets_status_tool": get_budgets_status_tool,
+    "get_recurring_expenses_tool": get_recurring_expenses_tool,
+    "get_debts_tool": get_debts_tool,
+    "get_investor_profile_tool": get_investor_profile_tool,
+    "update_investor_profile_tool": update_investor_profile_tool,
+    "send_analysis_email_tool": send_analysis_email_tool,
+}

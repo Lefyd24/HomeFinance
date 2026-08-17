@@ -474,6 +474,9 @@ function UserMenu({
             <NavLink to="/rules">{t('userMenu.rules')}</NavLink>
           </DropdownMenuItem>
           <DropdownMenuItem asChild>
+            <NavLink to="/investor-profile">{t('userMenu.investorProfile')}</NavLink>
+          </DropdownMenuItem>
+          <DropdownMenuItem asChild>
             <NavLink to="/api-keys">{t('userMenu.apiKeys')}</NavLink>
           </DropdownMenuItem>
           {user?.is_admin && (

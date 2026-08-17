@@ -52,6 +52,16 @@ frontend/app/src/locales/{en,el}/investments.json          EDIT
 
 ## Part 1 — Architecture principle
 
+> **Scope note (added with plan 5).** Everything in this section — "no tool-calling", "do not
+> extend the chat agent", "never recommend an action" — governs **this feature: the persisted,
+> citable research report**. It does *not* govern the conversational advisor, which
+> [`05-portfolio-advisor-agent.md`](./05-portfolio-advisor-agent.md) built by deliberately taking
+> the opposite position on both points. The difference is the subject: a report is read later,
+> detached from any particular person, and must not carry a recommendation; a conversation knows
+> whose emergency fund, horizon and concentration it is reasoning about, which is what makes an
+> opinionated answer defensible. See plan 5 Part 0 for the full comparison. This plan is
+> otherwise unimplemented.
+
 **The model synthesises; it does not retrieve and it does not calculate.**
 
 Everything factual is gathered by Python, assigned a source id, and placed in the prompt. The

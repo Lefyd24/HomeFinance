@@ -31,6 +31,7 @@ import { AdvisorPage } from './advisor/AdvisorPage'
 import { AiAdvisorPage } from './ai-advisor/AiAdvisorPage'
 import { NotificationsPage } from './notifications/NotificationsPage'
 import { ApiKeysPage } from './account-settings/ApiKeysPage'
+import { InvestorProfilePage } from './account-settings/InvestorProfilePage'
 import { BankSyncPage } from './bank-sync/BankSyncPage'
 import { RulesPage } from './rules/RulesPage'
 import { PrivacyPage } from './legal/PrivacyPage'
@@ -103,6 +104,7 @@ function App() {
           <Route path="/connections" element={<BankSyncPage />} />
           <Route path="/rules" element={<RulesPage />} />
           <Route path="/api-keys" element={<ApiKeysPage />} />
+          <Route path="/investor-profile" element={<InvestorProfilePage />} />
           <Route path="/admin" element={<AdminPage />} />
         </Route>
       </Route>

@@ -2,6 +2,7 @@ import { apiFetch, getApiBaseUrl } from '../lib/apiClient'
 
 export interface ChatStatus {
   configured: boolean
+  investment_tools_enabled: boolean
 }
 
 export interface ChatMessage {
@@ -13,6 +14,23 @@ export interface ChatMessage {
 export interface ToolCall {
   name: string
   state: 'running' | 'done'
+  /**
+   * The arguments it was called with. Kept so the trail can say what was looked
+   * up — "Researching AAPL" rather than a bare tool name.
+   */
+  args?: Record<string, unknown>
+}
+
+/** One field the advisor changed on the investor profile, and why. */
+export interface ProfileChange {
+  field: string
+  old_value: unknown
+  new_value: unknown
+}
+
+export interface ProfileUpdate {
+  changes: ProfileChange[]
+  reason?: string
 }
 
 /**
@@ -22,10 +40,15 @@ export interface ToolCall {
  */
 export type ChatEvent =
   | { type: 'token'; content: string }
-  | { type: 'tool_call_start'; tool: string }
+  | { type: 'tool_call_start'; tool: string; args?: Record<string, unknown> }
   | { type: 'tool_call_result'; tool: string }
   | { type: 'done'; content?: string }
   | { type: 'error'; message?: string }
+  // The advisor wrote something durable to the investor profile. Surfaced as a
+  // card with an undo, never applied silently.
+  | { type: 'profile_update'; changes: ProfileChange[]; reason?: string }
+  // Server-generated, appended after the answer so it cannot be omitted.
+  | { type: 'disclaimer'; text: string }
 
 export class AdvisorStreamError extends Error {
   readonly code: 'unreachable' | 'empty_response'

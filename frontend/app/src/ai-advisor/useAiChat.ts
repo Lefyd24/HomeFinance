@@ -1,24 +1,57 @@
 /**
  * Conversation state for the advisor.
  *
- * Holds the transcript, drives one streaming turn at a time, and keeps the
- * tool activity attached to the answer it belongs to. The transcript survives
- * navigating to another page and back — losing a long analysis because you
- * clicked through to Transactions to check something would be its own bug.
+ * Holds the transcript, drives one streaming turn at a time, and records what
+ * the advisor did **in the order it did it**. The transcript survives navigating
+ * to another page and back — losing a long analysis because you clicked through
+ * to Transactions to check something would be its own bug.
  */
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { TFunction } from 'i18next'
-import { AdvisorStreamError, streamChat, type ChatMessage, type ToolCall } from './aiChatApi'
+import {
+  AdvisorStreamError,
+  streamChat,
+  type ChatMessage,
+  type ProfileUpdate,
+  type ToolCall,
+} from './aiChatApi'
 
 const STORAGE_KEY = 'ai-advisor:transcript'
+
+/**
+ * One thing that happened during an answer, in sequence.
+ *
+ * An answer is not a block of prose with a list of lookups bolted on top: the
+ * advisor reasons, looks something up, writes about it, looks up the next thing.
+ * Keeping the pieces in order lets the UI show that — a lookup appears between
+ * the paragraph that motivated it and the paragraph that used its result, which
+ * is where the reader expects it and what makes the reasoning followable.
+ */
+export type TurnSegment =
+  | { kind: 'text'; id: string; content: string }
+  | {
+      kind: 'tool'
+      id: string
+      name: string
+      state: 'running' | 'done'
+      args?: Record<string, unknown>
+    }
+  | { kind: 'profile'; id: string; update: ProfileUpdate }
 
 export interface Turn {
   id: string
   role: 'user' | 'assistant'
+  /**
+   * The full prose of the turn. For an assistant turn this is every text
+   * segment joined — kept alongside `segments` because the model's history, the
+   * copy button and the markdown export all want the answer as one string.
+   */
   content: string
-  /** Tools the advisor used for this answer, in the order it reached for them. */
-  tools: ToolCall[]
+  /** What happened, in order. Empty for user turns. */
+  segments: TurnSegment[]
+  /** Server-generated, appended after the answer. */
+  disclaimer?: string
   /** Set when the turn failed; the partial answer above it is still shown. */
   error?: string
   streaming?: boolean
@@ -26,6 +59,29 @@ export interface Turn {
 
 function newId(): string {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+}
+
+/** Every tool the turn used, for callers that want them without the ordering. */
+export function turnTools(turn: Turn): ToolCall[] {
+  return turn.segments.filter((segment) => segment.kind === 'tool')
+}
+
+export function turnProfileUpdates(turn: Turn): ProfileUpdate[] {
+  return turn.segments
+    .filter((segment) => segment.kind === 'profile')
+    .map((segment) => segment.update)
+}
+
+/**
+ * Append streamed text to the turn, extending the trailing text segment when
+ * there is one and starting a new one when a lookup interrupted the prose.
+ */
+function appendText(segments: TurnSegment[], text: string): TurnSegment[] {
+  const last = segments[segments.length - 1]
+  if (last?.kind === 'text') {
+    return [...segments.slice(0, -1), { ...last, content: last.content + text }]
+  }
+  return [...segments, { kind: 'text', id: newId(), content: text }]
 }
 
 function formatAdvisorError(error: unknown, t: TFunction<'advisor'>): string {
@@ -39,6 +95,34 @@ function formatAdvisorError(error: unknown, t: TFunction<'advisor'>): string {
   return t('aiAdvisor.chat.streamError')
 }
 
+/**
+ * A transcript stored before segments existed, brought forward.
+ *
+ * Those turns recorded the tools as a flat list with no position, so the true
+ * order is unrecoverable — the honest reconstruction puts the lookups first and
+ * the prose after, which is exactly how they were displayed at the time.
+ */
+function migrateTurn(turn: Turn & { tools?: ToolCall[]; profileUpdates?: ProfileUpdate[] }): Turn {
+  if (Array.isArray(turn.segments)) return { ...turn, streaming: false }
+
+  const segments: TurnSegment[] = [
+    ...(turn.tools ?? []).map((tool) => ({
+      kind: 'tool' as const,
+      id: newId(),
+      name: tool.name,
+      state: 'done' as const,
+      args: tool.args,
+    })),
+    ...(turn.content ? [{ kind: 'text' as const, id: newId(), content: turn.content }] : []),
+    ...(turn.profileUpdates ?? []).map((update) => ({
+      kind: 'profile' as const,
+      id: newId(),
+      update,
+    })),
+  ]
+  return { ...turn, segments, streaming: false }
+}
+
 function loadTranscript(): Turn[] {
   try {
     const raw = window.sessionStorage.getItem(STORAGE_KEY)
@@ -46,7 +130,7 @@ function loadTranscript(): Turn[] {
     const parsed: unknown = JSON.parse(raw)
     if (!Array.isArray(parsed)) return []
     // Anything still marked as streaming was interrupted by the reload.
-    return (parsed as Turn[]).map((turn) => ({ ...turn, streaming: false }))
+    return (parsed as Turn[]).map(migrateTurn)
   } catch {
     return []
   }
@@ -83,7 +167,7 @@ export function useAiChat() {
       const content = text.trim()
       if (!content || abortRef.current) return
 
-      const userTurn: Turn = { id: newId(), role: 'user', content, tools: [] }
+      const userTurn: Turn = { id: newId(), role: 'user', content, segments: [] }
       const answerId = newId()
 
       // The model needs the history, but only the roles and text — tool
@@ -96,7 +180,7 @@ export function useAiChat() {
       setTurns((current) => [
         ...current,
         userTurn,
-        { id: answerId, role: 'assistant', content: '', tools: [], streaming: true },
+        { id: answerId, role: 'assistant', content: '', segments: [], streaming: true },
       ])
       setIsStreaming(true)
 
@@ -112,31 +196,80 @@ export function useAiChat() {
           (event) => {
             switch (event.type) {
               case 'token':
-                patchAnswer((turn) => ({ ...turn, content: turn.content + event.content }))
+                patchAnswer((turn) => ({
+                  ...turn,
+                  content: turn.content + event.content,
+                  segments: appendText(turn.segments, event.content),
+                }))
                 break
               case 'tool_call_start':
                 patchAnswer((turn) => ({
                   ...turn,
-                  tools: [...turn.tools, { name: event.tool, state: 'running' }],
+                  segments: [
+                    ...turn.segments,
+                    {
+                      kind: 'tool',
+                      id: newId(),
+                      name: event.tool,
+                      state: 'running',
+                      args: event.args,
+                    },
+                  ],
                 }))
                 break
               case 'tool_call_result':
-                patchAnswer((turn) => ({
-                  ...turn,
-                  tools: turn.tools.map((tool) =>
-                    tool.name === event.tool && tool.state === 'running'
-                      ? { ...tool, state: 'done' }
-                      : tool,
-                  ),
-                }))
+                patchAnswer((turn) => {
+                  // Settle the most recent still-running call of that name:
+                  // the same tool can legitimately be used more than once in a
+                  // turn, and settling the first would leave a later one
+                  // spinning forever.
+                  const index = turn.segments.findLastIndex(
+                    (segment) =>
+                      segment.kind === 'tool' &&
+                      segment.name === event.tool &&
+                      segment.state === 'running',
+                  )
+                  if (index === -1) return turn
+                  const segments = [...turn.segments]
+                  segments[index] = { ...(segments[index] as TurnSegment & { kind: 'tool' }), state: 'done' }
+                  return { ...turn, segments }
+                })
                 break
               case 'done':
+                patchAnswer((turn) => {
+                  // `content` here is only the final round's prose, so it must
+                  // not replace what already streamed — it is a fallback for
+                  // the case where no token events arrived at all.
+                  const hasText = turn.segments.some((segment) => segment.kind === 'text')
+                  const segments =
+                    !hasText && event.content
+                      ? appendText(turn.segments, event.content)
+                      : turn.segments
+                  return {
+                    ...turn,
+                    content: turn.content || event.content || '',
+                    segments: segments.map((segment) =>
+                      segment.kind === 'tool' ? { ...segment, state: 'done' } : segment,
+                    ),
+                    streaming: false,
+                  }
+                })
+                break
+              case 'profile_update':
                 patchAnswer((turn) => ({
                   ...turn,
-                  content: event.content || turn.content,
-                  tools: turn.tools.map((tool) => ({ ...tool, state: 'done' })),
-                  streaming: false,
+                  segments: [
+                    ...turn.segments,
+                    {
+                      kind: 'profile',
+                      id: newId(),
+                      update: { changes: event.changes, reason: event.reason },
+                    },
+                  ],
                 }))
+                break
+              case 'disclaimer':
+                patchAnswer((turn) => ({ ...turn, disclaimer: event.text }))
                 break
               case 'error':
                 patchAnswer((turn) => ({
@@ -161,10 +294,14 @@ export function useAiChat() {
       } finally {
         abortRef.current = null
         setIsStreaming(false)
+        // However the turn ended — finished, failed or stopped — nothing may be
+        // left spinning.
         patchAnswer((turn) => ({
           ...turn,
           streaming: false,
-          tools: turn.tools.map((tool) => ({ ...tool, state: 'done' })),
+          segments: turn.segments.map((segment) =>
+            segment.kind === 'tool' ? { ...segment, state: 'done' } : segment,
+          ),
         }))
       }
     },
