@@ -15,22 +15,25 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import {
-  Empty,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from '@/components/ui/empty'
+import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty'
 import { cn } from '@/lib/utils'
 import { PageContainer } from '../ui/PageContainer'
 import { PageHeader } from '../ui/PageHeader'
 import { formatCurrency } from '../lib/format'
 import { DeltaPct, InvestmentsBreadcrumb } from './InvestmentPrimitives'
-import { useCompanyProfile, useSaveWatch, useDeleteWatch, useSymbolSearch, useWatches } from './useInvestments'
+import {
+  useCompanyHistory,
+  useCompanyProfile,
+  useSaveWatch,
+  useDeleteWatch,
+  useSymbolSearch,
+  useWatches,
+} from './useInvestments'
 import { WatchCard } from './widgets/WatchCard'
+import { ExportPdfButton } from './pdf/ExportPdfButton'
+import { useExportCompanyPdf } from './pdf/usePdfExport'
 import { CompanyProfileView } from './research/CompanyProfileView'
-import type { SymbolSearchResult } from './investmentsApi'
+import type { HistoryPeriod, SymbolSearchResult } from './investmentsApi'
 
 const MIN_QUERY_LENGTH = 2
 
@@ -61,9 +64,16 @@ export function CompanyResearchPage() {
     error: searchError,
   } = useSymbolSearch(query, { minLength: MIN_QUERY_LENGTH, provider: 'yahoo' })
 
-  const { data: profile, isLoading: profileLoading, isError: profileFailed } = useCompanyProfile(
-    symbol || null,
-  )
+  const {
+    data: profile,
+    isLoading: profileLoading,
+    isError: profileFailed,
+  } = useCompanyProfile(symbol || null)
+  // The chart's range lives here rather than in `CompanyProfileView` because
+  // the export action in the header reports on whatever range is on screen.
+  const [period, setPeriod] = useState<HistoryPeriod>('1y')
+  const { data: history, isLoading: historyLoading } = useCompanyHistory(symbol || null, period)
+  const { exportCompany, isExporting } = useExportCompanyPdf()
   const { data: watches } = useWatches()
   const saveWatch = useSaveWatch()
   const deleteWatch = useDeleteWatch()
@@ -100,12 +110,22 @@ export function CompanyResearchPage() {
           description={t('research.description')}
           className="mb-0"
           action={
-            showBackButton ? (
-              <Button variant="ghost" size="sm" onClick={clearSymbol}>
-                <span className="text-xs">
-                  {query ? t('research.backToResults') : t('research.backToWatchlist')}
-                </span>
-              </Button>
+            showBackButton || profile ? (
+              <div className="flex flex-wrap items-center gap-2">
+                {showBackButton && (
+                  <Button variant="ghost" size="sm" onClick={clearSymbol}>
+                    <span className="text-xs">
+                      {query ? t('research.backToResults') : t('research.backToWatchlist')}
+                    </span>
+                  </Button>
+                )}
+                {profile && (
+                  <ExportPdfButton
+                    onExport={() => exportCompany({ profile, history, period })}
+                    isExporting={isExporting}
+                  />
+                )}
+              </div>
             ) : undefined
           }
         />
@@ -169,6 +189,10 @@ export function CompanyResearchPage() {
           ) : (
             <CompanyProfileView
               profile={profile}
+              history={history}
+              historyLoading={historyLoading}
+              period={period}
+              onPeriodChange={setPeriod}
               isWatched={watches?.some((w) => w.symbol === symbol) ?? false}
               onToggleWatch={() => {
                 const existing = watches?.find((w) => w.symbol === symbol)

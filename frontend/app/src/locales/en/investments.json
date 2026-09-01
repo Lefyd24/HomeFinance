@@ -1366,5 +1366,25 @@
       "shortHistoryTitle": "Limited history",
       "cryptoTitle": "24/7 market"
     }
+  },
+  "pdf": {
+    "exportAction": "Export PDF",
+    "exporting": "Preparing…",
+    "page": "Page {{page}} of {{total}}",
+    "generatedOn": "Generated {{date}}",
+    "toasts": {
+      "preparing": "Building your PDF…",
+      "ready": "Saved {{filename}}",
+      "failed": "Couldn't build the PDF. Try again."
+    },
+    "compare": {
+      "eyebrow": "Ticker comparison",
+      "headlineSection": "At a glance",
+      "bestValueNote": "The best value in each row is highlighted. {{benchmark}} is the benchmark — shown for reference, never scored."
+    },
+    "research": {
+      "fundamentals": "Fundamentals",
+      "eyebrow": "Company research"
+    }
   }
 }

@@ -1,9 +1,7 @@
-import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Metric } from '../InvestmentPrimitives'
-import { useCompanyHistory } from '../useInvestments'
-import type { CompanyProfile, HistoryPeriod } from '../investmentsApi'
+import type { CompanyHistory, CompanyProfile, HistoryPeriod } from '../investmentsApi'
 import { AboutCard } from './AboutCard'
 import { CompanyFactsCard } from './CompanyFactsCard'
 import { CompanyNewsCard } from './CompanyNewsCard'
@@ -31,22 +29,29 @@ import { fmtCompactMoney, fmtInt, fmtPct } from './researchFormat'
  * deliberately — the price story is the anchor, the tables are reference you
  * scroll to.
  *
- * Two queries feed this: the profile (fundamentals, fetched by the page) and
- * the history (bars and analytics, fetched here and re-fetched on range change
- * without disturbing the profile).
+ * Two queries feed this: the profile (fundamentals) and the history (bars and
+ * analytics, re-fetched on range change without disturbing the profile). Both
+ * are owned by the page rather than by this component — the PDF export action
+ * lives in the page header and needs the same history the charts are drawing.
  */
 export function CompanyProfileView({
   profile,
+  history,
+  historyLoading,
+  period,
+  onPeriodChange,
   isWatched,
   onToggleWatch,
 }: {
   profile: CompanyProfile
+  history: CompanyHistory | undefined
+  historyLoading: boolean
+  period: HistoryPeriod
+  onPeriodChange: (next: HistoryPeriod) => void
   isWatched: boolean
   onToggleWatch: () => void
 }) {
   const { t } = useTranslation('investments')
-  const [period, setPeriod] = useState<HistoryPeriod>('1y')
-  const { data: history, isLoading: historyLoading } = useCompanyHistory(profile.symbol, period)
   const currency = profile.currency ?? 'USD'
   const isStock = profile.quote_type === 'stock'
   const isFund = profile.quote_type === 'etf' || profile.quote_type === 'mutual_fund'
@@ -71,7 +76,7 @@ export function CompanyProfileView({
         history={history}
         isLoading={historyLoading}
         period={period}
-        onPeriodChange={setPeriod}
+        onPeriodChange={onPeriodChange}
         currency={currency}
         className="md:col-span-6 lg:col-span-12"
       />
@@ -152,7 +157,11 @@ export function CompanyProfileView({
                 value={fmtInt(profile.circulating_supply)}
                 size="sm"
               />
-              <Metric label={t('research.volume24h')} value={fmtInt(profile.volume_24h)} size="sm" />
+              <Metric
+                label={t('research.volume24h')}
+                value={fmtInt(profile.volume_24h)}
+                size="sm"
+              />
             </div>
           </CardContent>
         </Card>

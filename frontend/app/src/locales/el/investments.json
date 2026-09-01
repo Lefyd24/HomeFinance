@@ -412,7 +412,7 @@
       "beta": "BETA",
       "target": "ΤΙΜΗ-ΣΤΟΧΟΣ",
       "recommendation": "ΣΥΣΤΑΣΗ",
-      "employees": "ΕΡΓΑΖΟΜΕΝΟΙ",
+      "employees": "Εργαζόμενοι",
       "open": "Άνοιγμα",
       "previousClose": "Προηγ. κλείσιμο",
       "dayHigh": "Υψηλό ημέρας",
@@ -1365,6 +1365,26 @@
     "warnings": {
       "shortHistoryTitle": "Περιορισμένο ιστορικό",
       "cryptoTitle": "Αγορά 24/7"
+    }
+  },
+  "pdf": {
+    "exportAction": "Εξαγωγή PDF",
+    "exporting": "Προετοιμασία…",
+    "page": "Σελίδα {{page}} από {{total}}",
+    "generatedOn": "Δημιουργήθηκε {{date}}",
+    "toasts": {
+      "preparing": "Δημιουργία PDF…",
+      "ready": "Αποθηκεύτηκε το {{filename}}",
+      "failed": "Δεν ήταν δυνατή η δημιουργία του PDF. Δοκιμάστε ξανά."
+    },
+    "compare": {
+      "eyebrow": "Σύγκριση τίτλων",
+      "headlineSection": "Με μια ματιά",
+      "bestValueNote": "Η καλύτερη τιμή κάθε γραμμής εμφανίζεται τονισμένη. Ο {{benchmark}} είναι ο δείκτης αναφοράς — εμφανίζεται για σύγκριση, δεν βαθμολογείται."
+    },
+    "research": {
+      "fundamentals": "Θεμελιώδη μεγέθη",
+      "eyebrow": "Έρευνα εταιρείας"
     }
   }
 }
