@@ -1,33 +1,36 @@
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from 'recharts'
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart'
+import { Bar, BarChart, CartesianGrid, Cell, XAxis, YAxis } from 'recharts'
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+  type ChartConfig,
+} from '@/components/ui/chart'
 import { Skeleton } from '@/components/ui/skeleton'
 import { cn } from '@/lib/utils'
-import { formatCurrency, formatDate } from '../../lib/format'
-import { useChartMotion, VALUE_CHART_CONFIG } from '../chartConfig'
+import { formatDate } from '../../lib/format'
+import { polarityColor, useChartMotion } from '../chartConfig'
+import { dailyReturns } from '../portfolioInsights'
 import { HISTORY_RANGES, type HistoryRangeKey } from '../usePortfolioView'
 import { Tile, TileEmpty } from './Tile'
 import type { PortfolioSnapshot } from '../investmentsApi'
 
 /**
- * The portfolio over time, split into what is invested and what is cash.
+ * The portfolio's day-by-day return, as bars above and below zero.
  *
- * Stacked rather than two separate lines because the top edge is then the total
- * — the number people actually track — while the band underneath shows how much
- * of it was ever at risk. A single total line would hide a portfolio that only
- * looks steady because half of it is sitting in cash.
+ * Bars rather than a line because each day is its own result, and the sign is
+ * the point: green and red read as "up day / down day" at a glance, which a
+ * value curve buries under its own trend.
  */
-export function PortfolioValueTile({
+export function DailyReturnsTile({
   history,
-  currency,
   range,
   onRangeChange,
   loading,
   className,
 }: {
   history: PortfolioSnapshot[]
-  currency: string
   range: HistoryRangeKey
   onRangeChange: (range: HistoryRangeKey) => void
   loading: boolean
@@ -36,28 +39,16 @@ export function PortfolioValueTile({
   const { t } = useTranslation('investments')
   const motion = useChartMotion()
 
-  const config = useMemo(
-    () => ({
-      positions_value: { ...VALUE_CHART_CONFIG.positions_value, label: t('tiles.invested') },
-      cash_balance: { ...VALUE_CHART_CONFIG.cash_balance, label: t('tiles.cash') },
-    }),
-    [t],
-  )
+  const returns = useMemo(() => dailyReturns(history), [history])
 
-  // Compact money for the axis — a full "€124,340.00" every 40px is unreadable,
-  // and the tooltip carries the exact figure anyway.
-  const compact = useMemo(
-    () =>
-      new Intl.NumberFormat(undefined, {
-        notation: 'compact',
-        maximumFractionDigits: 1,
-      }),
-    [],
+  const config = useMemo(
+    () => ({ pct: { label: t('tiles.dailyReturn') } }) satisfies ChartConfig,
+    [t],
   )
 
   return (
     <Tile
-      title={t('tiles.portfolioValue')}
+      title={t('tiles.dailyReturns')}
       className={className}
       allowOverflow
       action={
@@ -86,21 +77,11 @@ export function PortfolioValueTile({
     >
       {loading ? (
         <Skeleton className="h-[13rem] w-full rounded-lg" />
-      ) : history.length === 0 ? (
+      ) : returns.length === 0 ? (
         <TileEmpty>{t('detail.noHistory')}</TileEmpty>
       ) : (
         <ChartContainer config={config} className="aspect-auto h-[13rem] w-full">
-          <AreaChart data={history} margin={{ left: 4, right: 4, top: 4, bottom: 0 }}>
-            <defs>
-              <linearGradient id="fill-positions" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="var(--color-positions_value)" stopOpacity={0.7} />
-                <stop offset="95%" stopColor="var(--color-positions_value)" stopOpacity={0.08} />
-              </linearGradient>
-              <linearGradient id="fill-cash" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="var(--color-cash_balance)" stopOpacity={0.5} />
-                <stop offset="95%" stopColor="var(--color-cash_balance)" stopOpacity={0.06} />
-              </linearGradient>
-            </defs>
+          <BarChart data={returns} margin={{ left: 4, right: 4, top: 4, bottom: 0 }}>
             <CartesianGrid vertical={false} strokeDasharray="3 3" />
             <XAxis
               dataKey="date"
@@ -115,50 +96,35 @@ export function PortfolioValueTile({
               axisLine={false}
               width={44}
               tickMargin={4}
-              tickFormatter={(value: number) => compact.format(value)}
+              tickFormatter={(value: number) => `${value.toFixed(1)}%`}
             />
             <ChartTooltip
-              cursor={{ strokeDasharray: '3 3' }}
+              cursor={{ fill: 'var(--muted)', opacity: 0.4 }}
               // Recharts' tooltip wrapper carries no z-index of its own, so it
               // loses to any later sibling tile on the grid.
               wrapperStyle={{ zIndex: 30 }}
               content={
                 <ChartTooltipContent
+                  hideIndicator
                   labelFormatter={(value) => formatDate(String(value))}
-                  formatter={(value, name) => (
+                  formatter={(value) => (
                     <div className="flex w-full items-center justify-between gap-3">
-                      <span className="text-muted-foreground">
-                        {config[name as keyof typeof config]?.label ?? name}
-                      </span>
+                      <span className="text-muted-foreground">{config.pct.label}</span>
                       <span className="font-medium tabular-nums">
-                        {formatCurrency(Number(value), currency)}
+                        {Number(value) > 0 ? '+' : ''}
+                        {Number(value).toFixed(2)}%
                       </span>
                     </div>
                   )}
                 />
               }
             />
-            {/* Invested sits at the bottom of the stack so its band starts at
-                zero — the part of the total that is actually in the market. */}
-            <Area
-              {...motion}
-              dataKey="positions_value"
-              type="monotone"
-              stackId="value"
-              stroke="var(--color-positions_value)"
-              fill="url(#fill-positions)"
-              strokeWidth={2}
-            />
-            <Area
-              {...motion}
-              dataKey="cash_balance"
-              type="monotone"
-              stackId="value"
-              stroke="var(--color-cash_balance)"
-              fill="url(#fill-cash)"
-              strokeWidth={1.5}
-            />
-          </AreaChart>
+            <Bar {...motion} dataKey="pct" radius={2}>
+              {returns.map((day) => (
+                <Cell key={day.date} fill={polarityColor(day.pct)} />
+              ))}
+            </Bar>
+          </BarChart>
         </ChartContainer>
       )}
     </Tile>

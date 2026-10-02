@@ -27,13 +27,12 @@
     "syncAllHint": "Refreshes all {{count}} accounts"
   },
   "tiles": {
-    "portfolioValue": "Portfolio value",
+    "dailyReturns": "Daily returns",
     "allocation": "Allocation",
     "movers": "Today's movers",
     "holdings": "Holdings",
     "activity": "Recent activity",
-    "invested": "Invested",
-    "cash": "Cash",
+    "dailyReturn": "Daily return",
     "otherHoldings": "{{count}} other",
     "otherHoldings_other": "{{count}} others",
     "quotedCount": "Based on {{quoted}} of {{total}} holdings with a live quote",

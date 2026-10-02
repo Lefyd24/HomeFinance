@@ -7,6 +7,7 @@
  */
 import { useCallback, useMemo } from 'react'
 import { useSearchParams } from 'react-router-dom'
+import { toLocalIsoDate as iso } from '../lib/format'
 import type { ReportParams } from './reportsPageApi'
 
 export const RANGE_PRESETS = [
@@ -22,11 +23,6 @@ export const RANGE_PRESETS = [
 export type RangeKey = (typeof RANGE_PRESETS)[number]['key']
 
 const DEFAULT_RANGE: RangeKey = '6m'
-
-function iso(date: Date): string {
-  const pad = (n: number) => String(n).padStart(2, '0')
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`
-}
 
 export function computeRange(range: RangeKey, today = new Date()): { start: string; end: string } {
   const end = iso(today)
@@ -57,8 +53,10 @@ export function computeRange(range: RangeKey, today = new Date()): { start: stri
  * number can be stated as a change rather than a bare total.
  */
 export function previousPeriod(params: ReportParams): ReportParams {
-  const start = new Date(params.start_date)
-  const end = new Date(params.end_date)
+  // Bare `YYYY-MM-DD` parses as UTC midnight; the time suffix keeps it local so
+  // the local-calendar arithmetic below can't slip a day west of Greenwich.
+  const start = new Date(`${params.start_date}T00:00:00`)
+  const end = new Date(`${params.end_date}T00:00:00`)
   const spanDays = Math.max(1, Math.round((end.getTime() - start.getTime()) / 86_400_000))
 
   const prevEnd = new Date(start)

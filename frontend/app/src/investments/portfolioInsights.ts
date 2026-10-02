@@ -128,6 +128,29 @@ export function mergeHistory(
     .sort((a, b) => a.date.localeCompare(b.date))
 }
 
+export interface DailyReturn {
+  date: string
+  /** Percent change in total value since the previous snapshot. */
+  pct: number
+}
+
+/**
+ * Day-over-day change in total value, as a percentage.
+ *
+ * Snapshots only carry balances, so a deposit or withdrawal shows up as a
+ * return on the day it lands. A day is skipped when the previous total was not
+ * positive — there is nothing to measure a percentage against.
+ */
+export function dailyReturns(history: PortfolioSnapshot[]): DailyReturn[] {
+  const returns: DailyReturn[] = []
+  for (let i = 1; i < history.length; i++) {
+    const previous = history[i - 1].total_value
+    if (previous <= 0) continue
+    returns.push({ date: history[i].date, pct: (history[i].total_value / previous - 1) * 100 })
+  }
+  return returns
+}
+
 /**
  * Holdings that moved today, biggest move first, split by direction.
  *

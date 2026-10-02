@@ -45,14 +45,9 @@ import { TransactionFilterBar, type DatePreset } from './TransactionFilterBar'
 import { TransactionFormDialog } from './TransactionFormDialog'
 import { TransactionDetailDialog } from './TransactionDetailDialog'
 import { MarkTransferDialog } from './MarkTransferDialog'
-import { currentMonthRange } from '../lib/format'
+import { currentMonthRange, toLocalIsoDate as iso } from '../lib/format'
 import { isLinkedPayment, type Transaction, type TransactionFilters } from './transactionsApi'
 import { Alert01Icon } from '@hugeicons/core-free-icons'
-
-const iso = (date: Date) =>
-  `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(
-    date.getDate(),
-  ).padStart(2, '0')}`
 
 function buildDatePresets(
   t: (key: string) => string,

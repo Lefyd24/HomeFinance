@@ -32,12 +32,12 @@ import { AccountScopeRail } from './widgets/AccountScopeRail'
 import { ActivityTile } from './widgets/ActivityTile'
 import { CashFlowTile } from './widgets/CashFlowTile'
 import { CurrencyExposureTile } from './widgets/CurrencyExposureTile'
+import { DailyReturnsTile } from './widgets/DailyReturnsTile'
 import { EarnPositionsTile } from './widgets/EarnPositionsTile'
 import { HoldingsList } from './widgets/HoldingsList'
 import { MoversTile } from './widgets/MoversTile'
 import { PortfolioHeadline } from './widgets/PortfolioHeadline'
 import { PortfolioTicker } from './widgets/PortfolioTicker'
-import { PortfolioValueTile } from './widgets/PortfolioValueTile'
 import { TradingCostsTile } from './widgets/TradingCostsTile'
 import type { InvestmentAccount } from './investmentsApi'
 
@@ -83,7 +83,7 @@ export function InvestmentsPage() {
       ? { kind: 'account', id: initialAccountId }
       : null,
   )
-  const [range, setRange] = useState<HistoryRangeKey>('6m')
+  const [range, setRange] = useState<HistoryRangeKey>('30d')
   const [editingAccount, setEditingAccount] = useState<InvestmentAccount | null>(null)
   const [rotatingAccount, setRotatingAccount] = useState<InvestmentAccount | null>(null)
 
@@ -249,9 +249,8 @@ export function InvestmentsPage() {
             */}
               <div className="flex flex-col gap-2.5">
                 <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-3">
-                  <PortfolioValueTile
+                  <DailyReturnsTile
                     history={view.history}
-                    currency={view.totals?.currency ?? ''}
                     range={range}
                     onRangeChange={setRange}
                     loading={view.isHistoryLoading}

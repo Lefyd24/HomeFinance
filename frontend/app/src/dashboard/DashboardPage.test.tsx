@@ -102,6 +102,12 @@ describe('DashboardPage', () => {
       per_page: 100,
     })
 
+    vi.spyOn(reportsApi, 'getCashflowReport').mockResolvedValue({
+      labels: ['2026-10'],
+      income: [2000],
+      expenses: [750],
+    })
+
     vi.spyOn(debtsApi, 'listUpcomingDebtPayments').mockResolvedValue([])
 
     vi.spyOn(recurringApi, 'listUpcomingRecurringPayments').mockResolvedValue([])
@@ -115,6 +121,10 @@ describe('DashboardPage', () => {
 
     // Wait for the balance to appear
     expect(await screen.findByText(formatCurrency(1500))).toBeInTheDocument()
+
+    // Month totals come from the cashflow aggregate, not a paginated list
+    expect(await screen.findByText(formatCurrency(2000))).toBeInTheDocument()
+    expect(screen.getByText(formatCurrency(750))).toBeInTheDocument()
 
     // Check that at least one chart is rendered (could be multiple)
     const charts = screen.getAllByTestId('spending-chart-mock')

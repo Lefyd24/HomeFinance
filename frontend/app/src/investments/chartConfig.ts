@@ -1,6 +1,5 @@
 import { useMemo } from 'react'
 import { useReducedMotion } from 'motion/react'
-import type { ChartConfig } from '@/components/ui/chart'
 
 /**
  * Chart vocabulary for the investments sub-app.
@@ -62,15 +61,6 @@ export function polarityGlow(value: number | null | undefined): string | undefin
     ? 'drop-shadow(0 0 5px var(--flow-in-glow))'
     : 'drop-shadow(0 0 5px var(--flow-out-glow))'
 }
-
-/**
- * The portfolio history chart: what the money is doing, split into the part
- * that is invested and the part sitting in cash.
- */
-export const VALUE_CHART_CONFIG = {
-  positions_value: { label: 'invested', color: 'var(--chart-4)' },
-  cash_balance: { label: 'cash', color: 'var(--chart-2)' },
-} satisfies ChartConfig
 
 /**
  * Recharts animates by default and has no notion of the user's motion

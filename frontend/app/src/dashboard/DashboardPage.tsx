@@ -41,7 +41,7 @@ import {
   ItemMedia,
   ItemTitle,
 } from '@/components/ui/item'
-import { getSpendingReport } from './reportsApi'
+import { getCashflowReport, getSpendingReport } from './reportsApi'
 import { listUpcomingDebtPayments, type UpcomingDebtPayment } from '../debts/debtsApi'
 import {
   listUpcomingRecurringPayments,
@@ -145,10 +145,11 @@ export function DashboardPage() {
   const { data: investmentAccounts = [], isLoading: investmentAccountsLoading } =
     useInvestmentAccounts()
 
-  const { data: txnData, isLoading: txnLoading } = useTransactions({
-    ...monthRange,
-    per_page: 100,
-    page: 1,
+  // Totals come from the server-side aggregate: summing a paginated
+  // transaction list would silently drop everything past the first page.
+  const { data: monthCashflow, isLoading: txnLoading } = useQuery({
+    queryKey: queryKeys.cashflowReport(monthRange),
+    queryFn: () => getCashflowReport({ ...monthRange, group_by: 'month' }),
   })
 
   const { data: recentTxnData, isLoading: recentTxnLoading } = useTransactions({
@@ -171,13 +172,8 @@ export function DashboardPage() {
     queryFn: () => listUpcomingRecurringPayments(15),
   })
 
-  const txns = txnData?.items ?? []
-  const totalIncome = txns
-    .filter((t) => t.type === 'income')
-    .reduce((sum, t) => sum + t.amount, 0)
-  const totalExpenses = txns
-    .filter((t) => t.type === 'expense')
-    .reduce((sum, t) => sum + t.amount, 0)
+  const totalIncome = monthCashflow?.income.reduce((a, b) => a + b, 0) ?? 0
+  const totalExpenses = monthCashflow?.expenses.reduce((a, b) => a + b, 0) ?? 0
   const netSaved = totalIncome - totalExpenses
 
   const totalBalance = accounts?.reduce((sum, acc) => sum + (acc.balance ?? 0), 0) ?? 0

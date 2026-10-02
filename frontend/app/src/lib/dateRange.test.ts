@@ -60,6 +60,13 @@ describe('currentMonthRange', () => {
     })
   })
 
+  it('handles February in a leap year', () => {
+    expect(currentMonthRange(new Date(2028, 1, 3))).toEqual({
+      start_date: '2028-02-01',
+      end_date: '2028-02-29',
+    })
+  })
+
   it('is correct on the first instant of the month', () => {
     expect(currentMonthRange(new Date(2026, 7, 1, 0, 0, 0))).toEqual({
       start_date: '2026-08-01',
