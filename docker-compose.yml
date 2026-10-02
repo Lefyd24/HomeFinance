@@ -25,9 +25,17 @@ services:
     environment:
       # Only vars that need a fallback when absent from .env.
       - BACKEND_PORT=${BACKEND_PORT:-8223}
-      - DEEPSEEK_BASE_URL=${DEEPSEEK_BASE_URL:-https://api.deepseek.com}
-      - DEEPSEEK_MODEL=${DEEPSEEK_MODEL:-deepseek-chat}
-      - AI_CHAT_MAX_TOOL_ROUNDS=${AI_CHAT_MAX_TOOL_ROUNDS:-6}
+      - OPENROUTER_BASE_URL=${OPENROUTER_BASE_URL:-https://openrouter.ai/api/v1}
+      - AI_DEFAULT_MODEL=${AI_DEFAULT_MODEL:-deepseek/deepseek-chat-v3.1}
+      - AI_MAX_OUTPUT_TOKENS=${AI_MAX_OUTPUT_TOKENS:-4096}
+      - AI_TURN_COST_CAP_USD=${AI_TURN_COST_CAP_USD:-0.25}
+      - AI_FALLBACK_PRICE_IN_PER_M=${AI_FALLBACK_PRICE_IN_PER_M:-1.0}
+      - AI_FALLBACK_PRICE_OUT_PER_M=${AI_FALLBACK_PRICE_OUT_PER_M:-4.0}
+      # OPENROUTER_API_KEY and the optional AI_MONTHLY_CAP_USD arrive via env_file.
+      # AI_MONTHLY_CAP_USD is deliberately NOT listed here: compose would pass an
+      # empty string when unset, which fails float parsing. Set it in .env only
+      # when you want a cap.
+      - AI_CHAT_MAX_TOOL_ROUNDS=${AI_CHAT_MAX_TOOL_ROUNDS:-10}
     volumes:
       - ./data:/app/data
       - ./logs:/app/logs

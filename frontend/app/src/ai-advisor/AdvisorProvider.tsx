@@ -12,13 +12,13 @@ import { useAiChat } from './useAiChat'
  * (with a question, if it has one) without knowing how the chat works.
  */
 export function AdvisorProvider({ children }: { children: ReactNode }) {
-  const chat = useAiChat()
   const [isOpen, setIsOpen] = useState(false)
 
   const { data: status, isLoading: statusLoading } = useQuery({
     queryKey: ['ai', 'status'],
     queryFn: getChatStatus,
   })
+  const chat = useAiChat(status?.default_model)
   const available = status?.configured !== false
 
   const { send } = chat

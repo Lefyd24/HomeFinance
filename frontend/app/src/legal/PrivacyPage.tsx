@@ -109,12 +109,14 @@ export function PrivacyPage() {
           The app includes an optional AI advisor. <strong>If, and only if, you use it</strong>,
           the questions you ask and the financial data needed to answer them — which can include
           transaction descriptions and amounts, account balances, budgets and debts — are sent
-          to the third-party model provider configured on this instance (DeepSeek by default) for
-          processing.
+          to <strong>OpenRouter</strong>, which routes the request to the provider of the model
+          you chose in the chat (DeepSeek by default). The results of the data look-ups the model
+          performs to answer you are sent along as well, so both OpenRouter and that model
+          provider process them.
         </p>
         <p>
           If you would rather no financial data ever leave this server, do not use the AI
-          advisor. The operator can also disable it entirely by removing the provider API key.
+          advisor. The operator can also disable it entirely by removing the OpenRouter API key.
         </p>
       </Section>
 
@@ -125,8 +127,8 @@ export function PrivacyPage() {
             and transaction data on your behalf.
           </li>
           <li>
-            <strong>The configured AI provider</strong> — only if you use the AI advisor, as
-            described above.
+            <strong>OpenRouter and the chosen model provider</strong> — only if you use the AI
+            advisor, as described above.
           </li>
           <li>
             <strong>The configured email provider</strong> — to send account emails such as

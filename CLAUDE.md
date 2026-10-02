@@ -14,7 +14,7 @@ Personal Finance — a self-hosted personal finance app (accounts, transactions,
 - **Background jobs**: APScheduler (`app/services/scheduler.py`) drives bank sync, investment sync, recurring-expense processing, and notification checks — started in `main.py`'s lifespan.
 - **Migrations**: Alembic, configured in `backend/alembic/` (`backend/ALEMBIC_GUIDE.md` has the full workflow). Migrations run automatically on container startup via `docker-entrypoint.sh`.
 - **Auth**: JWT access+refresh tokens, invite-only registration, email verification, per-IP/per-email rate limiting (`app/utils/rate_limit.py`).
-- **External integrations** (all optional, feature-flagged in `app/config.py`): Enable Banking (EU bank sync), DeepSeek (AI chat), Freedom24/TraderNet + yfinance (investments), SMTP + Web Push/VAPID (notifications).
+- **External integrations** (all optional, feature-flagged in `app/config.py`): Enable Banking (EU bank sync), OpenRouter (AI chat, user-selectable model), Freedom24/TraderNet + yfinance (investments), SMTP + Web Push/VAPID (notifications).
 
 ## Commands
 

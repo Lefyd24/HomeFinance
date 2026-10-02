@@ -168,10 +168,22 @@ class Settings(BaseSettings):
     VAPID_PRIVATE_KEY: str | None = None
     VAPID_SUBJECT: str = "mailto:admin@example.com"
 
-    # AI Chat (DeepSeek)
-    DEEPSEEK_API_KEY: str | None = None
-    DEEPSEEK_BASE_URL: str = "https://api.deepseek.com"
-    DEEPSEEK_MODEL: str = "deepseek-chat"
+    # AI Chat (OpenRouter). Unset key = feature off; the chat reports itself
+    # unconfigured rather than failing at startup.
+    OPENROUTER_API_KEY: str | None = None
+    OPENROUTER_BASE_URL: str = "https://openrouter.ai/api/v1"
+    # Always selectable, even when the model catalogue cannot be fetched, so an
+    # OpenRouter catalogue outage never strands the chat.
+    AI_DEFAULT_MODEL: str = "deepseek/deepseek-chat-v3.1"
+    AI_MAX_OUTPUT_TOKENS: int = 4096
+    # A turn stops calling the model once its accumulated cost reaches this.
+    AI_TURN_COST_CAP_USD: float = 0.25
+    # Optional household-wide monthly spend cap; unset = no cap.
+    AI_MONTHLY_CAP_USD: float | None = None
+    # USD per 1M tokens, used only when neither OpenRouter nor the catalogue
+    # gives a price (the cost is then flagged as estimated).
+    AI_FALLBACK_PRICE_IN_PER_M: float = 1.0
+    AI_FALLBACK_PRICE_OUT_PER_M: float = 4.0
     # An advice-grade answer legitimately chains overview -> allocation -> risk ->
     # surplus -> compare -> project, so the ceiling is higher than a plain Q&A needs.
     AI_CHAT_MAX_TOOL_ROUNDS: int = 10

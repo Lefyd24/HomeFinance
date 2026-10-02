@@ -118,6 +118,7 @@ describe('ReportsPage', () => {
     vi.spyOn(aiChatApi, 'getChatStatus').mockResolvedValue({
       configured: true,
       investment_tools_enabled: false,
+      default_model: 'deepseek/deepseek-chat-v3.1',
     })
     const streamSpy = vi.spyOn(aiChatApi, 'streamChat').mockResolvedValue()
 

@@ -314,7 +314,39 @@
       "subtitle": "Διαβάζει τους πραγματικούς λογαριασμούς και προϋπολογισμούς σας",
       "close": "Κλείσιμο βοηθού"
     },
-    "unavailableReason": "Η συνομιλία με AI δεν έχει ρυθμιστεί σε αυτόν τον διακομιστή. Ορίστε DEEPSEEK_API_KEY στο backend για να την ενεργοποιήσετε.",
+    "unavailableReason": "Η συνομιλία με AI δεν έχει ρυθμιστεί σε αυτόν τον διακομιστή. Ορίστε OPENROUTER_API_KEY στο backend για να την ενεργοποιήσετε.",
+    "models": {
+      "pickerLabel": "Μοντέλο",
+      "search": "Αναζήτηση μοντέλων…",
+      "sortName": "Όνομα",
+      "sortPrice": "Τιμή",
+      "sortContext": "Context",
+      "loading": "Φόρτωση μοντέλων…",
+      "unavailable": "Δεν ήταν δυνατή η φόρτωση της λίστας μοντέλων.",
+      "empty": "Κανένα μοντέλο δεν ταιριάζει.",
+      "updated": "Ενημερώθηκε {{when}}",
+      "count": "{{count}} μοντέλα",
+      "refresh": "Ανανέωση λίστας μοντέλων",
+      "free": "δωρεάν",
+      "priceUnknown": "άγνωστη τιμή",
+      "perMillion": "ανά 1M tokens",
+      "contextLength": "{{size}} context"
+    },
+    "usage": {
+      "title": "Αυτή η απάντηση",
+      "model": "Μοντέλο",
+      "steps": "Βήματα",
+      "toolCalls": "Αναζητήσεις",
+      "input": "Tokens εισόδου",
+      "cached": "Tokens από cache",
+      "output": "Tokens εξόδου",
+      "peakContext": "Μέγιστο context",
+      "cost": "Κόστος",
+      "duration": "Διάρκεια",
+      "estimated": "Το κόστος είναι εκτίμηση: ο πάροχος δεν ανέφερε ακριβές ποσό.",
+      "tokens": "tok",
+      "sessionTotal": "Αυτή η συνομιλία: {{cost}}"
+    },
     "chat": {
       "newChat": "Νέα συνομιλία",
       "thinking": "Σκέφτεται",
@@ -428,6 +460,7 @@
       }
     },
     "export": {
+      "modelLine": "Μοντέλο: {{model}} · {{cost}}",
       "title": "Συνομιλία με τον σύμβουλο ΤΝ",
       "exportedAt": "Εξήχθη {{when}}",
       "you": "Εσύ",

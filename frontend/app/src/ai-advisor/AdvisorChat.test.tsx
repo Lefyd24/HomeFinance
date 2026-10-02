@@ -43,10 +43,18 @@ function mockStream(events: ChatEvent[]) {
     })
 }
 
+const DEFAULT_MODEL = 'deepseek/deepseek-chat-v3.1'
+
+function mockModels() {
+  return vi.spyOn(aiChatApi, 'getModels').mockResolvedValue({ models: [], fetched_at: null })
+}
+
 describe('AdvisorChat', () => {
   beforeEach(() => {
     window.sessionStorage.clear()
-    vi.spyOn(aiChatApi, 'getChatStatus').mockResolvedValue({ configured: true, investment_tools_enabled: true })
+    window.localStorage.removeItem('ai-advisor:model')
+    mockModels()
+    vi.spyOn(aiChatApi, 'getChatStatus').mockResolvedValue({ configured: true, investment_tools_enabled: true, default_model: DEFAULT_MODEL })
   })
   afterEach(() => vi.restoreAllMocks())
 
@@ -105,14 +113,16 @@ describe('AdvisorChat', () => {
     expect(streamSpy.mock.calls[0][0]).toEqual([
       { role: 'user', content: 'Where did my money go?' },
     ])
+    // The server's default model is sent until the user picks another.
+    expect(streamSpy.mock.calls[0][3]).toBe(DEFAULT_MODEL)
   })
 
   it('explains itself when the feature is not configured', async () => {
-    vi.spyOn(aiChatApi, 'getChatStatus').mockResolvedValue({ configured: false, investment_tools_enabled: true })
+    vi.spyOn(aiChatApi, 'getChatStatus').mockResolvedValue({ configured: false, investment_tools_enabled: true, default_model: DEFAULT_MODEL })
 
     renderPage()
 
-    expect(await screen.findByText(/DEEPSEEK_API_KEY/)).toBeInTheDocument()
+    expect(await screen.findByText(/OPENROUTER_API_KEY/)).toBeInTheDocument()
     expect(screen.getByLabelText(/ask about your finances/i)).toBeDisabled()
   })
 
@@ -128,5 +138,67 @@ describe('AdvisorChat', () => {
     renderPage()
 
     expect(await screen.findByText('Two thousand euro.')).toBeInTheDocument()
+  })
+
+  it('sends the model picked in the picker and shows what the answer cost', async () => {
+    vi.spyOn(aiChatApi, 'getModels').mockResolvedValue({
+      fetched_at: null,
+      models: [
+        {
+          id: 'google/gemini-2.5-flash',
+          name: 'Gemini 2.5 Flash',
+          context_length: 1_000_000,
+          prompt_per_m: 0.3,
+          completion_per_m: 2.5,
+          cache_read_per_m: null,
+          supports_tools: true,
+          known: true,
+          history_budget: 800_000,
+        },
+      ],
+    })
+    const streamSpy = mockStream([
+      { type: 'token', content: 'Fine.' },
+      {
+        type: 'done',
+        model: 'google/gemini-2.5-flash',
+        context_window: 1_000_000,
+        usage: {
+          prompt_tokens: 1200,
+          completion_tokens: 300,
+          cached_tokens: 0,
+          cost_usd: 0.0011,
+          cost_estimated: true,
+          peak_context_tokens: 1200,
+          duration_ms: 2500,
+          steps: 1,
+          tool_calls: 0,
+        },
+      },
+    ])
+
+    renderPage()
+    const input = await composer()
+    await userEvent.click(screen.getByRole('button', { name: 'Model' }))
+    await userEvent.click(await screen.findByText('Gemini 2.5 Flash'))
+    await userEvent.type(input, 'hello{Enter}')
+
+    await screen.findByText('Fine.')
+    expect(streamSpy.mock.calls[0][3]).toBe('google/gemini-2.5-flash')
+    expect(window.localStorage.getItem('ai-advisor:model')).toBe('google/gemini-2.5-flash')
+    const footer = await screen.findByTestId('turn-footer')
+    expect(footer).toHaveTextContent('gemini-2.5-flash')
+    expect(footer).toHaveTextContent('≈ $0.0011')
+  })
+
+  it('shows the server explanation when a model is rejected', async () => {
+    vi.spyOn(aiChatApi, 'streamChat').mockRejectedValue(
+      new aiChatApi.AdvisorStreamError('unreachable', 422, 'Model not available.'),
+    )
+
+    renderPage()
+    await userEvent.type(await composer(), 'hello{Enter}')
+
+    expect(await screen.findByText('Model not available.')).toBeInTheDocument()
   })
 })

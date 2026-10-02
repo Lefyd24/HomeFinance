@@ -42,12 +42,21 @@ function positionsOf(container: HTMLElement, snippets: string[]): number[] {
   return snippets.map((snippet) => text.indexOf(snippet))
 }
 
+const DEFAULT_MODEL = 'deepseek/deepseek-chat-v3.1'
+
+function mockModels() {
+  return vi.spyOn(aiChatApi, 'getModels').mockResolvedValue({ models: [], fetched_at: null })
+}
+
 describe('answers render in the order they happened', () => {
   beforeEach(() => {
     window.sessionStorage.clear()
+    window.localStorage.removeItem('ai-advisor:model')
+    mockModels()
     vi.spyOn(aiChatApi, 'getChatStatus').mockResolvedValue({
       configured: true,
       investment_tools_enabled: true,
+      default_model: DEFAULT_MODEL,
     })
   })
 
@@ -154,9 +163,12 @@ describe('answers render in the order they happened', () => {
 describe('the composer', () => {
   beforeEach(() => {
     window.sessionStorage.clear()
+    window.localStorage.removeItem('ai-advisor:model')
+    mockModels()
     vi.spyOn(aiChatApi, 'getChatStatus').mockResolvedValue({
       configured: true,
       investment_tools_enabled: true,
+      default_model: DEFAULT_MODEL,
     })
   })
 
@@ -192,9 +204,12 @@ describe('the composer', () => {
 describe('exporting from the page', () => {
   beforeEach(() => {
     window.sessionStorage.clear()
+    window.localStorage.removeItem('ai-advisor:model')
+    mockModels()
     vi.spyOn(aiChatApi, 'getChatStatus').mockResolvedValue({
       configured: true,
       investment_tools_enabled: true,
+      default_model: DEFAULT_MODEL,
     })
   })
 

@@ -3,6 +3,39 @@ import { apiFetch, getApiBaseUrl } from '../lib/apiClient'
 export interface ChatStatus {
   configured: boolean
   investment_tools_enabled: boolean
+  /** Optional in the type so older status mocks still compile; the server always sends it. */
+  default_model: string
+}
+
+/** One model in the OpenRouter catalogue. Prices are USD per 1M tokens. */
+export interface ModelInfo {
+  id: string
+  name: string
+  context_length: number
+  prompt_per_m: number | null
+  completion_per_m: number | null
+  cache_read_per_m: number | null
+  supports_tools: boolean
+  known: boolean
+  history_budget: number
+}
+
+export interface ModelCatalog {
+  models: ModelInfo[]
+  fetched_at: string | null
+}
+
+/** What one answer cost, as reported on the final `done` event. */
+export interface TurnUsage {
+  prompt_tokens: number
+  completion_tokens: number
+  cached_tokens: number
+  cost_usd: number
+  cost_estimated: boolean
+  peak_context_tokens: number
+  duration_ms: number
+  steps: number
+  tool_calls: number
 }
 
 export interface ChatMessage {
@@ -42,7 +75,15 @@ export type ChatEvent =
   | { type: 'token'; content: string }
   | { type: 'tool_call_start'; tool: string; args?: Record<string, unknown> }
   | { type: 'tool_call_result'; tool: string }
-  | { type: 'done'; content?: string }
+  | {
+      type: 'done'
+      content?: string
+      model?: string
+      context_window?: number
+      usage?: TurnUsage
+    }
+  // Streamed reasoning deltas from models that think out loud.
+  | { type: 'reasoning'; text: string }
   | { type: 'error'; message?: string }
   // The advisor wrote something durable to the investor profile. Surfaced as a
   // card with an undo, never applied silently.
@@ -53,17 +94,38 @@ export type ChatEvent =
 export class AdvisorStreamError extends Error {
   readonly code: 'unreachable' | 'empty_response'
   readonly status?: number
+  /** The server's own words (FastAPI `detail`), when it sent any. */
+  readonly detail?: string
 
-  constructor(code: 'unreachable' | 'empty_response', status?: number) {
+  constructor(code: 'unreachable' | 'empty_response', status?: number, detail?: string) {
     super(code)
     this.name = 'AdvisorStreamError'
     this.code = code
     this.status = status
+    this.detail = detail
   }
 }
 
 export function getChatStatus(): Promise<ChatStatus> {
   return apiFetch<ChatStatus>('/ai/status')
+}
+
+export function getModels(): Promise<ModelCatalog> {
+  return apiFetch<ModelCatalog>('/ai/models')
+}
+
+/** Force the server to re-download the catalogue. */
+export function refreshModels(): Promise<ModelCatalog> {
+  return apiFetch<ModelCatalog>('/ai/models/refresh', { method: 'POST' })
+}
+
+async function readDetail(response: Response): Promise<string | undefined> {
+  try {
+    const body = (await response.json()) as { detail?: unknown }
+    return typeof body?.detail === 'string' && body.detail.trim() ? body.detail : undefined
+  } catch {
+    return undefined
+  }
 }
 
 /**
@@ -77,6 +139,8 @@ export async function streamChat(
   messages: ChatMessage[],
   onEvent: (event: ChatEvent) => void,
   signal?: AbortSignal,
+  /** OpenRouter model id; null/absent lets the server use its default. */
+  model?: string | null,
 ): Promise<void> {
   const token = window.localStorage.getItem('token')
   const response = await fetch(`${getApiBaseUrl()}/ai/chat`, {
@@ -85,11 +149,16 @@ export async function streamChat(
       'Content-Type': 'application/json',
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
-    body: JSON.stringify({ messages }),
+    body: JSON.stringify({ messages, model: model ?? null }),
     signal,
   })
 
-  if (!response.ok) throw new AdvisorStreamError('unreachable', response.status)
+  if (!response.ok) {
+    // 422 (model rejected) and 429 (budget / rate limit) explain themselves.
+    const detail =
+      response.status === 422 || response.status === 429 ? await readDetail(response) : undefined
+    throw new AdvisorStreamError('unreachable', response.status, detail)
+  }
   if (!response.body) throw new AdvisorStreamError('empty_response')
 
   const reader = response.body.getReader()

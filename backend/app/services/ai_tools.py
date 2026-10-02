@@ -3,7 +3,7 @@
 Every function takes `db` and `user_id` as plain arguments supplied by the
 router from the authenticated user — never from the LLM's tool-call
 arguments. This is the security boundary: the JSON schemas handed to
-DeepSeek (see ai_service.AI_TOOLS) never expose `user_id` or an email
+the model (see ai_service.AI_TOOLS) never expose `user_id` or an email
 recipient, so the model has no way to reach another user's data or redirect
 the email tool.
 """

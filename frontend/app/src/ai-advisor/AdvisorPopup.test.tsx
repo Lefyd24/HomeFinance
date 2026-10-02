@@ -30,12 +30,21 @@ function renderPopup() {
 /** The popup stays mounted while closed, so "closed" means hidden from the user. */
 const popup = () => screen.queryByRole('dialog', { name: 'Finance Assistant' })
 
+const DEFAULT_MODEL = 'deepseek/deepseek-chat-v3.1'
+
+function mockModels() {
+  return vi.spyOn(aiChatApi, 'getModels').mockResolvedValue({ models: [], fetched_at: null })
+}
+
 describe('AdvisorPopup', () => {
   beforeEach(() => {
     window.sessionStorage.clear()
+    window.localStorage.removeItem('ai-advisor:model')
+    mockModels()
     vi.spyOn(aiChatApi, 'getChatStatus').mockResolvedValue({
       configured: true,
       investment_tools_enabled: false,
+      default_model: DEFAULT_MODEL,
     })
     vi.spyOn(aiChatApi, 'streamChat').mockImplementation(async (_messages, onEvent) => {
       onEvent({ type: 'token', content: 'Two thousand euro.' })

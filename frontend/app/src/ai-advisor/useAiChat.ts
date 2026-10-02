@@ -15,9 +15,19 @@ import {
   type ChatMessage,
   type ProfileUpdate,
   type ToolCall,
+  type TurnUsage,
 } from './aiChatApi'
 
 const STORAGE_KEY = 'ai-advisor:transcript'
+const MODEL_STORAGE_KEY = 'ai-advisor:model'
+
+function loadSelectedModel(): string | null {
+  try {
+    return window.localStorage.getItem(MODEL_STORAGE_KEY) || null
+  } catch {
+    return null
+  }
+}
 
 /**
  * One thing that happened during an answer, in sequence.
@@ -55,6 +65,12 @@ export interface Turn {
   /** Set when the turn failed; the partial answer above it is still shown. */
   error?: string
   streaming?: boolean
+  /** The model that wrote this answer. Absent on transcripts saved before models were selectable. */
+  model?: string
+  /** What the answer cost. Absent on older transcripts and on turns that failed. */
+  usage?: TurnUsage
+  /** The model's context window, for the footer's fill indicator. */
+  contextWindow?: number
 }
 
 function newId(): string {
@@ -86,6 +102,8 @@ function appendText(segments: TurnSegment[], text: string): TurnSegment[] {
 
 function formatAdvisorError(error: unknown, t: TFunction<'advisor'>): string {
   if (error instanceof AdvisorStreamError) {
+    // A 422 / 429 carries the server's own explanation (unknown model, budget reached).
+    if (error.detail) return error.detail
     if (error.code === 'unreachable') {
       return t('aiAdvisor.chat.unreachableError', { status: error.status ?? '?' })
     }
@@ -136,11 +154,25 @@ function loadTranscript(): Turn[] {
   }
 }
 
-export function useAiChat() {
+export function useAiChat(defaultModel?: string) {
   const { t } = useTranslation('advisor')
   const [turns, setTurns] = useState<Turn[]>(loadTranscript)
   const [isStreaming, setIsStreaming] = useState(false)
   const abortRef = useRef<AbortController | null>(null)
+  const [selectedModel, setSelectedModel] = useState<string | null>(loadSelectedModel)
+  /** What the next question will be sent to: the user's pick, else the server default. */
+  const model = selectedModel ?? defaultModel ?? null
+  const modelRef = useRef(model)
+  modelRef.current = model
+
+  const selectModel = useCallback((id: string) => {
+    setSelectedModel(id)
+    try {
+      window.localStorage.setItem(MODEL_STORAGE_KEY, id)
+    } catch {
+      // Not remembering the choice is fine; it still applies for this session.
+    }
+  }, [])
 
   /**
    * The transcript as of right now. `send` builds the model's history from
@@ -235,6 +267,9 @@ export function useAiChat() {
                   return { ...turn, segments }
                 })
                 break
+              case 'reasoning':
+                // Reasoning deltas are not shown; the answer itself is what matters.
+                break
               case 'done':
                 patchAnswer((turn) => {
                   // `content` here is only the final round's prose, so it must
@@ -252,6 +287,9 @@ export function useAiChat() {
                       segment.kind === 'tool' ? { ...segment, state: 'done' } : segment,
                     ),
                     streaming: false,
+                    model: event.model ?? turn.model,
+                    usage: event.usage ?? turn.usage,
+                    contextWindow: event.context_window ?? turn.contextWindow,
                   }
                 })
                 break
@@ -281,6 +319,7 @@ export function useAiChat() {
             }
           },
           controller.signal,
+          modelRef.current,
         )
       } catch (error) {
         const stopped = controller.signal.aborted
@@ -332,5 +371,5 @@ export function useAiChat() {
     void send(lastUser.content)
   }, [send])
 
-  return { turns, isStreaming, send, stop, clear, retry }
+  return { turns, isStreaming, send, stop, clear, retry, model, selectModel }
 }

@@ -8,6 +8,7 @@
  */
 import type { TFunction } from 'i18next'
 
+import { formatUsd } from './format'
 import { profileFieldLabel, profileValueText, toolLabel, toolSubject } from './aiAdvisorLabels'
 import type { Turn } from './useAiChat'
 
@@ -86,6 +87,11 @@ export function conversationToMarkdown(
       lines.push(`> ✏️ **${t('aiAdvisor.profileUpdate.title')}** — ${changes}`)
       if (segment.update.reason) lines.push(`> _${segment.update.reason}_`)
       lines.push('')
+    }
+
+    if (turn.model && turn.usage) {
+      const cost = `${turn.usage.cost_estimated ? '≈ ' : ''}${formatUsd(turn.usage.cost_usd)}`
+      lines.push(`_${t('aiAdvisor.export.modelLine', { model: turn.model, cost })}_`, '')
     }
 
     if (turn.error) {

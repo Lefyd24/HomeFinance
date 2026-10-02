@@ -1,4 +1,4 @@
-"""DeepSeek-backed conversational agent with tool calling and streaming.
+"""OpenRouter-backed conversational agent with tool calling and streaming.
 
 `run_agent_stream` is a generator that yields small dicts describing what's
 happening (a streamed answer token, a tool call starting/finishing, a profile
@@ -12,13 +12,21 @@ authenticated user, so the model has no way to reach another user's data.
 """
 import json
 import logging
-from typing import Callable, Generator, Optional
+import time
+from typing import Any, Callable, Generator, Optional
 
-from openai import OpenAI
 from sqlalchemy.orm import Session
 
 from app.config import settings
+from app.llm.openrouter import (
+    ChatCompletion,
+    OpenRouterClient,
+    ReasoningDelta,
+    TextDelta,
+)
 from app.services import ai_tools, ai_tools_investments, ai_tools_planning
+from app.services.ai_budget import estimate_tokens, fit_history
+from app.services.ai_models import ModelInfo
 
 logger = logging.getLogger("app.ai")
 
@@ -121,104 +129,129 @@ def _serialize_result(name: str, result: dict) -> str:
     return payload
 
 
+def system_message(text: str, model_id: str) -> dict[str, Any]:
+    """The system prompt as a message. Anthropic caches only explicitly marked prefixes
+    (other providers cache automatically), so for those the prompt is marked ephemeral."""
+    if model_id.startswith("anthropic/"):
+        return {
+            "role": "system",
+            "content": [{"type": "text", "text": text, "cache_control": {"type": "ephemeral"}}],
+        }
+    return {"role": "system", "content": text}
+
+
+def _history_budget(model: ModelInfo, system_prompt: str) -> int:
+    """Tokens left for the conversation once the system prompt and tool schemas are paid."""
+    fixed = estimate_tokens(system_prompt) + estimate_tokens(
+        json.dumps(AI_TOOLS, ensure_ascii=False)
+    )
+    return max(model.history_budget(settings) - fixed, 2_000)
+
+
+_UNAVAILABLE = "The AI service is unavailable. Please try again."
+
+
 def run_agent_stream(
     db: Session,
     user_id: int,
     user_email: str,
+    system_prompt: str,
     messages: list[dict],
+    model: ModelInfo,
+    client: Optional[OpenRouterClient],
 ) -> Generator[dict, None, None]:
-    if not settings.DEEPSEEK_API_KEY:
+    """Run one chat turn. `messages` is the user/assistant transcript (no system message);
+    the system prompt is passed separately so it can be cache-marked per model."""
+    if client is None:
         yield {"type": "error", "message": "AI chat is not configured."}
         return
 
-    client = OpenAI(
-        api_key=settings.DEEPSEEK_API_KEY,
-        base_url=settings.DEEPSEEK_BASE_URL,
-        timeout=settings.AI_CHAT_TIMEOUT_SECONDS,
-    )
-
-    prompt_tokens = 0
-    completion_tokens = 0
+    messages = list(messages)  # tool rounds append to it; never mutate the caller's list
+    started = time.monotonic()
+    prompt_tokens = completion_tokens = cached_tokens = 0
+    peak_context = 0
+    cost_usd = 0.0
+    cost_estimated = False
+    steps = 0
+    tool_calls_made = 0
 
     for _ in range(settings.AI_CHAT_MAX_TOOL_ROUNDS):
+        steps += 1
+        history, _dropped = fit_history(messages, _history_budget(model, system_prompt))
+        request_messages = [system_message(system_prompt, model.id), *history]
+
+        completion: Optional[ChatCompletion] = None
+        stream = client.stream_chat(
+            model.id,
+            request_messages,
+            tools=AI_TOOLS,
+            max_tokens=settings.AI_MAX_OUTPUT_TOKENS,
+        )
         try:
-            stream = client.chat.completions.create(
-                model=settings.DEEPSEEK_MODEL,
-                messages=messages,
-                tools=AI_TOOLS,
-                stream=True,
-                stream_options={"include_usage": True},
-            )
+            for item in stream:
+                if isinstance(item, ReasoningDelta):
+                    yield {"type": "reasoning", "text": item.text}
+                elif isinstance(item, TextDelta):
+                    yield {"type": "token", "content": item.text}
+                elif isinstance(item, ChatCompletion):
+                    completion = item
         except Exception as exc:
-            logger.warning("DeepSeek request failed: %s", exc)
-            yield {"type": "error", "message": f"DeepSeek API error: {exc}"}
+            # The real error stays in the server log; the client gets a generic message.
+            logger.warning("OpenRouter request failed for user %s: %s", user_id, exc)
+            yield {"type": "error", "message": _UNAVAILABLE}
+            return
+        finally:
+            stream.close()
+
+        if completion is None:
+            logger.warning("OpenRouter stream ended without a completion for user %s", user_id)
+            yield {"type": "error", "message": _UNAVAILABLE}
             return
 
-        content_buf = ""
-        tool_call_buf: dict[int, dict] = {}
-        finish_reason: Optional[str] = None
+        usage = completion.usage
+        step_cost, estimated = model.cost_usd(usage, settings)
+        prompt_tokens += usage.prompt_tokens
+        completion_tokens += usage.completion_tokens
+        cached_tokens += usage.cached_tokens
+        peak_context = max(peak_context, usage.prompt_tokens)
+        cost_usd += step_cost
+        cost_estimated = cost_estimated or estimated
 
-        try:
-            for chunk in stream:
-                # The usage-only chunk that `include_usage` appends carries no choices.
-                if getattr(chunk, "usage", None):
-                    prompt_tokens += chunk.usage.prompt_tokens or 0
-                    completion_tokens += chunk.usage.completion_tokens or 0
-                if not chunk.choices:
-                    continue
-
-                choice = chunk.choices[0]
-                delta = choice.delta
-                if choice.finish_reason:
-                    finish_reason = choice.finish_reason
-
-                if delta.content:
-                    content_buf += delta.content
-                    yield {"type": "token", "content": delta.content}
-
-                if delta.tool_calls:
-                    for tc in delta.tool_calls:
-                        entry = tool_call_buf.setdefault(
-                            tc.index, {"id": None, "name": None, "arguments": ""}
-                        )
-                        if tc.id:
-                            entry["id"] = tc.id
-                        if tc.function and tc.function.name:
-                            entry["name"] = tc.function.name
-                        if tc.function and tc.function.arguments:
-                            entry["arguments"] += tc.function.arguments
-        except Exception as exc:
-            logger.warning("DeepSeek stream interrupted: %s", exc)
-            yield {"type": "error", "message": f"DeepSeek stream error: {exc}"}
-            return
-
-        if finish_reason == "tool_calls" and tool_call_buf:
-            assistant_tool_calls = []
-            for entry in tool_call_buf.values():
-                assistant_tool_calls.append(
+        if completion.tool_calls:
+            assistant_message: dict[str, Any] = {
+                "role": "assistant",
+                "content": completion.text or None,
+                "tool_calls": [
                     {
-                        "id": entry["id"],
+                        "id": call.id,
                         "type": "function",
-                        "function": {"name": entry["name"], "arguments": entry["arguments"]},
+                        "function": {"name": call.name, "arguments": call.arguments or "{}"},
                     }
-                )
-            messages.append(
-                {"role": "assistant", "content": content_buf or None, "tool_calls": assistant_tool_calls}
-            )
+                    for call in completion.tool_calls
+                ],
+            }
+            # A reasoning model needs its own thinking back to keep its train of thought
+            # across tool rounds. In-memory, within this turn only.
+            if completion.reasoning_details:
+                assistant_message["reasoning_details"] = completion.reasoning_details
+            messages.append(assistant_message)
 
-            for entry in tool_call_buf.values():
+            for call in completion.tool_calls:
+                tool_calls_made += 1
                 try:
-                    args = json.loads(entry["arguments"]) if entry["arguments"] else {}
+                    args = json.loads(call.arguments) if call.arguments else {}
                 except json.JSONDecodeError:
                     args = {}
+                if not isinstance(args, dict):
+                    args = {}
 
-                yield {"type": "tool_call_start", "tool": entry["name"], "args": args}
-                result = _execute_tool(db, user_id, user_email, entry["name"], args)
-                yield {"type": "tool_call_result", "tool": entry["name"], "result": result}
+                yield {"type": "tool_call_start", "tool": call.name, "args": args}
+                result = _execute_tool(db, user_id, user_email, call.name, args)
+                yield {"type": "tool_call_result", "tool": call.name, "result": result}
 
                 # A profile write is the one thing the model does that outlasts
                 # the conversation, so it gets its own event and its own UI.
-                if entry["name"] == _PROFILE_WRITE_TOOL and result.get("updated"):
+                if call.name == _PROFILE_WRITE_TOOL and result.get("updated"):
                     yield {
                         "type": "profile_update",
                         "changes": result.get("changes", []),
@@ -228,22 +261,44 @@ def run_agent_stream(
                 messages.append(
                     {
                         "role": "tool",
-                        "tool_call_id": entry["id"],
-                        "content": _serialize_result(entry["name"], result),
+                        "tool_call_id": call.id,
+                        "content": _serialize_result(call.name, result),
                     }
                 )
+
+            if cost_usd >= settings.AI_TURN_COST_CAP_USD:
+                logger.warning(
+                    "AI turn for user %s stopped at the cost cap (%.4f USD)", user_id, cost_usd
+                )
+                yield {"type": "error", "message": "This answer hit the per-turn cost limit."}
+                return
             continue
 
         logger.info(
-            "AI chat completed for user %s: %d prompt tokens, %d completion tokens",
+            "AI chat completed for user %s on %s: %d prompt tokens, %d completion tokens, "
+            "%.5f USD",
             user_id,
+            model.id,
             prompt_tokens,
             completion_tokens,
+            cost_usd,
         )
         yield {
             "type": "done",
-            "content": content_buf,
-            "usage": {"prompt_tokens": prompt_tokens, "completion_tokens": completion_tokens},
+            "content": completion.text,
+            "model": model.id,
+            "context_window": model.context_length,
+            "usage": {
+                "prompt_tokens": prompt_tokens,
+                "completion_tokens": completion_tokens,
+                "cached_tokens": cached_tokens,
+                "cost_usd": cost_usd,
+                "cost_estimated": cost_estimated,
+                "peak_context_tokens": peak_context,
+                "duration_ms": int((time.monotonic() - started) * 1000),
+                "steps": steps,
+                "tool_calls": tool_calls_made,
+            },
         }
         return
 

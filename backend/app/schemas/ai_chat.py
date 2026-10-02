@@ -1,6 +1,7 @@
 """Pydantic schemas for AI Chat endpoints"""
 
-from typing import List, Literal
+from datetime import datetime
+from typing import List, Literal, Optional
 from pydantic import BaseModel, Field, field_validator
 
 
@@ -11,6 +12,8 @@ class AiChatMessage(BaseModel):
 
 class AiChatRequest(BaseModel):
     messages: List[AiChatMessage] = Field(..., min_length=1, max_length=40)
+    # OpenRouter model id; None means the server's AI_DEFAULT_MODEL.
+    model: Optional[str] = Field(default=None, max_length=200)
 
     @field_validator("messages")
     @classmethod
@@ -25,3 +28,22 @@ class AiChatStatus(BaseModel):
     # Lets the UI show investment-flavoured suggestions only when the portfolio
     # tools are actually registered.
     investment_tools_enabled: bool = True
+    default_model: str
+
+
+class ModelOut(BaseModel):
+    id: str
+    name: str
+    context_length: int
+    # USD per 1M tokens; None when the catalogue does not price the model.
+    prompt_per_m: Optional[float] = None
+    completion_per_m: Optional[float] = None
+    cache_read_per_m: Optional[float] = None
+    supports_tools: bool
+    known: bool
+    history_budget: int
+
+
+class ModelCatalogOut(BaseModel):
+    models: List[ModelOut]
+    fetched_at: Optional[datetime] = None

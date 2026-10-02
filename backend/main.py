@@ -12,6 +12,7 @@ from app.routers import (
     admin,
     advisor,
     ai_chat,
+    ai_usage,
     auth,
     bank_sync,
     budgets,
@@ -210,6 +211,7 @@ app.include_router(notifications.router, prefix="/api")
 app.include_router(rules.router, prefix="/api")
 app.include_router(trackers.router, prefix="/api")
 app.include_router(ai_chat.router, prefix="/api")
+app.include_router(ai_usage.router, prefix="/api")
 app.include_router(bank_sync.router, prefix="/api")
 
 

@@ -36,12 +36,21 @@ function mockStream(events: ChatEvent[]) {
   })
 }
 
+const DEFAULT_MODEL = 'deepseek/deepseek-chat-v3.1'
+
+function mockModels() {
+  return vi.spyOn(aiChatApi, 'getModels').mockResolvedValue({ models: [], fetched_at: null })
+}
+
 describe('the advisor with investment tools', () => {
   beforeEach(() => {
     window.sessionStorage.clear()
+    window.localStorage.removeItem('ai-advisor:model')
+    mockModels()
     vi.spyOn(aiChatApi, 'getChatStatus').mockResolvedValue({
       configured: true,
       investment_tools_enabled: true,
+      default_model: DEFAULT_MODEL,
     })
   })
 
@@ -59,6 +68,7 @@ describe('the advisor with investment tools', () => {
     vi.spyOn(aiChatApi, 'getChatStatus').mockResolvedValue({
       configured: true,
       investment_tools_enabled: false,
+      default_model: DEFAULT_MODEL,
     })
     renderPage()
 

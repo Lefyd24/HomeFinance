@@ -314,7 +314,39 @@
       "subtitle": "Reads your real accounts, budgets and bills",
       "close": "Close assistant"
     },
-    "unavailableReason": "AI chat is not configured on this server. Set DEEPSEEK_API_KEY on the backend to turn it on.",
+    "unavailableReason": "AI chat is not configured on this server. Set OPENROUTER_API_KEY on the backend to turn it on.",
+    "models": {
+      "pickerLabel": "Model",
+      "search": "Search models…",
+      "sortName": "Name",
+      "sortPrice": "Price",
+      "sortContext": "Context",
+      "loading": "Loading models…",
+      "unavailable": "Could not load the model list.",
+      "empty": "No models match.",
+      "updated": "Updated {{when}}",
+      "count": "{{count}} models",
+      "refresh": "Refresh model list",
+      "free": "free",
+      "priceUnknown": "price unknown",
+      "perMillion": "per 1M tokens",
+      "contextLength": "{{size}} context"
+    },
+    "usage": {
+      "title": "This answer",
+      "model": "Model",
+      "steps": "Steps",
+      "toolCalls": "Lookups",
+      "input": "Input tokens",
+      "cached": "Cached tokens",
+      "output": "Output tokens",
+      "peakContext": "Peak context",
+      "cost": "Cost",
+      "duration": "Duration",
+      "estimated": "Cost is estimated: the provider did not report an exact figure.",
+      "tokens": "tok",
+      "sessionTotal": "This chat: {{cost}}"
+    },
     "chat": {
       "newChat": "New chat",
       "thinking": "Thinking",
@@ -428,6 +460,7 @@
       }
     },
     "export": {
+      "modelLine": "Model: {{model}} · {{cost}}",
       "title": "AI Advisor conversation",
       "exportedAt": "Exported {{when}}",
       "you": "You",

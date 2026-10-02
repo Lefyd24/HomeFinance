@@ -35,6 +35,7 @@ describe('SpeedDial', () => {
     vi.spyOn(aiChatApi, 'getChatStatus').mockResolvedValue({
       configured: true,
       investment_tools_enabled: false,
+      default_model: 'deepseek/deepseek-chat-v3.1',
     })
   })
   afterEach(() => vi.restoreAllMocks())
@@ -82,6 +83,7 @@ describe('SpeedDial', () => {
     vi.spyOn(aiChatApi, 'getChatStatus').mockResolvedValue({
       configured: false,
       investment_tools_enabled: false,
+      default_model: 'deepseek/deepseek-chat-v3.1',
     })
     renderDial()
     await userEvent.click(mainButton())

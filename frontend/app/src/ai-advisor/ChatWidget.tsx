@@ -24,8 +24,11 @@ import {
   downloadConversation,
 } from './exportConversation'
 import { Markdown } from './Markdown'
+import { formatUsd } from './format'
+import { ModelPicker } from './ModelPicker'
 import { ProfileUpdateCard } from './ProfileUpdateCard'
 import { ToolTrail } from './ToolTrail'
+import { TurnFooter } from './TurnFooter'
 import type { Turn, TurnSegment } from './useAiChat'
 
 /** Consecutive lookups render as one block — the model often batches them. */
@@ -66,6 +69,8 @@ export function ChatWidget({
   disabled,
   disabledReason,
   showInvestmentPrompts,
+  model,
+  onModelChange,
 }: {
   turns: Turn[]
   isStreaming: boolean
@@ -80,11 +85,15 @@ export function ChatWidget({
   disabledReason?: string
   /** Offer the portfolio openers — only when the investment tools are enabled. */
   showInvestmentPrompts?: boolean
+  /** The model the next question goes to; the picker is hidden when absent. */
+  model?: string | null
+  onModelChange?: (model: string) => void
 }) {
   const { t } = useTranslation('advisor')
   const composerRef = useRef<HTMLTextAreaElement>(null)
 
   const lastTurn = turns[turns.length - 1]
+  const sessionCost = turns.reduce((sum, turn) => sum + (turn.usage?.cost_usd ?? 0), 0)
 
   function handleExport() {
     const now = new Date()
@@ -180,6 +189,17 @@ export function ChatWidget({
         </MessageScroller>
       </MessageScrollerProvider>
 
+      {model && onModelChange && !disabled && (
+        <div className="flex shrink-0 items-center gap-2 px-4 pt-1">
+          <ModelPicker model={model} disabled={isStreaming} onChange={onModelChange} />
+          {sessionCost > 0 && (
+            <span className="ms-auto text-[11px] text-muted-foreground tabular-nums">
+              {t('aiAdvisor.usage.sessionTotal', { cost: formatUsd(sessionCost) })}
+            </span>
+          )}
+        </div>
+      )}
+
       <Composer
         ref={composerRef}
         isStreaming={isStreaming}
@@ -263,6 +283,12 @@ function AssistantTurn({
           <Alert variant="destructive" className="mt-1.5 max-w-full">
             <AlertDescription>{turn.error}</AlertDescription>
           </Alert>
+        )}
+
+        {!turn.streaming && turn.usage && (
+          <div className="mt-1 px-1">
+            <TurnFooter turn={turn} />
+          </div>
         )}
 
         {!turn.streaming && (hasAnswer || turn.error) && (
