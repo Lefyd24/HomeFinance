@@ -54,6 +54,7 @@ describe('AdvisorChat', () => {
     window.sessionStorage.clear()
     window.localStorage.removeItem('ai-advisor:model')
     mockModels()
+    vi.spyOn(aiChatApi, 'getSkills').mockResolvedValue({ skills: [] })
     vi.spyOn(aiChatApi, 'getChatStatus').mockResolvedValue({ configured: true, investment_tools_enabled: true, default_model: DEFAULT_MODEL })
   })
   afterEach(() => vi.restoreAllMocks())

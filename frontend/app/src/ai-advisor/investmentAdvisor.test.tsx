@@ -47,6 +47,7 @@ describe('the advisor with investment tools', () => {
     window.sessionStorage.clear()
     window.localStorage.removeItem('ai-advisor:model')
     mockModels()
+    vi.spyOn(aiChatApi, 'getSkills').mockResolvedValue({ skills: [] })
     vi.spyOn(aiChatApi, 'getChatStatus').mockResolvedValue({
       configured: true,
       investment_tools_enabled: true,

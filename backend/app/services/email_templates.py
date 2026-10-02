@@ -88,12 +88,22 @@ def _progress_bar(pct: float) -> str:
     </table>"""
 
 
-def render(title: str, body_html: str, *, preheader: str = "") -> tuple[str, str]:
-    """Generic renderer: wraps arbitrary already-safe body_html."""
+def render(
+    title: str,
+    body_html: str,
+    *,
+    preheader: str = "",
+    text_body: str | None = None,
+) -> tuple[str, str]:
+    """Generic renderer: wraps arbitrary already-safe body_html (not escaped, so
+    pre-rendered sanitized HTML such as report_rendering.markdown_to_html output
+    embeds as-is). Pass text_body (e.g. report_rendering.markdown_to_text) to
+    use it as the plain-text alternative instead of the placeholder."""
     html_out = _wrap(title, body_html, preheader or title)
-    text_out = (
-        f"{title}\n\n(View this email in an HTML-capable client for full formatting.)"
-    )
+    if text_body is not None:
+        text_out = f"{title}\n\n{text_body}"
+    else:
+        text_out = f"{title}\n\n(View this email in an HTML-capable client for full formatting.)"
     return html_out, text_out
 
 

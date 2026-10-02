@@ -1,7 +1,17 @@
-import { useLayoutEffect, useRef, useState } from 'react'
+import { useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { TFunction } from 'i18next'
-import { ArrowUp, Check, Copy, Download, PenLine, RotateCcw, Square, X } from 'lucide-react'
+import {
+  ArrowUp,
+  Check,
+  Copy,
+  Download,
+  PenLine,
+  RotateCcw,
+  Sparkles,
+  Square,
+  X,
+} from 'lucide-react'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Message, MessageContent, MessageFooter } from '@/components/ui/message'
@@ -24,7 +34,8 @@ import {
   downloadConversation,
 } from './exportConversation'
 import { Markdown } from './Markdown'
-import { formatUsd } from './format'
+import type { Skill } from './aiChatApi'
+import { formatUsd, shortModel } from './format'
 import { ModelPicker } from './ModelPicker'
 import { ProfileUpdateCard } from './ProfileUpdateCard'
 import { ToolTrail } from './ToolTrail'
@@ -34,13 +45,17 @@ import type { Turn, TurnSegment } from './useAiChat'
 /** Consecutive lookups render as one block — the model often batches them. */
 type RenderGroup =
   | { kind: 'text'; id: string; content: string }
-  | { kind: 'tools'; id: string; tools: Extract<TurnSegment, { kind: 'tool' }>[] }
+  | {
+      kind: 'tools'
+      id: string
+      tools: Array<Extract<TurnSegment, { kind: 'tool' | 'skill' }>>
+    }
   | { kind: 'profile'; id: string; update: Extract<TurnSegment, { kind: 'profile' }>['update'] }
 
 function groupSegments(segments: TurnSegment[]): RenderGroup[] {
   const groups: RenderGroup[] = []
   for (const segment of segments) {
-    if (segment.kind === 'tool') {
+    if (segment.kind === 'tool' || segment.kind === 'skill') {
       const last = groups[groups.length - 1]
       if (last?.kind === 'tools') {
         last.tools.push(segment)
@@ -71,6 +86,11 @@ export function ChatWidget({
   showInvestmentPrompts,
   model,
   onModelChange,
+  skills = [],
+  activeSkills = [],
+  onDismissSkill,
+  modelHint,
+  onDismissModelHint,
 }: {
   turns: Turn[]
   isStreaming: boolean
@@ -88,6 +108,14 @@ export function ChatWidget({
   /** The model the next question goes to; the picker is hidden when absent. */
   model?: string | null
   onModelChange?: (model: string) => void
+  /** Every skill the server offers: feeds the "/" menu and the chip titles. */
+  skills?: Skill[]
+  /** Skills that will ride along with the next request. */
+  activeSkills?: string[]
+  onDismissSkill?: (name: string) => void
+  /** A model a loaded skill suggests; offered as a one-click switch. */
+  modelHint?: { model: string; skillTitle: string } | null
+  onDismissModelHint?: () => void
 }) {
   const { t } = useTranslation('advisor')
   const composerRef = useRef<HTMLTextAreaElement>(null)
@@ -200,8 +228,66 @@ export function ChatWidget({
         </div>
       )}
 
+      {modelHint && onModelChange && !disabled && (
+        <div
+          role="status"
+          className="mx-4 mt-1 flex shrink-0 items-center gap-2 rounded-lg bg-primary/[0.06] px-2.5 py-1 text-[11px] text-muted-foreground"
+        >
+          <span className="min-w-0 flex-1 truncate">
+            {t('aiAdvisor.skills.modelHint', {
+              skill: modelHint.skillTitle,
+              model: shortModel(modelHint.model),
+            })}
+          </span>
+          <button
+            type="button"
+            onClick={() => onModelChange(modelHint.model)}
+            className="shrink-0 font-medium text-primary hover:underline focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+          >
+            {t('aiAdvisor.skills.switchModel', { model: shortModel(modelHint.model) })}
+          </button>
+          <button
+            type="button"
+            onClick={onDismissModelHint}
+            aria-label={t('aiAdvisor.skills.dismissHint')}
+            className="shrink-0 rounded-sm hover:text-foreground focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+          >
+            <X className="size-3" />
+          </button>
+        </div>
+      )}
+
+      {activeSkills.length > 0 && !disabled && (
+        <ul
+          className="flex shrink-0 flex-wrap gap-1.5 px-4 pt-1.5"
+          aria-label={t('aiAdvisor.skills.activeLabel')}
+        >
+          {activeSkills.map((name) => {
+            const title = skills.find((skill) => skill.name === name)?.title ?? name
+            return (
+              <li
+                key={name}
+                className="flex items-center gap-1 rounded-full border border-primary/25 bg-primary/10 py-0.5 ps-2 pe-1 text-[11px] font-medium text-primary"
+              >
+                <Sparkles className="size-3" />
+                <span className="max-w-[10rem] truncate">{title}</span>
+                <button
+                  type="button"
+                  onClick={() => onDismissSkill?.(name)}
+                  aria-label={t('aiAdvisor.skills.dismiss', { title })}
+                  className="rounded-full p-0.5 hover:bg-primary/20 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+                >
+                  <X className="size-3" />
+                </button>
+              </li>
+            )
+          })}
+        </ul>
+      )}
+
       <Composer
         ref={composerRef}
+        skills={skills}
         isStreaming={isStreaming}
         disabled={disabled}
         onSend={onSend}
@@ -386,8 +472,10 @@ function Composer({
   disabled,
   onSend,
   onStop,
+  skills,
   t,
 }: {
+  skills: Skill[]
   ref: React.RefObject<HTMLTextAreaElement | null>
   isStreaming: boolean
   disabled?: boolean
@@ -396,6 +484,31 @@ function Composer({
   t: TFunction<'advisor'>
 }) {
   const [value, setValue] = useState('')
+  const [menuIndex, setMenuIndex] = useState(0)
+  const [menuClosed, setMenuClosed] = useState(false)
+
+  /** "/" at the very start, still on the first word: offer the skills that match. */
+  const suggestions = useMemo(() => {
+    const match = /^\/([A-Za-z0-9_-]*)$/.exec(value)
+    if (!match) return []
+    const query = match[1].toLowerCase()
+    return skills.filter(
+      (skill) => skill.command && skill.command.toLowerCase().startsWith(query),
+    )
+  }, [value, skills])
+  const menuOpen = suggestions.length > 0 && !menuClosed && !disabled
+  const activeIndex = Math.min(menuIndex, Math.max(suggestions.length - 1, 0))
+
+  function changeValue(next: string) {
+    setValue(next)
+    setMenuIndex(0)
+    setMenuClosed(false)
+  }
+
+  function pickSkill(skill: Skill) {
+    changeValue(`/${skill.command} `)
+    ref.current?.focus()
+  }
 
   /**
    * Measured after every render rather than on each keystroke.
@@ -418,11 +531,46 @@ function Composer({
     const text = value.trim()
     if (!text || isStreaming || disabled) return
     onSend(text)
-    setValue('')
+    changeValue('')
   }
 
   return (
-    <div className="shrink-0 px-3 pb-3 pt-1">
+    <div className="relative shrink-0 px-3 pb-3 pt-1">
+      {menuOpen && (
+        <ul
+          id="advisor-skill-menu"
+          role="listbox"
+          aria-label={t('aiAdvisor.skills.menuLabel')}
+          className="absolute inset-x-3 bottom-full z-10 mb-1 max-h-56 overflow-y-auto rounded-xl border bg-popover p-1 shadow-lg"
+        >
+          {suggestions.map((skill, index) => (
+            <li
+              key={skill.name}
+              id={`advisor-skill-option-${skill.name}`}
+              role="option"
+              aria-selected={index === activeIndex}
+              // mousedown, not click: the textarea must not lose focus first.
+              onMouseDown={(event) => {
+                event.preventDefault()
+                pickSkill(skill)
+              }}
+              onMouseEnter={() => setMenuIndex(index)}
+              className={cn(
+                'flex cursor-pointer flex-col gap-0.5 rounded-lg px-2.5 py-1.5',
+                index === activeIndex && 'bg-accent text-accent-foreground',
+              )}
+            >
+              <span className="flex items-baseline gap-2 text-sm">
+                <span className="font-mono text-xs font-semibold text-primary">/{skill.command}</span>
+                <span className="truncate font-medium">{skill.title}</span>
+              </span>
+              <span className="line-clamp-2 text-[11px] leading-snug text-muted-foreground">
+                {skill.description}
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
       <form
         className="flex w-full items-end gap-1.5 rounded-[1.5rem] border bg-muted/40 p-1.5 transition-shadow focus-within:border-primary/40 focus-within:bg-background focus-within:ring-3 focus-within:ring-ring/25"
         onSubmit={(event) => {
@@ -439,8 +587,33 @@ function Composer({
             disabled ? t('aiAdvisor.chat.composerPlaceholderDisabled') : t('aiAdvisor.chat.composerPlaceholder')
           }
           aria-label={t('aiAdvisor.chat.composerAriaLabel')}
-          onChange={(event) => setValue(event.target.value)}
+          onChange={(event) => changeValue(event.target.value)}
+          aria-controls={menuOpen ? 'advisor-skill-menu' : undefined}
+          aria-activedescendant={
+            menuOpen ? `advisor-skill-option-${suggestions[activeIndex].name}` : undefined
+          }
           onKeyDown={(event) => {
+            if (menuOpen) {
+              if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+                event.preventDefault()
+                const step = event.key === 'ArrowDown' ? 1 : -1
+                setMenuIndex((activeIndex + step + suggestions.length) % suggestions.length)
+                return
+              }
+              if ((event.key === 'Enter' && !event.shiftKey) || event.key === 'Tab') {
+                event.preventDefault()
+                pickSkill(suggestions[activeIndex])
+                return
+              }
+              if (event.key === 'Escape') {
+                // Close the menu only, not the whole popup behind it.
+                event.preventDefault()
+                event.stopPropagation()
+                event.nativeEvent.stopImmediatePropagation()
+                setMenuClosed(true)
+                return
+              }
+            }
             // Enter sends; Shift+Enter is how you write a second line.
             if (event.key === 'Enter' && !event.shiftKey) {
               event.preventDefault()

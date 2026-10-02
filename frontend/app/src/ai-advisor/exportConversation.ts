@@ -9,7 +9,7 @@
 import type { TFunction } from 'i18next'
 
 import { formatUsd } from './format'
-import { profileFieldLabel, profileValueText, toolLabel, toolSubject } from './aiAdvisorLabels'
+import { profileFieldLabel, profileValueText, toolDescription } from './aiAdvisorLabels'
 import type { Turn } from './useAiChat'
 
 function formatTimestamp(date: Date): string {
@@ -67,14 +67,17 @@ export function conversationToMarkdown(
         continue
       }
 
+      if (segment.kind === 'skill') {
+        lines.push(`> ✨ ${t('aiAdvisor.toolTrail.usingSkill', { title: segment.title })}`, '')
+        continue
+      }
+
       if (segment.kind === 'tool') {
-        const subject = toolSubject(segment.args)
+        if (segment.name === 'load_skill_tool') continue
+        const { label, subject } = toolDescription(segment.name, segment.args, t)
         // Blockquoted so a lookup reads as an aside in the reasoning rather
         // than as something the advisor asserted.
-        lines.push(
-          `> 🔍 ${toolLabel(segment.name, t)}${subject ? ` · ${subject}` : ''}`,
-          '',
-        )
+        lines.push(`> 🔍 ${label}${subject ? ` · ${subject}` : ''}`, '')
         continue
       }
 

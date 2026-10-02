@@ -55,8 +55,16 @@ def resolve_smtp_config(row, app) -> "SmtpConfig | None":
     )
 
 
+Attachment = tuple[str, bytes, str]  # (filename, content, mimetype)
+
+
 def _send(
-    to: str, subject: str, html: str, cfg: SmtpConfig, text: str | None = None
+    to: str,
+    subject: str,
+    html: str,
+    cfg: SmtpConfig,
+    text: str | None = None,
+    attachments: list[Attachment] | None = None,
 ) -> tuple[bool, str | None]:
     try:
         msg = EmailMessage()
@@ -65,6 +73,14 @@ def _send(
         msg["To"] = to
         msg.set_content(text or "This message requires an HTML-capable client.")
         msg.add_alternative(html, subtype="html")
+        for filename, content, mimetype in attachments or []:
+            maintype, _, subtype = (mimetype or "application/octet-stream").partition("/")
+            msg.add_attachment(
+                content,
+                maintype=maintype or "application",
+                subtype=subtype or "octet-stream",
+                filename=filename,
+            )
         use_ssl = cfg.port == 465
         smtp_cls = smtplib.SMTP_SSL if use_ssl else smtplib.SMTP
         with smtp_cls(cfg.host, cfg.port, timeout=15) as s:
@@ -89,10 +105,18 @@ def send_email(
 
 
 def send_email_detailed(
-    to: str, subject: str, html: str, cfg: SmtpConfig, text: str | None = None
+    to: str,
+    subject: str,
+    html: str,
+    cfg: SmtpConfig,
+    text: str | None = None,
+    attachments: list[Attachment] | None = None,
 ) -> tuple[bool, str | None]:
-    """Same as send_email but also returns the error string on failure, for UI diagnostics."""
-    return _send(to, subject, html, cfg, text)
+    """Same as send_email but also returns the error string on failure, for UI diagnostics.
+
+    `attachments` is an optional list of (filename, content, mimetype).
+    """
+    return _send(to, subject, html, cfg, text, attachments)
 
 
 def send_transactional_email(

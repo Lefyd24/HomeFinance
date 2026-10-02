@@ -6,7 +6,21 @@ import { ChatWidget } from './ChatWidget'
 export function AdvisorChat({ onClose }: { onClose?: () => void }) {
   const { t } = useTranslation('advisor')
   const { chat, status, statusLoading, available } = useAdvisor()
-  const { turns, isStreaming, send, stop, clear, retry, model, selectModel } = chat
+  const {
+    turns,
+    isStreaming,
+    send,
+    stop,
+    clear,
+    retry,
+    model,
+    selectModel,
+    skills,
+    activeSkills,
+    dismissSkill,
+    modelHint,
+    dismissModelHint,
+  } = chat
 
   return (
     <ChatWidget
@@ -22,6 +36,11 @@ export function AdvisorChat({ onClose }: { onClose?: () => void }) {
       showInvestmentPrompts={status?.investment_tools_enabled ?? false}
       model={model}
       onModelChange={selectModel}
+      skills={skills}
+      activeSkills={activeSkills}
+      onDismissSkill={dismissSkill}
+      modelHint={modelHint}
+      onDismissModelHint={dismissModelHint}
     />
   )
 }

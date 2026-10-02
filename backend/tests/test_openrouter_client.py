@@ -28,9 +28,11 @@ def _client(handler):
 
 
 def test_no_api_key_is_a_config_error(monkeypatch):
-    from app.config import settings
+    # Patch the instance the client module holds: test_crypto reloads app.config,
+    # after which `app.config.settings` is a different object.
+    from app.llm import openrouter
 
-    monkeypatch.setattr(settings, "OPENROUTER_API_KEY", None)
+    monkeypatch.setattr(openrouter.settings, "OPENROUTER_API_KEY", None)
     with pytest.raises(LLMConfigError):
         OpenRouterClient()
 

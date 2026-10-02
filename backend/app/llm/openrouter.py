@@ -175,6 +175,7 @@ class OpenRouterClient:
         tools: list[dict[str, Any]] | None = None,
         max_tokens: int | None = None,
         temperature: float = 0.2,
+        tool_choice: str | None = None,
     ) -> Generator[TextDelta | ReasoningDelta | ToolCallStarted | ChatCompletion]:
         """Stream an OpenAI-compatible chat call with optional function tools.
 
@@ -191,6 +192,8 @@ class OpenRouterClient:
         }
         if tools:
             body["tools"] = tools
+            if tool_choice:
+                body["tool_choice"] = tool_choice  # e.g. "none": answer in text, no more calls
         if max_tokens:
             body["max_tokens"] = max_tokens
         started = time.monotonic()

@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { getChatStatus } from './aiChatApi'
 import { AdvisorContext } from './advisorContext'
 import { useAiChat } from './useAiChat'
+import { useAiSkills } from './useAiSkills'
 
 /**
  * Owns the advisor for the whole app shell.
@@ -18,7 +19,8 @@ export function AdvisorProvider({ children }: { children: ReactNode }) {
     queryKey: ['ai', 'status'],
     queryFn: getChatStatus,
   })
-  const chat = useAiChat(status?.default_model)
+  const { skills } = useAiSkills(status?.configured === true)
+  const chat = useAiChat(status?.default_model, skills)
   const available = status?.configured !== false
 
   const { send } = chat

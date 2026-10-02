@@ -16,6 +16,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
+from app import ai_skills
 from app.config import settings
 from app.database import get_db
 from app.models import User
@@ -24,6 +25,8 @@ from app.schemas.ai_chat import (
     AiChatStatus,
     ModelCatalogOut,
     ModelOut,
+    SkillListOut,
+    SkillOut,
 )
 from app.services import ai_models, ai_service, ai_usage_service
 from app.services.ai_prompt import DISCLAIMER, build_system_prompt
@@ -86,6 +89,23 @@ def refresh_ai_models(current_user: User = Depends(get_current_user)):
     return _catalog_out(force=True)
 
 
+@router.get("/skills", response_model=SkillListOut)
+def list_ai_skills(current_user: User = Depends(get_current_user)):
+    """Skills the advisor can load (and the slash commands that pre-activate them)."""
+    return SkillListOut(
+        skills=[
+            SkillOut(
+                name=s.name,
+                title=s.title,
+                description=s.description,
+                command=s.command,
+                suggested_model=s.suggested_model,
+            )
+            for s in ai_skills.available_skills()
+        ]
+    )
+
+
 @router.post("/chat")
 def ai_chat(
     body: AiChatRequest,
@@ -119,7 +139,14 @@ def ai_chat(
     def event_stream():
         gave_answer = False
         for event in ai_service.run_agent_stream(
-            db, user_id, current_user.email, system_prompt, messages, model, client
+            db,
+            user_id,
+            current_user.email,
+            system_prompt,
+            messages,
+            model,
+            client,
+            active_skills=body.skills,
         ):
             if event.get("type") == "done":
                 gave_answer = bool(event.get("content"))

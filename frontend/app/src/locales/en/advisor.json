@@ -312,7 +312,8 @@
     "popup": {
       "title": "Finance Assistant",
       "subtitle": "Reads your real accounts, budgets and bills",
-      "close": "Close assistant"
+      "close": "Close assistant",
+      "resize": "Resize assistant (drag, or use the arrow keys; double-click to reset)"
     },
     "unavailableReason": "AI chat is not configured on this server. Set OPENROUTER_API_KEY on the backend to turn it on.",
     "models": {
@@ -434,9 +435,37 @@
         "getInvestableSurplus": "Working out what you can invest",
         "getRecurringCommitments": "Totalling your commitments",
         "projectInvestment": "Projecting the growth",
-        "compareInvestVsPayoff": "Comparing investing against paying it off"
+        "compareInvestVsPayoff": "Comparing investing against paying it off",
+        "loadSkill": "Loading a skill",
+        "getCategoryTrends": "Tracking category trends",
+        "getCashflowTrend": "Charting your cash flow",
+        "detectSpendingAnomalies": "Looking for unusual spending",
+        "getSubscriptionAudit": "Auditing your subscriptions",
+        "sendReportEmail": "Emailing the report",
+        "getFinancialStatements": "Reading the financial statements for",
+        "getAnalystEstimates": "Reading analyst estimates for",
+        "findPeers": "Finding peers of",
+        "dcfValuation": "Running a DCF valuation for",
+        "getNewsDigest": "Reading the latest news on",
+        "screenStocks": "Screening stocks",
+        "screenEtfs": "Screening ETFs",
+        "getSectorOverview": "Surveying the sector",
+        "portfolioFit": "Checking how it fits your portfolio",
+        "rebalancePlan": "Drafting a rebalancing plan",
+        "getFundCosts": "Comparing fund costs",
+        "webSearch": "Searching the web"
       },
-      "usingFallback": "Using {{name}}"
+      "usingFallback": "Using {{name}}",
+      "phrases": {
+        "statement": "Reading {{symbol}} {{statement}}",
+        "webSearch": "Searching the web for {{query}}"
+      },
+      "statements": {
+        "income": "income statement",
+        "balance": "balance sheet",
+        "cashflow": "cash flow statement"
+      },
+      "usingSkill": "Using skill: {{title}}"
     },
     "profileUpdate": {
       "title": "The advisor updated your profile",
@@ -465,6 +494,14 @@
       "exportedAt": "Exported {{when}}",
       "you": "You",
       "advisor": "Advisor"
+    },
+    "skills": {
+      "menuLabel": "Skills",
+      "activeLabel": "Active skills",
+      "dismiss": "Stop using {{title}}",
+      "modelHint": "{{skill}} works best with {{model}}.",
+      "switchModel": "Switch to {{model}}",
+      "dismissHint": "Dismiss"
     }
   },
   "investorProfile": {

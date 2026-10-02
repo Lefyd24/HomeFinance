@@ -14,6 +14,7 @@ import {
   streamChat,
   type ChatMessage,
   type ProfileUpdate,
+  type Skill,
   type ToolCall,
   type TurnUsage,
 } from './aiChatApi'
@@ -48,6 +49,8 @@ export type TurnSegment =
       args?: Record<string, unknown>
     }
   | { kind: 'profile'; id: string; update: ProfileUpdate }
+  // A skill the advisor switched on mid-answer, shown in the trail as "Using skill: …".
+  | { kind: 'skill'; id: string; name: string; title: string }
 
 export interface Turn {
   id: string
@@ -71,6 +74,21 @@ export interface Turn {
   usage?: TurnUsage
   /** The model's context window, for the footer's fill indicator. */
   contextWindow?: number
+  /** Skills active when the answer finished; echoed on the next request. Absent on older transcripts. */
+  activeSkills?: string[]
+}
+
+/** The skill a leading "/command" in the message points at, if the server has one by that name. */
+export function parseSlashCommand(text: string, skills: Skill[]): Skill | null {
+  const match = /^\s*\/([A-Za-z0-9_-]+)(?=\s|$)/.exec(text)
+  if (!match) return null
+  const command = match[1].toLowerCase()
+  return skills.find((skill) => skill.command?.toLowerCase() === command) ?? null
+}
+
+function lastActiveSkills(turns: Turn[]): string[] {
+  const last = [...turns].reverse().find((turn) => turn.role === 'assistant')
+  return last?.activeSkills ?? []
 }
 
 function newId(): string {
@@ -120,8 +138,9 @@ function formatAdvisorError(error: unknown, t: TFunction<'advisor'>): string {
  * order is unrecoverable — the honest reconstruction puts the lookups first and
  * the prose after, which is exactly how they were displayed at the time.
  */
-function migrateTurn(turn: Turn & { tools?: ToolCall[]; profileUpdates?: ProfileUpdate[] }): Turn {
-  if (Array.isArray(turn.segments)) return { ...turn, streaming: false }
+export function migrateTurn(turn: Turn & { tools?: ToolCall[]; profileUpdates?: ProfileUpdate[] }): Turn {
+  const activeSkills = turn.role === 'assistant' ? (turn.activeSkills ?? []) : undefined
+  if (Array.isArray(turn.segments)) return { ...turn, streaming: false, activeSkills }
 
   const segments: TurnSegment[] = [
     ...(turn.tools ?? []).map((tool) => ({
@@ -138,7 +157,7 @@ function migrateTurn(turn: Turn & { tools?: ToolCall[]; profileUpdates?: Profile
       update,
     })),
   ]
-  return { ...turn, segments, streaming: false }
+  return { ...turn, segments, streaming: false, activeSkills }
 }
 
 function loadTranscript(): Turn[] {
@@ -154,7 +173,7 @@ function loadTranscript(): Turn[] {
   }
 }
 
-export function useAiChat(defaultModel?: string) {
+export function useAiChat(defaultModel?: string, skills: Skill[] = []) {
   const { t } = useTranslation('advisor')
   const [turns, setTurns] = useState<Turn[]>(loadTranscript)
   const [isStreaming, setIsStreaming] = useState(false)
@@ -165,7 +184,21 @@ export function useAiChat(defaultModel?: string) {
   const modelRef = useRef(model)
   modelRef.current = model
 
+  const skillsRef = useRef(skills)
+  skillsRef.current = skills
+  const [activeSkills, setActiveSkills] = useState<string[]>(() => lastActiveSkills(loadTranscript()))
+  const activeSkillsRef = useRef(activeSkills)
+  activeSkillsRef.current = activeSkills
+  /** A model a just-loaded skill would rather run on; offered, never applied. */
+  const [modelHint, setModelHint] = useState<{ model: string; skillTitle: string } | null>(null)
+
+  const dismissSkill = useCallback((name: string) => {
+    setActiveSkills((current) => current.filter((skill) => skill !== name))
+  }, [])
+  const dismissModelHint = useCallback(() => setModelHint(null), [])
+
   const selectModel = useCallback((id: string) => {
+    setModelHint(null)
     setSelectedModel(id)
     try {
       window.localStorage.setItem(MODEL_STORAGE_KEY, id)
@@ -198,6 +231,15 @@ export function useAiChat(defaultModel?: string) {
     async (text: string) => {
       const content = text.trim()
       if (!content || abortRef.current) return
+
+      // A leading "/command" switches that skill on for this request; the text
+      // itself goes through unchanged.
+      const slashSkill = parseSlashCommand(content, skillsRef.current)
+      const requestSkills = Array.from(
+        new Set([...activeSkillsRef.current, ...(slashSkill ? [slashSkill.name] : [])]),
+      )
+      if (slashSkill) setActiveSkills(requestSkills)
+      setModelHint(null)
 
       const userTurn: Turn = { id: newId(), role: 'user', content, segments: [] }
       const answerId = newId()
@@ -290,8 +332,10 @@ export function useAiChat(defaultModel?: string) {
                     model: event.model ?? turn.model,
                     usage: event.usage ?? turn.usage,
                     contextWindow: event.context_window ?? turn.contextWindow,
+                    activeSkills: event.active_skills ?? turn.activeSkills,
                   }
                 })
+                if (event.active_skills) setActiveSkills(event.active_skills)
                 break
               case 'profile_update':
                 patchAnswer((turn) => ({
@@ -303,6 +347,21 @@ export function useAiChat(defaultModel?: string) {
                       id: newId(),
                       update: { changes: event.changes, reason: event.reason },
                     },
+                  ],
+                }))
+                break
+              case 'skill_loaded':
+                setActiveSkills((current) =>
+                  current.includes(event.name) ? current : [...current, event.name],
+                )
+                if (event.suggested_model && event.suggested_model !== modelRef.current) {
+                  setModelHint({ model: event.suggested_model, skillTitle: event.title })
+                }
+                patchAnswer((turn) => ({
+                  ...turn,
+                  segments: [
+                    ...turn.segments,
+                    { kind: 'skill', id: newId(), name: event.name, title: event.title },
                   ],
                 }))
                 break
@@ -320,6 +379,7 @@ export function useAiChat(defaultModel?: string) {
           },
           controller.signal,
           modelRef.current,
+          requestSkills,
         )
       } catch (error) {
         const stopped = controller.signal.aborted
@@ -352,6 +412,8 @@ export function useAiChat(defaultModel?: string) {
   const clear = useCallback(() => {
     abortRef.current?.abort()
     setTurns([])
+    setActiveSkills([])
+    setModelHint(null)
     try {
       window.sessionStorage.removeItem(STORAGE_KEY)
     } catch {
@@ -368,8 +430,24 @@ export function useAiChat(defaultModel?: string) {
     const trimmed = current.slice(0, current.findIndex((turn) => turn.id === lastUser.id))
     turnsRef.current = trimmed
     setTurns(trimmed)
+    setActiveSkills(lastActiveSkills(trimmed))
+    activeSkillsRef.current = lastActiveSkills(trimmed)
     void send(lastUser.content)
   }, [send])
 
-  return { turns, isStreaming, send, stop, clear, retry, model, selectModel }
+  return {
+    turns,
+    isStreaming,
+    send,
+    stop,
+    clear,
+    retry,
+    model,
+    selectModel,
+    skills,
+    activeSkills,
+    dismissSkill,
+    modelHint: modelHint && modelHint.model !== model ? modelHint : null,
+    dismissModelHint,
+  }
 }

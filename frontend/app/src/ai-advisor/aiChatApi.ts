@@ -38,6 +38,16 @@ export interface TurnUsage {
   tool_calls: number
 }
 
+/** A skill the advisor can load: a packaged method plus the tools it needs. */
+export interface Skill {
+  name: string
+  title: string
+  description: string
+  /** Slash command without the leading "/", or null when it has none. */
+  command: string | null
+  suggested_model: string | null
+}
+
 export interface ChatMessage {
   role: 'user' | 'assistant'
   content: string
@@ -81,6 +91,8 @@ export type ChatEvent =
       model?: string
       context_window?: number
       usage?: TurnUsage
+      /** Every skill active at the end of the turn, request ones included. */
+      active_skills?: string[]
     }
   // Streamed reasoning deltas from models that think out loud.
   | { type: 'reasoning'; text: string }
@@ -90,6 +102,8 @@ export type ChatEvent =
   | { type: 'profile_update'; changes: ProfileChange[]; reason?: string }
   // Server-generated, appended after the answer so it cannot be omitted.
   | { type: 'disclaimer'; text: string }
+  // A skill became active mid-turn (the model called load_skill_tool).
+  | { type: 'skill_loaded'; name: string; title: string; suggested_model?: string | null }
 
 export class AdvisorStreamError extends Error {
   readonly code: 'unreachable' | 'empty_response'
@@ -108,6 +122,10 @@ export class AdvisorStreamError extends Error {
 
 export function getChatStatus(): Promise<ChatStatus> {
   return apiFetch<ChatStatus>('/ai/status')
+}
+
+export function getSkills(): Promise<{ skills: Skill[] }> {
+  return apiFetch<{ skills: Skill[] }>('/ai/skills')
 }
 
 export function getModels(): Promise<ModelCatalog> {
@@ -141,6 +159,8 @@ export async function streamChat(
   signal?: AbortSignal,
   /** OpenRouter model id; null/absent lets the server use its default. */
   model?: string | null,
+  /** Skill names active for this request; null/empty lets the model pick its own. */
+  skills?: string[] | null,
 ): Promise<void> {
   const token = window.localStorage.getItem('token')
   const response = await fetch(`${getApiBaseUrl()}/ai/chat`, {
@@ -149,7 +169,11 @@ export async function streamChat(
       'Content-Type': 'application/json',
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
-    body: JSON.stringify({ messages, model: model ?? null }),
+    body: JSON.stringify({
+      messages,
+      model: model ?? null,
+      skills: skills && skills.length > 0 ? skills : null,
+    }),
     signal,
   })
 

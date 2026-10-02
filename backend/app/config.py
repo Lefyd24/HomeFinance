@@ -198,6 +198,15 @@ class Settings(BaseSettings):
     # Feature-flagged like every other integration: off, the advisor keeps its
     # original transactions/budgets/debts tool set and no portfolio tools.
     AI_INVESTMENT_TOOLS_ENABLED: bool = True
+    # Skills (backend/app/ai_skills): a loaded skill may raise the turn's tool-round
+    # limit via its `max_rounds`, but never above this.
+    AI_SKILL_MAX_ROUNDS: int = 25
+    # Web research skill: off by default because every search is billed by OpenRouter
+    # on top of the model tokens (counted toward AI_TURN_COST_CAP_USD).
+    AI_WEB_SEARCH_ENABLED: bool = False
+    AI_WEB_SEARCH_MAX_RESULTS: int = 5
+    # Cheap model used only to run the search request; empty = AI_DEFAULT_MODEL.
+    AI_WEB_SEARCH_MODEL: str | None = None
 
     # Bank sync (Enable Banking — PSD2 account information)
     # Off by default: without a registered application and its private key the

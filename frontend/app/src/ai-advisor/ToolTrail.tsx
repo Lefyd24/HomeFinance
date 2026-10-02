@@ -1,8 +1,8 @@
 import { useTranslation } from 'react-i18next'
-import { Check } from 'lucide-react'
+import { Check, Sparkles } from 'lucide-react'
 import { Spinner } from '@/components/ui/spinner'
 import { cn } from '@/lib/utils'
-import { toolLabel, toolSubject } from './aiAdvisorLabels'
+import { toolDescription } from './aiAdvisorLabels'
 import type { ToolCall } from './aiChatApi'
 
 /**
@@ -17,9 +17,30 @@ import type { ToolCall } from './aiChatApi'
  * Each row settles from a spinner to a tick in place, and stays afterwards as
  * the receipt for that step of the reasoning.
  */
-export function ToolTrail({ tools, className }: { tools: ToolCall[]; className?: string }) {
+export interface SkillTrailItem {
+  kind: 'skill'
+  name: string
+  title: string
+}
+
+function isSkillItem(item: ToolCall | SkillTrailItem): item is SkillTrailItem {
+  return 'kind' in item && item.kind === 'skill'
+}
+
+export function ToolTrail({
+  tools,
+  className,
+}: {
+  tools: Array<ToolCall | SkillTrailItem>
+  className?: string
+}) {
   const { t } = useTranslation('advisor')
-  if (tools.length === 0) return null
+  // load_skill_tool is bookkeeping: the skill entry that follows is its receipt,
+  // so the raw call only shows while it is still in flight.
+  const visible = tools.filter(
+    (item) => isSkillItem(item) || !(item.name === 'load_skill_tool' && item.state === 'done'),
+  )
+  if (visible.length === 0) return null
 
   return (
     <ul
@@ -28,8 +49,21 @@ export function ToolTrail({ tools, className }: { tools: ToolCall[]; className?:
         className,
       )}
     >
-      {tools.map((tool, index) => {
-        const subject = toolSubject(tool.args)
+      {visible.map((tool, index) => {
+        if (isSkillItem(tool)) {
+          return (
+            <li
+              key={`skill-${tool.name}-${index}`}
+              className="flex items-center gap-2 text-xs font-medium text-primary"
+            >
+              <Sparkles className="size-3 shrink-0" />
+              <span className="min-w-0 truncate">
+                {t('aiAdvisor.toolTrail.usingSkill', { title: tool.title })}
+              </span>
+            </li>
+          )
+        }
+        const { label, subject } = toolDescription(tool.name, tool.args, t)
         const running = tool.state === 'running'
         return (
           <li
@@ -47,7 +81,7 @@ export function ToolTrail({ tools, className }: { tools: ToolCall[]; className?:
             {/* min-w-0 lets the label truncate instead of forcing the bubble
                 wider than the viewport on a phone. */}
             <span className={cn('min-w-0 truncate', running && 'shimmer')}>
-              {toolLabel(tool.name, t)}
+              {label}
               {subject ? <span className="text-muted-foreground"> · {subject}</span> : null}
             </span>
           </li>

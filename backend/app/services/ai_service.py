@@ -17,6 +17,7 @@ from typing import Any, Callable, Generator, Optional
 
 from sqlalchemy.orm import Session
 
+from app import ai_skills
 from app.config import settings
 from app.llm.openrouter import (
     ChatCompletion,
@@ -54,6 +55,25 @@ def _build_registry() -> tuple[list, dict[str, Callable]]:
 
 AI_TOOLS, TOOL_DISPATCH = _build_registry()
 
+# Skills are validated against the core registry here, once, at import: a broken
+# skill fails startup. Core tools that exist but are switched off by a feature flag
+# are passed separately so a skill depending on them is unavailable, not an error.
+_DISABLED_CORE_TOOLS = (
+    set()
+    if settings.AI_INVESTMENT_TOOLS_ENABLED
+    else {
+        schema["function"]["name"]
+        for module in (ai_tools_investments, ai_tools_planning)
+        for schema in module.TOOLS
+    }
+)
+ai_skills.install(
+    ai_skills.load_all(
+        core_tool_names=set(TOOL_DISPATCH),
+        disabled_core_tool_names=_DISABLED_CORE_TOOLS,
+    )
+)
+
 # Tools that need the caller's identity injected server-side rather than
 # taking every argument straight from the model.
 _EMAIL_TOOL_NAME = "send_analysis_email_tool"
@@ -62,12 +82,31 @@ _EMAIL_TOOL_NAME = "send_analysis_email_tool"
 _PROFILE_WRITE_TOOL = "update_investor_profile_tool"
 
 
-def _execute_tool(db: Session, user_id: int, user_email: str, name: str, args: dict) -> dict:
+def _execute_tool(
+    db: Session,
+    user_id: int,
+    user_email: str,
+    name: str,
+    args: dict,
+    active_skills: Optional[list[ai_skills.Skill]] = None,
+) -> dict:
+    """Run one tool. Skill tools are reachable only through a skill that is active this
+    turn, so a hallucinated call to an unloaded skill's tool is an unknown tool."""
+    if name == ai_skills.LOAD_SKILL_TOOL_NAME:
+        return ai_skills.load_skill_result(args.get("name"))
+
+    inject_email = name == _EMAIL_TOOL_NAME
     fn = TOOL_DISPATCH.get(name)
+    if fn is None:
+        for skill in active_skills or ():
+            if name in skill.dispatch:
+                fn = skill.dispatch[name]
+                inject_email = name in skill.needs_user_email
+                break
     if fn is None:
         return {"error": f"Unknown tool: {name}"}
     try:
-        if name == _EMAIL_TOOL_NAME:
+        if inject_email:
             return fn(db, user_id, **args, user_email=user_email)
         return fn(db, user_id, **args)
     except TypeError as exc:
@@ -140,15 +179,41 @@ def system_message(text: str, model_id: str) -> dict[str, Any]:
     return {"role": "system", "content": text}
 
 
-def _history_budget(model: ModelInfo, system_prompt: str) -> int:
+def _history_budget(
+    model: ModelInfo, system_prompt: str, tools: Optional[list] = None, extra_text: str = ""
+) -> int:
     """Tokens left for the conversation once the system prompt and tool schemas are paid."""
-    fixed = estimate_tokens(system_prompt) + estimate_tokens(
-        json.dumps(AI_TOOLS, ensure_ascii=False)
+    fixed = (
+        estimate_tokens(system_prompt)
+        + estimate_tokens(json.dumps(AI_TOOLS if tools is None else tools, ensure_ascii=False))
+        + estimate_tokens(extra_text)
     )
     return max(model.history_budget(settings) - fixed, 2_000)
 
 
 _UNAVAILABLE = "The AI service is unavailable. Please try again."
+
+
+def _round_limit(active: list[ai_skills.Skill]) -> int:
+    """Tool rounds allowed this turn: the base limit, raised by an active skill's
+    `max_rounds` but never beyond AI_SKILL_MAX_ROUNDS."""
+    base = settings.AI_CHAT_MAX_TOOL_ROUNDS
+    wanted = max((s.max_rounds or 0 for s in active), default=0)
+    return max(base, min(wanted, settings.AI_SKILL_MAX_ROUNDS))
+
+
+def _tools_for(active: list[ai_skills.Skill]) -> list[dict]:
+    tools = list(AI_TOOLS)
+    load_schema = ai_skills.load_skill_tool_schema()
+    if load_schema is not None:
+        tools.append(load_schema)
+    for skill in active:
+        tools.extend(skill.tools)
+    return tools
+
+
+def _skill_system_message(skill: ai_skills.Skill) -> dict[str, Any]:
+    return {"role": "system", "content": f"Active skill: {skill.title}\n\n{skill.body}"}
 
 
 def run_agent_stream(
@@ -159,9 +224,12 @@ def run_agent_stream(
     messages: list[dict],
     model: ModelInfo,
     client: Optional[OpenRouterClient],
+    active_skills: Optional[list[str]] = None,
 ) -> Generator[dict, None, None]:
     """Run one chat turn. `messages` is the user/assistant transcript (no system message);
-    the system prompt is passed separately so it can be cache-marked per model."""
+    the system prompt is passed separately so it can be cache-marked per model.
+    `active_skills` are skill names carried over from earlier turns or pre-activated by a
+    slash command; unknown or unavailable names are silently dropped."""
     if client is None:
         yield {"type": "error", "message": "AI chat is not configured."}
         return
@@ -175,18 +243,33 @@ def run_agent_stream(
     steps = 0
     tool_calls_made = 0
 
-    for _ in range(settings.AI_CHAT_MAX_TOOL_ROUNDS):
+    active: list[ai_skills.Skill] = []
+    for requested in active_skills or []:
+        skill = ai_skills.get_skill(requested)
+        if skill is not None and skill not in active:
+            active.append(skill)
+    # Skills active from the start get their method injected up front; skills the model
+    # loads later deliver it through the load_skill_tool result instead.
+    preloaded = [_skill_system_message(s) for s in active]
+    preloaded_text = "".join(m["content"] for m in preloaded)
+
+    rounds_used = 0
+    while rounds_used < _round_limit(active):
+        rounds_used += 1
+        last_round = rounds_used >= _round_limit(active)
         steps += 1
-        history, _dropped = fit_history(messages, _history_budget(model, system_prompt))
-        request_messages = [system_message(system_prompt, model.id), *history]
+        tools = _tools_for(active)
+        history, _dropped = fit_history(
+            messages, _history_budget(model, system_prompt, tools, preloaded_text)
+        )
+        request_messages = [system_message(system_prompt, model.id), *preloaded, *history]
 
         completion: Optional[ChatCompletion] = None
-        stream = client.stream_chat(
-            model.id,
-            request_messages,
-            tools=AI_TOOLS,
-            max_tokens=settings.AI_MAX_OUTPUT_TOKENS,
-        )
+        call_kwargs: dict[str, Any] = {"tools": tools, "max_tokens": settings.AI_MAX_OUTPUT_TOKENS}
+        if last_round:
+            # Final allowed round: the model must answer with what it has.
+            call_kwargs["tool_choice"] = "none"
+        stream = client.stream_chat(model.id, request_messages, **call_kwargs)
         try:
             for item in stream:
                 if isinstance(item, ReasoningDelta):
@@ -217,6 +300,8 @@ def run_agent_stream(
         cost_usd += step_cost
         cost_estimated = cost_estimated or estimated
 
+        if completion.tool_calls and last_round:
+            break  # defensive: tool_choice "none" was ignored; fall through to the error
         if completion.tool_calls:
             assistant_message: dict[str, Any] = {
                 "role": "assistant",
@@ -246,8 +331,26 @@ def run_agent_stream(
                     args = {}
 
                 yield {"type": "tool_call_start", "tool": call.name, "args": args}
-                result = _execute_tool(db, user_id, user_email, call.name, args)
+                result = _execute_tool(db, user_id, user_email, call.name, args, active)
+                # A tool may report extra spend (e.g. a web search). It counts toward the
+                # turn cost but is internal: neither the model nor the client sees it.
+                if isinstance(result, dict) and "_cost_usd" in result:
+                    result = dict(result)
+                    extra_cost = result.pop("_cost_usd")
+                    if isinstance(extra_cost, (int, float)) and not isinstance(extra_cost, bool):
+                        cost_usd += float(extra_cost)
                 yield {"type": "tool_call_result", "tool": call.name, "result": result}
+
+                if call.name == ai_skills.LOAD_SKILL_TOOL_NAME and result.get("skill"):
+                    loaded = ai_skills.get_skill(result["skill"])
+                    if loaded is not None and loaded not in active:
+                        active.append(loaded)
+                        yield {
+                            "type": "skill_loaded",
+                            "name": loaded.name,
+                            "title": loaded.title,
+                            "suggested_model": loaded.suggested_model,
+                        }
 
                 # A profile write is the one thing the model does that outlasts
                 # the conversation, so it gets its own event and its own UI.
@@ -287,6 +390,7 @@ def run_agent_stream(
             "type": "done",
             "content": completion.text,
             "model": model.id,
+            "active_skills": [s.name for s in active],
             "context_window": model.context_length,
             "usage": {
                 "prompt_tokens": prompt_tokens,

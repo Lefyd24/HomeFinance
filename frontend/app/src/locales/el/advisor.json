@@ -312,7 +312,8 @@
     "popup": {
       "title": "Οικονομικός Βοηθός",
       "subtitle": "Διαβάζει τους πραγματικούς λογαριασμούς και προϋπολογισμούς σας",
-      "close": "Κλείσιμο βοηθού"
+      "close": "Κλείσιμο βοηθού",
+      "resize": "Αλλαγή μεγέθους βοηθού (σύρετε ή χρησιμοποιήστε τα βελάκια· διπλό κλικ για επαναφορά)"
     },
     "unavailableReason": "Η συνομιλία με AI δεν έχει ρυθμιστεί σε αυτόν τον διακομιστή. Ορίστε OPENROUTER_API_KEY στο backend για να την ενεργοποιήσετε.",
     "models": {
@@ -434,9 +435,37 @@
         "getInvestableSurplus": "Υπολογισμός του ποσού που μπορείς να επενδύσεις",
         "getRecurringCommitments": "Άθροισμα των πάγιων υποχρεώσεων",
         "projectInvestment": "Προβολή της ανάπτυξης",
-        "compareInvestVsPayoff": "Σύγκριση επένδυσης με αποπληρωμή"
+        "compareInvestVsPayoff": "Σύγκριση επένδυσης με αποπληρωμή",
+        "loadSkill": "Φόρτωση δεξιότητας",
+        "getCategoryTrends": "Παρακολούθηση τάσεων ανά κατηγορία",
+        "getCashflowTrend": "Σχεδιασμός των ταμειακών σου ροών",
+        "detectSpendingAnomalies": "Αναζήτηση ασυνήθιστων δαπανών",
+        "getSubscriptionAudit": "Έλεγχος των συνδρομών σου",
+        "sendReportEmail": "Αποστολή της αναφοράς με email",
+        "getFinancialStatements": "Ανάγνωση των οικονομικών καταστάσεων για",
+        "getAnalystEstimates": "Ανάγνωση εκτιμήσεων αναλυτών για",
+        "findPeers": "Αναζήτηση ομοειδών εταιρειών για",
+        "dcfValuation": "Αποτίμηση DCF για",
+        "getNewsDigest": "Ανάγνωση των τελευταίων ειδήσεων για",
+        "screenStocks": "Φιλτράρισμα μετοχών",
+        "screenEtfs": "Φιλτράρισμα ETF",
+        "getSectorOverview": "Επισκόπηση του κλάδου",
+        "portfolioFit": "Έλεγχος προσαρμογής στο χαρτοφυλάκιό σου",
+        "rebalancePlan": "Σχεδιασμός αναδιάρθρωσης χαρτοφυλακίου",
+        "getFundCosts": "Σύγκριση κόστους κεφαλαίων",
+        "webSearch": "Αναζήτηση στο διαδίκτυο"
       },
-      "usingFallback": "Χρήση {{name}}"
+      "usingFallback": "Χρήση {{name}}",
+      "phrases": {
+        "statement": "Ανάγνωση: {{symbol}} · {{statement}}",
+        "webSearch": "Αναζήτηση στο διαδίκτυο για {{query}}"
+      },
+      "statements": {
+        "income": "κατάσταση αποτελεσμάτων",
+        "balance": "ισολογισμός",
+        "cashflow": "κατάσταση ταμειακών ροών"
+      },
+      "usingSkill": "Χρήση δεξιότητας: {{title}}"
     },
     "profileUpdate": {
       "title": "Ο σύμβουλος ενημέρωσε το προφίλ σου",
@@ -465,6 +494,14 @@
       "exportedAt": "Εξήχθη {{when}}",
       "you": "Εσύ",
       "advisor": "Σύμβουλος"
+    },
+    "skills": {
+      "menuLabel": "Δεξιότητες",
+      "activeLabel": "Ενεργές δεξιότητες",
+      "dismiss": "Διακοπή χρήσης: {{title}}",
+      "modelHint": "Η δεξιότητα «{{skill}}» αποδίδει καλύτερα με το {{model}}.",
+      "switchModel": "Αλλαγή σε {{model}}",
+      "dismissHint": "Απόρριψη"
     }
   },
   "investorProfile": {

@@ -27,10 +27,14 @@ dependencies = [
     "tradernet-sdk>=2.2.0",
     "yfinance>=1.5.2",
     "python-binance>=1.0.29",
+    "markdown-it-py>=4.2.0",
+    "nh3>=0.3.7",
+    "fpdf2>=2.8.9",
 ]
 
 [dependency-groups]
 dev = [
+    "pypdf>=6.19.0",
     "pytest>=8.3.0",
 ]
 

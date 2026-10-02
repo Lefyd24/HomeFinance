@@ -2,7 +2,8 @@
 
 from datetime import datetime
 from typing import List, Literal, Optional
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, StringConstraints, field_validator
+from typing_extensions import Annotated
 
 
 class AiChatMessage(BaseModel):
@@ -14,6 +15,11 @@ class AiChatRequest(BaseModel):
     messages: List[AiChatMessage] = Field(..., min_length=1, max_length=40)
     # OpenRouter model id; None means the server's AI_DEFAULT_MODEL.
     model: Optional[str] = Field(default=None, max_length=200)
+    # Skills already active (echoed from the previous turn's `done.active_skills`, or
+    # pre-activated by a slash command). Unknown names are ignored server-side.
+    skills: Optional[
+        List[Annotated[str, StringConstraints(max_length=64)]]
+    ] = Field(default=None, max_length=10)
 
     @field_validator("messages")
     @classmethod
@@ -47,3 +53,15 @@ class ModelOut(BaseModel):
 class ModelCatalogOut(BaseModel):
     models: List[ModelOut]
     fetched_at: Optional[datetime] = None
+
+
+class SkillOut(BaseModel):
+    name: str
+    title: str
+    description: str
+    command: Optional[str] = None
+    suggested_model: Optional[str] = None
+
+
+class SkillListOut(BaseModel):
+    skills: List[SkillOut]

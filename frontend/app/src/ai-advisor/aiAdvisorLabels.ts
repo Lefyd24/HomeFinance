@@ -32,6 +32,32 @@ const TOOL_I18N_KEYS: Record<string, string> = {
   get_recurring_commitments_tool: 'aiAdvisor.toolTrail.labels.getRecurringCommitments',
   project_investment_tool: 'aiAdvisor.toolTrail.labels.projectInvestment',
   compare_invest_vs_debt_payoff_tool: 'aiAdvisor.toolTrail.labels.compareInvestVsPayoff',
+  // Skills
+  load_skill_tool: 'aiAdvisor.toolTrail.labels.loadSkill',
+  get_category_trends_tool: 'aiAdvisor.toolTrail.labels.getCategoryTrends',
+  get_cashflow_trend_tool: 'aiAdvisor.toolTrail.labels.getCashflowTrend',
+  detect_spending_anomalies_tool: 'aiAdvisor.toolTrail.labels.detectSpendingAnomalies',
+  get_subscription_audit_tool: 'aiAdvisor.toolTrail.labels.getSubscriptionAudit',
+  send_report_email_tool: 'aiAdvisor.toolTrail.labels.sendReportEmail',
+  get_financial_statements_tool: 'aiAdvisor.toolTrail.labels.getFinancialStatements',
+  get_analyst_estimates_tool: 'aiAdvisor.toolTrail.labels.getAnalystEstimates',
+  find_peers_tool: 'aiAdvisor.toolTrail.labels.findPeers',
+  dcf_valuation_tool: 'aiAdvisor.toolTrail.labels.dcfValuation',
+  get_news_digest_tool: 'aiAdvisor.toolTrail.labels.getNewsDigest',
+  screen_stocks_tool: 'aiAdvisor.toolTrail.labels.screenStocks',
+  screen_etfs_tool: 'aiAdvisor.toolTrail.labels.screenEtfs',
+  get_sector_overview_tool: 'aiAdvisor.toolTrail.labels.getSectorOverview',
+  portfolio_fit_tool: 'aiAdvisor.toolTrail.labels.portfolioFit',
+  rebalance_plan_tool: 'aiAdvisor.toolTrail.labels.rebalancePlan',
+  get_fund_costs_tool: 'aiAdvisor.toolTrail.labels.getFundCosts',
+  web_search_tool: 'aiAdvisor.toolTrail.labels.webSearch',
+}
+
+/** Statement kinds as the user would say them, for "Reading ASML income statement". */
+const STATEMENT_KEYS: Record<string, string> = {
+  income: 'aiAdvisor.toolTrail.statements.income',
+  balance: 'aiAdvisor.toolTrail.statements.balance',
+  cashflow: 'aiAdvisor.toolTrail.statements.cashflow',
 }
 
 /**
@@ -41,10 +67,51 @@ const TOOL_I18N_KEYS: Record<string, string> = {
  * Only ever a symbol or a plain list of them — never a date range or a limit,
  * which add length without telling the reader anything they wanted to know.
  */
-const SUBJECT_ARG_KEYS = ['symbol', 'symbols', 'query'] as const
+const SUBJECT_ARG_KEYS = ['symbol', 'symbols', 'query', 'name', 'sector_key'] as const
 
 const SUGGESTION_GROUP_KEYS = ['findLeak', 'checkPlan', 'getOutOfDebt'] as const
 const INVESTMENT_SUGGESTION_GROUP_KEYS = ['portfolioHealth', 'investDecision'] as const
+
+/**
+ * A label that bakes the arguments into the sentence where that reads better
+ * than "label · subject" — null when the tool has no such phrasing.
+ */
+function argsAwareLabel(
+  name: string,
+  args: Record<string, unknown> | undefined,
+  t: TFunction<'advisor'>,
+): string | null {
+  const text = (key: string) => {
+    const value = args?.[key]
+    return typeof value === 'string' && value.trim() ? value.trim() : null
+  }
+  if (name === 'get_financial_statements_tool') {
+    const symbol = text('symbol')
+    const statement = STATEMENT_KEYS[text('statement') ?? 'income']
+    if (symbol && statement) {
+      return t('aiAdvisor.toolTrail.phrases.statement', { symbol, statement: t(statement) })
+    }
+  }
+  if (name === 'web_search_tool') {
+    const query = text('query')
+    if (query) return t('aiAdvisor.toolTrail.phrases.webSearch', { query })
+  }
+  return null
+}
+
+/**
+ * The trail's text for one call. Some tools fold their subject into the
+ * sentence (see `argsAwareLabel`); for those no trailing subject is added.
+ */
+export function toolDescription(
+  name: string,
+  args: Record<string, unknown> | undefined,
+  t: TFunction<'advisor'>,
+): { label: string; subject: string | null } {
+  const phrase = argsAwareLabel(name, args, t)
+  if (phrase) return { label: phrase, subject: null }
+  return { label: toolLabel(name, t), subject: toolSubject(args) }
+}
 
 export function toolLabel(name: string, t: TFunction<'advisor'>): string {
   const key = TOOL_I18N_KEYS[name]

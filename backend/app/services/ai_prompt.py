@@ -15,6 +15,7 @@ from datetime import date
 
 from sqlalchemy.orm import Session
 
+from app import ai_skills
 from app.models import Account, User
 from app.services import investor_profile_service
 
@@ -160,6 +161,9 @@ def _context_block(db: Session, user: User) -> str:
 
 
 def build_system_prompt(db: Session, user: User) -> str:
-    return "\n\n".join(
-        [_context_block(db, user), _BASE.strip(), _profile_block(db, user.id)]
-    )
+    parts = [_context_block(db, user), _BASE.strip()]
+    skills_block = ai_skills.skills_prompt_block()
+    if skills_block:
+        parts.append(skills_block)
+    parts.append(_profile_block(db, user.id))
+    return "\n\n".join(parts)
