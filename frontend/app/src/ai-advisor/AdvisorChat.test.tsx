@@ -202,4 +202,44 @@ describe('AdvisorChat', () => {
 
     expect(await screen.findByText('Model not available.')).toBeInTheDocument()
   })
+
+  it('does not resend a failed, empty answer as history', async () => {
+    const streamSpy = vi
+      .spyOn(aiChatApi, 'streamChat')
+      .mockImplementationOnce(async (_messages, onEvent) => {
+        onEvent({ type: 'error', message: 'Provider unavailable.' })
+      })
+      .mockImplementationOnce(async (_messages, onEvent) => {
+        onEvent({ type: 'token', content: 'Second time lucky.' })
+        onEvent({ type: 'done', content: 'Second time lucky.' })
+      })
+
+    renderPage()
+    const input = await composer()
+    await userEvent.type(input, 'first{Enter}')
+    await screen.findByText('Provider unavailable.')
+    await waitFor(() => expect(input).not.toBeDisabled())
+    await userEvent.type(input, 'again{Enter}')
+
+    await screen.findByText('Second time lucky.')
+    const sent = streamSpy.mock.calls[1][0]
+    expect(sent.every((message) => message.content.trim() !== '')).toBe(true)
+    expect(sent.map((message) => message.content)).toEqual(['first', 'again'])
+  })
+
+  it('shows a request-validation message instead of a generic error', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          detail: [{ type: 'value_error', msg: 'Value error, Message is too long (40000 characters); the limit is 32000.' }],
+        }),
+        { status: 422, headers: { 'Content-Type': 'application/json' } },
+      ),
+    )
+
+    await expect(aiChatApi.streamChat([{ role: 'user', content: 'x' }], () => {})).rejects.toMatchObject({
+      status: 422,
+      detail: 'Message is too long (40000 characters); the limit is 32000.',
+    })
+  })
 })

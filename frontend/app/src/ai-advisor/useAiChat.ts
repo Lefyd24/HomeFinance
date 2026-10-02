@@ -246,10 +246,10 @@ export function useAiChat(defaultModel?: string, skills: Skill[] = []) {
 
       // The model needs the history, but only the roles and text — tool
       // bookkeeping is ours, not part of the conversation it sees.
-      const history: ChatMessage[] = [...turnsRef.current, userTurn].map((turn) => ({
-        role: turn.role,
-        content: turn.content,
-      }))
+      // A stopped or failed answer has no text and nothing for the model to read.
+      const history: ChatMessage[] = [...turnsRef.current, userTurn]
+        .filter((turn) => turn.content.trim())
+        .map((turn) => ({ role: turn.role, content: turn.content }))
 
       setTurns((current) => [
         ...current,

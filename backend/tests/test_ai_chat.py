@@ -456,7 +456,7 @@ def test_history_is_trimmed_to_the_models_budget(client, stub_llm, monkeypatch):
     monkeypatch.setattr(settings, "AI_MAX_OUTPUT_TOKENS", 100)
     # 4k floor budget (context is tiny) minus system prompt + tool schemas leaves ~2k tokens.
     fake = stub_llm([_answer("ok")], catalogue=[_catalog_entry("acme/tiny", ctx=1000)])
-    old = "word " * 1500  # ~1.9k tokens; the schema caps a message at 8000 chars
+    old = "word " * 1500  # ~1.9k tokens per message
     messages = [
         {"role": "user", "content": old},
         {"role": "assistant", "content": "fine"},
@@ -566,3 +566,81 @@ def test_below_the_monthly_cap_the_turn_runs(client, stub_llm, monkeypatch):
     monkeypatch.setattr(ai_usage_service, "household_month_spend", lambda db, now=None: 4.99)
     stub_llm([_answer("ok")])
     assert _chat(client).status_code == 200
+
+
+# --- transcript validation: the client resends the whole conversation every turn ---
+
+
+def _post_history(client, messages):
+    return client.post("/api/ai/chat", json={"messages": messages})
+
+
+def test_a_long_earlier_answer_is_shortened_not_rejected(client, stub_llm):
+    from app.schemas.ai_chat import MAX_ASSISTANT_MESSAGE_CHARS
+
+    fake = stub_llm([_answer("Sure.")])
+    long_answer = "x" * (MAX_ASSISTANT_MESSAGE_CHARS + 5_000)
+    response = _post_history(
+        client,
+        [
+            {"role": "user", "content": "write a long report"},
+            {"role": "assistant", "content": long_answer},
+            {"role": "user", "content": "thanks, and now?"},
+        ],
+    )
+
+    assert response.status_code == 200
+    sent = [m for m in fake.calls[0]["messages"] if m["role"] == "assistant"]
+    assert all(len(m["content"]) <= MAX_ASSISTANT_MESSAGE_CHARS for m in sent)
+
+
+def test_a_long_user_prompt_is_accepted(client, stub_llm):
+    stub_llm([_answer("Ok.")])
+    response = _chat(client, "a" * 20_000)  # was over the old 8000-char cap
+    assert response.status_code == 200
+
+
+def test_an_over_limit_user_prompt_gets_a_readable_422(client, stub_llm):
+    from app.schemas.ai_chat import MAX_USER_MESSAGE_CHARS
+
+    stub_llm([_answer("never")])
+    response = _chat(client, "a" * (MAX_USER_MESSAGE_CHARS + 1))
+    assert response.status_code == 422
+    assert "too long" in json.dumps(response.json())
+
+
+def test_empty_stopped_answers_are_dropped(client, stub_llm):
+    fake = stub_llm([_answer("Back again.")])
+    response = _post_history(
+        client,
+        [
+            {"role": "user", "content": "first"},
+            {"role": "assistant", "content": ""},
+            {"role": "user", "content": "retry"},
+        ],
+    )
+
+    assert response.status_code == 200
+    roles = [m["role"] for m in fake.calls[0]["messages"] if m["role"] != "system"]
+    assert roles == ["user", "user"]
+
+
+def test_a_long_conversation_keeps_its_most_recent_messages(client, stub_llm):
+    from app.schemas.ai_chat import MAX_HISTORY_MESSAGES
+
+    fake = stub_llm([_answer("Still here.")])
+    history = []
+    for i in range(60):
+        history += [
+            {"role": "user", "content": f"q{i}"},
+            {"role": "assistant", "content": f"a{i}"},
+        ]
+    history.append({"role": "user", "content": "latest"})
+
+    response = _post_history(client, history)
+
+    assert response.status_code == 200
+    convo = [m for m in fake.calls[0]["messages"] if m["role"] != "system"]
+    assert convo[-1]["content"] == "latest"
+    assert convo[0]["role"] == "user"
+    assert len(convo) <= MAX_HISTORY_MESSAGES

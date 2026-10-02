@@ -17,7 +17,8 @@ skills-lock.json
 .agents/
 .cursor/
 .lunaos/
-
+brag-output/
+brag-output-2026-10-02-172500/
 # Secrets — Enable Banking private key, TLS material, anything PEM-encoded
 *.pem
 *.key

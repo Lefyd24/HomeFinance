@@ -140,7 +140,17 @@ export function refreshModels(): Promise<ModelCatalog> {
 async function readDetail(response: Response): Promise<string | undefined> {
   try {
     const body = (await response.json()) as { detail?: unknown }
-    return typeof body?.detail === 'string' && body.detail.trim() ? body.detail : undefined
+    const detail = body?.detail
+    if (typeof detail === 'string') return detail.trim() || undefined
+    // A request-validation 422 carries a list of pydantic errors; the first message
+    // (e.g. "Message is too long …") is the one worth showing.
+    if (Array.isArray(detail)) {
+      const first = detail.find(
+        (item): item is { msg: string } => typeof item?.msg === 'string' && item.msg.trim() !== '',
+      )
+      return first?.msg.replace(/^Value error, /, '')
+    }
+    return undefined
   } catch {
     return undefined
   }
