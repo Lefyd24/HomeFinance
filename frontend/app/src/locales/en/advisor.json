@@ -309,6 +309,11 @@
     }
   },
   "aiAdvisor": {
+    "popup": {
+      "title": "Finance Assistant",
+      "subtitle": "Reads your real accounts, budgets and bills",
+      "close": "Close assistant"
+    },
     "unavailableReason": "AI chat is not configured on this server. Set DEEPSEEK_API_KEY on the backend to turn it on.",
     "chat": {
       "newChat": "New chat",

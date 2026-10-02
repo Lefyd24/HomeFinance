@@ -5,6 +5,7 @@ import {
   cashDrag,
   concentration,
   dailyReturns,
+  withCumulativeReturn,
   mergeHistory,
   sharedCurrency,
   topContributors,
@@ -344,5 +345,32 @@ describe('dailyReturns', () => {
     ])
     expect(returns).toHaveLength(1)
     expect(returns[0].date).toBe('2026-01-03')
+  })
+})
+
+describe('withCumulativeReturn', () => {
+  it('compounds the daily returns instead of adding them', () => {
+    const points = withCumulativeReturn([
+      { date: '2026-01-02', pct: 10 },
+      { date: '2026-01-03', pct: -10 },
+    ])
+    expect(points[0]).toMatchObject({ date: '2026-01-02', pct: 10 })
+    expect(points[0].cumulative).toBeCloseTo(10)
+    expect(points[1].cumulative).toBeCloseTo(-1)
+  })
+
+  it('matches the change from the first to the last snapshot', () => {
+    const points = withCumulativeReturn(
+      dailyReturns([
+        snapshot('2026-01-01', 100, 100),
+        snapshot('2026-01-02', 120, 120),
+        snapshot('2026-01-03', 90, 90),
+      ]),
+    )
+    expect(points[points.length - 1].cumulative).toBeCloseTo(-10)
+  })
+
+  it('returns nothing for an empty range', () => {
+    expect(withCumulativeReturn([])).toEqual([])
   })
 })

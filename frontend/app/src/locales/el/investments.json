@@ -27,12 +27,13 @@
     "syncAllHint": "Ανανεώνει και τους {{count}} λογαριασμούς"
   },
   "tiles": {
-    "dailyReturns": "ΗΜΕΡΗΣΙΕΣ ΑΠΟΔΟΣΕΙΣ",
+    "portfolioReturn": "ΑΠΟΔΟΣΗ ΧΑΡΤΟΦΥΛΑΚΙΟΥ",
     "allocation": "ΚΑΤΑΝΟΜΗ",
     "movers": "ΚΙΝΗΣΕΙΣ ΗΜΕΡΑΣ",
     "holdings": "ΘΕΣΕΙΣ",
     "activity": "ΠΡΟΣΦΑΤΗ ΔΡΑΣΤΗΡΙΟΤΗΤΑ",
     "dailyReturn": "Ημερήσια απόδοση",
+    "cumulativeReturn": "Σωρευτική απόδοση",
     "otherHoldings": "{{count}} ακόμη",
     "otherHoldings_other": "{{count}} ακόμη",
     "quotedCount": "Με βάση {{quoted}} από {{total}} θέσεις με ζωντανή τιμή",

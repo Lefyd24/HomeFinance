@@ -4,6 +4,8 @@
 @import "@fontsource-variable/instrument-sans";
 /* Numerals only — see `--font-numeric` and the `.tabular-nums` rule below. */
 @import "@fontsource-variable/inter";
+/* The "Made by" signature only — a soft, rounded italic. */
+@import "@fontsource-variable/nunito/wght-italic.css";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -299,6 +301,7 @@
 @theme inline {
   --font-sans: 'Instrument Sans Variable', ui-sans-serif, system-ui, sans-serif;
   --font-heading: 'Instrument Sans Variable', ui-sans-serif, system-ui, sans-serif;
+  --font-signature: 'Nunito Variable', ui-rounded, system-ui, sans-serif;
   /*
    * Figures keep Inter. Instrument Sans sets prose and headings, but Inter's
    * tabular figures are narrower and more even, which is what you want in a

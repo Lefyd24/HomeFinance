@@ -1,9 +1,9 @@
-import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { ArrowDownRight, ArrowUpRight, Minus, Sparkles } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { cn } from '@/lib/utils'
+import { useAdvisor } from '../ai-advisor/advisorContext'
 import { formatCurrency } from '../lib/format'
 import { useChartTheme } from './chartTheme'
 import { Sparkline } from './Sparkline'
@@ -36,6 +36,7 @@ export function PeriodReadBand({
 }) {
   const { t } = useTranslation('reports')
   const theme = useChartTheme()
+  const { available: advisorAvailable, open: openAdvisor } = useAdvisor()
 
   if (loading || !current) {
     return (
@@ -88,14 +89,18 @@ export function PeriodReadBand({
           {read.detail && <p className="mt-2 text-sm text-muted-foreground">{read.detail}</p>}
         </div>
 
-        <Button asChild variant="outline" className="shrink-0">
-          <Link
-            to={`/ai-advisor?q=${encodeURIComponent(advisorPrompt(filters.startDate, filters.endDate, filters.tab, t))}`}
+        {advisorAvailable && (
+          <Button
+            variant="outline"
+            className="shrink-0"
+            onClick={() =>
+              openAdvisor(advisorPrompt(filters.startDate, filters.endDate, filters.tab, t))
+            }
           >
             <Sparkles data-icon="inline-start" />
             {t('periodBand.askAdvisor')}
-          </Link>
-        </Button>
+          </Button>
+        )}
       </div>
 
       <div className="mt-6 grid grid-cols-2 gap-x-4 gap-y-5 lg:grid-cols-4">

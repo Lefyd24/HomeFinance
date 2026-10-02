@@ -1,7 +1,8 @@
 {
   "brand": {
     "name": "Home Finance",
-    "tagline": ""
+    "tagline": "",
+    "madeBy": "Made by"
   },
   "workspace": "Workspace",
   "items": {
@@ -18,8 +19,6 @@
     "trackers": "Ιχνηλάτης",
     "reports": "Αναφορές",
     "advice": "Συμβουλές",
-    "analysis": "Ανάλυση",
-    "askAi": "Ρωτήστε το AI",
     "documents": "Έγγραφα",
     "import": "Εισαγωγή",
     "marketNews": "Ειδήσεις αγορών",
@@ -71,7 +70,13 @@
     "admin": "Διαχείριση",
     "defaultAccountName": "Λογαριασμός"
   },
-  "quickAdd": "Προσθήκη συναλλαγής",
+  "speedDial": {
+    "label": "Γρήγορες ενέργειες",
+    "open": "Άνοιγμα γρήγορων ενεργειών",
+    "close": "Κλείσιμο γρήγορων ενεργειών",
+    "addTransaction": "Προσθήκη συναλλαγής",
+    "aiAdvisor": "Οικονομικός Βοηθός"
+  },
   "themeToggle": {
     "changeTheme": "Αλλαγή θέματος"
   },

@@ -1,21 +1,30 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import type { ReactNode } from 'react'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { MemoryRouter } from 'react-router-dom'
 import * as aiChatApi from './aiChatApi'
 import type { ChatEvent } from './aiChatApi'
-import { AiAdvisorPage } from './AiAdvisorPage'
+import { AdvisorChat } from './AdvisorChat'
+import { useAdvisor } from './advisorContext'
+import { AdvisorProvider } from './AdvisorProvider'
 
-function renderPage(initialEntry = '/ai-advisor') {
+function renderPage(children: ReactNode = <AdvisorChat />) {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   return render(
-    <MemoryRouter initialEntries={[initialEntry]}>
+    <MemoryRouter>
       <QueryClientProvider client={queryClient}>
-        <AiAdvisorPage />
+        <AdvisorProvider>{children}</AdvisorProvider>
       </QueryClientProvider>
     </MemoryRouter>,
   )
+}
+
+/** Stands in for any page that hands the advisor a question. */
+function AskButton() {
+  const { open } = useAdvisor()
+  return <button onClick={() => open('Where did my money go?')}>ask</button>
 }
 
 /** The composer stays disabled until the status check comes back. */
@@ -34,7 +43,7 @@ function mockStream(events: ChatEvent[]) {
     })
 }
 
-describe('AiAdvisorPage', () => {
+describe('AdvisorChat', () => {
   beforeEach(() => {
     window.sessionStorage.clear()
     vi.spyOn(aiChatApi, 'getChatStatus').mockResolvedValue({ configured: true, investment_tools_enabled: true })
@@ -86,10 +95,11 @@ describe('AiAdvisorPage', () => {
     expect(screen.getByRole('button', { name: /ask again/i })).toBeInTheDocument()
   })
 
-  it('asks a question handed over in the URL', async () => {
+  it('asks a question handed over by another page', async () => {
     const streamSpy = mockStream([{ type: 'token', content: 'Here is the breakdown.' }, { type: 'done' }])
 
-    renderPage('/ai-advisor?q=Where%20did%20my%20money%20go%3F')
+    renderPage(<AskButton />)
+    await userEvent.click(await screen.findByRole('button', { name: 'ask' }))
 
     await waitFor(() => expect(streamSpy).toHaveBeenCalled())
     expect(streamSpy.mock.calls[0][0]).toEqual([

@@ -5,6 +5,8 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { MemoryRouter } from 'react-router-dom'
 import { ThemeProvider } from '@/components/theme-provider'
 import { TooltipProvider } from '@/components/ui/tooltip'
+import * as aiChatApi from '../ai-advisor/aiChatApi'
+import { AdvisorProvider } from '../ai-advisor/AdvisorProvider'
 import * as reportsPageApi from './reportsPageApi'
 import { ReportsPage } from './ReportsPage'
 
@@ -21,7 +23,9 @@ function renderPage(initialEntry = '/reports') {
       <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
         <TooltipProvider>
           <QueryClientProvider client={queryClient}>
-            <ReportsPage />
+            <AdvisorProvider>
+              <ReportsPage />
+            </AdvisorProvider>
           </QueryClientProvider>
         </TooltipProvider>
       </ThemeProvider>
@@ -108,15 +112,25 @@ describe('ReportsPage', () => {
     expect(await screen.findByText(/Clear Card first/)).toBeInTheDocument()
   })
 
-  it('links to the advisor with the selected period baked into the question', async () => {
+  it('asks the advisor with the selected period baked into the question', async () => {
     mockCashflow()
     mockOverviewSupport()
+    vi.spyOn(aiChatApi, 'getChatStatus').mockResolvedValue({
+      configured: true,
+      investment_tools_enabled: false,
+    })
+    const streamSpy = vi.spyOn(aiChatApi, 'streamChat').mockResolvedValue()
 
     renderPage('/reports?range=custom&from=2026-01-01&to=2026-02-28')
 
-    const link = await screen.findByRole('link', { name: /ask the advisor about this/i })
-    expect(link).toHaveAttribute('href', expect.stringContaining('2026-01-01'))
-    expect(link).toHaveAttribute('href', expect.stringContaining('2026-02-28'))
+    await userEvent.click(
+      await screen.findByRole('button', { name: /ask the advisor about this/i }),
+    )
+
+    await waitFor(() => expect(streamSpy).toHaveBeenCalled())
+    const [question] = streamSpy.mock.calls[0][0]
+    expect(question.content).toContain('2026-01-01')
+    expect(question.content).toContain('2026-02-28')
   })
 
   it('fetches the matching prior window so every number is a comparison', async () => {

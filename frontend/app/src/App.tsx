@@ -28,7 +28,6 @@ import { ScenarioLibraryPage } from './investments/ScenarioLibraryPage'
 import { ScenarioDetailPage } from './investments/ScenarioDetailPage'
 import { HoldingHistoryPage } from './investments/HoldingHistoryPage'
 import { AdvisorPage } from './advisor/AdvisorPage'
-import { AiAdvisorPage } from './ai-advisor/AiAdvisorPage'
 import { NotificationsPage } from './notifications/NotificationsPage'
 import { ApiKeysPage } from './account-settings/ApiKeysPage'
 import { InvestorProfilePage } from './account-settings/InvestorProfilePage'
@@ -99,7 +98,6 @@ function App() {
             element={<HoldingHistoryPage />}
           />
           <Route path="/advisor" element={<AdvisorPage />} />
-          <Route path="/ai-advisor" element={<AiAdvisorPage />} />
           <Route path="/notifications" element={<NotificationsPage />} />
           <Route path="/connections" element={<BankSyncPage />} />
           <Route path="/rules" element={<RulesPage />} />

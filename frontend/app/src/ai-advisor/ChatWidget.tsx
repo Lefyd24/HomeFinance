@@ -1,15 +1,10 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { useLayoutEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { TFunction } from 'i18next'
-import { ArrowUp, Check, Copy, Download, PenLine, RotateCcw, Sparkles, Square } from 'lucide-react'
+import { ArrowUp, Check, Copy, Download, PenLine, RotateCcw, Square, X } from 'lucide-react'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
-import {
-  Message,
-  MessageAvatar,
-  MessageContent,
-  MessageFooter,
-} from '@/components/ui/message'
+import { Message, MessageContent, MessageFooter } from '@/components/ui/message'
 import { Bubble, BubbleContent } from '@/components/ui/bubble'
 import { Marker, MarkerContent } from '@/components/ui/marker'
 import {
@@ -67,9 +62,9 @@ export function ChatWidget({
   onStop,
   onRetry,
   onClear,
+  onClose,
   disabled,
   disabledReason,
-  initialPrompt,
   showInvestmentPrompts,
 }: {
   turns: Turn[]
@@ -79,22 +74,15 @@ export function ChatWidget({
   onRetry: () => void
   /** Present (and the control shown) only once there's a transcript to clear. */
   onClear?: () => void
+  /** Present when the chat sits in a popup that can be dismissed. */
+  onClose?: () => void
   disabled?: boolean
   disabledReason?: string
-  /** A question handed over from another page, asked once on arrival. */
-  initialPrompt?: string
   /** Offer the portfolio openers — only when the investment tools are enabled. */
   showInvestmentPrompts?: boolean
 }) {
   const { t } = useTranslation('advisor')
   const composerRef = useRef<HTMLTextAreaElement>(null)
-  const sentInitial = useRef(false)
-
-  useEffect(() => {
-    if (!initialPrompt || disabled || sentInitial.current) return
-    sentInitial.current = true
-    onSend(initialPrompt)
-  }, [initialPrompt, disabled, onSend])
 
   const lastTurn = turns[turns.length - 1]
 
@@ -104,32 +92,60 @@ export function ChatWidget({
   }
 
   return (
-    <div className="relative flex h-full min-h-0 flex-col">
-      {/* A real bar rather than a floating button: on a phone an absolutely
-          positioned control sits on top of the first message. */}
-      {turns.length > 0 && (
-        <div className="flex shrink-0 items-center justify-end gap-1.5 px-3 pt-2 sm:px-4 lg:px-6">
-          <Button variant="ghost" size="sm" onClick={handleExport}>
-            <Download data-icon="inline-start" />
-            {/* The label costs more than it earns on a narrow screen. */}
-            <span className="max-sm:sr-only">{t('aiAdvisor.chat.export')}</span>
-          </Button>
-          {onClear && (
-            <Button variant="outline" size="sm" onClick={onClear}>
-              <PenLine data-icon="inline-start" />
-              <span className="max-sm:sr-only">{t('aiAdvisor.chat.newChat')}</span>
-            </Button>
-          )}
+    <div className="relative flex h-full min-h-0 flex-col bg-gradient-to-b from-primary/[0.05] via-transparent to-transparent">
+      <header className="flex shrink-0 items-center gap-3 border-b border-border/60 px-4 py-3">
+        <span className="relative flex size-9 shrink-0 items-center justify-center rounded-full bg-white shadow-sm ring-1 ring-border">
+          <img src="/assets/icons/icon-96.png" alt="" className="size-6" />
+          <span className="absolute -bottom-0.5 -end-0.5 size-2.5 rounded-full border-2 border-popover bg-emerald-500" />
+        </span>
+        <div className="min-w-0 flex-1">
+          <h2 className="truncate font-heading text-sm font-semibold leading-tight text-foreground">
+            {t('aiAdvisor.popup.title')}
+          </h2>
+          <p className="truncate text-xs text-muted-foreground">{t('aiAdvisor.popup.subtitle')}</p>
         </div>
-      )}
+        {turns.length > 0 && (
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            onClick={handleExport}
+            aria-label={t('aiAdvisor.chat.export')}
+            title={t('aiAdvisor.chat.export')}
+          >
+            <Download />
+          </Button>
+        )}
+        {onClear && (
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            onClick={onClear}
+            aria-label={t('aiAdvisor.chat.newChat')}
+            title={t('aiAdvisor.chat.newChat')}
+          >
+            <PenLine />
+          </Button>
+        )}
+        {onClose && (
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            onClick={onClose}
+            aria-label={t('aiAdvisor.popup.close')}
+            title={t('aiAdvisor.popup.close')}
+          >
+            <X />
+          </Button>
+        )}
+      </header>
 
       <MessageScrollerProvider autoScroll>
         <MessageScroller className="flex-1">
           <MessageScrollerViewport>
             <MessageScrollerContent
               className={cn(
-                'mx-auto w-full max-w-5xl px-3 py-4 sm:px-4 sm:py-6 lg:px-6',
-                turns.length === 0 && 'flex h-full min-h-[26rem] flex-col',
+                'w-full gap-5 px-4 py-4',
+                turns.length === 0 && 'flex h-full flex-col',
               )}
             >
               {turns.length === 0 ? (
@@ -210,10 +226,6 @@ function AssistantTurn({
 
   return (
     <Message align="start">
-      <MessageAvatar className="size-8 bg-primary text-primary-foreground max-sm:hidden">
-        <Sparkles className="size-4" />
-      </MessageAvatar>
-
       <MessageContent>
         {/* One bubble holding the whole answer — prose and lookups interleaved
             in the order they happened, so a lookup reads as a step in the
@@ -222,7 +234,7 @@ function AssistantTurn({
             80% bubble cap would squeeze them. */}
         {(groups.length > 0 || turn.streaming) && (
           <Bubble variant="muted" className="max-w-full">
-            <BubbleContent className="flex flex-col gap-2.5 px-3 py-2.5 sm:px-3.5">
+            <BubbleContent className="flex flex-col gap-2.5 px-3.5 py-2.5">
               {groups.map((group) => {
                 if (group.kind === 'text') {
                   const text = group.content.trim()
@@ -290,7 +302,7 @@ function EmptyState({
   if (disabled) {
     return (
       <div className="flex flex-1 items-center justify-center">
-        <Alert className="max-w-md">
+        <Alert>
           <AlertDescription>{disabledReason}</AlertDescription>
         </Alert>
       </div>
@@ -298,31 +310,29 @@ function EmptyState({
   }
 
   return (
-    <div className="flex flex-1 flex-col items-center justify-center py-6 text-center">
-      <h2 className="font-heading text-xl font-bold tracking-tight text-foreground sm:text-3xl">
+    <div className="flex flex-1 flex-col py-1">
+      <h3 className="font-heading text-lg font-bold tracking-tight text-foreground">
         {t('aiAdvisor.chat.heading')}
-      </h2>
-      <p className="mx-auto mt-2 max-w-lg text-sm text-muted-foreground">
+      </h3>
+      <p className="mt-1 text-[13px] leading-snug text-muted-foreground">
         {t('aiAdvisor.chat.subheading')}
       </p>
 
-      <div className="mt-6 flex w-full max-w-2xl flex-col gap-5 sm:mt-8 sm:gap-6">
+      <div className="mt-4 flex w-full flex-col gap-3.5">
         {getSuggestionGroups(t, showInvestmentPrompts).map((group) => (
           <div key={group.key}>
             {/* The groups name the job, so the openers read as directions to
                 take rather than an undifferentiated list of prompts. */}
-            <Marker variant="separator" className="mb-2 justify-center">
+            <Marker variant="separator" className="mb-1.5">
               <MarkerContent>{group.title}</MarkerContent>
             </Marker>
-            <div className="flex flex-wrap justify-center gap-2">
+            <div className="flex flex-wrap gap-1.5">
               {group.prompts.map((prompt) => (
                 <button
                   key={prompt}
                   type="button"
                   onClick={() => onPick(prompt)}
-                  // A full-width row per prompt on a phone: wrapped chips of
-                  // sentence-length text turn into ragged, hard-to-hit shapes.
-                  className="w-full rounded-2xl bg-card px-3.5 py-2.5 text-start text-sm text-foreground shadow-xs transition-colors hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 sm:w-auto sm:rounded-full sm:py-2"
+                  className="rounded-2xl border border-primary/15 bg-gradient-to-br from-primary/10 via-primary/[0.04] to-transparent px-3 py-1.5 text-start text-[13px] leading-snug text-foreground transition-all hover:-translate-y-px hover:border-primary/35 hover:from-primary/15 hover:shadow-sm focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 active:translate-y-0"
                 >
                   {prompt}
                 </button>
@@ -386,9 +396,9 @@ function Composer({
   }
 
   return (
-    <div className="shrink-0 px-3 pb-3 pt-2 sm:px-4 sm:pb-4 lg:px-6">
+    <div className="shrink-0 px-3 pb-3 pt-1">
       <form
-        className="glass-popover mx-auto flex w-full max-w-5xl items-end gap-1.5 rounded-[1.5rem] border p-1.5 focus-within:border-primary/40 focus-within:ring-3 focus-within:ring-ring/25"
+        className="flex w-full items-end gap-1.5 rounded-[1.5rem] border bg-muted/40 p-1.5 transition-shadow focus-within:border-primary/40 focus-within:bg-background focus-within:ring-3 focus-within:ring-ring/25"
         onSubmit={(event) => {
           event.preventDefault()
           submit()
@@ -444,7 +454,7 @@ function Composer({
       </form>
       {/* Keyboard help is meaningless on a touch device, and the space below
           the composer is at its most valuable there. */}
-      <p className="mx-auto mt-2 max-w-5xl text-center text-xs text-muted-foreground max-sm:hidden">
+      <p className="mt-2 text-center text-[11px] text-muted-foreground max-sm:hidden">
         {t('aiAdvisor.chat.composerHint')}
       </p>
     </div>

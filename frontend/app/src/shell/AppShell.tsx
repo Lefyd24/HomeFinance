@@ -1,10 +1,4 @@
-import {
-  Fragment,
-  useMemo,
-  useState,
-  type CSSProperties,
-  type ReactNode,
-} from 'react'
+import { Fragment, useMemo, useState, type CSSProperties, type ReactNode } from 'react'
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { AnimatePresence, motion } from 'motion/react'
@@ -14,7 +8,6 @@ import {
   ArrowDown01Icon,
   ArrowLeft01Icon,
   Logout01Icon,
-  DashboardCircleAddIcon,
   Notification03Icon,
   SidebarLeftIcon,
 } from '@hugeicons/core-free-icons'
@@ -37,7 +30,9 @@ import {
   type NavGroup,
   type NavItem,
 } from './NavItems'
-import { TransactionFormDialog } from '../transactions/TransactionFormDialog'
+import { AdvisorPopup } from '../ai-advisor/AdvisorPopup'
+import { AdvisorProvider } from '../ai-advisor/AdvisorProvider'
+import { SpeedDial } from './SpeedDial'
 import { ThemeToggle } from '@/components/ThemeToggle'
 import { LanguageToggle } from '@/components/LanguageToggle'
 import { BalanceVisibilityToggle } from '@/components/BalanceVisibilityToggle'
@@ -52,11 +47,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from '@/components/ui/collapsible'
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import {
   Item,
   ItemContent,
@@ -70,7 +61,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Separator } from '@/components/ui/separator'
-import { NoiseBackground } from "@/components/ui/noise-background";
+import { NoiseBackground } from '@/components/ui/noise-background'
 import {
   Sheet,
   SheetContent,
@@ -78,11 +69,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet'
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { cn } from '@/lib/utils'
 
 function userInitials(name: string | null | undefined, email: string | undefined) {
@@ -92,14 +79,7 @@ function userInitials(name: string | null | undefined, email: string | undefined
   return source.slice(0, 2).toUpperCase()
 }
 
-function BrandMark({
-  compact = false,
-  section,
-}: {
-  compact?: boolean
-  /** Names the sub-app the rail is currently showing, in place of the tagline. */
-  section?: string
-}) {
+function BrandMark({ compact = false }: { compact?: boolean }) {
   const { t } = useTranslation('nav')
   return (
     <div className={cn('flex items-center gap-2.5 min-w-0', compact && 'justify-center')}>
@@ -113,26 +93,35 @@ function BrandMark({
       />
       {!compact && (
         <div className="min-w-0 flex flex-col">
-          <span className="font-heading font-bold text-sm tracking-tight truncate">{t('brand.name')}</span>
-          {/* Swaps with the nav below it, on the same beat. */}
-          <AnimatePresence mode="wait" initial={false}>
-            <motion.span
-              key={section ?? 'default'}
-              initial={{ opacity: 0, y: 3 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -3 }}
-              transition={{ duration: 0.18, ease: 'easeOut' }}
-              className={cn(
-                'text-[10px] uppercase tracking-[0.14em] truncate',
-                section ? 'font-semibold text-sidebar-primary' : 'text-muted-foreground',
-              )}
-            >
-              {section ?? t('brand.tagline')}
-            </motion.span>
-          </AnimatePresence>
+          <span className="font-heading font-bold text-sm tracking-tight truncate">
+            {t('brand.name')}
+          </span>
+          <span className="text-[10px] uppercase tracking-[0.14em] truncate text-muted-foreground">
+            {t('brand.tagline')}
+          </span>
         </div>
       )}
     </div>
+  )
+}
+
+/** The author's credit, pinned to the foot of the sidebar. */
+function MadeBy({ compact }: { compact: boolean }) {
+  const { t } = useTranslation('nav')
+  return (
+    <a
+      href="https://fthenos.work"
+      target="_blank"
+      rel="noopener noreferrer"
+      className="group flex shrink-0 items-center justify-center gap-2 rounded-xl px-2 py-2 font-signature text-xs font-medium italic text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+    >
+      {!compact && t('brand.madeBy')}
+      <img
+        src="/assets/icons/lf_logo.svg"
+        alt="Lefteris Fthenos"
+        className="size-7 transition-transform group-hover:scale-110"
+      />
+    </a>
   )
 }
 
@@ -161,9 +150,7 @@ function NavItemLink({
           'border-0 outline-none ring-0 shadow-none',
           'transition-[background-color,color,transform] duration-150 ease-out',
           'focus-visible:outline-none focus-visible:ring-0',
-          collapsed
-            ? 'mx-auto size-9 justify-center px-0'
-            : 'gap-3 px-2.5 py-2',
+          collapsed ? 'mx-auto size-9 justify-center px-0' : 'gap-3 px-2.5 py-2',
           isActive
             ? cn(
                 'bg-sidebar-primary/12 text-sidebar-primary shadow-[inset_0_1px_0_rgba(255,255,255,0.55)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]',
@@ -301,16 +288,14 @@ function NavEntry({
     return <NavItemGroup item={item} collapsed={collapsed} onNavigate={onNavigate} />
   }
   return (
-    <NavItemLink
-      item={item}
-      collapsed={collapsed}
-      onNavigate={onNavigate}
-      className={className}
-    />
+    <NavItemLink item={item} collapsed={collapsed} onNavigate={onNavigate} className={className} />
   )
 }
 
-function relativeTime(iso: string, t: (key: string, options?: Record<string, unknown>) => string): string {
+function relativeTime(
+  iso: string,
+  t: (key: string, options?: Record<string, unknown>) => string,
+): string {
   const then = new Date(iso).getTime()
   if (Number.isNaN(then)) return ''
   const minutes = Math.round((Date.now() - then) / 60_000)
@@ -487,10 +472,7 @@ function UserMenu({
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
-          <DropdownMenuItem
-            variant="destructive"
-            onClick={() => void logout()}
-          >
+          <DropdownMenuItem variant="destructive" onClick={() => void logout()}>
             <HugeiconsIcon icon={Logout01Icon} strokeWidth={2} />
             {t('common:logout')}
           </DropdownMenuItem>
@@ -529,7 +511,7 @@ function DesktopSidebar({
           collapsed && 'justify-center px-2',
         )}
       >
-        <BrandMark compact={collapsed} section={section} />
+        <BrandMark compact={collapsed} />
         {!collapsed && (
           <Button
             variant="ghost"
@@ -558,18 +540,12 @@ function DesktopSidebar({
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: section ? -10 : 10 }}
             transition={{ duration: 0.18, ease: 'easeOut' }}
-            className={cn(
-              'flex flex-col gap-4 p-2',
-              collapsed && 'items-center px-1.5',
-            )}
+            className={cn('flex flex-col gap-4 p-2', collapsed && 'items-center px-1.5')}
           >
             {groups.map((group, groupIndex) => (
               <div
                 key={group.groupKey}
-                className={cn(
-                  'flex flex-col gap-1',
-                  collapsed && 'w-full items-center',
-                )}
+                className={cn('flex flex-col gap-1', collapsed && 'w-full items-center')}
               >
                 {!collapsed && (
                   <p className="px-2.5 pb-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
@@ -591,12 +567,7 @@ function DesktopSidebar({
       </ScrollArea>
 
       {(section || collapsed) && (
-        <div
-          className={cn(
-            'shrink-0 p-2 flex flex-col gap-2',
-            collapsed && 'items-center',
-          )}
-        >
+        <div className={cn('shrink-0 p-2 flex flex-col gap-2', collapsed && 'items-center')}>
           {section && <SidebarBackToDashboard collapsed={collapsed} />}
           {collapsed && (
             <Tooltip>
@@ -607,7 +578,11 @@ function DesktopSidebar({
                   onClick={onToggle}
                   aria-label={t('sidebar.expand')}
                 >
-                  <HugeiconsIcon icon={SidebarLeftIcon} strokeWidth={2} className="rtl:rotate-180" />
+                  <HugeiconsIcon
+                    icon={SidebarLeftIcon}
+                    strokeWidth={2}
+                    className="rtl:rotate-180"
+                  />
                 </Button>
               </TooltipTrigger>
               <TooltipContent side="right">{t('sidebar.expandTooltip')}</TooltipContent>
@@ -615,6 +590,8 @@ function DesktopSidebar({
           )}
         </div>
       )}
+
+      <MadeBy compact={collapsed} />
     </aside>
   )
 }
@@ -627,9 +604,17 @@ function DesktopSidebar({
 function SidebarBackToDashboard({ collapsed }: { collapsed: boolean }) {
   const { t } = useTranslation('nav')
   const link = (
-    <Button asChild size={collapsed ? 'icon-sm' : 'sm'} className={collapsed ? undefined : 'w-full'}>
+    <Button
+      asChild
+      size={collapsed ? 'icon-sm' : 'sm'}
+      className={collapsed ? undefined : 'w-full'}
+    >
       <NavLink to={PRIMARY_NAV_ITEMS[0].to}>
-        <HugeiconsIcon icon={ArrowLeft01Icon} strokeWidth={2.25} className="size-4 shrink-0 rtl:rotate-180" />
+        <HugeiconsIcon
+          icon={ArrowLeft01Icon}
+          strokeWidth={2.25}
+          className="size-4 shrink-0 rtl:rotate-180"
+        />
         {!collapsed && t('backToDashboard')}
       </NavLink>
     </Button>
@@ -692,7 +677,11 @@ function InvestmentsNavButton() {
                   ),
             )}
           >
-            <HugeiconsIcon icon={INVESTMENTS_NAV_ITEM.icon} strokeWidth={2.25} className="size-4 shrink-0" />
+            <HugeiconsIcon
+              icon={INVESTMENTS_NAV_ITEM.icon}
+              strokeWidth={2.25}
+              className="size-4 shrink-0"
+            />
             <span className="sr-only sm:not-sr-only">{t(INVESTMENTS_NAV_ITEM.labelKey)}</span>
           </span>
         </NoiseBackground>
@@ -769,36 +758,6 @@ function NavActions({ inInvestments }: { inInvestments: boolean }) {
       <ThemeToggle />
       <UserMenu align="end" side="bottom" />
     </div>
-  )
-}
-
-function QuickAddTransactionFab() {
-  const { t } = useTranslation('nav')
-  const [open, setOpen] = useState(false)
-
-  return (
-    <>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Button
-            size="icon-xl"
-            className={cn(
-              'fixed z-30 size-12 rounded-full shadow-lg',
-              // Clears the dock (3.5rem tall, sitting ~0.5rem above the safe
-              // area) with a gap, in a browser tab and an installed PWA alike.
-              'bottom-[max(4.5rem,calc(4rem+env(safe-area-inset-bottom)))] end-3',
-              'lg:bottom-12 lg:end-6',
-            )}
-            onClick={() => setOpen(true)}
-            aria-label={t('quickAdd')}
-          >
-            <HugeiconsIcon icon={DashboardCircleAddIcon} strokeWidth={2} />
-          </Button>
-        </TooltipTrigger>
-        <TooltipContent side="left">{t('quickAdd')}</TooltipContent>
-      </Tooltip>
-      <TransactionFormDialog open={open} onOpenChange={setOpen} />
-    </>
   )
 }
 
@@ -908,9 +867,7 @@ function MoreSheet({
         <div className="mx-auto mt-3 mb-1 h-1 w-10 shrink-0 rounded-full bg-muted-foreground/25" />
         <SheetHeader className="shrink-0 gap-1 pb-2 pt-1">
           <SheetTitle className="tracking-tight">{t('more')}</SheetTitle>
-          <SheetDescription className="text-xs">
-            {t('moreSheet.description')}
-          </SheetDescription>
+          <SheetDescription className="text-xs">{t('moreSheet.description')}</SheetDescription>
         </SheetHeader>
         <ScrollArea className="min-h-0 flex-1">
           <nav className="flex flex-col gap-4 px-3 pb-3">
@@ -964,8 +921,7 @@ function MobileBottomNav({
   const location = useLocation()
   const secondaryNavItems = inInvestments ? INVESTMENTS_SECONDARY_NAV_ITEMS : SECONDARY_NAV_ITEMS
   const secondaryActive = useMemo(
-    () =>
-      secondaryNavItems.some((item) => location.pathname.startsWith(item.to)),
+    () => secondaryNavItems.some((item) => location.pathname.startsWith(item.to)),
     [location.pathname, secondaryNavItems],
   )
   const moreActive = moreOpen || secondaryActive
@@ -1093,40 +1049,43 @@ export function AppShell() {
   const section = inInvestments ? 'investments' : undefined
 
   return (
-    <div data-section={section} className="app-canvas h-dvh flex overflow-hidden">
-      <DesktopSidebar
-        collapsed={collapsed}
-        onToggle={() => setCollapsed((v) => !v)}
-        groups={inInvestments ? INVESTMENTS_NAV_GROUPS : NAV_GROUPS}
-        section={inInvestments ? t('investmentsSection') : undefined}
-      />
+    <AdvisorProvider>
+      <div data-section={section} className="app-canvas h-dvh flex overflow-hidden">
+        <DesktopSidebar
+          collapsed={collapsed}
+          onToggle={() => setCollapsed((v) => !v)}
+          groups={inInvestments ? INVESTMENTS_NAV_GROUPS : NAV_GROUPS}
+          section={inInvestments ? t('investmentsSection') : undefined}
+        />
 
-      <div
-        data-section={section}
-        className="shell-content-column flex-1 min-w-0 min-h-0 flex flex-col overflow-hidden"
-      >
-        <MobileTopBar inInvestments={inInvestments} />
-        <DesktopTopBar inInvestments={inInvestments} />
+        <div
+          data-section={section}
+          className="shell-content-column flex-1 min-w-0 min-h-0 flex flex-col overflow-hidden"
+        >
+          <MobileTopBar inInvestments={inInvestments} />
+          <DesktopTopBar inInvestments={inInvestments} />
 
-        <main className="shell-main flex-1 min-h-0">
-          <div className="shell-main-bg" aria-hidden="true" />
-          <div className="shell-main-scroll pb-[max(4.875rem,calc(4rem+env(safe-area-inset-bottom)))] lg:pb-0">
-            <Outlet />
-          </div>
-        </main>
+          <main className="shell-main flex-1 min-h-0">
+            <div className="shell-main-bg" aria-hidden="true" />
+            <div className="shell-main-scroll pb-[max(4.875rem,calc(4rem+env(safe-area-inset-bottom)))] lg:pb-0">
+              <Outlet />
+            </div>
+          </main>
 
-        <DesktopFooter />
+          <DesktopFooter />
+        </div>
+
+        <SpeedDial />
+        <AdvisorPopup />
+
+        <MobileBottomNav
+          items={inInvestments ? INVESTMENTS_DOCK_NAV_ITEMS : DOCK_NAV_ITEMS}
+          moreOpen={moreOpen}
+          onMoreToggle={() => setMoreOpen((open) => !open)}
+          inInvestments={inInvestments}
+        />
+        <MoreSheet open={moreOpen} onOpenChange={setMoreOpen} inInvestments={inInvestments} />
       </div>
-
-      <QuickAddTransactionFab />
-
-      <MobileBottomNav
-        items={inInvestments ? INVESTMENTS_DOCK_NAV_ITEMS : DOCK_NAV_ITEMS}
-        moreOpen={moreOpen}
-        onMoreToggle={() => setMoreOpen((open) => !open)}
-        inInvestments={inInvestments}
-      />
-      <MoreSheet open={moreOpen} onOpenChange={setMoreOpen} inInvestments={inInvestments} />
-    </div>
+    </AdvisorProvider>
   )
 }

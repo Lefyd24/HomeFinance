@@ -1,7 +1,8 @@
 {
   "brand": {
     "name": "Home Finance",
-    "tagline": "Personal"
+    "tagline": "Personal",
+    "madeBy": "Made by"
   },
   "workspace": "Workspace",
   "items": {
@@ -18,8 +19,6 @@
     "trackers": "Tracker",
     "reports": "Reports",
     "advice": "Advice",
-    "analysis": "Analysis",
-    "askAi": "Ask AI",
     "documents": "Documents",
     "import": "Import",
     "marketNews": "Market news",
@@ -71,7 +70,13 @@
     "admin": "Admin",
     "defaultAccountName": "Account"
   },
-  "quickAdd": "Add transaction",
+  "speedDial": {
+    "label": "Quick actions",
+    "open": "Open quick actions",
+    "close": "Close quick actions",
+    "addTransaction": "Add transaction",
+    "aiAdvisor": "Finance Assistant"
+  },
   "themeToggle": {
     "changeTheme": "Change theme"
   },

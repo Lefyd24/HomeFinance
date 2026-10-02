@@ -1,6 +1,6 @@
-import { useMemo } from 'react'
+import { useMemo, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Bar, BarChart, CartesianGrid, Cell, XAxis, YAxis } from 'recharts'
+import { Bar, CartesianGrid, Cell, ComposedChart, Line, XAxis, YAxis } from 'recharts'
 import {
   ChartContainer,
   ChartTooltip,
@@ -10,18 +10,19 @@ import {
 import { Skeleton } from '@/components/ui/skeleton'
 import { cn } from '@/lib/utils'
 import { formatDate } from '../../lib/format'
-import { polarityColor, useChartMotion } from '../chartConfig'
-import { dailyReturns } from '../portfolioInsights'
+import { polarityColor, seriesColor, useChartMotion } from '../chartConfig'
+import { dailyReturns, withCumulativeReturn } from '../portfolioInsights'
 import { HISTORY_RANGES, type HistoryRangeKey } from '../usePortfolioView'
 import { Tile, TileEmpty } from './Tile'
 import type { PortfolioSnapshot } from '../investmentsApi'
 
 /**
- * The portfolio's day-by-day return, as bars above and below zero.
+ * The portfolio's return over the selected range: a line for the running total
+ * and bars for each day's result.
  *
- * Bars rather than a line because each day is its own result, and the sign is
- * the point: green and red read as "up day / down day" at a glance, which a
- * value curve buries under its own trend.
+ * Both share one percent axis so the bars are honest about how small a day is
+ * next to the whole move. The bars stay green/red ("up day / down day"), and
+ * are softened so the line, which carries the trend, reads first.
  */
 export function DailyReturnsTile({
   history,
@@ -39,16 +40,20 @@ export function DailyReturnsTile({
   const { t } = useTranslation('investments')
   const motion = useChartMotion()
 
-  const returns = useMemo(() => dailyReturns(history), [history])
+  const returns = useMemo(() => withCumulativeReturn(dailyReturns(history)), [history])
 
   const config = useMemo(
-    () => ({ pct: { label: t('tiles.dailyReturn') } }) satisfies ChartConfig,
+    () =>
+      ({
+        pct: { label: t('tiles.dailyReturn') },
+        cumulative: { label: t('tiles.cumulativeReturn'), color: seriesColor(0) },
+      }) satisfies ChartConfig,
     [t],
   )
 
   return (
     <Tile
-      title={t('tiles.dailyReturns')}
+      title={t('tiles.portfolioReturn')}
       className={className}
       allowOverflow
       action={
@@ -81,7 +86,7 @@ export function DailyReturnsTile({
         <TileEmpty>{t('detail.noHistory')}</TileEmpty>
       ) : (
         <ChartContainer config={config} className="aspect-auto h-[13rem] w-full">
-          <BarChart data={returns} margin={{ left: 4, right: 4, top: 4, bottom: 0 }}>
+          <ComposedChart data={returns} margin={{ left: 4, right: 4, top: 4, bottom: 0 }}>
             <CartesianGrid vertical={false} strokeDasharray="3 3" />
             <XAxis
               dataKey="date"
@@ -107,26 +112,47 @@ export function DailyReturnsTile({
                 <ChartTooltipContent
                   hideIndicator
                   labelFormatter={(value) => formatDate(String(value))}
-                  formatter={(value) => (
-                    <div className="flex w-full items-center justify-between gap-3">
-                      <span className="text-muted-foreground">{config.pct.label}</span>
-                      <span className="font-medium tabular-nums">
-                        {Number(value) > 0 ? '+' : ''}
-                        {Number(value).toFixed(2)}%
-                      </span>
-                    </div>
-                  )}
+                  // One row per series would repeat the date's pair, so the
+                  // first item renders both from the shared data point.
+                  formatter={(_value, _name, item, index) =>
+                    index === 0 ? (
+                      <div className="flex w-full flex-col gap-1">
+                        <TooltipRow label={config.cumulative.label} pct={item.payload.cumulative} />
+                        <TooltipRow label={config.pct.label} pct={item.payload.pct} />
+                      </div>
+                    ) : null
+                  }
                 />
               }
             />
-            <Bar {...motion} dataKey="pct" radius={2}>
+            <Bar {...motion} dataKey="pct" radius={2} fillOpacity={0.55}>
               {returns.map((day) => (
                 <Cell key={day.date} fill={polarityColor(day.pct)} />
               ))}
             </Bar>
-          </BarChart>
+            <Line
+              {...motion}
+              dataKey="cumulative"
+              type="monotone"
+              stroke="var(--color-cumulative)"
+              strokeWidth={2}
+              dot={false}
+            />
+          </ComposedChart>
         </ChartContainer>
       )}
     </Tile>
+  )
+}
+
+function TooltipRow({ label, pct }: { label: ReactNode; pct: number }) {
+  return (
+    <div className="flex w-full items-center justify-between gap-3">
+      <span className="text-muted-foreground">{label}</span>
+      <span className="font-medium tabular-nums">
+        {pct > 0 ? '+' : ''}
+        {pct.toFixed(2)}%
+      </span>
+    </div>
   )
 }

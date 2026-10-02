@@ -7,7 +7,8 @@ import { MemoryRouter } from 'react-router-dom'
 import * as investorProfileApi from '../account-settings/investorProfileApi'
 import * as aiChatApi from './aiChatApi'
 import type { ChatEvent } from './aiChatApi'
-import { AiAdvisorPage } from './AiAdvisorPage'
+import { AdvisorChat } from './AdvisorChat'
+import { AdvisorProvider } from './AdvisorProvider'
 import { toolSubject } from './aiAdvisorLabels'
 
 function renderPage() {
@@ -15,7 +16,9 @@ function renderPage() {
   return render(
     <MemoryRouter initialEntries={['/ai-advisor']}>
       <QueryClientProvider client={queryClient}>
-        <AiAdvisorPage />
+        <AdvisorProvider>
+          <AdvisorChat />
+        </AdvisorProvider>
       </QueryClientProvider>
     </MemoryRouter>,
   )

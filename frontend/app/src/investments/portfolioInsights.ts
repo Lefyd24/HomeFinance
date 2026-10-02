@@ -151,6 +151,28 @@ export function dailyReturns(history: PortfolioSnapshot[]): DailyReturn[] {
   return returns
 }
 
+export interface ReturnPoint extends DailyReturn {
+  /** Compounded return from the start of the range through this day, in percent. */
+  cumulative: number
+}
+
+/**
+ * Adds the running return over the range to each day.
+ *
+ * Compounds the daily returns (`(1 + r1)(1 + r2)… - 1`) instead of comparing
+ * against the first snapshot, so the line always follows from the bars beside
+ * it and a skipped day (see `dailyReturns`) cannot divide by an empty portfolio.
+ * Like the daily figures it is balance-based: a deposit or withdrawal counts as
+ * a return, so treat it as "how the balance moved", not a time-weighted result.
+ */
+export function withCumulativeReturn(returns: DailyReturn[]): ReturnPoint[] {
+  let growth = 1
+  return returns.map((day) => {
+    growth *= 1 + day.pct / 100
+    return { ...day, cumulative: (growth - 1) * 100 }
+  })
+}
+
 /**
  * Holdings that moved today, biggest move first, split by direction.
  *

@@ -11,7 +11,6 @@ import {
   Route01Icon,
   Analytics01Icon,
   File01Icon,
-  SparklesIcon,
   ChartLineData01Icon,
   ChartIncreaseIcon,
   Idea01Icon,
@@ -250,15 +249,7 @@ export const NAV_GROUPS: NavGroup[] = [
     groupKey: 'groups.insights',
     items: [
       { labelKey: 'items.reports', to: '/reports', icon: Analytics01Icon },
-      {
-        labelKey: 'items.advice',
-        to: '/advisor',
-        icon: Idea01Icon,
-        children: [
-          { labelKey: 'items.analysis', to: '/advisor', icon: ChartLineData01Icon },
-          { labelKey: 'items.askAi', to: '/ai-advisor', icon: SparklesIcon },
-        ],
-      },
+      { labelKey: 'items.advice', to: '/advisor', icon: Idea01Icon },
       { labelKey: 'items.documents', to: '/documents', icon: File01Icon },
     ],
   },
