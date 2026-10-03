@@ -78,7 +78,7 @@ class Settings(BaseSettings):
 
     # Application
     APP_NAME: str = "Personal Finance API"
-    APP_VERSION: str = "1.0.0"
+    APP_VERSION: str = "1.0.1"
     DEBUG: bool = False
 
     # Service ports (compose / .env — also used for CORS localhost origins)

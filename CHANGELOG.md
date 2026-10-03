@@ -6,8 +6,21 @@ Releases that add database migrations or new `.env` settings say so, so you know
 
 ## [Unreleased]
 
+## [1.0.1] - 2026-10-03
+
+No new migrations and no new `.env` settings.
+
 ### Fixed
+- The app could stall for about 30 seconds, mostly while loading the dashboard, and then return a 500. Authentication and file-upload handlers ran blocking database calls on the event loop, so once the connection pool filled up nothing could release a connection. They now run in the thread pool.
+- The AI chat no longer holds a database connection for the whole streamed answer; tool calls and usage bookkeeping use short-lived sessions.
+- The investments watchlist refreshes stale prices concurrently under a 5 second limit instead of one ticker at a time, and no longer holds a connection while waiting on Yahoo.
+- Investment sync fetches chart-history candles before opening its write transaction, so a slow broker no longer blocks other writes.
+- Every request was logged twice (once by uvicorn, once by the app logger). Only the app logger remains.
 - A brand-new Docker install started with an empty database: the entrypoint created no tables but still stamped Alembic at head, so account creation failed with `no such table: users`. `init_db()` now registers all models itself. If you hit this, delete the empty `data/finance.db*` files and start again.
+
+### Changed
+- Investment sync and the notification check now start 2 minutes and 1 minute after boot instead of immediately, so they don't compete with the first page load after a restart.
+- The SQLite connection pool is larger (20 + 20 overflow) with a 10 second timeout, so exhaustion fails fast.
 
 ## [1.0.0] - 2026-10-03
 
@@ -30,5 +43,6 @@ First public release.
 - The Privacy Policy and Terms pages read the operator's name, contact email and jurisdiction from the server instead of compiled-in values. **Action required:** set `LEGAL_OPERATOR_NAME`, `LEGAL_CONTACT_EMAIL` and `LEGAL_JURISDICTION` in `.env`. Until you do, those pages show a "not configured" notice. See [Configuration](docs/configuration.md#legal-pages).
 - `docker-compose.yml` now names the published image. `docker compose pull && docker compose up -d` updates without building.
 
-[Unreleased]: https://github.com/Lefyd24/HomeFinance/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/Lefyd24/HomeFinance/compare/v1.0.1...HEAD
+[1.0.1]: https://github.com/Lefyd24/HomeFinance/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/Lefyd24/HomeFinance/releases/tag/v1.0.0
