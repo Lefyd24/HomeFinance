@@ -5,14 +5,13 @@
 # `npm run build` is `tsc -b && vite build`, so a type error fails the
 # image build rather than shipping a broken bundle.
 #
-# Node 22, not 20: vite 8 / rolldown declare engines "^20.19.0 || >=22.12.0",
-# which the node:20 tag only barely satisfies at its newest patch. 22 also
-# matches the Node the app is developed against.
+# Node 26: matches the Node the app is developed against and CI's
+# frontend job (.github/workflows/ci.yml). vite 8 / rolldown need >=22.12.
 #
 # --platform=$BUILDPLATFORM: the bundle is static JS and identical on every CPU, so
 # build it natively on the CI runner. Under multi-arch builds the arm64 image would
 # otherwise run npm ci + tsc + vite under QEMU emulation, which takes 30+ minutes.
-FROM --platform=$BUILDPLATFORM node:22-alpine AS react-builder
+FROM --platform=$BUILDPLATFORM node:26-alpine AS react-builder
 
 WORKDIR /app/frontend/app
 
