@@ -61,8 +61,7 @@ describe('AppShell', () => {
 
     expect(screen.getByText('Investments content')).toBeInTheDocument()
     expect(screen.getAllByText('Market news').length).toBeGreaterThan(0)
-    expect(screen.getAllByText('Ticker search').length).toBeGreaterThan(0)
-    expect(screen.getAllByText('Company research').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Research').length).toBeGreaterThan(0)
     expect(screen.getAllByText('Portfolio').length).toBeGreaterThan(0)
 
     expect(screen.queryByText('Transactions')).not.toBeInTheDocument()

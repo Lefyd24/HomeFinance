@@ -1,3 +1,4 @@
+from app.config import settings
 from app.models.notification import NotificationSettings, NotificationRule
 
 
@@ -118,6 +119,9 @@ def test_send_test_notification(client, db, seed_user, monkeypatch):
 
     monkeypatch.setattr(ns, "_send_email_detailed", fake_email_detailed)
     monkeypatch.setattr(ns, "_send_push", fake_push)
+    # The endpoint skips push unless VAPID keys exist; don't depend on a local .env.
+    monkeypatch.setattr(settings, "VAPID_PUBLIC_KEY", "test-public")
+    monkeypatch.setattr(settings, "VAPID_PRIVATE_KEY", "test-private")
 
     resp = client.post("/api/notifications/test")
     assert resp.status_code == 200

@@ -10,7 +10,9 @@ import app.services.comparison_service as comparison_service
 
 def _synthetic_history(symbol: str, n: int = 300, seed: int = 0) -> pd.DataFrame:
     rng = np.random.default_rng(seed)
-    idx = pd.bdate_range(end=date.today(), periods=n)
+    # End on the last business day: real market data never ends on a weekend, and a
+    # weekend 'today' makes the synthetic index disagree with the service's calendar.
+    idx = pd.bdate_range(end=pd.offsets.BDay().rollback(pd.Timestamp(date.today())), periods=n)
     drift = 0.0004 if symbol != "BENCH" else 0.0003
     rets = rng.normal(drift, 0.01, n)
     prices = 100 * np.cumprod(1 + rets)
@@ -80,7 +82,7 @@ def test_compare_basic_two_symbols(client):
         "/api/investments/compare",
         params={"symbols": "AAA,BBB", "period": "1y", "benchmark": "^GSPC"},
     )
-    assert resp.status_code == 200
+    assert resp.status_code == 200, resp.text
     body = resp.json()
 
     assert body["meta"]["benchmark_symbol"] == "^GSPC"
@@ -120,7 +122,7 @@ def test_compare_explicit_benchmark_in_symbols_is_not_duplicated(client):
         "/api/investments/compare",
         params={"symbols": "AAA,^GSPC", "period": "1y", "benchmark": "^GSPC"},
     )
-    assert resp.status_code == 200
+    assert resp.status_code == 200, resp.text
     body = resp.json()
     symbols = [i["symbol"] for i in body["instruments"]]
     assert symbols.count("^GSPC") == 1
@@ -148,6 +150,6 @@ def test_saved_comparisons_crud(client):
 
 def test_benchmarks_list(client):
     resp = client.get("/api/investments/compare/benchmarks")
-    assert resp.status_code == 200
+    assert resp.status_code == 200, resp.text
     symbols = {b["symbol"] for b in resp.json()}
     assert "^GSPC" in symbols
