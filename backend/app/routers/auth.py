@@ -32,6 +32,7 @@ from app.utils.security import (
     get_current_user,
     get_current_user_authenticated,
     get_password_hash,
+    token_issued_before_session_invalidation,
     verify_password,
 )
 from app.utils.urls import public_base_url
@@ -187,6 +188,14 @@ def refresh_token(refresh_token: str, db: Session = Depends(get_db)):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="User not found or inactive",
+        )
+
+    # A refresh token minted before a password reset/change must die with the
+    # old sessions — otherwise it could mint fresh access tokens (with a new
+    # iat) and sidestep the invalidation entirely.
+    if token_issued_before_session_invalidation(payload, user):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid refresh token"
         )
 
     # Create new tokens

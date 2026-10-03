@@ -28,7 +28,7 @@ from sqlalchemy.orm import Session
 from app.config import settings
 from app.database import get_db
 from app.models.user import User
-from app.utils.security import decode_token, get_current_user_authenticated as get_current_user
+from app.utils.security import get_current_user_authenticated as get_current_user, user_from_access_token
 
 router = APIRouter(prefix="/documents", tags=["Documents"])
 
@@ -47,6 +47,21 @@ ALLOWED_MIME_TYPES = {
     "text/csv",
     "application/zip",
 }
+
+# Uploaded files are user-controlled content served from the app's own origin.
+# An SVG (or anything sniffed as HTML) opened via /preview would otherwise run
+# its scripts with access to the logged-in session. The sandbox CSP makes the
+# browser treat the response as an opaque origin with scripts disabled. PDFs
+# are exempt: Chrome refuses to render a PDF in a sandboxed document, and the
+# preview sheet shows them in an iframe.
+def _untrusted_file_headers(mime_type: str) -> dict[str, str]:
+    headers = {"X-Content-Type-Options": "nosniff"}
+    if mime_type != "application/pdf":
+        headers["Content-Security-Policy"] = (
+            "sandbox; default-src 'none'; img-src 'self' data:; style-src 'unsafe-inline'"
+        )
+    return headers
+
 
 ALLOWED_EXTENSIONS = {
     ".pdf", ".jpg", ".jpeg", ".png", ".gif", ".webp", ".svg",
@@ -67,15 +82,9 @@ async def get_user_for_file(
             raw = auth[7:]
     if not raw:
         raise HTTPException(status_code=401, detail="Not authenticated")
-    payload = decode_token(raw)
-    if not payload:
+    user = user_from_access_token(raw, db)
+    if user is None:
         raise HTTPException(status_code=401, detail="Invalid token")
-    user_id = payload.get("sub")
-    if not user_id:
-        raise HTTPException(status_code=401, detail="Invalid token")
-    user = db.query(User).filter(User.id == int(user_id)).first()
-    if not user or not user.is_active:
-        raise HTTPException(status_code=401, detail="User not found")
     return user
 
 
@@ -295,6 +304,8 @@ def preview_document(
         path=str(file_path),
         media_type=doc.get("mime_type", "application/octet-stream"),
         filename=doc["filename"],
+        content_disposition_type="inline",
+        headers=_untrusted_file_headers(doc.get("mime_type", "")),
     )
 
 
@@ -316,7 +327,7 @@ def download_document(
         path=str(file_path),
         media_type=doc.get("mime_type", "application/octet-stream"),
         filename=doc["filename"],
-        headers={"Content-Disposition": f'attachment; filename="{doc["filename"]}"'},
+        headers=_untrusted_file_headers(doc.get("mime_type", "")),
     )
 
 
