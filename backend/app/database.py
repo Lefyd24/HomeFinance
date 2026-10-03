@@ -19,11 +19,26 @@ def _sqlite_connect_args(database_url: str) -> dict:
     return {"check_same_thread": False, "timeout": 30}
 
 
+def _pool_kwargs(database_url: str) -> dict:
+    if not _is_sqlite_database_url(database_url):
+        return {}
+    # In-memory SQLite (tests) gets a SingletonThreadPool that takes no sizing args.
+    if database_url.rstrip("/").lower() in ("sqlite:", "sqlite") or ":memory:" in database_url:
+        return {}
+    # Defensive headroom, not the fix for pool exhaustion (that was blocking DB
+    # calls on the event loop, see utils/security.py). SQLite connections are
+    # cheap and WAL allows concurrent readers, so a bigger pool costs little,
+    # while a short timeout makes a genuine exhaustion fail fast with a 500
+    # instead of stalling the request for 30s.
+    return {"pool_size": 20, "max_overflow": 20, "pool_timeout": 10}
+
+
 # Create engine
 engine = create_engine(
     settings.DATABASE_URL,
     connect_args=_sqlite_connect_args(settings.DATABASE_URL),
-    echo=settings.DEBUG
+    echo=settings.DEBUG,
+    **_pool_kwargs(settings.DATABASE_URL),
 )
 
 # SQLite pragmas for better concurrency characteristics.

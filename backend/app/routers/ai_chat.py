@@ -11,6 +11,7 @@ so it cannot be omitted, softened or reworded by the model.
 """
 import json
 import logging
+from contextlib import closing
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import StreamingResponse
@@ -18,7 +19,7 @@ from sqlalchemy.orm import Session
 
 from app import ai_skills
 from app.config import settings
-from app.database import get_db
+from app.database import SessionLocal, get_db
 from app.models import User
 from app.schemas.ai_chat import (
     AiChatRequest,
@@ -135,13 +136,17 @@ def ai_chat(
     system_prompt = build_system_prompt(db, current_user)
     messages = [{"role": m.role, "content": m.content} for m in body.messages]
     user_id = current_user.id
+    user_email = current_user.email
 
+    # Nothing below may touch the request-scoped `db`: the stream can run for
+    # minutes, and keeping that session open would hold a pool connection for the
+    # whole time. The stream uses short-lived sessions instead.
     def event_stream():
         gave_answer = False
         for event in ai_service.run_agent_stream(
-            db,
+            SessionLocal,
             user_id,
-            current_user.email,
+            user_email,
             system_prompt,
             messages,
             model,
@@ -151,11 +156,17 @@ def ai_chat(
             if event.get("type") == "done":
                 gave_answer = bool(event.get("content"))
                 try:
-                    ai_usage_service.record_usage(db, user_id, event["model"], event["usage"])
+                    with closing(SessionLocal()) as usage_db:
+                        try:
+                            ai_usage_service.record_usage(
+                                usage_db, user_id, event["model"], event["usage"]
+                            )
+                        except Exception:
+                            usage_db.rollback()
+                            raise
                 except Exception:
                     # A failed bookkeeping write must never break the answer.
                     logger.exception("Could not record AI usage for user %s", user_id)
-                    db.rollback()
             yield f"data: {json.dumps(event)}\n\n"
 
         # Server-generated, so it is present on every answer and the model can

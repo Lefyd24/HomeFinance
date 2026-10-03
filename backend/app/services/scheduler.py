@@ -1,5 +1,5 @@
 import logging
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 
 from apscheduler.schedulers.background import BackgroundScheduler
 
@@ -8,6 +8,11 @@ from app.models.notification import NotificationSettings, NotificationRule
 from app.services import notification_service as ns
 from app.services.investment_sync_service import sync_all_investment_accounts
 from app.services.scenario_service import run_scenario_valuation_tick
+
+# Offsets from boot for the startup-run jobs, staggered so they don't coincide
+# with each other or with the first page load after a restart.
+_STARTUP_DELAY_NOTIF = timedelta(seconds=60)
+_STARTUP_DELAY_INVESTMENT_SYNC = timedelta(seconds=120)
 
 logger = logging.getLogger("app.notifications")
 _scheduler = None
@@ -116,7 +121,8 @@ def start_scheduler(app_settings, session_factory):
             "interval",
             hours=1,
             id="notif_tick",
-            next_run_time=datetime.now(),
+            # Still runs shortly after boot (see below for why not immediately).
+            next_run_time=datetime.now() + _STARTUP_DELAY_NOTIF,
         )
     else:
         logger.info("Notifications disabled; notif_tick not scheduled")
@@ -127,7 +133,11 @@ def start_scheduler(app_settings, session_factory):
             "interval",
             hours=app_settings.INVESTMENT_SYNC_INTERVAL_HOURS,
             id="investment_sync_tick",
-            next_run_time=datetime.now(),
+            # Delayed rather than immediate: the first page load after a deploy
+            # fires ~17 parallel API calls, and a broker sync at the same moment
+            # competes with them for DB connections. Still runs on every boot
+            # (unlike bank sync, there is no tight per-day quota to protect).
+            next_run_time=datetime.now() + _STARTUP_DELAY_INVESTMENT_SYNC,
         )
     else:
         logger.info("Investment sync disabled; investment_sync_tick not scheduled")

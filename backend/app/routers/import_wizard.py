@@ -21,7 +21,7 @@ router = APIRouter(prefix="/import", tags=["Import"])
 
 
 @router.post("/upload")
-async def upload_file(
+def upload_file(
     file: UploadFile | None = File(None),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
@@ -78,7 +78,7 @@ async def upload_file(
 
     try:
         # Read file content
-        content = await file.read()
+        content = file.file.read()
 
         if not content:
             raise ValueError("File is empty")

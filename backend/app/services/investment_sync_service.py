@@ -1,6 +1,8 @@
 import logging
 from collections import defaultdict
+from dataclasses import dataclass
 from datetime import date, datetime, timedelta, timezone
+from typing import Optional
 
 from sqlalchemy.orm import Session
 
@@ -69,6 +71,10 @@ def sync_account(db: Session, account: Account) -> InvestmentCredential:
         # left early (wrongly-parsed) rows stuck forever because we keyed on
         # external_id and never updated them.
         transactions = provider.get_transactions(since=None)
+        # Candle fetches are one network call per symbol. Do them now, before the
+        # first write, so no SQLite write transaction is open across network I/O
+        # (every other writer would otherwise sit on its busy timeout meanwhile).
+        backfill = _fetch_backfill_candles(db, account, provider, positions, transactions)
 
         account.balance = round(balance.total_value, 2)
         account.currency = balance.currency
@@ -117,7 +123,7 @@ def sync_account(db: Session, account: Account) -> InvestmentCredential:
         # duplicated by a reconstructed "today" point.
         db.flush()
 
-        _backfill_portfolio_history(db, account, provider, balance, positions)
+        _backfill_portfolio_history(db, account, balance, positions, backfill)
 
         credential.sync_status = "ok"
         credential.sync_error = None
@@ -175,53 +181,58 @@ def _upsert_transactions(
         row.raw_payload = str(txn.raw_payload)
 
 
-def _backfill_portfolio_history(
+@dataclass
+class _BackfillData:
+    start: date
+    closes_by_symbol: dict[str, dict[date, float]]
+
+
+def _fetch_backfill_candles(
     db: Session,
     account: Account,
     provider,
-    balance: ProviderBalance,
     positions: list[ProviderPosition],
-) -> None:
-    """Fill missing daily snapshots so charts have something to draw.
+    transactions: list[ProviderTransaction],
+) -> Optional[_BackfillData]:
+    """Network half of the history backfill; must run before any write.
 
-    Freedom24 has no portfolio equity-curve endpoint. We rebuild one from the
-    trade tape + daily closes (`getHloc` / `get_candles`), then shift the series
-    so it ends on today's live balance. Existing snapshot dates are left alone
-    (a real sync always wins over a reconstruction).
+    Returns None when no backfill is needed (provider can't do candles, or the
+    account already has a usable series). Reads only, then releases the pooled
+    connection before talking to the broker.
     """
     get_candles = getattr(provider, "get_candles", None)
     if not callable(get_candles):
-        return
+        return None
 
     today = date.today()
-    existing_dates = {
-        row.date
-        for row in db.query(PortfolioSnapshot.date)
+    existing_count = (
+        db.query(PortfolioSnapshot.date)
         .filter(PortfolioSnapshot.account_id == account.id)
-        .all()
-    }
+        .count()
+    )
     # Already have a usable series (today + at least one prior day).
-    if len(existing_dates) >= 2:
-        return
+    if existing_count >= 2:
+        return None
 
-    txns = (
-        db.query(InvestmentTransaction)
+    stored = (
+        db.query(InvestmentTransaction.type, InvestmentTransaction.symbol, InvestmentTransaction.date)
         .filter(InvestmentTransaction.account_id == account.id)
-        .order_by(InvestmentTransaction.date.asc())
         .all()
     )
-
-    symbols = {
-        t.symbol
-        for t in txns
-        if t.symbol and t.type in ("buy", "sell")
-    } | {p.symbol for p in positions if p.symbol}
-
-    if txns:
-        start = min(t.date.date() for t in txns if t.date)
-    else:
-        start = today - timedelta(days=180)
+    # The sync pulls the full tape, so stored + fetched is what the DB will hold
+    # once the upsert below has run.
+    trades = [(t.type, t.symbol, t.date) for t in stored] + [
+        (t.type, t.symbol, t.date) for t in transactions
+    ]
+    symbols = {sym for typ, sym, _ in trades if sym and typ in ("buy", "sell")} | {
+        p.symbol for p in positions if p.symbol
+    }
+    dates = [d.date() for _, _, d in trades if d]
+    start = min(dates) if dates else today - timedelta(days=180)
     start = max(start, today - timedelta(days=_HISTORY_LOOKBACK_DAYS))
+
+    # Return the connection to the pool for the duration of the network calls.
+    db.rollback()
 
     closes_by_symbol: dict[str, dict[date, float]] = {}
     for symbol in symbols:
@@ -235,6 +246,42 @@ def _backfill_portfolio_history(
             )
             continue
         closes_by_symbol[symbol] = {c.date: c.close for c in candles if c.close}
+    return _BackfillData(start=start, closes_by_symbol=closes_by_symbol)
+
+
+def _backfill_portfolio_history(
+    db: Session,
+    account: Account,
+    balance: ProviderBalance,
+    positions: list[ProviderPosition],
+    backfill: Optional[_BackfillData],
+) -> None:
+    """Fill missing daily snapshots so charts have something to draw.
+
+    Freedom24 has no portfolio equity-curve endpoint. We rebuild one from the
+    trade tape + daily closes (fetched beforehand by `_fetch_backfill_candles`),
+    then shift the series so it ends on today's live balance. Existing snapshot
+    dates are left alone (a real sync always wins over a reconstruction).
+    Database-only: no network I/O happens here.
+    """
+    if backfill is None:
+        return
+
+    today = date.today()
+    start = backfill.start
+    closes_by_symbol = backfill.closes_by_symbol
+    existing_dates = {
+        row.date
+        for row in db.query(PortfolioSnapshot.date)
+        .filter(PortfolioSnapshot.account_id == account.id)
+        .all()
+    }
+    txns = (
+        db.query(InvestmentTransaction)
+        .filter(InvestmentTransaction.account_id == account.id)
+        .order_by(InvestmentTransaction.date.asc())
+        .all()
+    )
 
     if not closes_by_symbol and not positions:
         return

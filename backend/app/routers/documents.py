@@ -69,7 +69,7 @@ ALLOWED_EXTENSIONS = {
 }
 
 
-async def get_user_for_file(
+def get_user_for_file(
     request: Request,
     token: str | None = Query(default=None),
     db: Session = Depends(get_db),
@@ -207,7 +207,7 @@ def delete_folder(
 
 
 @router.post("/upload", status_code=status.HTTP_201_CREATED)
-async def upload_document(
+def upload_document(
     file: UploadFile = File(...),
     title: str = Form(...),
     description: str = Form(""),
@@ -215,7 +215,7 @@ async def upload_document(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    content = await file.read()
+    content = file.file.read()
     if len(content) > settings.DOCUMENTS_MAX_FILE_SIZE:
         raise HTTPException(
             status_code=413,

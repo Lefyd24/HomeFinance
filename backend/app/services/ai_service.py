@@ -13,6 +13,7 @@ authenticated user, so the model has no way to reach another user's data.
 import json
 import logging
 import time
+from contextlib import closing
 from typing import Any, Callable, Generator, Optional
 
 from sqlalchemy.orm import Session
@@ -217,7 +218,7 @@ def _skill_system_message(skill: ai_skills.Skill) -> dict[str, Any]:
 
 
 def run_agent_stream(
-    db: Session,
+    session_factory: Callable[[], Session],
     user_id: int,
     user_email: str,
     system_prompt: str,
@@ -229,7 +230,11 @@ def run_agent_stream(
     """Run one chat turn. `messages` is the user/assistant transcript (no system message);
     the system prompt is passed separately so it can be cache-marked per model.
     `active_skills` are skill names carried over from earlier turns or pre-activated by a
-    slash command; unknown or unavailable names are silently dropped."""
+    slash command; unknown or unavailable names are silently dropped.
+
+    `session_factory` is called once per tool execution and the session is closed right
+    after: a chat turn can stream for minutes, and holding one session (and so one pool
+    connection) across LLM round-trips starves the rest of the app."""
     if client is None:
         yield {"type": "error", "message": "AI chat is not configured."}
         return
@@ -331,7 +336,8 @@ def run_agent_stream(
                     args = {}
 
                 yield {"type": "tool_call_start", "tool": call.name, "args": args}
-                result = _execute_tool(db, user_id, user_email, call.name, args, active)
+                with closing(session_factory()) as tool_db:
+                    result = _execute_tool(tool_db, user_id, user_email, call.name, args, active)
                 # A tool may report extra spend (e.g. a web search). It counts toward the
                 # turn cost but is internal: neither the model nor the client sees it.
                 if isinstance(result, dict) and "_cost_usd" in result:

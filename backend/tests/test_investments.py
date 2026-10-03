@@ -958,3 +958,59 @@ def test_a_pinned_ticker_is_not_second_guessed_on_currency(db, monkeypatch):
     assert listing.symbol == "VIO"
     assert listing.source == "manual"
     assert listing.currency == "USD"
+
+
+def test_sync_fetches_candles_before_opening_a_write_transaction(client, db, monkeypatch):
+    """Network I/O (candle fetches) must never happen inside an open write
+    transaction: it would hold SQLite's write lock for the duration of the calls."""
+    seen = []
+
+    class WatchingProvider(FakeProvider):
+        def get_candles(self, symbol, start, end):
+            seen.append(
+                {"in_transaction": db.in_transaction(), "pending": bool(db.new or db.dirty or db.deleted)}
+            )
+            return super().get_candles(symbol, start, end)
+
+    _patch_provider(monkeypatch, WatchingProvider)
+
+    resp = client.post(
+        "/api/investments/accounts",
+        json={
+            "name": "Freedom24 Brokerage",
+            "provider": "freedom24",
+            "currency": "USD",
+            "public_key": "pub-123",
+            "private_key": "priv-456",
+        },
+    )
+    account_id = resp.json()["id"]
+
+    assert seen, "expected the backfill to fetch candles"
+    assert all(not s["in_transaction"] and not s["pending"] for s in seen)
+    # And the backfill still produced a series from those candles.
+    assert db.query(PortfolioSnapshot).filter_by(account_id=account_id).count() >= 2
+
+
+def test_sync_isolates_a_failing_candle_fetch(client, db, monkeypatch):
+    class FlakyProvider(FakeProvider):
+        def get_candles(self, symbol, start, end):
+            raise RuntimeError("getHloc down")
+
+    _patch_provider(monkeypatch, FlakyProvider)
+
+    resp = client.post(
+        "/api/investments/accounts",
+        json={
+            "name": "Freedom24 Brokerage",
+            "provider": "freedom24",
+            "currency": "USD",
+            "public_key": "pub-123",
+            "private_key": "priv-456",
+        },
+    )
+    account_id = resp.json()["id"]
+
+    credential = db.query(InvestmentCredential).filter_by(account_id=account_id).one()
+    assert credential.sync_status == "ok"
+    assert db.query(PortfolioPosition).filter_by(account_id=account_id).count() == 1

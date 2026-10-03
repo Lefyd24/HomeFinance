@@ -1,5 +1,6 @@
 import json
 import math
+from concurrent.futures import ThreadPoolExecutor, wait
 from datetime import date, datetime, timedelta
 from typing import List, Optional
 
@@ -978,6 +979,45 @@ def delete_saved_comparison(
 # ---------------------------------------------------------------------------
 
 
+_WATCH_REFRESH_TIMEOUT_S = 5.0
+_WATCH_REFRESH_WORKERS = 8
+
+
+def _fetch_one_watch_price(symbol: str) -> float | None:
+    fast = yf.Ticker(symbol).fast_info
+    price = getattr(fast, "last_price", None) or getattr(
+        fast, "regular_market_previous_close", None
+    )
+    return _maybe_float(price) if price is not None else None
+
+
+def _fetch_watch_prices(symbols: list[str]) -> dict[str, float]:
+    """Best-effort concurrent price fetch with a hard overall deadline.
+
+    Symbols that fail or miss the deadline are simply absent, so callers keep the
+    stale stored price. Never blocks longer than ``_WATCH_REFRESH_TIMEOUT_S``.
+    """
+    unique = list(dict.fromkeys(symbols))
+    if not unique:
+        return {}
+    pool = ThreadPoolExecutor(max_workers=min(_WATCH_REFRESH_WORKERS, len(unique)))
+    futures = {pool.submit(_fetch_one_watch_price, sym): sym for sym in unique}
+    prices: dict[str, float] = {}
+    try:
+        done, _ = wait(futures, timeout=_WATCH_REFRESH_TIMEOUT_S)
+        for fut in done:
+            try:
+                price = fut.result()
+            except Exception:
+                continue  # best-effort, keep stale price
+            if price is not None:
+                prices[futures[fut]] = price
+    finally:
+        # Don't wait for stragglers still stuck on the network.
+        pool.shutdown(wait=False, cancel_futures=True)
+    return prices
+
+
 @router.get("/watchlist", response_model=List[SavedWatchResponse])
 def list_watches(
     current_user: User = Depends(get_current_user_authenticated),
@@ -990,20 +1030,25 @@ def list_watches(
         .order_by(SavedWatch.created_at.desc())
         .all()
     )
-    for r in rows:
-        if r.last_updated is None or (datetime.utcnow() - r.last_updated).total_seconds() > 900:
-            try:
-                ticker = yf.Ticker(r.symbol)
-                fast = ticker.fast_info
-                price = getattr(fast, "last_price", None) or getattr(
-                    fast, "regular_market_previous_close", None
-                )
-                if price is not None:
-                    r.last_price = _maybe_float(price)
-                    r.last_updated = datetime.utcnow()
-                    db.commit()
-            except Exception:
-                pass  # best-effort, keep stale price
+    stale = [
+        (r.id, r.symbol)
+        for r in rows
+        if r.last_updated is None or (datetime.utcnow() - r.last_updated).total_seconds() > 900
+    ]
+    if stale:
+        # Release the pool connection while we wait on the network; the rows
+        # reload lazily when the write below touches them.
+        db.rollback()
+        prices = _fetch_watch_prices([symbol for _, symbol in stale])
+        changed = False
+        for r in rows:
+            price = prices.get(r.symbol)
+            if price is not None:
+                r.last_price = price
+                r.last_updated = datetime.utcnow()
+                changed = True
+        if changed:
+            db.commit()
 
     return [
         SavedWatchResponse(
@@ -1040,6 +1085,9 @@ def save_watch(
     last_price = None
     day_change_pct = None
     name = data.name
+    # Return the pool connection before the slow yfinance call; `existing`
+    # reloads lazily afterwards.
+    db.rollback()
     try:
         ticker = yf.Ticker(symbol)
         info = ticker.info or {}

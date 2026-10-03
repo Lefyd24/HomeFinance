@@ -72,7 +72,11 @@ def setup_logging(*, log_dir: str, log_level: str) -> None:
     root.addHandler(app_handler)
     root.addHandler(err_handler)
 
-    # Uvicorn loggers sometimes bypass root handlers.
+    # Uvicorn installs its own stream handlers on these loggers; leaving them in
+    # place while also propagating to root logged every request twice (once as
+    # "INFO:     ..." and once through our formatter). Drop uvicorn's handlers
+    # and let root's handlers be the single sink.
     for name in ("uvicorn", "uvicorn.error", "uvicorn.access"):
         logger = logging.getLogger(name)
+        logger.handlers.clear()
         logger.propagate = True

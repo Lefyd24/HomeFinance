@@ -142,7 +142,12 @@ def user_from_access_token(token: str | None, db: Session) -> User | None:
     return user
 
 
-async def get_current_user(
+# NOTE: these dependencies are deliberately plain `def`. They run blocking
+# SQLAlchemy queries, and FastAPI runs sync dependencies in the threadpool. As
+# `async def` they would call pool.connect() on the event loop thread; once the
+# pool is exhausted that blocks the loop, which then can't run the teardown that
+# returns connections - a deadlock until the pool timeout fires.
+def get_current_user(
     token: str | None = Depends(oauth2_scheme), db: Session = Depends(get_db)
 ) -> User:
     """Get current authenticated user via JWT token."""
@@ -156,7 +161,7 @@ async def get_current_user(
     return user
 
 
-async def get_current_active_user(
+def get_current_active_user(
     current_user: User = Depends(get_current_user),
 ) -> User:
     """Get current active user."""
@@ -170,7 +175,7 @@ def generate_api_key(length: int = 64) -> str:
     return secrets.token_urlsafe(length)
 
 
-async def get_current_user_by_api_key(
+def get_current_user_by_api_key(
     api_key: str | None = Security(api_key_header), db: Session = Depends(get_db)
 ) -> User | None:
     """Get current user by API key."""
@@ -183,7 +188,7 @@ async def get_current_user_by_api_key(
     return None
 
 
-async def get_current_user_authenticated(
+def get_current_user_authenticated(
     token: str | None = Depends(oauth2_scheme),
     api_key: str | None = Security(api_key_header),
     db: Session = Depends(get_db),
@@ -197,7 +202,7 @@ async def get_current_user_authenticated(
 
     # Try API key first
     if api_key:
-        user = await get_current_user_by_api_key(api_key, db)
+        user = get_current_user_by_api_key(api_key, db)
         if user:
             return user
 
@@ -208,7 +213,7 @@ async def get_current_user_authenticated(
     return user
 
 
-async def require_admin(
+def require_admin(
     current_user: User = Depends(get_current_user_authenticated),
 ) -> User:
     """Gate a route to admin users only (401/403 handled uniformly via 403)."""

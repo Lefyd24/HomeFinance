@@ -161,6 +161,26 @@ def _fresh_catalog():
     ai_models.catalog.reset()
 
 
+@pytest.fixture(autouse=True)
+def stream_sessions(monkeypatch, db):
+    """The chat stream opens its own short-lived sessions (it must not hold the
+    request's); point those at the test database and record how they are used."""
+    from sqlalchemy.orm import sessionmaker
+
+    import app.routers.ai_chat as ai_chat_router
+
+    factory = sessionmaker(autocommit=False, autoflush=False, bind=db.get_bind())
+    opened = []
+
+    def _factory():
+        session = factory()
+        opened.append(session)
+        return session
+
+    monkeypatch.setattr(ai_chat_router, "SessionLocal", _factory)
+    return opened
+
+
 @pytest.fixture()
 def stub_llm(monkeypatch):
     """Installs a fake OpenRouter client and a fake API key."""
@@ -644,3 +664,37 @@ def test_a_long_conversation_keeps_its_most_recent_messages(client, stub_llm):
     assert convo[-1]["content"] == "latest"
     assert convo[0]["role"] == "user"
     assert len(convo) <= MAX_HISTORY_MESSAGES
+
+
+def test_stream_does_not_use_the_request_session(client, stub_llm, seed_user, db, stream_sessions):
+    """The request session must not be held for the whole LLM stream: tools and
+    usage bookkeeping each get their own short-lived session, closed afterwards."""
+    make_investment_account(db, seed_user, name="Broker")
+    stub_llm(
+        [
+            _tool_round("call_1", "get_portfolio_overview_tool", "{}"),
+            _answer("You have one account."),
+        ]
+    )
+
+    events = _events(_chat(client, "my portfolio?"))
+
+    assert any(e["type"] == "done" for e in events)
+    assert len(stream_sessions) >= 2  # one for the tool call, one for usage
+    assert all(s not in (db,) for s in stream_sessions)
+    # Closed sessions hold no connection: nothing left in a transaction.
+    assert all(not s.in_transaction() for s in stream_sessions)
+
+
+def test_usage_bookkeeping_failure_does_not_break_the_answer(
+    client, stub_llm, monkeypatch
+):
+    def boom(*args, **kwargs):
+        raise RuntimeError("db down")
+
+    monkeypatch.setattr(ai_usage_service, "record_usage", boom)
+    stub_llm([_answer("Fine.")])
+
+    events = _events(_chat(client, "hi"))
+
+    assert any(e["type"] == "disclaimer" for e in events)
