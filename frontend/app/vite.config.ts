@@ -37,6 +37,10 @@ export default defineConfig({
     globals: true,
     setupFiles: './src/test-setup.ts',
     pool: 'forks',
+    // Node 25+ ships its own global localStorage (empty and unusable without
+    // --localstorage-file), which shadows jsdom's and breaks every component
+    // that reads storage. Turn it off in the test workers.
+    execArgv: ['--no-experimental-webstorage'],
     maxWorkers: 1,
     fileParallelism: false,
     testTimeout: 15_000,
