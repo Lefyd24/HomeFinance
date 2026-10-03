@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://lefyd24.github.io/HomeFinance/sitemap.xml

@@ -1,0 +1,256 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Home Finance: self-hosted household budget app</title>
+<meta name="description" content="Accounts, budgets, debts, goals, bank sync, investments and an AI advisor in one self-hosted app. One Docker container, one SQLite file, no subscription.">
+<link rel="canonical" href="https://lefyd24.github.io/HomeFinance/">
+<link rel="alternate" hreflang="en" href="https://lefyd24.github.io/HomeFinance/">
+<link rel="alternate" hreflang="el" href="https://lefyd24.github.io/HomeFinance/?lang=el">
+<link rel="alternate" hreflang="x-default" href="https://lefyd24.github.io/HomeFinance/">
+<meta name="theme-color" content="#f6f8fb" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0d1320" media="(prefers-color-scheme: dark)">
+<link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Home Finance: your household budget, on your own server">
+<meta property="og:description" content="One Docker container. One SQLite file. No subscription, no third party reading your statements.">
+<meta property="og:url" content="https://lefyd24.github.io/HomeFinance/">
+<meta property="og:image" content="https://lefyd24.github.io/HomeFinance/assets/img/og.jpg">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preload" href="assets/fonts/instrument-sans-latin-wdth-normal.woff2" as="font" type="font/woff2" crossorigin>
+<script>
+(function(){try{var t=new URLSearchParams(location.search).get('theme')||localStorage.getItem('hf-theme');if(t==='dark'||t==='light')document.documentElement.dataset.theme=t}catch(e){}})();
+</script>
+<link rel="stylesheet" href="assets/styles.css">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"SoftwareApplication","name":"Home Finance","applicationCategory":"FinanceApplication","operatingSystem":"Linux, macOS, Windows (Docker)","description":"Self-hosted household budget app: accounts, budgets, debts, goals, bank sync, investments and an AI advisor.","url":"https://lefyd24.github.io/HomeFinance/","codeRepository":"https://github.com/Lefyd24/HomeFinance","license":"https://opensource.org/license/isc-license-txt","offers":{"@type":"Offer","price":"0","priceCurrency":"EUR"},"inLanguage":["en","el"]}
+</script>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[
+{"@type":"Question","name":"Does my financial data leave my server?","acceptedAnswer":{"@type":"Answer","text":"Not by default. There is no analytics, telemetry or vendor account. AI chat, bank sync, brokerage sync, market data and email only contact an outside service if you turn them on."}},
+{"@type":"Question","name":"What does it cost?","acceptedAnswer":{"@type":"Answer","text":"The software is free and open source under the ISC license. You need a machine you control. The optional AI advisor uses your own OpenRouter key and shows the cost of every answer."}},
+{"@type":"Question","name":"Can my household share it?","acceptedAnswer":{"@type":"Answer","text":"Yes. Registration is invite-only, and every person gets a separate login and separate data."}},
+{"@type":"Question","name":"How do I back it up?","acceptedAnswer":{"@type":"Answer","text":"Your data is one SQLite file in a data folder. Back up that folder and your two secret keys."}}
+]}
+</script>
+</head>
+<body>
+<a class="skip" href="#main" data-i18n="skip">Skip to content</a>
+
+<header class="top">
+  <div class="wrap bar">
+    <a class="brand" href="#main"><img src="assets/img/logo.png" alt="" width="28" height="28">Home Finance</a>
+    <nav class="nav" aria-label="Primary">
+      <a href="#tour" data-i18n="nav.tour">Tour</a>
+      <a href="#privacy" data-i18n="nav.privacy">Privacy</a>
+      <a href="#install" data-i18n="nav.install">Install</a>
+      <a href="https://github.com/Lefyd24/HomeFinance/blob/main/docs/README.md" data-i18n="nav.docs">Docs</a>
+    </nav>
+    <div class="grow"></div>
+    <div class="ctl">
+      <button class="icon-btn" id="lang" type="button">EL</button>
+      <button class="icon-btn" id="theme" type="button" aria-label="Toggle dark mode"></button>
+      <a class="icon-btn gh" href="https://github.com/Lefyd24/HomeFinance">GitHub</a>
+    </div>
+  </div>
+</header>
+
+<main id="main">
+
+<!-- HERO: a working slice of the dashboard -->
+<section class="hero">
+  <div class="wrap hero-grid">
+    <div class="hero-copy">
+      <p class="eyebrow" data-i18n="hero.eyebrow">Self-hosted · Open source · EN / EL</p>
+      <h1>
+        <span class="l"><span data-i18n="h1.1">The household</span></span>
+        <span class="l"><span data-i18n="h1.2">budget that lives</span></span>
+        <span class="l"><span data-i18n="h1.3">on your server.</span></span>
+      </h1>
+      <p class="lede" data-i18n="hero.lede">Accounts, budgets, debts, goals, bank sync, investments and an AI advisor. One Docker container and one SQLite file, with no subscription and no third party reading your statements.</p>
+      <div class="hero-cta">
+        <a class="btn btn-ink" href="#install" data-i18n="cta.install">Install in 5 minutes</a>
+        <button class="btn btn-line" type="button" data-video><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg><span data-i18n="cta.demo">Watch the demo</span></button>
+      </div>
+      <div class="facts">
+        <span data-i18n="fact.1">No telemetry</span>
+        <span data-i18n="fact.2">amd64 &amp; arm64</span>
+        <span data-i18n="fact.3">Invite-only household logins</span>
+      </div>
+    </div>
+
+    <div class="app" aria-label="Interactive preview of the dashboard">
+      <div class="app-head"><span><b data-i18n="app.title">Dashboard</b> · <span data-i18n="app.month">October 2026</span></span><span class="live" data-i18n="app.live">Live preview</span></div>
+      <div class="app-body">
+        <div class="balance">
+          <div><small data-i18n="app.total">Total balance</small><span class="big" id="v-total">35.844,99 €</span></div>
+          <div class="flows">
+            <div><small data-i18n="app.in">In</small><b id="v-in">2.850,00 €</b></div>
+            <div><small data-i18n="app.out">Out</small><b id="v-out">1.309,32 €</b></div>
+            <div><small data-i18n="app.saved">Saved</small><b id="v-saved">1.540,68 €</b></div>
+          </div>
+        </div>
+        <div class="try">
+          <label for="groceries"><span><span data-i18n="app.try">Groceries this month</span> <span class="hint" data-i18n="app.drag">· drag to try</span></span><span style="display:inline-flex;gap:10px;align-items:baseline"><span class="chip" id="g-status">On track</span><b id="v-groc">266,92 €</b></span></label>
+          <input type="range" id="groceries" min="0" max="600" step="1" value="267" aria-describedby="g-note">
+        </div>
+        <div class="row2">
+          <div class="card">
+            <h4><span style="color:var(--ink);font-weight:600" data-i18n="app.budgets">Budgets</span><span id="v-budsum">1.221,94 / 1.700,00 €</span></h4>
+            <div class="bud">
+              <div class="r"><div class="t"><span data-i18n="cat.housing">Housing</span><i>850,00 / 900,00</i></div><div class="trk"><div class="warn" style="width:94%"></div></div></div>
+              <div class="r"><div class="t"><span data-i18n="cat.groceries">Groceries</span><i id="v-gbud">266,92 / 420,00</i></div><div class="trk"><div id="b-groc" style="width:64%"></div></div></div>
+              <div class="r"><div class="t"><span data-i18n="cat.utilities">Utilities</span><i>74,20 / 200,00</i></div><div class="trk"><div style="width:37%"></div></div></div>
+              <div class="r"><div class="t"><span data-i18n="cat.dining">Dining out</span><i>30,82 / 180,00</i></div><div class="trk"><div style="width:17%"></div></div></div>
+            </div>
+          </div>
+          <div class="card goal">
+            <h4><span style="color:var(--ink);font-weight:600" data-i18n="app.goal">Goal</span></h4>
+            <div class="gl"><span data-i18n="app.laptop">New laptop</span><span class="chip" id="g-chip" data-i18n="app.ontrack">On track</span></div>
+            <div class="trk"><div id="b-goal" style="width:80%"></div></div>
+            <small id="g-note">1.280,00 € / 1.600,00 € · 10 Dec 2026</small>
+            <div class="bills">
+              <div><span>HomeNet Fibre</span><i>−29,90 €</i></div>
+              <div><span>CityPower</span><i>−82,00 €</i></div>
+              <div><span data-i18n="app.car">Car loan</span><i>−215,00 €</i></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- REEL: scroll moves the track sideways -->
+<section class="reel" id="tour">
+  <div class="reel-pin">
+    <div class="wrap">
+      <div class="reel-head">
+        <div><p class="eyebrow" data-i18n="reel.eyebrow">A tour of the app</p><h2 data-i18n="reel.h2">Every screen you'd open in a month.</h2></div>
+        <div class="tabs" role="tablist" id="tabs"></div>
+      </div>
+      <div class="viewport" id="viewport">
+        <div class="track" id="track">
+          <article class="slide" data-name="Dashboard"><div class="shot"><img src="assets/img/dashboard.webp" width="1600" height="800" alt="Dashboard with balances, bills due, budgets and goals"></div><div class="cap"><h3 data-i18n="s1.h">Dashboard</h3><p data-i18n="s1.p">Balances, bills due in the next 30 days, budgets and goals on one screen.</p></div></article>
+          <article class="slide" data-name="Transactions"><div class="shot"><img loading="lazy" src="assets/img/transactions.webp" width="1600" height="800" alt="Transactions list with filters"></div><div class="cap"><h3 data-i18n="s2.h">Transactions</h3><p data-i18n="s2.p">Search, filter, split and pair transfers. Rules categorize every future import.</p></div></article>
+          <article class="slide" data-name="Budgets"><div class="shot"><img loading="lazy" src="assets/img/budgets.webp" width="1600" height="800" alt="Budgets per category with progress"></div><div class="cap"><h3 data-i18n="s3.h">Budgets</h3><p data-i18n="s3.p">A limit per category and period, with alerts at the thresholds you choose.</p></div></article>
+          <article class="slide" data-name="Debts"><div class="shot"><img loading="lazy" src="assets/img/debts.webp" width="1600" height="800" alt="Debts with payoff dates"></div><div class="cap"><h3 data-i18n="s4.h">Debts</h3><p data-i18n="s4.p">Payoff dates for every loan and card, and snowball versus avalanche side by side.</p></div></article>
+          <article class="slide" data-name="Goals"><div class="shot"><img loading="lazy" src="assets/img/goals.webp" width="1600" height="800" alt="Savings goals with monthly amounts"></div><div class="cap"><h3 data-i18n="s5.h">Goals</h3><p data-i18n="s5.p">The amount to save each month to hit your date, checked against what you really save.</p></div></article>
+          <article class="slide" data-name="Reports"><div class="shot"><img loading="lazy" src="assets/img/reports.webp" width="1600" height="800" alt="Reports summarizing the period"></div><div class="cap"><h3 data-i18n="s6.h">Reports</h3><p data-i18n="s6.p">Cash flow, spending, budgets and debt, with saved views, scheduled emails and CSV export.</p></div></article>
+        </div>
+      </div>
+      <div class="meter" aria-hidden="true"><i id="meter"></i></div>
+    </div>
+  </div>
+</section>
+
+<!-- INSIDE -->
+<section class="inside">
+  <div class="wrap inside-grid">
+    <div class="sl">
+      <p class="eyebrow" data-i18n="in.eyebrow">Also inside</p>
+      <h2 data-i18n="in.h2">The rest of the toolbox.</h2>
+      <p class="lede" data-i18n="in.p">Everything below ships in the same container. The parts that talk to outside services are off until you set them up.</p>
+    </div>
+    <div class="flist sl">
+      <div><b data-i18n="f1.h">Bank sync</b><span data-i18n="f1.p">European banks through Enable Banking (PSD2, read-only), synced nightly.</span></div>
+      <div><b data-i18n="f2.h">Investments</b><span data-i18n="f2.p">Freedom24 and Binance sync, analytics, backtesting and research.</span></div>
+      <div><b data-i18n="f3.h">Rules</b><span data-i18n="f3.p">"If the description contains X, use category Y." Write it once.</span></div>
+      <div><b data-i18n="f4.h">Recurring bills</b><span data-i18n="f4.p">Subscriptions and bills, and when each one is next due.</span></div>
+      <div><b data-i18n="f5.h">AI advisor</b><span data-i18n="f5.p">Reads your data through tools. Every figure comes from server-side math, never from the model.</span></div>
+      <div><b data-i18n="f6.h">Calculators</b><span data-i18n="f6.p">Compound growth, retirement, loans, refinance and emergency fund.</span></div>
+      <div><b data-i18n="f7.h">Notifications</b><span data-i18n="f7.p">Email and push for bills, low balances and budgets, with quiet hours.</span></div>
+      <div><b data-i18n="f8.h">Trackers &amp; documents</b><span data-i18n="f8.p">Follow a trip or renovation across accounts. Attach receipts and statements.</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- PRIVACY MONITOR -->
+<section class="privacy" id="privacy">
+  <div class="wrap">
+    <div class="priv-head sl">
+      <div><p class="eyebrow" data-i18n="pv.eyebrow">Privacy</p><h2 data-i18n="pv.h2">See what would leave your server.</h2></div>
+      <p data-i18n="pv.p">Out of the box, nothing does. Switch on a feature to see which service it contacts and what it sends.</p>
+    </div>
+    <div class="monitor">
+      <div class="switches" id="switches"></div>
+      <div class="log" aria-live="polite">
+        <div class="log-top"><span data-i18n="pv.log">Outbound connections</span><button class="reset" type="button" id="reset" data-i18n="pv.reset">Turn all off</button></div>
+        <div class="count"><b id="count">0</b><span id="count-l" data-i18n="pv.zero">outside services. Everything stays on this machine.</span></div>
+        <div class="lines" id="lines"></div>
+      </div>
+    </div>
+    <div class="priv-foot">
+      <p data-i18n="pv.foot">Accounts, transactions, budgets, debts, goals, reports, rules and documents are always computed and stored locally.</p>
+      <a href="https://github.com/Lefyd24/HomeFinance/blob/main/docs/security.md" data-i18n="pv.link">Security &amp; privacy docs →</a>
+    </div>
+  </div>
+</section>
+
+<!-- INSTALL -->
+<section class="install" id="install">
+  <div class="wrap inst-grid">
+    <div class="sl">
+      <p class="eyebrow" data-i18n="is.eyebrow">Install</p>
+      <h2 data-i18n="is.h2">Five minutes to your own instance.</h2>
+      <p class="lede" data-i18n="is.p">You need Docker with Compose and openssl. The prebuilt image runs on a PC, a home server or a Raspberry Pi.</p>
+      <div class="inst-cta">
+        <a class="btn btn-ink" href="https://github.com/Lefyd24/HomeFinance/blob/main/docs/getting-started.md" data-i18n="is.guide">Getting started guide</a>
+        <a class="btn btn-line" href="https://github.com/Lefyd24/HomeFinance" data-i18n="is.gh">View on GitHub</a>
+      </div>
+    </div>
+    <div class="term sl">
+      <div class="term-bar"><i></i><i></i><i></i><button class="copy" type="button" id="copy" data-i18n="copy">Copy</button></div>
+<pre id="code"><span class="p">$</span> git clone https://github.com/Lefyd24/HomeFinance.git
+<span class="p">$</span> cd HomeFinance &amp;&amp; cp .env.example .env
+<span class="c"># put two values from `openssl rand -hex 32` in .env</span>
+<span class="p">$</span> docker compose up -d
+<span class="p">$</span> docker compose run --rm -v "$PWD/scripts:/app/scripts:ro" \
+    app python /app/scripts/create_admin.py \
+    you@example.com 'a-strong-password' "Your Name"
+<span class="o">✓ open http://localhost:8223</span></pre>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section class="faq">
+  <div class="wrap">
+    <h2 data-i18n="faq.h2">Questions before installing</h2>
+    <div class="faq-grid">
+      <div>
+        <details><summary data-i18n="q1">Does my financial data leave my server?</summary><p data-i18n="a1">Not by default. There is no analytics, telemetry or vendor account. AI chat, bank and brokerage sync, market data and email only contact an outside service if you turn them on.</p></details>
+        <details><summary data-i18n="q2">What does it cost?</summary><p data-i18n="a2">Nothing. It's open source under the ISC license. The optional AI advisor uses your own OpenRouter key and shows the cost of every answer, with monthly caps.</p></details>
+      </div>
+      <div>
+        <details><summary data-i18n="q3">Can my household share it?</summary><p data-i18n="a3">Yes. Registration is invite-only, and every person gets a separate login and separate data.</p></details>
+        <details><summary data-i18n="q4">How do I back it up?</summary><p data-i18n="a4">Your data is one SQLite file in a data folder. Back up that folder and your two secret keys.</p></details>
+      </div>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer>
+  <div class="wrap foot">
+    <a class="brand" href="#main"><img src="assets/img/logo.png" alt="" width="28" height="28">Home Finance</a>
+    <nav aria-label="Footer">
+      <a href="https://github.com/Lefyd24/HomeFinance/blob/main/docs/README.md" data-i18n="nav.docs">Docs</a>
+      <a href="https://github.com/Lefyd24/HomeFinance/blob/main/docs/security.md" data-i18n="ft.sec">Security</a>
+      <a href="https://github.com/Lefyd24/HomeFinance/releases" data-i18n="ft.rel">Releases</a>
+      <a href="https://github.com/Lefyd24/HomeFinance/blob/main/LICENSE">ISC License</a>
+    </nav>
+    <small data-i18n="ft.small">Home Finance is a personal tool. Nothing in it, including the AI advisor, is financial, tax or legal advice. Screenshots and the preview above use demo data. This page makes no third-party requests.</small>
+  </div>
+</footer>
+
+<dialog id="video">
+  <button class="close" type="button" data-i18n="close">Close ✕</button>
+  <video controls playsinline preload="none" poster="assets/img/poster.webp"></video>
+</dialog>
+
+<script src="assets/app.js" defer></script>
+</body>
+</html>
