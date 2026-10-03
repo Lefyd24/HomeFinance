@@ -1,6 +1,9 @@
-# Weekly dependency PRs, grouped per ecosystem so a busy week is one PR to
-# review rather than twenty. Security fixes still arrive individually as soon
-# as an advisory is published (Dependabot security updates, repo settings).
+# Weekly dependency PRs. Minor and patch bumps are grouped per ecosystem so a
+# busy week is one PR to review rather than twenty; major bumps arrive as their
+# own PRs, so one breaking upgrade (e.g. TypeScript 7 before typescript-eslint
+# supports it) can't hold every other update hostage. Security fixes still
+# arrive individually as soon as an advisory is published (Dependabot security
+# updates, repo settings).
 version: 2
 updates:
   - package-ecosystem: uv
@@ -10,6 +13,7 @@ updates:
     groups:
       python:
         patterns: ["*"]
+        update-types: [minor, patch]
 
   - package-ecosystem: npm
     directory: /frontend/app
@@ -18,6 +22,7 @@ updates:
     groups:
       npm:
         patterns: ["*"]
+        update-types: [minor, patch]
 
   - package-ecosystem: github-actions
     directory: /
