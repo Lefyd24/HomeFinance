@@ -65,6 +65,12 @@ def init_db() -> None:
     A fresh database has no `alembic_version`, so bare-metal dev still gets its
     tables here; the Docker entrypoint stamps head after this runs.
     """
+    # Register every model on Base.metadata. The Docker entrypoint calls this
+    # having imported only app.database, so without this import the metadata is
+    # empty, create_all() silently creates nothing, and the entrypoint then
+    # stamps Alembic at head: a "migrated" database with no tables at all.
+    import app.models  # noqa: F401
+
     if inspect(engine).has_table("alembic_version"):
         logging.getLogger("app").debug(
             "Alembic-managed database detected; skipping create_all "
