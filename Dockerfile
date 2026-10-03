@@ -44,10 +44,10 @@ FROM python:3.11-slim-bookworm
 
 WORKDIR /app
 
-# Install system dependencies including supervisord
+# Runtime packages only: supervisord runs the app, curl backs the compose
+# healthcheck. Python deps arrive prebuilt in the venv from python-builder, so
+# no compiler or DB client headers belong in this image.
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    gcc \
-    libpq-dev \
     supervisor \
     curl \
     && rm -rf /var/lib/apt/lists/*
