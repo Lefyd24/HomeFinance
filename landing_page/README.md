@@ -1,6 +1,6 @@
 # Landing page
 
-Static site for https://lefyd24.github.io/PersonalFinance/ (plain HTML, CSS and JS, no build step).
+Static site for https://lefyd24.github.io/HomeFinance/ (plain HTML, CSS and JS, no build step).
 
 - `index.html`: all markup and English copy. `assets/app.js` holds the Greek translations (`EL`), the theme and language toggles, the live dashboard preview in the hero, the scroll-driven reel and the privacy monitor. No libraries.
 - `assets/img/*.webp`: screenshots cropped from `docs/assets/screenshots/` (caption bar removed). Re-crop with `magick <shot>.jpg -crop 1760x880+80+122 +repage -resize 1600x -quality 84 <name>.webp`.

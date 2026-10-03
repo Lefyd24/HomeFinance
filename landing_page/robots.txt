@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://lefyd24.github.io/PersonalFinance/sitemap.xml
+Sitemap: https://lefyd24.github.io/HomeFinance/sitemap.xml

@@ -5,10 +5,10 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Home Finance: self-hosted household budget app</title>
 <meta name="description" content="Accounts, budgets, debts, goals, bank sync, investments and an AI advisor in one self-hosted app. One Docker container, one SQLite file, no subscription.">
-<link rel="canonical" href="https://lefyd24.github.io/PersonalFinance/">
-<link rel="alternate" hreflang="en" href="https://lefyd24.github.io/PersonalFinance/">
-<link rel="alternate" hreflang="el" href="https://lefyd24.github.io/PersonalFinance/?lang=el">
-<link rel="alternate" hreflang="x-default" href="https://lefyd24.github.io/PersonalFinance/">
+<link rel="canonical" href="https://lefyd24.github.io/HomeFinance/">
+<link rel="alternate" hreflang="en" href="https://lefyd24.github.io/HomeFinance/">
+<link rel="alternate" hreflang="el" href="https://lefyd24.github.io/HomeFinance/?lang=el">
+<link rel="alternate" hreflang="x-default" href="https://lefyd24.github.io/HomeFinance/">
 <meta name="theme-color" content="#f6f8fb" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0d1320" media="(prefers-color-scheme: dark)">
 <link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
@@ -16,8 +16,8 @@
 <meta property="og:type" content="website">
 <meta property="og:title" content="Home Finance: your household budget, on your own server">
 <meta property="og:description" content="One Docker container. One SQLite file. No subscription, no third party reading your statements.">
-<meta property="og:url" content="https://lefyd24.github.io/PersonalFinance/">
-<meta property="og:image" content="https://lefyd24.github.io/PersonalFinance/assets/img/og.jpg">
+<meta property="og:url" content="https://lefyd24.github.io/HomeFinance/">
+<meta property="og:image" content="https://lefyd24.github.io/HomeFinance/assets/img/og.jpg">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="preload" href="assets/fonts/instrument-sans-latin-wdth-normal.woff2" as="font" type="font/woff2" crossorigin>
 <script>
@@ -25,7 +25,7 @@
 </script>
 <link rel="stylesheet" href="assets/styles.css">
 <script type="application/ld+json">
-{"@context":"https://schema.org","@type":"SoftwareApplication","name":"Home Finance","applicationCategory":"FinanceApplication","operatingSystem":"Linux, macOS, Windows (Docker)","description":"Self-hosted household budget app: accounts, budgets, debts, goals, bank sync, investments and an AI advisor.","url":"https://lefyd24.github.io/PersonalFinance/","codeRepository":"https://github.com/Lefyd24/PersonalFinance","license":"https://opensource.org/license/isc-license-txt","offers":{"@type":"Offer","price":"0","priceCurrency":"EUR"},"inLanguage":["en","el"]}
+{"@context":"https://schema.org","@type":"SoftwareApplication","name":"Home Finance","applicationCategory":"FinanceApplication","operatingSystem":"Linux, macOS, Windows (Docker)","description":"Self-hosted household budget app: accounts, budgets, debts, goals, bank sync, investments and an AI advisor.","url":"https://lefyd24.github.io/HomeFinance/","codeRepository":"https://github.com/Lefyd24/HomeFinance","license":"https://opensource.org/license/isc-license-txt","offers":{"@type":"Offer","price":"0","priceCurrency":"EUR"},"inLanguage":["en","el"]}
 </script>
 <script type="application/ld+json">
 {"@context":"https://schema.org","@type":"FAQPage","mainEntity":[
@@ -46,13 +46,13 @@
       <a href="#tour" data-i18n="nav.tour">Tour</a>
       <a href="#privacy" data-i18n="nav.privacy">Privacy</a>
       <a href="#install" data-i18n="nav.install">Install</a>
-      <a href="https://github.com/Lefyd24/PersonalFinance/blob/main/docs/README.md" data-i18n="nav.docs">Docs</a>
+      <a href="https://github.com/Lefyd24/HomeFinance/blob/main/docs/README.md" data-i18n="nav.docs">Docs</a>
     </nav>
     <div class="grow"></div>
     <div class="ctl">
       <button class="icon-btn" id="lang" type="button">EL</button>
       <button class="icon-btn" id="theme" type="button" aria-label="Toggle dark mode"></button>
-      <a class="icon-btn gh" href="https://github.com/Lefyd24/PersonalFinance">GitHub</a>
+      <a class="icon-btn gh" href="https://github.com/Lefyd24/HomeFinance">GitHub</a>
     </div>
   </div>
 </header>
@@ -184,7 +184,7 @@
     </div>
     <div class="priv-foot">
       <p data-i18n="pv.foot">Accounts, transactions, budgets, debts, goals, reports, rules and documents are always computed and stored locally.</p>
-      <a href="https://github.com/Lefyd24/PersonalFinance/blob/main/docs/security.md" data-i18n="pv.link">Security &amp; privacy docs →</a>
+      <a href="https://github.com/Lefyd24/HomeFinance/blob/main/docs/security.md" data-i18n="pv.link">Security &amp; privacy docs →</a>
     </div>
   </div>
 </section>
@@ -197,14 +197,14 @@
       <h2 data-i18n="is.h2">Five minutes to your own instance.</h2>
       <p class="lede" data-i18n="is.p">You need Docker with Compose and openssl. The prebuilt image runs on a PC, a home server or a Raspberry Pi.</p>
       <div class="inst-cta">
-        <a class="btn btn-ink" href="https://github.com/Lefyd24/PersonalFinance/blob/main/docs/getting-started.md" data-i18n="is.guide">Getting started guide</a>
-        <a class="btn btn-line" href="https://github.com/Lefyd24/PersonalFinance" data-i18n="is.gh">View on GitHub</a>
+        <a class="btn btn-ink" href="https://github.com/Lefyd24/HomeFinance/blob/main/docs/getting-started.md" data-i18n="is.guide">Getting started guide</a>
+        <a class="btn btn-line" href="https://github.com/Lefyd24/HomeFinance" data-i18n="is.gh">View on GitHub</a>
       </div>
     </div>
     <div class="term sl">
       <div class="term-bar"><i></i><i></i><i></i><button class="copy" type="button" id="copy" data-i18n="copy">Copy</button></div>
-<pre id="code"><span class="p">$</span> git clone https://github.com/Lefyd24/PersonalFinance.git
-<span class="p">$</span> cd PersonalFinance &amp;&amp; cp .env.example .env
+<pre id="code"><span class="p">$</span> git clone https://github.com/Lefyd24/HomeFinance.git
+<span class="p">$</span> cd HomeFinance &amp;&amp; cp .env.example .env
 <span class="c"># put two values from `openssl rand -hex 32` in .env</span>
 <span class="p">$</span> docker compose up -d
 <span class="p">$</span> docker compose run --rm -v "$PWD/scripts:/app/scripts:ro" \
@@ -237,10 +237,10 @@
   <div class="wrap foot">
     <a class="brand" href="#main"><img src="assets/img/logo.png" alt="" width="28" height="28">Home Finance</a>
     <nav aria-label="Footer">
-      <a href="https://github.com/Lefyd24/PersonalFinance/blob/main/docs/README.md" data-i18n="nav.docs">Docs</a>
-      <a href="https://github.com/Lefyd24/PersonalFinance/blob/main/docs/security.md" data-i18n="ft.sec">Security</a>
-      <a href="https://github.com/Lefyd24/PersonalFinance/releases" data-i18n="ft.rel">Releases</a>
-      <a href="https://github.com/Lefyd24/PersonalFinance/blob/main/LICENSE">ISC License</a>
+      <a href="https://github.com/Lefyd24/HomeFinance/blob/main/docs/README.md" data-i18n="nav.docs">Docs</a>
+      <a href="https://github.com/Lefyd24/HomeFinance/blob/main/docs/security.md" data-i18n="ft.sec">Security</a>
+      <a href="https://github.com/Lefyd24/HomeFinance/releases" data-i18n="ft.rel">Releases</a>
+      <a href="https://github.com/Lefyd24/HomeFinance/blob/main/LICENSE">ISC License</a>
     </nav>
     <small data-i18n="ft.small">Home Finance is a personal tool. Nothing in it, including the AI advisor, is financial, tax or legal advice. Screenshots and the preview above use demo data. This page makes no third-party requests.</small>
   </div>
