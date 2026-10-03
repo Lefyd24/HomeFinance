@@ -14,7 +14,7 @@ Day-two tasks: updating, backing up, restoring, reading logs and fixing common p
 
 ## Updating
 
-Releases are listed on the [Releases page](https://github.com/Lefyd24/PersonalFinance/releases) and in [`CHANGELOG.md`](../CHANGELOG.md). Each says whether it adds migrations or new settings.
+Releases are listed on the [Releases page](https://github.com/Lefyd24/HomeFinance/releases) and in [`CHANGELOG.md`](../CHANGELOG.md). Each says whether it adds migrations or new settings.
 
 ```bash
 # 1. Back up first (see below), then read the release notes

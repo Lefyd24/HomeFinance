@@ -15,8 +15,8 @@ One Docker container. One SQLite file. No subscription, no third party reading y
 
 <br>
 
-[![CI](https://github.com/Lefyd24/PersonalFinance/actions/workflows/ci.yml/badge.svg)](https://github.com/Lefyd24/PersonalFinance/actions/workflows/ci.yml)
-[![Release](https://img.shields.io/github/v/release/Lefyd24/PersonalFinance?style=flat-square&color=1e3a5f)](https://github.com/Lefyd24/PersonalFinance/releases)
+[![CI](https://github.com/Lefyd24/HomeFinance/actions/workflows/ci.yml/badge.svg)](https://github.com/Lefyd24/HomeFinance/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/Lefyd24/HomeFinance?style=flat-square&color=1e3a5f)](https://github.com/Lefyd24/HomeFinance/releases)
 [![Self-hosted](https://img.shields.io/badge/self--hosted-your%20data%2C%20your%20server-1e3a5f?style=flat-square)](docs/security.md)
 [![Docker](https://img.shields.io/badge/docker-single%20image-2496ED?style=flat-square&logo=docker&logoColor=white)](docs/getting-started.md)
 [![FastAPI](https://img.shields.io/badge/FastAPI-009688?style=flat-square&logo=fastapi&logoColor=white)](docs/development.md)
@@ -24,7 +24,7 @@ One Docker container. One SQLite file. No subscription, no third party reading y
 [![SQLite](https://img.shields.io/badge/SQLite-003B57?style=flat-square&logo=sqlite&logoColor=white)](docs/operations.md)
 [![License: ISC](https://img.shields.io/badge/license-ISC-blue?style=flat-square)](LICENSE)
 
-[**Get started**](docs/getting-started.md) &nbsp;·&nbsp; [**Watch the demo**](promo/hf_marketing.mp4) &nbsp;·&nbsp; [**Documentation**](docs/README.md) &nbsp;·&nbsp; [**Security & privacy**](docs/security.md)
+[**Website**](https://lefyd24.github.io/HomeFinance/) &nbsp;·&nbsp; [**Get started**](docs/getting-started.md) &nbsp;·&nbsp; [**Watch the demo**](promo/hf_marketing.mp4) &nbsp;·&nbsp; [**Documentation**](docs/README.md) &nbsp;·&nbsp; [**Security & privacy**](docs/security.md)
 
 </div>
 
@@ -140,8 +140,8 @@ It's off until you add an API key. → [AI advisor guide](docs/ai-advisor.md)
 You need Docker with Compose, and `openssl`. The prebuilt image supports **amd64 and arm64**, so it runs on a PC, a server or a Raspberry Pi.
 
 ```bash
-git clone https://github.com/Lefyd24/PersonalFinance.git
-cd PersonalFinance
+git clone https://github.com/Lefyd24/HomeFinance.git
+cd HomeFinance
 cp .env.example .env
 ```
 
@@ -170,7 +170,7 @@ Open **http://localhost:8223** and sign in. Then invite your household from **Ad
 
 That's it. Your data is in `./data`. The full walkthrough is in [Getting started](docs/getting-started.md).
 
-**Updating:** read the [release notes](https://github.com/Lefyd24/PersonalFinance/releases), back up, then `docker compose pull && docker compose up -d`. Pin a version with `PF_IMAGE_TAG=1.0.0` in `.env`. Details in [Operations](docs/operations.md#updating). Prefer building from source? Use `docker compose up --build -d`.
+**Updating:** read the [release notes](https://github.com/Lefyd24/HomeFinance/releases), back up, then `docker compose pull && docker compose up -d`. Pin a version with `PF_IMAGE_TAG=1.0.0` in `.env`. Details in [Operations](docs/operations.md#updating). Prefer building from source? Use `docker compose up --build -d`.
 
 <br>
 

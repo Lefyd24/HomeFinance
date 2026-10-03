@@ -13,8 +13,8 @@ For running without Docker, see [Development](development.md).
 ## 1. Get the code and create your `.env`
 
 ```bash
-git clone https://github.com/Lefyd24/PersonalFinance.git
-cd PersonalFinance
+git clone https://github.com/Lefyd24/HomeFinance.git
+cd HomeFinance
 cp .env.example .env
 ```
 

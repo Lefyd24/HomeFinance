@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Monthly SQLite backup for PersonalFinance (see crontab: 1st of month 03:00).
+# Monthly SQLite backup for Home Finance (see crontab: 1st of month 03:00).
 #
 # Test like cron's minimal environment (script augments PATH for Linuxbrew etc.):
 #   env -i HOME="$HOME" PATH="/usr/bin:/bin" USER="$(id -un)" LOGNAME="$(id -un)" \

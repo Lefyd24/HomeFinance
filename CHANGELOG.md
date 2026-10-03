@@ -30,5 +30,5 @@ First public release.
 - The Privacy Policy and Terms pages read the operator's name, contact email and jurisdiction from the server instead of compiled-in values. **Action required:** set `LEGAL_OPERATOR_NAME`, `LEGAL_CONTACT_EMAIL` and `LEGAL_JURISDICTION` in `.env`. Until you do, those pages show a "not configured" notice. See [Configuration](docs/configuration.md#legal-pages).
 - `docker-compose.yml` now names the published image. `docker compose pull && docker compose up -d` updates without building.
 
-[Unreleased]: https://github.com/Lefyd24/PersonalFinance/compare/v1.0.0...HEAD
-[1.0.0]: https://github.com/Lefyd24/PersonalFinance/releases/tag/v1.0.0
+[Unreleased]: https://github.com/Lefyd24/HomeFinance/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/Lefyd24/HomeFinance/releases/tag/v1.0.0
