@@ -12,7 +12,7 @@
 # --platform=$BUILDPLATFORM: the bundle is static JS and identical on every CPU, so
 # build it natively on the CI runner. Under multi-arch builds the arm64 image would
 # otherwise run npm ci + tsc + vite under QEMU emulation, which takes 30+ minutes.
-FROM --platform=$BUILDPLATFORM node:22-alpine AS react-builder
+FROM --platform=$BUILDPLATFORM node:26-alpine AS react-builder
 
 WORKDIR /app/frontend/app
 
