@@ -1,7 +1,8 @@
-import { LegalLayout, Section } from './LegalLayout'
-import { legal } from './legalConfig'
+import { ContactEmail, LegalLayout, Section } from './LegalLayout'
+import { useLegal } from './legalConfig'
 
 export function TermsPage() {
+  const legal = useLegal()
   return (
     <LegalLayout
       title="Terms of Service"
@@ -17,10 +18,9 @@ export function TermsPage() {
 
       <Section heading="Who may use it">
         <p>
-          Accounts are created by invitation only. You must be at least 18, use the service only
-          for your own personal finances, keep your password confidential, and not attempt to
-          access anyone else&rsquo;s data. The operator may suspend or remove an account that is
-          misused.
+          Accounts are created by invitation only. You must be at least 18, use the service only for
+          your own personal finances, keep your password confidential, and not attempt to access
+          anyone else&rsquo;s data. The operator may suspend or remove an account that is misused.
         </p>
       </Section>
 
@@ -31,10 +31,10 @@ export function TermsPage() {
           bank grants — typically 90 days — after which you must reconnect.
         </p>
         <p>
-          Bank data is retrieved through Enable Banking, whose own terms apply to that
-          retrieval. Banks impose their own limits on how often accounts may be read, so
-          synchronisation is periodic rather than instant, and imported data may lag behind your
-          bank statement. <strong>Your bank&rsquo;s own records are always authoritative.</strong>
+          Bank data is retrieved through Enable Banking, whose own terms apply to that retrieval.
+          Banks impose their own limits on how often accounts may be read, so synchronisation is
+          periodic rather than instant, and imported data may lag behind your bank statement.{' '}
+          <strong>Your bank&rsquo;s own records are always authoritative.</strong>
         </p>
       </Section>
 
@@ -42,17 +42,17 @@ export function TermsPage() {
         <p>
           Any forecast, insight, budget suggestion or AI-generated response in this app is
           informational only. It is not financial, investment, tax or legal advice, it may be
-          inaccurate or incomplete, and it must not be relied on for decisions. Verify anything
-          that matters against your bank and a qualified professional.
+          inaccurate or incomplete, and it must not be relied on for decisions. Verify anything that
+          matters against your bank and a qualified professional.
         </p>
       </Section>
 
       <Section heading="Availability">
         <p>
-          This is a self-hosted application running on private infrastructure. There is no
-          uptime guarantee. It may be unavailable, be changed, or be discontinued at any time,
-          and features that depend on third parties — bank synchronisation in particular — may
-          stop working without notice.
+          This is a self-hosted application running on private infrastructure. There is no uptime
+          guarantee. It may be unavailable, be changed, or be discontinued at any time, and features
+          that depend on third parties — bank synchronisation in particular — may stop working
+          without notice.
         </p>
         <p>
           Keep your own records. Do not treat this app as your only copy of important financial
@@ -62,11 +62,11 @@ export function TermsPage() {
 
       <Section heading="No warranty and limited liability">
         <p>
-          The service is provided &ldquo;as is&rdquo;, without warranties of any kind, express
-          or implied. To the fullest extent permitted by law, the operator is not liable for any
-          loss arising from use of the service, including inaccurate data, lost data, or
-          decisions made on the basis of anything shown here. Nothing here limits liability that
-          cannot lawfully be limited.
+          The service is provided &ldquo;as is&rdquo;, without warranties of any kind, express or
+          implied. To the fullest extent permitted by law, the operator is not liable for any loss
+          arising from use of the service, including inaccurate data, lost data, or decisions made
+          on the basis of anything shown here. Nothing here limits liability that cannot lawfully be
+          limited.
         </p>
       </Section>
 
@@ -83,14 +83,8 @@ export function TermsPage() {
       <Section heading="Ending your use">
         <p>
           You may stop at any time: disconnect any linked banks and ask for your account to be
-          deleted at{' '}
-          <a
-            href={`mailto:${legal.contactEmail}`}
-            className="text-primary underline underline-offset-4"
-          >
-            {legal.contactEmail}
-          </a>
-          . The operator may also close the instance, with reasonable notice where possible.
+          deleted at <ContactEmail />. The operator may also close the instance, with reasonable
+          notice where possible.
         </p>
       </Section>
 
@@ -103,12 +97,7 @@ export function TermsPage() {
 
       <Section heading="Contact">
         <p>
-          <a
-            href={`mailto:${legal.contactEmail}`}
-            className="text-primary underline underline-offset-4"
-          >
-            {legal.contactEmail}
-          </a>
+          <ContactEmail />
         </p>
       </Section>
     </LegalLayout>

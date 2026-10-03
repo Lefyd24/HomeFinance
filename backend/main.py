@@ -23,6 +23,7 @@ from app.routers import (
     import_wizard,
     investments,
     investor_profile,
+    legal,
     notifications,
     recurring_expenses,
     reports,
@@ -213,6 +214,7 @@ app.include_router(trackers.router, prefix="/api")
 app.include_router(ai_chat.router, prefix="/api")
 app.include_router(ai_usage.router, prefix="/api")
 app.include_router(bank_sync.router, prefix="/api")
+app.include_router(legal.router, prefix="/api")
 
 
 class _SpaStaticFiles(StaticFiles):

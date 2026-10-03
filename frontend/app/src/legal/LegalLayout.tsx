@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 import { Link } from 'react-router-dom'
-import { legal, legalNeedsConfiguring } from './legalConfig'
+import { useLegal } from './legalConfig'
 
 /**
  * Shell for the two public legal pages.
@@ -19,6 +19,7 @@ export function LegalLayout({
   intro: string
   children: ReactNode
 }) {
+  const legal = useLegal()
   return (
     <div className="min-h-dvh bg-background">
       <div className="mx-auto w-full max-w-3xl px-4 py-10 sm:px-6 sm:py-14">
@@ -33,17 +34,16 @@ export function LegalLayout({
             {title}
           </h1>
           <p className="mt-2 text-muted-foreground">{intro}</p>
-          <p className="mt-3 text-sm text-muted-foreground">
-            Last updated {legal.lastUpdated}.
-          </p>
+          <p className="mt-3 text-sm text-muted-foreground">Last updated {legal.lastUpdated}.</p>
         </header>
 
-        {legalNeedsConfiguring() && (
+        {legal.loaded && !legal.configured && (
           <div className="mb-8 rounded-lg border border-destructive/40 bg-destructive/10 p-4 text-sm text-destructive">
-            <strong className="font-semibold">This page is not configured.</strong> Set the
-            operator name and contact email in{' '}
-            <code className="font-mono">src/legal/legalConfig.ts</code> before submitting these
-            URLs to Enable Banking.
+            <strong className="font-semibold">This page is not configured.</strong> Set{' '}
+            <code className="font-mono">LEGAL_OPERATOR_NAME</code> and{' '}
+            <code className="font-mono">LEGAL_CONTACT_EMAIL</code> in the server's{' '}
+            <code className="font-mono">.env</code> and restart before submitting these URLs to
+            Enable Banking.
           </div>
         )}
 
@@ -72,5 +72,16 @@ export function Section({ heading, children }: { heading: string; children: Reac
       </h2>
       {children}
     </section>
+  )
+}
+
+/** Mailto link to the operator's contact address, or plain words if none is configured yet. */
+export function ContactEmail() {
+  const { contactEmail } = useLegal()
+  if (!contactEmail) return <span>the instance operator</span>
+  return (
+    <a href={`mailto:${contactEmail}`} className="text-primary underline underline-offset-4">
+      {contactEmail}
+    </a>
   )
 }

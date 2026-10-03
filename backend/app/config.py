@@ -258,6 +258,15 @@ class Settings(BaseSettings):
     # is_admin=True at startup (see main.py lifespan). Does not create users.
     ADMIN_EMAILS: list[str] = Field(default_factory=list)
 
+    # Operator identity shown on the public Privacy Policy and Terms pages
+    # (served unauthenticated at GET /api/legal). Enable Banking requires these
+    # pages, and end users read them to decide whether to trust the instance, so
+    # each operator must set their own. Unset = the pages show a "not
+    # configured" notice. Never hardcode a person here: this is a public repo.
+    LEGAL_OPERATOR_NAME: str | None = None
+    LEGAL_CONTACT_EMAIL: str | None = None
+    LEGAL_JURISDICTION: str | None = None
+
     # Absolute base URL used to build links in transactional emails (password
     # reset, email verification). Falls back to the incoming request's own
     # origin when unset — set this explicitly for a stable public URL (e.g.
