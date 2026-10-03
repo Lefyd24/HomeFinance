@@ -4,7 +4,7 @@ services:
     # workflow. `docker compose pull` fetches it; pin a release with
     # PF_IMAGE_TAG=1.0.0 in .env. `docker compose up --build` builds from this
     # checkout instead and tags the result with the same name.
-    image: ghcr.io/lefyd24/personalfinance:${PF_IMAGE_TAG:-latest}
+    image: ghcr.io/lefyd24/homefinance:${PF_IMAGE_TAG:-latest}
     build:
       context: .
       dockerfile: Dockerfile
