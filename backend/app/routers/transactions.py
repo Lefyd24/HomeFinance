@@ -140,9 +140,6 @@ def get_transactions(
 
     # Get paginated results
     transactions = query.offset(skip).limit(per_page).all()
-    print(
-        f"Fetched {len(transactions)} transactions (total: {total}) for user {current_user.id}"
-    )
     # Enhance with account, category, and debt payment info
     result = [_serialize_transaction(db, tx) for tx in transactions]
 

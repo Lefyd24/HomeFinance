@@ -98,7 +98,7 @@ def decode_token(token: str) -> dict | None:
         return None
 
 
-def _token_issued_before_session_invalidation(payload: dict, user: User) -> bool:
+def token_issued_before_session_invalidation(payload: dict, user: User) -> bool:
     """True if this token was issued before the user's last password reset/change.
 
     `sessions_valid_from` is bumped to "now" on password reset and password
@@ -113,37 +113,46 @@ def _token_issued_before_session_invalidation(payload: dict, user: User) -> bool
     issued_at = datetime.fromtimestamp(iat, tz=UTC)
     if valid_from.tzinfo is None:
         valid_from = valid_from.replace(tzinfo=UTC)
-    return issued_at < valid_from
+    # JWT iat is whole seconds; without truncating, a token issued in the same
+    # second as the reset (e.g. the login right after it) would be rejected.
+    return issued_at < valid_from.replace(microsecond=0)
+
+
+def user_from_access_token(token: str | None, db: Session) -> User | None:
+    """Resolve the user for an access JWT, or None if it must be rejected.
+
+    Single place for every check an access token has to pass: signature and
+    expiry, ``type == "access"`` (a refresh token is longer-lived and must only
+    ever be accepted by /auth/refresh), an active user, and not issued before
+    the user's last password reset/change.
+    """
+    if not token:
+        return None
+    payload = decode_token(token)
+    if payload is None or payload.get("type") != "access":
+        return None
+    user_id = payload.get("sub")
+    if user_id is None:
+        return None
+    user = db.query(User).filter(User.id == int(user_id)).first()
+    if user is None or not user.is_active:
+        return None
+    if token_issued_before_session_invalidation(payload, user):
+        return None
+    return user
 
 
 async def get_current_user(
     token: str | None = Depends(oauth2_scheme), db: Session = Depends(get_db)
 ) -> User:
     """Get current authenticated user via JWT token."""
-    credentials_exception = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate credentials",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
-
-    if not token:
-        raise credentials_exception
-
-    payload = decode_token(token)
-    if payload is None:
-        raise credentials_exception
-
-    user_id: str = payload.get("sub")
-    if user_id is None:
-        raise credentials_exception
-
-    user = db.query(User).filter(User.id == int(user_id)).first()
-    if user is None or not user.is_active:
-        raise credentials_exception
-
-    if _token_issued_before_session_invalidation(payload, user):
-        raise credentials_exception
-
+    user = user_from_access_token(token, db)
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Could not validate credentials",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
     return user
 
 
@@ -193,24 +202,9 @@ async def get_current_user_authenticated(
             return user
 
     # Fall back to JWT token
-    if not token:
+    user = user_from_access_token(token, db)
+    if user is None:
         raise credentials_exception
-
-    payload = decode_token(token)
-    if payload is None:
-        raise credentials_exception
-
-    user_id: str = payload.get("sub")
-    if user_id is None:
-        raise credentials_exception
-
-    user = db.query(User).filter(User.id == int(user_id)).first()
-    if user is None or not user.is_active:
-        raise credentials_exception
-
-    if _token_issued_before_session_invalidation(payload, user):
-        raise credentials_exception
-
     return user
 
 

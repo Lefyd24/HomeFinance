@@ -6,7 +6,7 @@ For maintainers. Pushing a version tag publishes a multi-arch Docker image to Gi
 
 | Output | Where |
 |---|---|
-| Image `ghcr.io/lefyd24/personalfinance:1.2.0` | GitHub Packages. Built for `linux/amd64` and `linux/arm64`. |
+| Image `ghcr.io/lefyd24/homefinance:1.2.0` | GitHub Packages. Built for `linux/amd64` and `linux/arm64`. |
 | Moving tags `1.2` and `latest` | Same package. `latest` is only moved by stable releases, never by pre-releases. |
 | GitHub Release with notes | The matching section of `CHANGELOG.md` plus GitHub's generated notes, and a `docker pull` line. Tags containing `-` (for example `v1.3.0-rc1`) are marked as pre-releases. |
 
