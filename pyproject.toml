@@ -1,7 +1,7 @@
 [project]
 name = "personalfinance"
-version = "0.1.0"
-description = "Add your description here"
+version = "1.0.0"
+description = "Self-hosted household finance: accounts, budgets, debts, goals, bank sync, investments and an AI advisor."
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [

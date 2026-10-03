@@ -35,7 +35,14 @@ Edit `.env`:
 SECRET_KEY=<first key>
 NOTIFICATION_ENCRYPTION_KEY=<second key>
 DEBUG=false
+
+# Shown on the public Privacy and Terms pages (required by Enable Banking)
+LEGAL_OPERATOR_NAME=Your Name
+LEGAL_CONTACT_EMAIL=you@example.com
+LEGAL_JURISDICTION=Your Country
 ```
+
+The legal details are not required to run the app, but until they are set the Privacy and Terms pages show a "not configured" notice. See [Configuration](configuration.md#legal-pages).
 
 The app **refuses to start** in production mode (`DEBUG=false`) when:
 
@@ -51,8 +58,10 @@ Registration needs an invite code, and only admins can create invite codes. A br
 Start the stack once so the database and its schema exist:
 
 ```bash
-docker compose up --build -d
+docker compose up -d
 ```
+
+This pulls the prebuilt image from GitHub Container Registry (amd64 and arm64). To build from your checkout instead, for example to run local changes, use `docker compose up --build -d`.
 
 Then create the admin. The image does not include `scripts/`, so mount it for this one command:
 
@@ -102,7 +111,9 @@ Then create [categorization rules](user-guide.md#categorization-rules) so new tr
 
 | Command | Effect |
 |---|---|
-| `docker compose up --build -d` | Build and start in the background |
+| `docker compose up -d` | Start in the background (pulls the image if needed) |
+| `docker compose pull && docker compose up -d` | Update to the newest published image |
+| `docker compose up --build -d` | Build from this checkout and start |
 | `docker compose logs -f app` | Follow logs |
 | `docker compose restart app` | Restart (re-reads `.env`) |
 | `docker compose down` | Stop (data is kept in `./data`) |

@@ -51,7 +51,7 @@ Everything else is local. If you don't enable a feature, nothing is sent.
 - [ ] `BIND_ADDRESS=127.0.0.1` with `TRUST_PROXY_HEADERS=true` (or LAN bind with trust off)
 - [ ] Strong, unique passwords for every user
 - [ ] Regular, tested backups of `data/`, `.env` and `secrets/`
-- [ ] Keep the image updated: `git pull && docker compose up --build -d`
+- [ ] Keep the image updated: `docker compose pull && docker compose up -d` (see [Operations](operations.md#updating))
 - [ ] Use read-only API keys at your broker
 - [ ] Set `AI_MONTHLY_CAP_USD` if you enable the AI chat
 

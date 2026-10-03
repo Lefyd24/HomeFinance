@@ -28,6 +28,7 @@ Everything you need to install, run, operate and extend **Home Finance**. If you
 |---|---|
 | [Security and privacy](security.md) | The security model and exactly what data leaves your server |
 | [Development](development.md) | Architecture, local setup, tests, conventions |
+| [Releasing](releasing.md) | For maintainers: cutting a release and publishing the image |
 
 ## Quick answers
 

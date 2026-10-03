@@ -1,5 +1,10 @@
 services:
   app:
+    # Prebuilt multi-arch image (amd64 + arm64) published by the release
+    # workflow. `docker compose pull` fetches it; pin a release with
+    # PF_IMAGE_TAG=1.0.0 in .env. `docker compose up --build` builds from this
+    # checkout instead and tags the result with the same name.
+    image: ghcr.io/lefyd24/personalfinance:${PF_IMAGE_TAG:-latest}
     build:
       context: .
       dockerfile: Dockerfile

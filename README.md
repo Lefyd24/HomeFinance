@@ -15,12 +15,14 @@ One Docker container. One SQLite file. No subscription, no third party reading y
 
 <br>
 
+[![CI](https://github.com/Lefyd24/PersonalFinance/actions/workflows/ci.yml/badge.svg)](https://github.com/Lefyd24/PersonalFinance/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/Lefyd24/PersonalFinance?style=flat-square&color=1e3a5f)](https://github.com/Lefyd24/PersonalFinance/releases)
 [![Self-hosted](https://img.shields.io/badge/self--hosted-your%20data%2C%20your%20server-1e3a5f?style=flat-square)](docs/security.md)
 [![Docker](https://img.shields.io/badge/docker-single%20image-2496ED?style=flat-square&logo=docker&logoColor=white)](docs/getting-started.md)
 [![FastAPI](https://img.shields.io/badge/FastAPI-009688?style=flat-square&logo=fastapi&logoColor=white)](docs/development.md)
 [![React 19](https://img.shields.io/badge/React-19-61DAFB?style=flat-square&logo=react&logoColor=black)](docs/development.md)
 [![SQLite](https://img.shields.io/badge/SQLite-003B57?style=flat-square&logo=sqlite&logoColor=white)](docs/operations.md)
-[![License: ISC](https://img.shields.io/badge/license-ISC-blue?style=flat-square)](#license)
+[![License: ISC](https://img.shields.io/badge/license-ISC-blue?style=flat-square)](LICENSE)
 
 [**Get started**](docs/getting-started.md) &nbsp;·&nbsp; [**Watch the demo**](promo/hf_marketing.mp4) &nbsp;·&nbsp; [**Documentation**](docs/README.md) &nbsp;·&nbsp; [**Security & privacy**](docs/security.md)
 
@@ -30,7 +32,7 @@ One Docker container. One SQLite file. No subscription, no third party reading y
 
 ## Why Home Finance?
 
-Most finance apps want your bank login, a monthly fee and a copy of your data. Home Finance is built the other way round: it's a normal web app you open from your phone or laptop, but the data lives in a **plain SQLite file on a machine you control**.
+Most finance apps want your bank login, a monthly fee and a copy of your data. Home Finance is built the other way round: it's a normal progressive web app (PWA) you open from your phone or laptop, but the data lives in a **plain SQLite file on a machine you control**.
 
 - 🏠 **Built for a household.** Several people, separate logins and separate data, invite-only registration.
 - 🔒 **Private by default.** Nothing phones home. Every outside connection is optional and documented line by line in [Security & privacy](docs/security.md).
@@ -113,7 +115,7 @@ Most finance apps want your bank login, a monthly fee and a copy of your data. H
 | | |
 |---|---|
 | **Bank sync** | Link European banks through [Enable Banking](https://enablebanking.com) (PSD2, read-only). Nightly sync, de-duplication, automatic categorization and consent-expiry reminders. → [Setup guide](docs/bank-sync.md) |
-| **Investments** | Sync **Freedom24** and **Binance**. Portfolio analytics, ticker comparison, backtesting, technical analysis and company research. → [Guide](docs/investments.md) |
+| **Investments** | Sync **Freedom24** and **Binance** (more are coming!). Portfolio analytics, ticker comparison, backtesting, technical analysis and company research. → [Guide](docs/investments.md) |
 | **Notifications** | Email and desktop push for bills, low balances and budget thresholds, with quiet hours and de-duplication. → [Guide](docs/notifications.md) |
 | **Trackers** | Follow spending on a project like a trip or a renovation, across accounts and categories. |
 
@@ -135,7 +137,7 @@ It's off until you add an API key. → [AI advisor guide](docs/ai-advisor.md)
 
 ## Quick start
 
-You need Docker with Compose, and `openssl`.
+You need Docker with Compose, and `openssl`. The prebuilt image supports **amd64 and arm64**, so it runs on a PC, a server or a Raspberry Pi.
 
 ```bash
 git clone https://github.com/Lefyd24/PersonalFinance.git
@@ -148,12 +150,17 @@ Generate two secrets (`openssl rand -hex 32`, twice) and put them in `.env`:
 ```dotenv
 SECRET_KEY=<first value>
 NOTIFICATION_ENCRYPTION_KEY=<second value>
+
+# Shown on the public Privacy and Terms pages
+LEGAL_OPERATOR_NAME=Your Name
+LEGAL_CONTACT_EMAIL=you@example.com
+LEGAL_JURISDICTION=Your Country
 ```
 
 Start it and create your admin account:
 
 ```bash
-docker compose up --build -d
+docker compose up -d        # pulls the prebuilt image from ghcr.io
 
 docker compose run --rm -v "$PWD/scripts:/app/scripts:ro" \
   app python /app/scripts/create_admin.py you@example.com 'a-strong-password' "Your Name"
@@ -162,6 +169,8 @@ docker compose run --rm -v "$PWD/scripts:/app/scripts:ro" \
 Open **http://localhost:8223** and sign in. Then invite your household from **Admin → Invite Codes**.
 
 That's it. Your data is in `./data`. The full walkthrough is in [Getting started](docs/getting-started.md).
+
+**Updating:** read the [release notes](https://github.com/Lefyd24/PersonalFinance/releases), back up, then `docker compose pull && docker compose up -d`. Pin a version with `PF_IMAGE_TAG=1.0.0` in `.env`. Details in [Operations](docs/operations.md#updating). Prefer building from source? Use `docker compose up --build -d`.
 
 <br>
 
@@ -191,6 +200,7 @@ The app listens on `127.0.0.1:8223` by default and has no TLS of its own, so you
 | 🔔 **[Notifications](docs/notifications.md)** | SMTP email and Web Push |
 | 🔐 **[Security & privacy](docs/security.md)** | The security model and what leaves your server |
 | 👩‍💻 **[Development](docs/development.md)** | Architecture, local setup, tests, contributing |
+| 🏷 **[Releasing](docs/releasing.md)** · **[Changelog](CHANGELOG.md)** | How versions are published, and what changed in each |
 
 Interactive API docs are served at `/docs` on your running instance.
 
@@ -226,13 +236,13 @@ The only things that leave your server are the integrations you switch on yourse
 
 ## Contributing
 
-Issues and pull requests are welcome. Start with [Development](docs/development.md) for the architecture, local setup and test commands. Please run `uv run pytest backend/tests` and `npm run test && npm run build` in `frontend/app` before opening a pull request.
+Issues and pull requests are welcome. Start with [Development](docs/development.md) for the architecture, local setup and test commands. CI runs the backend and frontend tests and a Docker build on every pull request. Please run `DEBUG=true uv run pytest backend/tests` and `npm run test && npm run build` in `frontend/app` first.
 
 Found a security problem? Please don't open a public issue. See [Security & privacy](docs/security.md#reporting-a-vulnerability).
 
 ## License
 
-Released under the **ISC License**.
+Released under the [ISC License](LICENSE).
 
 <br>
 

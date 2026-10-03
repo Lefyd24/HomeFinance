@@ -1,0 +1,63 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    name: Backend tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+      - run: uv sync --group dev --locked
+      - name: pytest
+        # DEBUG=true skips the production-only startup checks (SECRET_KEY etc.);
+        # there is no .env in CI.
+        env:
+          DEBUG: "true"
+        run: uv run pytest backend/tests -q
+
+  frontend:
+    name: Frontend typecheck, tests and build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend/app
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/app/package-lock.json
+      - run: npm ci
+      - name: Lint
+        # Non-blocking for now: a handful of long-standing React-compiler rule
+        # errors exist in older components. Remove continue-on-error once fixed.
+        continue-on-error: true
+        run: npm run lint
+      - run: npm run test
+      - name: Typecheck and build
+        run: npm run build
+
+  docker:
+    name: Docker image builds
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: false
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

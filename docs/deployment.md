@@ -50,7 +50,7 @@ Funnel gives you a public HTTPS URL on your `*.ts.net` domain without opening ro
 
 ```bash
 # 1. Start the app (loopback bind is the default)
-docker compose up --build -d
+docker compose up -d
 
 # 2. Publish it
 tailscale funnel --bg 8223        # public internet
@@ -87,7 +87,7 @@ Run the proxy on the same host as Docker, keep `BIND_ADDRESS=127.0.0.1` and `TRU
 
 ## Running at boot with systemd
 
-Compose already restarts the container (`restart: unless-stopped`) whenever the Docker daemon starts, so on most systems `systemctl enable docker` is enough. If you prefer a unit that rebuilds from source on start, use this template.
+Compose already restarts the container (`restart: unless-stopped`) whenever the Docker daemon starts, so on most systems `systemctl enable docker` is enough. If you prefer a unit that brings the stack up and down explicitly, use this template.
 
 Save as `/etc/systemd/system/personal-finance.service`, replacing the two placeholders:
 
@@ -102,9 +102,9 @@ Type=oneshot
 RemainAfterExit=yes
 WorkingDirectory=/opt/personalfinance
 User=YOUR_USER
-ExecStart=/usr/bin/docker compose up --build -d
+ExecStart=/usr/bin/docker compose up -d
 ExecStop=/usr/bin/docker compose down
-ExecReload=/usr/bin/docker compose up --build -d
+ExecReload=/bin/sh -c '/usr/bin/docker compose pull && /usr/bin/docker compose up -d'
 StandardOutput=journal
 StandardError=journal
 
@@ -119,9 +119,9 @@ sudo systemctl status personal-finance.service   # "active (exited)" is normal f
 journalctl -u personal-finance.service -f
 ```
 
-- `systemctl restart` rebuilds and restarts. `stop` runs `docker compose down`, and your `./data` folder is untouched.
+- `systemctl reload` pulls the newest image and restarts the stack, which is the update step (back up first). `stop` runs `docker compose down`, and your `./data` folder is untouched.
 - `YOUR_USER` must be in the `docker` group: `sudo usermod -aG docker YOUR_USER`, then log in again.
-- Rebuilding on every boot is slow when offline. Drop `--build` from `ExecStart` if you update manually.
+- Building from source instead of using the published image? Add `--build` to `ExecStart`, but note that it makes every boot slow and needs network access.
 - If you see `docker-credential-desktop` errors on a headless server, set `~/.docker/config.json` to `{"auths": {}}`.
 
 ## Exposing on the LAN instead

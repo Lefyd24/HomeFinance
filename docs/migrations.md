@@ -39,8 +39,8 @@ The database URL comes from `DATABASE_URL`, falling back to the application sett
 
 1. Stop the app: `docker compose down`.
 2. Restore the pre-update backup over `data/finance.db` (see [Restoring](operations.md#restoring)).
-3. Check out the previous version: `git checkout <previous-tag-or-commit>`.
-4. `docker compose up --build -d`.
+3. Go back to the previous version. With the published image, set `PF_IMAGE_TAG=<previous version>` in `.env` and run `docker compose pull`. When building from source, check out the previous tag with `git checkout <tag>` instead.
+4. `docker compose up -d` (add `--build` when building from source).
 
 Restoring a backup is safer than `alembic downgrade`, because downgrades can drop data that the newer schema stored.
 

@@ -78,7 +78,9 @@ cd frontend/app && npm run lint && npm run build       # lint, then typecheck + 
 
 - Backend tests use an in-memory SQLite database per test (`backend/tests/conftest.py`) and model factories in `backend/tests/factories.py`. `conftest.py` forces `DATABASE_URL=sqlite://` and `INVESTMENT_SYNC_ENABLED=false` before any app import. Keep that ordering if you touch fixtures.
 - Frontend tests sit next to the code (`*.test.tsx`). Vitest is configured with `pool: 'forks'`, a single worker and no file parallelism in `vite.config.ts`. Check why before changing that.
-- There is no CI pipeline yet. Please run both suites and `npm run build` before opening a pull request.
+- CI (`.github/workflows/ci.yml`) runs the backend tests, the frontend tests, the typecheck and build, and a Docker build on every push and pull request. Please run the suites locally first. Lint is currently non-blocking in CI while a few long-standing React-compiler rule errors in older components are cleaned up.
+- Backend tests need `DEBUG=true` in the environment when there is no `.env`: `DEBUG=true uv run pytest backend/tests -q`.
+- On Node 25 or newer, jsdom's `localStorage` is shadowed by Node's own and many frontend tests fail. Run them with `NODE_OPTIONS=--no-webstorage npm run test`, or use Node 22 as CI does.
 
 ## Conventions
 
@@ -88,6 +90,10 @@ cd frontend/app && npm run lint && npm run build       # lint, then typecheck + 
 - **Migrations**: any model change needs an Alembic revision. See [Migrations](migrations.md#creating-a-migration-developers).
 - **Translations**: add keys to both `src/locales/en` and `src/locales/el`.
 - **Design**: calm, precise and unshowy. Tabular numerals for money, thin rules, restrained colour. Avoid generic chatbot styling.
+
+## Releases
+
+Maintainers publish versions by tagging. See [Releasing](releasing.md).
 
 ## Building the image
 

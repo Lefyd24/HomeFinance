@@ -29,11 +29,24 @@ With `DEBUG=true` these checks only log warnings. Never use `DEBUG=true` in prod
 | `BACKEND_PORT` | `8223` | The single port serving both UI and API. |
 | `BIND_ADDRESS` | `127.0.0.1` | Compose only. Host interface the port is published on. |
 | `BIND_HOST` | `127.0.0.1` | Interface for `python main.py` outside Docker. |
+| `PF_IMAGE_TAG` | `latest` | Compose only. Which published image to run, for example `1.0.0` to pin a release. See [Operations](operations.md#updating). |
 | `CORS_ORIGINS` | `[]` | Leave empty for same-origin deployment, which is the default. `["*"]` disables credentials. |
 | `TRUST_PROXY_HEADERS` | `false` (template: `true`) | Trust `X-Forwarded-For` for the client IP. Only safe when the port is reachable solely through your local proxy. See [Deployment](deployment.md#trusting-proxy-headers). |
 | `PUBLIC_BASE_URL` | unset | Public origin used in verification and reset emails, for example `https://finance.your-tailnet.ts.net`. Falls back to the request origin. |
 | `FRONTEND_BASE_URL` | unset | Where the browser lands after a bank callback. Falls back to `PUBLIC_BASE_URL`. Set to `http://localhost:5173` only in Vite dev. |
 | `ADMIN_EMAILS` | `[]` | JSON list. Existing users with these emails are promoted to admin at startup. Never creates accounts. |
+
+## Legal pages
+
+The public Privacy Policy (`/privacy`) and Terms (`/terms`) pages show who operates the instance. Enable Banking requires these pages when you register a production application, and the people you invite read them. The values are served from `GET /api/legal` (no login needed), so they are **not** compiled into the image. Set your own.
+
+| Variable | Default | Notes |
+|---|---|---|
+| `LEGAL_OPERATOR_NAME` | unset | Who runs this instance. A personal name is fine for a household. |
+| `LEGAL_CONTACT_EMAIL` | unset | Data-protection contact. Use a mailbox you read, because Enable Banking asks for it and users write to it. |
+| `LEGAL_JURISDICTION` | unset | Country whose law governs the Terms, usually where you live. |
+
+Until the name and email are set, both pages show a "not configured" notice. A restart applies changes.
 
 ## Rate limiting
 

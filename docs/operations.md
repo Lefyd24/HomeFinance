@@ -14,17 +14,29 @@ Day-two tasks: updating, backing up, restoring, reading logs and fixing common p
 
 ## Updating
 
+Releases are listed on the [Releases page](https://github.com/Lefyd24/PersonalFinance/releases) and in [`CHANGELOG.md`](../CHANGELOG.md). Each says whether it adds migrations or new settings.
+
 ```bash
-# 1. Back up first (see below)
-git pull
-# 2. Check for new settings
+# 1. Back up first (see below), then read the release notes
+# 2. Update the code so docker-compose.yml and .env.example are current
+git pull            # or: git fetch --tags && git checkout v1.1.0
+# 3. Check for new settings
 diff <(grep -o '^[A-Z_]*=' .env.example | sort) <(grep -o '^[A-Z_]*=' .env | sort)
-# 3. Rebuild and restart. Migrations apply automatically.
-docker compose up --build -d
+# 4. Pull the new image and restart. Migrations apply automatically.
+docker compose pull
+docker compose up -d
 docker compose logs -f app
 ```
 
-Check `/health` afterwards. Under systemd, `sudo systemctl restart personal-finance.service` does the same. For how migrations behave and how to roll back, see [Migrations](migrations.md).
+To **pin a version** instead of following `latest`, set it in `.env` and the same commands apply:
+
+```dotenv
+PF_IMAGE_TAG=1.0.0
+```
+
+Available tags are the exact version (`1.0.0`), the minor line (`1.0`, which receives patch releases) and `latest` (the newest stable release). Pre-releases such as `1.1.0-rc1` are only available by exact tag.
+
+Building from source instead? Use `docker compose up --build -d`. Check `/health` afterwards. Under systemd, `sudo systemctl reload personal-finance.service` does the pull and restart. For how migrations behave and how to roll back, see [Migrations](migrations.md).
 
 ## Backups
 
