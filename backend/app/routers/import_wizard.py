@@ -1,9 +1,10 @@
 import logging
 from datetime import datetime
 
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
+from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
 from sqlalchemy.orm import Session
 
+from app.config import settings
 from app.database import get_db
 from app.models import Account, Category, ImportBatch, Transaction, User
 from app.schemas import (
@@ -11,8 +12,9 @@ from app.schemas import (
     ImportConfirmRequest,
     ImportPreviewResponse,
 )
+from app.services import import_service, rule_service
 from app.utils import linked_accounts
-from app.utils.file_parsers import parse_bank_file
+from app.utils.file_parsers import DATE_ORDERS, parse_bank_file
 from app.utils.security import get_current_user
 
 logger = logging.getLogger("app")
@@ -23,6 +25,12 @@ router = APIRouter(prefix="/import", tags=["Import"])
 @router.post("/upload")
 def upload_file(
     file: UploadFile | None = File(None),
+    date_format: str = Form(...),
+    date_column: str | None = Form(None),
+    description_column: str | None = Form(None),
+    amount_column: str | None = Form(None),
+    debit_column: str | None = Form(None),
+    credit_column: str | None = Form(None),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
@@ -39,6 +47,12 @@ def upload_file(
     if not file.filename:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="File has no filename"
+        )
+
+    if date_format not in DATE_ORDERS:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Choose a date format: day first, month first or year first.",
         )
 
     logger.info(
@@ -63,6 +77,13 @@ def upload_file(
             detail="Unsupported file type. Please upload CSV or Excel files (.csv, .xlsx, .xls)",
         )
 
+    content = file.file.read(settings.MAX_UPLOAD_SIZE + 1)
+    if len(content) > settings.MAX_UPLOAD_SIZE:
+        raise HTTPException(
+            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            detail=f"The file is larger than {settings.MAX_UPLOAD_SIZE // (1024 * 1024)} MB.",
+        )
+
     # Create import batch record
     batch = ImportBatch(
         user_id=current_user.id,
@@ -77,42 +98,45 @@ def upload_file(
     db.refresh(batch)
 
     try:
-        # Read file content
-        content = file.file.read()
-
-        if not content:
-            raise ValueError("File is empty")
-
         logger.debug("File size: %d bytes", len(content))
 
         # Parse file
-        transactions = parse_bank_file(content, file_type)
+        result = parse_bank_file(
+            content,
+            file_type,
+            date_format,
+            columns={
+                "date": date_column,
+                "description": description_column,
+                "amount": amount_column,
+                "debit": debit_column,
+                "credit": credit_column,
+            },
+        )
 
-        logger.info("Parsed %d transactions from %s", len(transactions), file.filename)
+        logger.info("Parsed %d transactions from %s", len(result.transactions), file.filename)
 
-        # Serialize transactions for JSON storage
-        serialized_transactions = []
-        for tx in transactions:
-            serialized_tx = {
-                "date": tx["date"].isoformat()
-                if isinstance(tx.get("date"), datetime)
-                else str(tx.get("date", "")),
-                "description": tx.get("description", ""),
-                "amount": float(tx.get("amount", 0)),
-            }
-            serialized_transactions.append(serialized_tx)
-
-        # Update batch info
-        batch.total_rows = len(transactions)
+        batch.total_rows = len(result.transactions)
         batch.status = "pending"
-        batch.parsed_data = serialized_transactions
+        batch.parsed_data = [
+            {
+                "line": tx["line"],
+                "date": tx["date"].isoformat(),
+                "description": tx["description"],
+                "amount": tx["amount"],
+            }
+            for tx in result.transactions
+        ]
         db.commit()
 
         return {
             "batch_id": batch.id,
             "filename": batch.filename,
             "total_rows": batch.total_rows,
-            "message": "File uploaded successfully. Call /preview to review transactions.",
+            "skipped": [
+                {"line": s.line, "reason": s.reason, "value": s.value} for s in result.skipped
+            ],
+            "message": "File uploaded. Review the rows before importing.",
         }
 
     except ValueError as ve:
@@ -123,9 +147,9 @@ def upload_file(
         db.commit()
         logger.info("Validation error parsing file %s: %s", file.filename, ve)
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(ve))
-    except Exception as e:
+    except Exception:
         batch.status = "error"
-        batch.error_message = str(e)
+        batch.error_message = "Unexpected error while parsing"
         db.commit()
         logger.exception("Error parsing file %s", file.filename)
         raise HTTPException(
@@ -158,72 +182,67 @@ def get_supported_formats():
 @router.get("/preview/{batch_id}", response_model=ImportPreviewResponse)
 def preview_transactions(
     batch_id: int,
+    account_id: int | None = None,
+    invert_signs: bool = False,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    """Preview parsed transactions before import."""
+    """Parsed rows with suggested categories, flagged against `account_id` for duplicates."""
     batch = (
         db.query(ImportBatch)
         .filter(ImportBatch.id == batch_id, ImportBatch.user_id == current_user.id)
         .first()
     )
-
     if not batch:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Import batch not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Import batch not found")
 
-    from app.services import rule_service
+    rows = import_service.batch_rows(batch.parsed_data, invert_signs)
+
+    duplicate_ids: set[int] = set()
+    if account_id is not None:
+        account = (
+            db.query(Account)
+            .filter(Account.id == account_id, Account.user_id == current_user.id)
+            .first()
+        )
+        if not account:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Account not found")
+        duplicate_ids = import_service.find_duplicate_row_ids(db, current_user.id, account_id, rows)
 
     rules = rule_service.load_rules(db, current_user.id)
-    # Get parsed transactions from batch
     transactions = []
-    if batch.parsed_data:
-        for i, tx in enumerate(batch.parsed_data):
-            amount = abs(float(tx.get("amount") or 0))
-            tx_type = "income" if float(tx.get("amount") or 0) > 0 else "expense"
-            suggested = rule_service.categorise(
-                db,
-                current_user.id,
-                {
-                    "description": tx.get("description") or "",
-                    "amount": amount,
-                    "type": tx_type,
-                    "category_id": None,
-                },
-                rules=rules,
-                record_stats=False,
-            )
-            transactions.append(
-                {
-                    "id": i + 1,
-                    "date": tx.get("date", ""),
-                    "description": tx.get("description", ""),
-                    "amount": tx.get("amount", 0),
-                    "suggested_category": suggested,
-                    "is_duplicate": False,
-                    "category_id": suggested,
-                }
-            )
+    for row in rows:
+        suggested = rule_service.categorise(
+            db,
+            current_user.id,
+            {
+                "description": row["description"],
+                "amount": row["abs_amount"],
+                "type": row["type"],
+                "account_id": account_id,
+                "category_id": None,
+            },
+            rules=rules,
+            record_stats=False,
+        )
+        transactions.append(
+            {
+                "id": row["row_id"],
+                "line": row["line"],
+                "date": row["date"].isoformat(),
+                "description": row["description"],
+                "amount": row["amount"],
+                "type": row["type"],
+                "category_id": suggested,
+                "is_duplicate": row["row_id"] in duplicate_ids,
+            }
+        )
 
     return ImportPreviewResponse(
-        transactions=transactions, duplicates=[], total=len(transactions)
+        transactions=transactions,
+        duplicates=[t for t in transactions if t["is_duplicate"]],
+        total=len(transactions),
     )
-
-
-@router.post("/preview/{row_id}/update")
-def update_preview_row(
-    row_id: int,
-    description: str | None = None,
-    amount: float | None = None,
-    date: datetime | None = None,
-    category_id: int | None = None,
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db),
-):
-    """Update a preview row before import."""
-    # In a real implementation, update temporary preview data
-    return {"message": "Preview row updated"}
 
 
 @router.post("/preview/{batch_id}/categorize")
@@ -243,8 +262,6 @@ def auto_categorize_preview(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Import batch not found"
         )
-
-    from app.services import rule_service
 
     rules = rule_service.load_rules(db, current_user.id)
     assigned = 0
@@ -283,128 +300,100 @@ def confirm_import(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    """Confirm and import transactions."""
+    """Import the selected rows of a pending batch into an account, once."""
     batch = (
         db.query(ImportBatch)
-        .filter(
-            ImportBatch.id == request.batch_id, ImportBatch.user_id == current_user.id
-        )
+        .filter(ImportBatch.id == request.batch_id, ImportBatch.user_id == current_user.id)
         .first()
     )
-
     if not batch:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Import batch not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Import batch not found")
 
-    # Verify account belongs to user
     account = (
         db.query(Account)
         .filter(Account.id == request.account_id, Account.user_id == current_user.id)
         .first()
     )
-
     if not account:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Account not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Account not found")
 
     # A CSV import into a bank-linked account would double every row against
     # what the sync already pulled: file rows carry no external_id, so the dedup
     # index cannot see them as duplicates.
     linked_accounts.reject_if_linked(account, action="imported into")
 
-    imported_count = 0
-    imported_transactions = []
+    rows_by_id = {r["row_id"]: r for r in import_service.batch_rows(batch.parsed_data, request.invert_signs)}
+    selected: dict[int, int | None] = {}
+    for choice in request.rows:
+        if choice.row_id not in rows_by_id:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Row {choice.row_id} is not part of this upload.",
+            )
+        selected[choice.row_id] = choice.category_id
+
+    category_ids = {c for c in selected.values() if c is not None}
+    if category_ids:
+        owned = {
+            cid
+            for (cid,) in db.query(Category.id).filter(
+                Category.id.in_(category_ids), Category.user_id == current_user.id
+            )
+        }
+        if owned != category_ids:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Unknown category.")
+
+    # Claim the batch atomically. A double-click or retry races here: SQLite
+    # serialises the two UPDATEs, and the loser matches zero rows.
+    claimed = (
+        db.query(ImportBatch)
+        .filter(ImportBatch.id == batch.id, ImportBatch.status == "pending")
+        .update({"status": "importing"}, synchronize_session=False)
+    )
+    if not claimed:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="This file has already been imported."
+            if batch.status == "completed"
+            else "This upload can no longer be imported. Upload the file again.",
+        )
 
     try:
-        for tx_data in request.transactions:
-            # Determine transaction type based on amount
-            amount = abs(tx_data["amount"])
-            tx_type = "income" if tx_data["amount"] > 0 else "expense"
-
-            # Parse date string to datetime object
-            tx_date = tx_data["date"]
-            if isinstance(tx_date, str):
-                # Parse ISO format date string (YYYY-MM-DD)
-                tx_date = datetime.strptime(tx_date, "%Y-%m-%d")
-            elif not isinstance(tx_date, datetime):
-                tx_date = datetime.now()
-
-            category_id = tx_data.get("category_id")
-            if category_id is None:
-                from app.services import rule_service
-
-                category_id = rule_service.categorise(
-                    db,
-                    current_user.id,
-                    {
-                        "description": tx_data["description"],
-                        "amount": amount,
-                        "type": tx_type,
-                        "account_id": request.account_id,
-                        "category_id": None,
-                    },
+        for row_id, category_id in selected.items():
+            row = rows_by_id[row_id]
+            db.add(
+                Transaction(
+                    user_id=current_user.id,
+                    account_id=account.id,
+                    category_id=category_id,
+                    amount=row["abs_amount"],
+                    type=row["type"],
+                    description=row["description"],
+                    date=row["date"],
+                    is_imported=True,
+                    import_batch_id=str(batch.id),
+                    source_file=batch.filename,
                 )
-
-            # Create transaction
-            transaction = Transaction(
-                user_id=current_user.id,
-                account_id=request.account_id,
-                category_id=category_id,
-                amount=amount,
-                type=tx_type,
-                description=tx_data["description"],
-                date=tx_date,
-                is_imported=True,
-                import_batch_id=str(request.batch_id),
-                source_file=batch.filename,
             )
-            db.add(transaction)
-            db.flush()  # Flush to get the transaction ID
+            account.balance = round(account.balance + row["amount"], 2)
 
-            # Store imported transaction info
-            imported_transactions.append(
-                {
-                    "id": transaction.id,
-                    "amount": amount,
-                    "date": tx_date.strftime("%Y-%m-%d"),
-                    "description": tx_data["description"],
-                    "type": tx_type,
-                }
-            )
-
-            # Update account balance with proper rounding to avoid floating-point precision errors
-            if tx_type == "income":
-                account.balance = round(account.balance + amount, 2)
-            else:
-                account.balance = round(account.balance - amount, 2)
-
-            imported_count += 1
-
-        # Update batch status
         batch.status = "completed"
-        batch.processed_rows = imported_count
+        batch.processed_rows = len(selected)
         batch.completed_at = datetime.utcnow()
         db.commit()
-
-        return {
-            "message": f"Successfully imported {imported_count} transactions",
-            "imported_count": imported_count,
-            "imported_transactions": imported_transactions,
-        }
-
-    except Exception as e:
-        batch.status = "error"
-        batch.error_message = str(e)
-        db.commit()
-        logger.exception(
-            "Error importing transactions for batch_id=%s", request.batch_id
-        )
+    except Exception:
+        db.rollback()
+        logger.exception("Error importing transactions for batch_id=%s", batch.id)
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Error importing transactions. Please check the data and try again.",
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="The import failed and nothing was saved. Please try again.",
         )
+
+    return {
+        "message": f"Imported {len(selected)} transactions",
+        "imported_count": len(selected),
+    }
 
 
 @router.get("/batches", response_model=list[ImportBatchResponse])

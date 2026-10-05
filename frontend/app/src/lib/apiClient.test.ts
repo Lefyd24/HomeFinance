@@ -255,3 +255,14 @@ describe('apiFetch', () => {
     )
   })
 })
+
+describe('apiFetch with FormData', () => {
+  it('lets the browser set the multipart Content-Type', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(new Response('{}', { status: 200 }))
+    vi.stubGlobal('fetch', fetchMock)
+    await apiFetch('/import/upload', { method: 'POST', body: new FormData() })
+    const headers = fetchMock.mock.calls[0][1].headers as Record<string, string>
+    expect(headers['Content-Type']).toBeUndefined()
+    vi.unstubAllGlobals()
+  })
+})

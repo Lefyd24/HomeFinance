@@ -6,6 +6,15 @@ Releases that add database migrations or new `.env` settings say so, so you know
 
 ## [Unreleased]
 
+### Added
+- File import wizard is complete: pick the file's date format, choose the account, review rows, skip duplicates, set categories, flip signs, and import. The page explains the accepted file format and offers a template. (#37)
+- Import review is a paginated table with search and select-all, and you can name the date, description and amount columns when a file has several candidates.
+
+### Fixed
+- Import parser handles Greek bank exports (cp1253, accented headers, metadata lines above the header) and reports unreadable rows instead of dating them today.
+- A file import can no longer be confirmed twice.
+- `.xls` files can be imported.
+
 ## [1.1.0] - 2026-10-05
 
 Adds migration `024`. No new `.env` settings. Migrations apply automatically on start, so [back up first](docs/operations.md#backups).

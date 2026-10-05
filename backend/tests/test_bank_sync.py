@@ -1163,7 +1163,7 @@ def test_csv_import_into_linked_account_is_rejected(client, db, seed_user, linke
 
     response = client.post(
         "/api/import/confirm",
-        json={"batch_id": batch.id, "account_id": linked_account.id, "transactions": []},
+        json={"batch_id": batch.id, "account_id": linked_account.id, "rows": [{"row_id": 1}]},
     )
     assert response.status_code == 400
 

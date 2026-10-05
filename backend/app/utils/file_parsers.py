@@ -1,253 +1,348 @@
-import pandas as pd
-import io
+"""Parse bank statement exports (CSV / Excel) into plain transaction rows.
+
+Bank exports are messy: a few metadata lines above the table, headers in Greek
+with or without accents, `1.234,56` vs `1,234.56`, debit/credit split into two
+columns, a "Total" line at the bottom. The parser's job is to be forgiving
+about *layout* and strict about *values*: a row whose date or amount can't be
+read is reported back to the user as skipped, never guessed (an unreadable
+date used to become "today", which silently put rows in the wrong month).
+"""
+
 import csv
-from typing import List, Dict, Any
-from datetime import datetime
+import io
+import logging
+import math
 import re
+import unicodedata
+from dataclasses import dataclass, field
+from datetime import date, datetime
 
-# TODO: Add parsing per specific bank formats (e.g. ING, ABN AMRO) for better accuracy and handling of specific quirks.
-def parse_bank_file(content: bytes, file_type: str) -> List[Dict[str, Any]]:
-    """Parse bank statement file (CSV or Excel)."""
-    transactions = []
-    
+import pandas as pd
+
+logger = logging.getLogger("app")
+
+# How far down the file the header row may be. Greek bank exports typically
+# have 3-8 lines of account details first.
+HEADER_SCAN_ROWS = 20
+
+SKIP_REASONS = ("missing_date", "invalid_date", "invalid_amount", "zero_amount")
+
+
+def normalize_header(value: object) -> str:
+    """Lowercase, strip accents, treat `_` as a space and collapse whitespace.
+
+    casefold() also maps the Greek final sigma (ς) to σ, so "ΚΙΝΗΣΗΣ" and
+    "κινήσης" compare equal.
+    """
+    text = unicodedata.normalize("NFKD", str(value))
+    text = "".join(ch for ch in text if not unicodedata.combining(ch))
+    text = text.casefold().replace("_", " ")
+    return re.sub(r"\s+", " ", text).strip()
+
+
+_ALIASES = {
+    "date": [
+        "date", "transaction date", "booking date", "posting date", "datum",
+        "ημερομηνία", "ημ/νία", "ημερομηνία κίνησης", "ημ/νία κίνησης",
+        "ημερομηνία συναλλαγής", "ημ/νία συναλλαγής",
+    ],
+    "description": [
+        "description", "desc", "details", "narrative", "transactie", "omschrijving",
+        "περιγραφή", "αιτιολογία", "περιγραφή κίνησης", "περιγραφή συναλλαγής",
+    ],
+    "amount": ["amount", "value", "bedrag", "ποσό", "ποσό κίνησης", "ποσό συναλλαγής"],
+    "debit": ["debit", "af", "withdrawal", "withdrawals", "χρέωση", "χρεώσεις"],
+    "credit": ["credit", "bij", "deposit", "deposits", "πίστωση", "πιστώσεις"],
+}
+COLUMN_ALIASES: dict[str, frozenset[str]] = {
+    key: frozenset(normalize_header(a) for a in aliases) for key, aliases in _ALIASES.items()
+}
+
+# The user picks the date order on the Import page before uploading. "05/01/2026"
+# is 5 January or 1 May depending on the bank, and no algorithm can tell from
+# the text, so only the chosen order's patterns are tried.
+DATE_ORDERS = ("dmy", "mdy", "ymd")
+
+
+def _numeric_formats(first: str, second: str) -> tuple[str, ...]:
+    formats = []
+    for sep in ("/", "-", "."):
+        for year in ("%Y", "%y"):
+            base = f"{first}{sep}{second}{sep}{year}"
+            formats += [base, f"{base} %H:%M", f"{base} %H:%M:%S"]
+    return tuple(formats)
+
+
+_DATE_FORMATS: dict[str, tuple[str, ...]] = {
+    "dmy": _numeric_formats("%d", "%m"),
+    "mdy": _numeric_formats("%m", "%d"),
+    "ymd": (
+        "%Y-%m-%d", "%Y/%m/%d", "%Y.%m.%d", "%Y%m%d",
+        "%Y-%m-%d %H:%M", "%Y-%m-%d %H:%M:%S", "%Y-%m-%dT%H:%M:%S",
+    ),
+}
+# A spelled-out month can't be misread, so these work under every choice.
+_TEXT_MONTH_FORMATS = ("%d %b %Y", "%d-%b-%Y", "%d %B %Y", "%d-%B-%Y")
+
+
+@dataclass
+class SkippedRow:
+    line: int
+    reason: str
+    value: str = ""
+
+
+@dataclass
+class ParseResult:
+    transactions: list[dict] = field(default_factory=list)
+    skipped: list[SkippedRow] = field(default_factory=list)
+
+
+def _is_blank(value: object) -> bool:
+    if value is None:
+        return True
+    if isinstance(value, str):
+        return not value.strip()
     try:
-        if file_type == "csv":
-            # Robust CSV parsing: decode bytes, detect delimiter, use python engine
-            try:
-                text = content.decode('utf-8')
-            except UnicodeDecodeError:
-                try:
-                    text = content.decode('latin-1')
-                except UnicodeDecodeError:
-                    text = content.decode('cp1252', errors='replace')
-
-            # Try to detect delimiter from a sample
-            sample = text[:4096]
-            try:
-                dialect = csv.Sniffer().sniff(sample, delimiters=[',', ';', '\t', '|'])
-                delimiter = dialect.delimiter
-            except Exception:
-                # Default to comma
-                delimiter = ','
-
-            df = pd.read_csv(io.StringIO(text), sep=delimiter, engine='python', on_bad_lines='skip')
-        elif file_type in ["xlsx", "xls"]:
-            # Parse Excel
-            df = pd.read_excel(io.BytesIO(content), engine='openpyxl' if file_type == 'xlsx' else None)
-        else:
-            raise ValueError(f"Unsupported file type: {file_type}")
-        
-        # Skip completely empty rows
-        df = df.dropna(how='all')
-        
-        # If dataframe is empty, raise error
-        if df.empty:
-            raise ValueError("The file appears to be empty or has no valid data")
-        
-        # Standardize column names (common variations)
-        column_mapping = {
-            'date': ['date', 'Date', 'DATE', 'transaction_date', 'Transaction Date', 'datum', 'Datum', 'ΗΜ/ΝΙΑ ΚΙΝΗΣΗΣ', 'ημ/νια', 'Transaction_Date'],
-            'description': ['description', 'Description', 'DESCRIPTION', 'desc', 'Desc', 'DESC', 'narrative', 'Narrative', 'transactie', 'Transactie', 'ΠΕΡΙΓΡΑΦΗ', 'περιγραφη', 'Details', 'details', 'DETAILS'],
-            'amount': ['amount', 'Amount', 'AMOUNT', 'bedrag', 'Bedrag', 'value', 'Value', 'ΠΟΣΟ', 'ποσο', 'Value_Date'],
-            'debit': ['debit', 'Debit', 'DEBIT', 'af', 'Af', 'AF', 'withdrawal', 'Withdrawal'],
-            'credit': ['credit', 'Credit', 'CREDIT', 'bij', 'Bij', 'BIJ', 'deposit', 'Deposit']
-        }
-        
-        # Find actual column names in the file
-        actual_columns = {}
-        for standard, variations in column_mapping.items():
-            for col in df.columns:
-                col_stripped = str(col).strip()
-                if col_stripped in variations:
-                    actual_columns[standard] = col
-                    break
-        
-        # Validate we have minimum required columns
-        if 'description' not in actual_columns:
-            raise ValueError("Could not find a 'description' column in the file. Please ensure your file has proper headers.")
-        
-        if 'date' not in actual_columns:
-            raise ValueError("Could not find a 'date' column in the file. Please ensure your file has proper headers.")
-        
-        if 'amount' not in actual_columns and ('debit' not in actual_columns or 'credit' not in actual_columns):
-            raise ValueError("Could not find 'amount' or 'debit/credit' columns in the file. Please ensure your file has proper headers.")
-        
-        # Parse each row
-        for idx, row in df.iterrows():
-            # Skip rows where all important fields are empty
-            if all(pd.isna(row.get(actual_columns.get(key))) for key in ['date', 'description', 'amount'] if key in actual_columns):
-                continue
-                
-            transaction = {}
-            
-            # Parse date
-            if 'date' in actual_columns:
-                date_val = row[actual_columns['date']]
-                if pd.notna(date_val):
-                    transaction['date'] = parse_date(date_val)
-                else:
-                    # Skip rows without dates
-                    continue
-            else:
-                # Skip rows without dates
-                continue
-            
-            # Parse description
-            if 'description' in actual_columns:
-                desc = row[actual_columns['description']]
-                transaction['description'] = str(desc).strip() if pd.notna(desc) else 'Unknown'
-            else:
-                transaction['description'] = 'Unknown'
-            
-            # Parse amount
-            if 'amount' in actual_columns:
-                amount_val = row[actual_columns['amount']]
-                transaction['amount'] = parse_amount(amount_val)
-            elif 'debit' in actual_columns and 'credit' in actual_columns:
-                # Handle separate debit/credit columns
-                debit_val = row[actual_columns['debit']]
-                credit_val = row[actual_columns['credit']]
-                debit = parse_amount(debit_val) if pd.notna(debit_val) else 0
-                credit = parse_amount(credit_val) if pd.notna(credit_val) else 0
-                transaction['amount'] = credit - debit
-            else:
-                transaction['amount'] = 0.0
-            
-            # Skip transactions with zero amount
-            if transaction['amount'] == 0:
-                continue
-            
-            transactions.append(transaction)
-        
-        if len(transactions) == 0:
-            raise ValueError("No valid transactions found in the file. Please check the file format and data.")
-        
-        return transactions
-        
-    except ValueError as e:
-        # Re-raise ValueError as-is
-        raise
-    except Exception as e:
-        raise ValueError(f"Error parsing file: {str(e)}")
+        return bool(pd.isna(value))
+    except (TypeError, ValueError):
+        return False
 
 
-def parse_date(date_val) -> datetime:
-    """Parse various date formats into datetime object."""
-    if isinstance(date_val, datetime):
-        return date_val
-    
-    if isinstance(date_val, pd.Timestamp):
-        return date_val.to_pydatetime()
-    
-    if pd.isna(date_val):
-        return datetime.now()
-    
-    date_str = str(date_val).strip()
-    
-    # Try different date formats
-    date_formats = [
-        '%Y-%m-%d',
-        '%d/%m/%Y',
-        '%m/%d/%Y',
-        '%d-%m-%Y',
-        '%Y/%m/%d',
-        '%d.%m.%Y',
-        '%Y.%m.%d',
-        '%d-%b-%Y',
-        '%d %b %Y',
-        '%d-%B-%Y',
-        '%d %B %Y',
-        '%Y%m%d'
-    ]
-    
-    for fmt in date_formats:
+def parse_date(value: object, date_order: str) -> date | None:
+    """Parse with the user's chosen order only. Returns None rather than guessing."""
+    if _is_blank(value):
+        return None
+    if isinstance(value, datetime):  # includes pd.Timestamp; Excel date cells
+        return value.date()
+    if isinstance(value, date):
+        return value
+    text = str(value).strip()
+    for fmt in (*_DATE_FORMATS[date_order], *_TEXT_MONTH_FORMATS):
         try:
-            return datetime.strptime(date_str, fmt)
+            return datetime.strptime(text, fmt).date()
         except ValueError:
             continue
-    
-    # Try pandas to_datetime as last resort
-    try:
-        return pd.to_datetime(date_str).to_pydatetime()
-    except:
-        # If all else fails, return current date
-        return datetime.now()
+    return None
 
 
-def parse_amount(amount_val) -> float:
-    """Parse various amount formats into float."""
-    if pd.isna(amount_val):
-        return 0.0
-    
-    if isinstance(amount_val, (int, float)):
-        return float(amount_val)
-    
-    # Convert to string and clean
-    amount_str = str(amount_val).strip()
-    
-    # Remove currency symbols and whitespace
-    amount_str = re.sub(r'[€$£¥₹\s]', '', amount_str)
-    
-    # Handle European format (comma as decimal separator)
-    # Check if there's both comma and dot
-    if ',' in amount_str and '.' in amount_str:
-        # Determine which is the decimal separator
-        # Usually the last one is decimal, the others are thousands separators
-        last_comma_pos = amount_str.rfind(',')
-        last_dot_pos = amount_str.rfind('.')
-        
-        if last_comma_pos > last_dot_pos:
-            # Comma is decimal separator (European format)
-            amount_str = amount_str.replace('.', '').replace(',', '.')
-        else:
-            # Dot is decimal separator (US format)
-            amount_str = amount_str.replace(',', '')
-    elif ',' in amount_str:
-        # Only comma - could be decimal or thousands separator
-        # If there are digits after comma, it's likely decimal
-        parts = amount_str.split(',')
-        if len(parts) == 2 and len(parts[1]) <= 2:
-            # Likely decimal separator
-            amount_str = amount_str.replace(',', '.')
-        else:
-            # Likely thousands separator
-            amount_str = amount_str.replace(',', '')
-    
-    # Remove any remaining non-numeric characters except minus and dot
-    amount_str = re.sub(r'[^0-9.\-]', '', amount_str)
-    
+def parse_amount(value: object) -> float | None:
+    """Parse `4,50`, `1.234,56`, `1,234.56`, `(50.00)`, `50,00-`, `€ 12`.
+
+    A single separator followed by exactly three digits is read as a thousands
+    separator (`1.234` -> 1234), anything else as the decimal point.
+    """
+    if value is None or isinstance(value, bool):
+        return None
+    if isinstance(value, (int, float)):
+        return None if math.isnan(value) else float(value)
+    text = str(value).strip()
+    negative = False
+    if text.startswith("(") and text.endswith(")"):
+        negative, text = True, text[1:-1]
+    text = re.sub(r"[€$£¥₹\s ]|EUR|USD|GBP", "", text, flags=re.IGNORECASE)
+    if text.endswith("-"):
+        negative, text = not negative, text[:-1]
+    if text[:1] in ("-", "+"):
+        if text[0] == "-":
+            negative = not negative
+        text = text[1:]
+    if not text or not re.fullmatch(r"[0-9.,']+", text):
+        return None
+    text = text.replace("'", "")
+
+    last_comma, last_dot = text.rfind(","), text.rfind(".")
+    if last_comma != -1 and last_dot != -1:
+        decimal: str | None = "," if last_comma > last_dot else "."
+    elif last_comma != -1 or last_dot != -1:
+        sep = "," if last_comma != -1 else "."
+        parts = text.split(sep)
+        decimal = None if len(parts) > 2 or len(parts[-1]) == 3 else sep
+    else:
+        decimal = None
+
+    if decimal is None:
+        number = text.replace(",", "").replace(".", "")
+    else:
+        thousands = "." if decimal == "," else ","
+        number = text.replace(thousands, "").replace(decimal, ".")
     try:
-        return float(amount_str)
+        amount = float(number)
     except ValueError:
-        return 0.0
+        return None
+    return -amount if negative else amount
 
 
-def detect_duplicates(transactions: List[Dict], existing_transactions: List[Any], threshold: float = 0.9) -> List[int]:
-    """Detect potential duplicate transactions."""
-    duplicates = []
-    
-    for i, new_tx in enumerate(transactions):
-        for existing in existing_transactions:
-            # Check date match (within 1 day)
-            if 'date' in new_tx and hasattr(existing, 'date'):
-                date_diff = abs((new_tx['date'] - existing.date).days)
-                if date_diff > 1:
-                    continue
-            else:
-                continue
-            
-            # Check amount match (within 1 cent)
-            if abs(new_tx.get('amount', 0) - float(existing.amount)) > 0.01:
-                continue
-            
-            # Check description similarity
-            new_desc = new_tx.get('description', '').lower().strip()
-            existing_desc = (existing.description.lower().strip() 
-                           if hasattr(existing, 'description') else '')
-            
-            # Simple similarity check - exact match or substring match
-            if new_desc == existing_desc or (len(new_desc) > 5 and new_desc in existing_desc):
-                duplicates.append(i)
-                break
-    
-    return duplicates
+def _decode(content: bytes) -> str:
+    # utf-8-sig drops the BOM Excel writes; cp1253 is the Greek Windows code
+    # page most Greek bank exports use; latin-1 never fails, so it goes last.
+    for encoding in ("utf-8-sig", "cp1253", "latin-1"):
+        try:
+            return content.decode(encoding)
+        except UnicodeDecodeError:
+            continue
+    return content.decode("latin-1", errors="replace")
+
+
+def _detect_delimiter(sample: str) -> str:
+    candidates = [",", ";", "\t", "|"]
+    try:
+        return csv.Sniffer().sniff(sample, delimiters="".join(candidates)).delimiter
+    except csv.Error:
+        return max(candidates, key=sample.count)
+
+
+def _read_grid(content: bytes, file_type: str) -> list[list]:
+    if file_type == "csv":
+        text = _decode(content)
+        delimiter = _detect_delimiter(text[:8192])
+        return [row for row in csv.reader(io.StringIO(text), delimiter=delimiter)]
+    if file_type in ("xlsx", "xls"):
+        engine = "openpyxl" if file_type == "xlsx" else "xlrd"
+        try:
+            frame = pd.read_excel(io.BytesIO(content), engine=engine, header=None, dtype=object)
+        except Exception:
+            logger.info("Could not read %s upload", file_type, exc_info=True)
+            raise ValueError(
+                "The file could not be read as an Excel workbook. Re-save it as .xlsx or CSV and try again."
+            )
+        return frame.values.tolist()
+    raise ValueError(f"Unsupported file type: {file_type}")
+
+
+COLUMN_KEYS = tuple(_ALIASES)
+
+
+def _clean_overrides(columns: dict[str, str | None] | None) -> dict[str, str]:
+    """Keep only the column names the user actually typed (blank means auto-detect)."""
+    return {
+        key: value.strip()
+        for key, value in (columns or {}).items()
+        if key in COLUMN_KEYS and value and value.strip()
+    }
+
+
+def _alias_sets(overrides: dict[str, str]) -> dict[str, frozenset[str]]:
+    """A typed name replaces the built-in aliases for that column, so a file with
+    several date or description columns uses the one the user named."""
+    sets = dict(COLUMN_ALIASES)
+    for key, name in overrides.items():
+        sets[key] = frozenset({normalize_header(name)})
+    # Typing debit/credit names means "use those", even if the file also has a
+    # generic Amount column.
+    if ("debit" in overrides or "credit" in overrides) and "amount" not in overrides:
+        sets["amount"] = frozenset()
+    return sets
+
+
+def _match_columns(cells: list, alias_sets: dict[str, frozenset[str]] = COLUMN_ALIASES) -> dict[str, int] | None:
+    found: dict[str, int] = {}
+    for index, cell in enumerate(cells):
+        if _is_blank(cell):
+            continue
+        key = normalize_header(cell)
+        for standard, aliases in alias_sets.items():
+            if standard not in found and key in aliases:
+                found[standard] = index
+    has_money = "amount" in found or ("debit" in found and "credit" in found)
+    if "date" in found and "description" in found and has_money:
+        return found
+    return None
+
+
+def _cell(row: list, index: int | None) -> object:
+    if index is None or index >= len(row):
+        return None
+    return row[index]
+
+
+def _as_text(value: object) -> str:
+    return "" if _is_blank(value) else str(value).strip()
+
+
+def parse_bank_file(
+    content: bytes,
+    file_type: str,
+    date_order: str,
+    columns: dict[str, str | None] | None = None,
+) -> ParseResult:
+    if date_order not in DATE_ORDERS:
+        raise ValueError("Choose a date format: day first, month first or year first.")
+    if not content or not content.strip():
+        raise ValueError("The file is empty.")
+
+    grid = _read_grid(content, file_type)
+    if not any(any(not _is_blank(c) for c in row) for row in grid):
+        raise ValueError("The file is empty.")
+
+    overrides = _clean_overrides(columns)
+    alias_sets = _alias_sets(overrides)
+    header_index, columns = None, None
+    for index, row in enumerate(grid[:HEADER_SCAN_ROWS]):
+        columns = _match_columns(row, alias_sets)
+        if columns:
+            header_index = index
+            break
+    if columns is None or header_index is None:
+        if overrides:
+            seen = {normalize_header(c) for row in grid[:HEADER_SCAN_ROWS] for c in row if not _is_blank(c)}
+            missing = [name for name in overrides.values() if normalize_header(name) not in seen]
+            if missing:
+                raise ValueError(
+                    "Could not find these column names in the file: "
+                    + ", ".join(f'"{name}"' for name in missing)
+                    + ". Check the spelling against the header row of your file."
+                )
+        raise ValueError(
+            "Could not find the column headers. The file needs a date column, a description "
+            "column, and either an amount column or debit and credit columns. See the Import "
+            "page for the accepted column names."
+        )
+
+    result = ParseResult()
+    money_keys = ("amount",) if "amount" in columns else ("debit", "credit")
+    for offset, row in enumerate(grid[header_index + 1:], start=header_index + 2):
+        raw_date = _cell(row, columns.get("date"))
+        raw_desc = _cell(row, columns.get("description"))
+        raw_money = [_cell(row, columns.get(k)) for k in money_keys]
+        if all(_is_blank(v) for v in (raw_date, raw_desc, *raw_money)):
+            continue
+
+        if _is_blank(raw_date):
+            result.skipped.append(SkippedRow(offset, "missing_date"))
+            continue
+        tx_date = parse_date(raw_date, date_order)
+        if tx_date is None:
+            result.skipped.append(SkippedRow(offset, "invalid_date", _as_text(raw_date)))
+            continue
+
+        if "amount" in columns:
+            amount = parse_amount(raw_money[0])
+            bad_value = _as_text(raw_money[0])
+        else:
+            debit_raw, credit_raw = raw_money
+            debit = 0.0 if _is_blank(debit_raw) else parse_amount(debit_raw)
+            credit = 0.0 if _is_blank(credit_raw) else parse_amount(credit_raw)
+            if _is_blank(debit_raw) and _is_blank(credit_raw):
+                debit = credit = None
+            amount = None if debit is None or credit is None else abs(credit) - abs(debit)
+            bad_value = _as_text(debit_raw) or _as_text(credit_raw)
+        if amount is None:
+            result.skipped.append(SkippedRow(offset, "invalid_amount", bad_value))
+            continue
+        if amount == 0:
+            result.skipped.append(SkippedRow(offset, "zero_amount", bad_value))
+            continue
+
+        result.transactions.append(
+            {
+                "line": offset,
+                "date": tx_date,
+                "description": _as_text(raw_desc) or "(no description)",
+                "amount": round(amount, 2),
+            }
+        )
+
+    if not result.transactions:
+        raise ValueError("No transactions could be read from the file. Check the dates and amounts.")
+    return result
