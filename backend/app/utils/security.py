@@ -3,14 +3,16 @@ import uuid
 from datetime import UTC, datetime, timedelta
 
 import bcrypt
-from fastapi import Depends, HTTPException, Security, status
+from fastapi import Depends, HTTPException, Request, Security, status
 from fastapi.security import APIKeyHeader, OAuth2PasswordBearer
 from jose import JWTError, jwt
 from sqlalchemy.orm import Session
 
 from app.config import settings
 from app.database import get_db
+from app.models.api_key import ApiKey
 from app.models.user import User
+from app.services.auth_tokens import hash_token
 
 # API Key scheme
 api_key_header = APIKeyHeader(name=settings.API_KEY_HEADER, auto_error=False)
@@ -170,30 +172,55 @@ def get_current_active_user(
     return current_user
 
 
-def generate_api_key(length: int = 64) -> str:
-    """Generate a secure random API key."""
-    return secrets.token_urlsafe(length)
+API_KEY_PREFIX = "pf_"
+API_KEY_MAX_PER_USER = 10
+_SAFE_METHODS = {"GET", "HEAD", "OPTIONS"}
+# last_used_at is a display hint - don't write on every single request.
+_LAST_USED_WRITE_INTERVAL = timedelta(minutes=1)
+
+
+def generate_api_key(length: int = 48) -> str:
+    """Generate a secure random API key (prefixed so it's recognisable)."""
+    return API_KEY_PREFIX + secrets.token_urlsafe(length)
+
+
+def get_api_key_record(api_key: str | None, db: Session) -> ApiKey | None:
+    """Resolve a presented key to its live ApiKey row (not revoked, owner active)."""
+    if not api_key:
+        return None
+    record = (
+        db.query(ApiKey)
+        .filter(ApiKey.key_hash == hash_token(api_key), ApiKey.revoked_at.is_(None))
+        .first()
+    )
+    if record is None:
+        return None
+    owner = db.query(User).filter(User.id == record.user_id).first()
+    if owner is None or not owner.is_active:
+        return None
+    return record
 
 
 def get_current_user_by_api_key(
     api_key: str | None = Security(api_key_header), db: Session = Depends(get_db)
 ) -> User | None:
     """Get current user by API key."""
-    if not api_key:
+    record = get_api_key_record(api_key, db)
+    if record is None:
         return None
-
-    user = db.query(User).filter(User.api_key == api_key).first()
-    if user and user.is_active:
-        return user
-    return None
+    return db.query(User).filter(User.id == record.user_id).first()
 
 
 def get_current_user_authenticated(
+    request: Request,
     token: str | None = Depends(oauth2_scheme),
     api_key: str | None = Security(api_key_header),
     db: Session = Depends(get_db),
 ) -> User:
-    """Get current user authenticated via JWT token or API key."""
+    """Get current user authenticated via JWT token or API key.
+
+    Read-only API keys are rejected (403) for anything but GET/HEAD/OPTIONS.
+    """
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
@@ -201,10 +228,21 @@ def get_current_user_authenticated(
     )
 
     # Try API key first
-    if api_key:
-        user = get_current_user_by_api_key(api_key, db)
-        if user:
-            return user
+    record = get_api_key_record(api_key, db)
+    if record is not None:
+        if record.scope != "full" and request.method.upper() not in _SAFE_METHODS:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="This API key is read-only",
+            )
+        now = datetime.utcnow()
+        if (
+            record.last_used_at is None
+            or now - record.last_used_at > _LAST_USED_WRITE_INTERVAL
+        ):
+            record.last_used_at = now
+            db.commit()
+        return db.query(User).filter(User.id == record.user_id).first()
 
     # Fall back to JWT token
     user = user_from_access_token(token, db)

@@ -8,6 +8,7 @@ export interface AdminUser {
   is_admin: boolean
   email_verified: boolean
   created_at: string
+  last_login_at: string | null
 }
 
 export interface InviteCode {
@@ -17,6 +18,7 @@ export interface InviteCode {
   expires_at: string | null
   used_at: string | null
   used_by_user_id: number | null
+  used_by_email: string | null
   revoked_at: string | null
   created_at: string
   status: string
@@ -57,4 +59,8 @@ export function setUserActive(id: number, isActive: boolean): Promise<AdminUser>
     method: 'PATCH',
     body: JSON.stringify({ is_active: isActive }),
   })
+}
+
+export function deleteInvite(id: number): Promise<void> {
+  return apiFetch<void>(`/admin/invites/${id}`, { method: 'DELETE' })
 }

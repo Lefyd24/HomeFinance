@@ -19,7 +19,9 @@ class User(Base):
     is_admin = Column(Boolean, default=False, nullable=False)
     email_verified = Column(Boolean, default=False, nullable=False)
     sessions_valid_from = Column(DateTime, default=datetime.utcnow, nullable=False)
+    # Deprecated: plaintext key superseded by the `api_keys` table (migration 024).
     api_key = Column(String(255), unique=True, index=True, nullable=True)
+    last_login_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
@@ -51,3 +53,4 @@ class User(Base):
     )
     notification_rules = relationship("NotificationRule", cascade="all, delete-orphan")
     push_subscriptions = relationship("PushSubscription", cascade="all, delete-orphan")
+    api_keys = relationship("ApiKey", cascade="all, delete-orphan")

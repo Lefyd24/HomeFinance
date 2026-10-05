@@ -66,6 +66,7 @@ export function AdminPage() {
   const { user: currentUser } = useAuth()
   const { confirm, confirmDialog } = useConfirm()
 
+  const registerUrl = `${window.location.origin}/register`
   const [createInviteOpen, setCreateInviteOpen] = useState(false)
   const [inviteLabel, setInviteLabel] = useState('')
   const [inviteExpiresDays, setInviteExpiresDays] = useState('')
@@ -114,6 +115,15 @@ export function AdminPage() {
     onError: () => toast.error('Failed to revoke invite'),
   })
 
+  const deleteInviteMutation = useMutation({
+    mutationFn: adminApi.deleteInvite,
+    onSuccess: () => {
+      toast.success('Invite deleted')
+      invalidateInvites()
+    },
+    onError: () => toast.error('Failed to delete invite'),
+  })
+
   const setUserActiveMutation = useMutation({
     mutationFn: ({ id, isActive }: { id: number; isActive: boolean }) =>
       adminApi.setUserActive(id, isActive),
@@ -153,6 +163,20 @@ export function AdminPage() {
     revokeInviteMutation.mutate(invite.id)
   }
 
+  const handleDeleteInvite = async (invite: InviteCode) => {
+    const ok = await confirm({
+      title: 'Delete invite code?',
+      description: invite.used_by_user_id
+        ? 'This removes the code from the list. The person who registered with it keeps their account and data.'
+        : 'This removes the code from the list. It can no longer be used to register. Accounts already created are not affected.',
+      confirmLabel: 'Delete invite',
+      cancelLabel: 'Keep invite',
+      tone: 'destructive',
+    })
+    if (!ok) return
+    deleteInviteMutation.mutate(invite.id)
+  }
+
   const handleToggleUserActive = async (id: number, currentlyActive: boolean) => {
     const ok = await confirm({
       title: currentlyActive ? 'Deactivate this user?' : 'Activate this user?',
@@ -190,6 +214,29 @@ export function AdminPage() {
           </CardAction>
         </CardHeader>
         <CardContent>
+          <div className="mb-4 rounded-lg border border-border bg-muted/40 p-4 text-sm">
+            <h3 className="font-semibold mb-2">How to invite someone</h3>
+            <ol className="list-decimal pl-5 flex flex-col gap-1 text-muted-foreground">
+              <li>
+                Click <strong className="text-foreground">New invite</strong> and optionally add a label
+                and an expiry.
+              </li>
+              <li>
+                Copy the code straight away — it&apos;s shown only once.
+              </li>
+              <li>
+                Send them the code together with the sign-up page:{' '}
+                <code className="font-mono text-foreground break-all">{registerUrl}</code>
+              </li>
+              <li>
+                They register with the code and confirm their email, then they can sign in.
+              </li>
+            </ol>
+            <p className="mt-2 text-xs text-muted-foreground">
+              Each code works once. Expired and revoked codes stop working, and deleting a code never
+              affects accounts that already used it.
+            </p>
+          </div>
           {invitesLoading && (
             <div className="flex items-center gap-2 text-sm text-muted-foreground py-6 justify-center">
               <Spinner />
@@ -223,10 +270,10 @@ export function AdminPage() {
                       {invite.expires_at ? formatDate(invite.expires_at) : 'Never'}
                     </TableCell>
                     <TableCell>
-                      {invite.used_by_user_id ? `#${invite.used_by_user_id}` : '—'}
+                      {invite.used_by_email ?? (invite.used_by_user_id ? `#${invite.used_by_user_id}` : '—')}
                     </TableCell>
                     <TableCell>{formatDate(invite.created_at)}</TableCell>
-                    <TableCell className="text-right">
+                    <TableCell className="text-right whitespace-nowrap">
                       {invite.status === 'active' && (
                         <Button
                           variant="ghost"
@@ -238,6 +285,15 @@ export function AdminPage() {
                           Revoke
                         </Button>
                       )}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-destructive"
+                        disabled={deleteInviteMutation.isPending}
+                        onClick={() => handleDeleteInvite(invite)}
+                      >
+                        Delete
+                      </Button>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -278,6 +334,7 @@ export function AdminPage() {
                   <TableHead>Admin</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Joined</TableHead>
+                  <TableHead>Last login</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -304,6 +361,19 @@ export function AdminPage() {
                       )}
                     </TableCell>
                     <TableCell>{formatDate(u.created_at)}</TableCell>
+                    <TableCell>
+                      {u.last_login_at ? (
+                        formatDate(u.last_login_at, {
+                          day: '2-digit',
+                          month: 'short',
+                          year: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })
+                      ) : (
+                        <span className="text-muted-foreground">Never</span>
+                      )}
+                    </TableCell>
                     <TableCell className="text-right">
                       {u.id === currentUser?.id ? (
                         <span className="text-xs text-muted-foreground">You</span>

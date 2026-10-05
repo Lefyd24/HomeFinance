@@ -24,7 +24,7 @@ Everything else is local. If you don't enable a feature, nothing is sent.
 
 - **Invite-only registration.** Nobody can sign themselves up. Admins create single-use invite codes. Only a hash of each code is stored, and the code is shown once.
 - **Email verification** before login, and a self-service **forgot-password** flow. Responses never reveal whether an email has an account. Verification links last 24 hours and reset links 30 minutes. Only token hashes are stored.
-- **JWT access and refresh tokens.** Users may also create an API key for scripts, sent in the `X-API-Key` header.
+- **JWT access and refresh tokens.** Users may also create up to 10 named API keys for scripts, sent in the `X-API-Key` header. Each is **read-only** (GET only) or **full access**, only a hash is stored, and the key is shown once. Keys cannot create or revoke other keys.
 - **Rate limiting** on login, registration, forgot-password and resend-verification: 10 requests per minute per IP and 5 per minute per email by default, with `Retry-After`. See [Deployment](deployment.md#trusting-proxy-headers) for getting client IPs right behind a proxy.
 - **Per-user data isolation.** Every query is scoped to the signed-in user. AI tools never accept a user id.
 - Admins can activate or deactivate users but can't read other users' data through the UI.

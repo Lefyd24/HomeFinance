@@ -29,7 +29,7 @@ def _invite_status(invite: InviteCode) -> str:
     return "active"
 
 
-def _invite_read(invite: InviteCode) -> InviteCodeRead:
+def _invite_read(invite: InviteCode, used_by_email: str | None = None) -> InviteCodeRead:
     return InviteCodeRead(
         id=invite.id,
         label=invite.label,
@@ -37,6 +37,7 @@ def _invite_read(invite: InviteCode) -> InviteCodeRead:
         expires_at=invite.expires_at,
         used_at=invite.used_at,
         used_by_user_id=invite.used_by_user_id,
+        used_by_email=used_by_email,
         revoked_at=invite.revoked_at,
         created_at=invite.created_at,
         status=_invite_status(invite),
@@ -77,7 +78,13 @@ def list_invites(
     db: Session = Depends(get_db),
 ):
     invites = db.query(InviteCode).order_by(InviteCode.created_at.desc()).all()
-    return [_invite_read(i) for i in invites]
+    used_ids = {i.used_by_user_id for i in invites if i.used_by_user_id}
+    emails = (
+        dict(db.query(User.id, User.email).filter(User.id.in_(used_ids)).all())
+        if used_ids
+        else {}
+    )
+    return [_invite_read(i, emails.get(i.used_by_user_id)) for i in invites]
 
 
 @router.post("/invites/{invite_id}/revoke", response_model=InviteCodeRead)
@@ -98,6 +105,23 @@ def revoke_invite(
         db.refresh(invite)
 
     return _invite_read(invite)
+
+
+@router.delete("/invites/{invite_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_invite(
+    invite_id: int,
+    admin: User = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    """Delete an invite code of any status. Users who already registered with
+    it are unaffected - nothing references the invite from the user side."""
+    invite = db.query(InviteCode).filter(InviteCode.id == invite_id).first()
+    if invite is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Invite not found"
+        )
+    db.delete(invite)
+    db.commit()
 
 
 @router.get("/users", response_model=list[UserAdminRead])

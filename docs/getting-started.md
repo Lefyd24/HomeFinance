@@ -95,6 +95,8 @@ To invite someone:
 2. Copy the code. It is shown **once**, is single-use, and can have an expiry.
 3. Send it to them. They register at `/register` with that code.
 
+The Admin page also shows each user's last login. You can delete an invite code at any time; people who already registered with it keep their accounts.
+
 Verification emails need SMTP. Without it, invited users cannot verify their address. See [Notifications](notifications.md#email-smtp) and set the global `SMTP_*` variables first. Without SMTP configured, the verification link is written to the server log at WARNING level, so you can still copy it from `docker compose logs app` when you are the one onboarding people.
 
 ## 6. Add your data

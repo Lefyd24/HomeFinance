@@ -1,5 +1,5 @@
 import logging
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.security import OAuth2PasswordRequestForm
@@ -7,11 +7,12 @@ from sqlalchemy.orm import Session
 
 from app.config import settings
 from app.database import get_db
-from app.models import User
+from app.models import ApiKey, User
 from app.models.invite_code import InviteCode
 from app.schemas import (
-    APIKeyResponse,
-    APIKeyStatus,
+    ApiKeyCreate,
+    ApiKeyCreated,
+    ApiKeyRead,
     ForgotPasswordRequest,
     PasswordChange,
     ResendVerificationRequest,
@@ -28,6 +29,7 @@ from app.utils.security import (
     create_access_token,
     create_refresh_token,
     decode_token,
+    API_KEY_MAX_PER_USER,
     generate_api_key,
     get_current_user,
     get_current_user_authenticated,
@@ -160,6 +162,9 @@ def login(
     # brute-force budget (see clear_rate_limit).
     clear_rate_limit(request, email=form_data.username)
 
+    user.last_login_at = datetime.utcnow()
+    db.commit()
+
     # Create tokens
     access_token = create_access_token(data={"sub": str(user.id)})
     refresh_token = create_refresh_token(data={"sub": str(user.id)})
@@ -197,6 +202,13 @@ def refresh_token(refresh_token: str, db: Session = Depends(get_db)):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid refresh token"
         )
+
+    # A silent refresh means the user is still around; keep "last login" fresh
+    # without a write on every refresh.
+    now = datetime.utcnow()
+    if user.last_login_at is None or now - user.last_login_at > timedelta(minutes=15):
+        user.last_login_at = now
+        db.commit()
 
     # Create new tokens
     new_access_token = create_access_token(data={"sub": str(user.id)})
@@ -379,41 +391,72 @@ def resend_verification(
     }
 
 
-@router.post("/api-key", response_model=APIKeyResponse)
-def generate_new_api_key(
-    current_user: User = Depends(get_current_user_authenticated),
+@router.get("/api-keys", response_model=list[ApiKeyRead])
+def list_api_keys(
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    """Generate a new API key for the current user."""
-    api_key = generate_api_key()
-    current_user.api_key = api_key
+    """List the current user's active API keys (JWT only)."""
+    return (
+        db.query(ApiKey)
+        .filter(ApiKey.user_id == current_user.id, ApiKey.revoked_at.is_(None))
+        .order_by(ApiKey.created_at.desc())
+        .all()
+    )
+
+
+@router.post(
+    "/api-keys", response_model=ApiKeyCreated, status_code=status.HTTP_201_CREATED
+)
+def create_api_key(
+    payload: ApiKeyCreate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Create a named API key. The plaintext is returned ONCE - only its sha256
+    hash is stored. JWT only, so a key can never mint more keys."""
+    active = (
+        db.query(ApiKey)
+        .filter(ApiKey.user_id == current_user.id, ApiKey.revoked_at.is_(None))
+        .count()
+    )
+    if active >= API_KEY_MAX_PER_USER:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"You can have at most {API_KEY_MAX_PER_USER} active API keys. Revoke one first.",
+        )
+
+    plaintext = generate_api_key()
+    record = ApiKey(
+        user_id=current_user.id,
+        name=payload.name.strip(),
+        key_hash=auth_tokens.hash_token(plaintext),
+        key_prefix=plaintext[:8],
+        last_four=plaintext[-4:],
+        scope=payload.scope,
+    )
+    db.add(record)
     db.commit()
-    db.refresh(current_user)
-
-    return {
-        "api_key": api_key,
-        "message": "API key generated successfully. Store it securely as it will not be shown again.",
-    }
+    db.refresh(record)
+    return ApiKeyCreated(key=plaintext, api_key=ApiKeyRead.model_validate(record))
 
 
-@router.get("/api-key", response_model=APIKeyStatus)
-def get_api_key_status(current_user: User = Depends(get_current_user)):
-    """Check if user has an API key configured."""
-    return {
-        "has_api_key": current_user.api_key is not None,
-        "api_key_last_four": current_user.api_key[-4:]
-        if current_user.api_key
-        else None,
-    }
-
-
-@router.delete("/api-key")
+@router.delete("/api-keys/{key_id}", status_code=status.HTTP_204_NO_CONTENT)
 def revoke_api_key(
-    current_user: User = Depends(get_current_user_authenticated),
+    key_id: int,
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    """Revoke the current user's API key."""
-    current_user.api_key = None
-    db.commit()
-
-    return {"message": "API key revoked successfully"}
+    """Revoke one of the current user's API keys (JWT only)."""
+    record = (
+        db.query(ApiKey)
+        .filter(ApiKey.id == key_id, ApiKey.user_id == current_user.id)
+        .first()
+    )
+    if record is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="API key not found"
+        )
+    if record.revoked_at is None:
+        record.revoked_at = datetime.utcnow()
+        db.commit()

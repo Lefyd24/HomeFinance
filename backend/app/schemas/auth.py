@@ -1,3 +1,6 @@
+from datetime import datetime
+from typing import Literal
+
 from pydantic import BaseModel, EmailStr, Field
 
 
@@ -23,14 +26,29 @@ class PasswordChange(BaseModel):
     confirm_password: str
 
 
-class APIKeyResponse(BaseModel):
-    api_key: str
-    message: str
+class ApiKeyCreate(BaseModel):
+    name: str = Field(..., min_length=1, max_length=100)
+    scope: Literal["read", "full"] = "read"
 
 
-class APIKeyStatus(BaseModel):
-    has_api_key: bool
-    api_key_last_four: str | None = None
+class ApiKeyRead(BaseModel):
+    id: int
+    name: str
+    scope: str
+    key_prefix: str
+    last_four: str
+    created_at: datetime
+    last_used_at: datetime | None = None
+
+    class Config:
+        from_attributes = True
+
+
+class ApiKeyCreated(BaseModel):
+    """Returned exactly once, at creation time - the plaintext is never stored."""
+
+    key: str
+    api_key: ApiKeyRead
 
 
 class ForgotPasswordRequest(BaseModel):

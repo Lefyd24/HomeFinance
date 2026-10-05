@@ -6,6 +6,22 @@ Releases that add database migrations or new `.env` settings say so, so you know
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-10-05
+
+Adds migration `024`. No new `.env` settings. Migrations apply automatically on start, so [back up first](docs/operations.md#backups).
+
+### Added
+- **Multiple API keys.** Create up to 10 named keys from **API Keys**, each read-only (GET requests only) or full access, and revoke them one at a time. The list shows when each key was created and last used.
+- **API key guide.** The API Keys page now explains how to authenticate with the `X-API-Key` header, what read-only and full access mean, and lists the main endpoints grouped by area with copy-able `curl` examples.
+- **Last login** column on the Admin users table.
+- **Delete invite codes** from the Admin page, in any state. Anyone who already registered with a deleted code keeps their account and data.
+- **How to invite someone** guide on the Admin page, and used invites now show the user's email instead of an id.
+
+### Changed
+- API keys are now stored as hashes and shown once. Your existing key is migrated to a "Default key" with full access, so current integrations keep working.
+- API keys can no longer create or revoke API keys; that requires being signed in.
+- `/api/auth/api-key` is replaced by `/api/auth/api-keys`. Only the bundled web app used it.
+
 ## [1.0.1] - 2026-10-03
 
 No new migrations and no new `.env` settings.
@@ -43,6 +59,7 @@ First public release.
 - The Privacy Policy and Terms pages read the operator's name, contact email and jurisdiction from the server instead of compiled-in values. **Action required:** set `LEGAL_OPERATOR_NAME`, `LEGAL_CONTACT_EMAIL` and `LEGAL_JURISDICTION` in `.env`. Until you do, those pages show a "not configured" notice. See [Configuration](docs/configuration.md#legal-pages).
 - `docker-compose.yml` now names the published image. `docker compose pull && docker compose up -d` updates without building.
 
-[Unreleased]: https://github.com/Lefyd24/HomeFinance/compare/v1.0.1...HEAD
+[Unreleased]: https://github.com/Lefyd24/HomeFinance/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/Lefyd24/HomeFinance/compare/v1.0.1...v1.1.0
 [1.0.1]: https://github.com/Lefyd24/HomeFinance/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/Lefyd24/HomeFinance/releases/tag/v1.0.0

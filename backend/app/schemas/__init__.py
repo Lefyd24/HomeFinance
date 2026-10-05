@@ -10,8 +10,9 @@ from app.schemas.ai_chat import (
     AiChatStatus,
 )
 from app.schemas.auth import (
-    APIKeyResponse,
-    APIKeyStatus,
+    ApiKeyCreate,
+    ApiKeyCreated,
+    ApiKeyRead,
     ForgotPasswordRequest,
     LoginRequest,
     PasswordChange,
@@ -258,8 +259,9 @@ __all__ = [
     "TokenPayload",
     "LoginRequest",
     "PasswordChange",
-    "APIKeyResponse",
-    "APIKeyStatus",
+    "ApiKeyCreate",
+    "ApiKeyCreated",
+    "ApiKeyRead",
     "ForgotPasswordRequest",
     "ResetPasswordRequest",
     "ResendVerificationRequest",

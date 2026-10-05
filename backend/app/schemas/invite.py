@@ -25,6 +25,7 @@ class InviteCodeRead(BaseModel):
     expires_at: datetime | None = None
     used_at: datetime | None = None
     used_by_user_id: int | None = None
+    used_by_email: str | None = None
     revoked_at: datetime | None = None
     created_at: datetime
     status: str  # 'active' | 'used' | 'expired' | 'revoked'
@@ -41,6 +42,7 @@ class UserAdminRead(BaseModel):
     is_admin: bool
     email_verified: bool
     created_at: datetime
+    last_login_at: datetime | None = None
 
     class Config:
         from_attributes = True
