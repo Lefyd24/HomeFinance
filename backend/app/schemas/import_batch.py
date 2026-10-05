@@ -4,14 +4,14 @@ from typing import Optional, List, Union
 
 
 class ImportTransactionPreview(BaseModel):
-    id: Optional[int] = None
-    date: Union[str, datetime]
+    id: int
+    line: Optional[int] = None
+    date: str
     description: str
     amount: float
-    suggested_category: Optional[str] = None
-    confidence: Optional[float] = None
-    is_duplicate: bool = False
+    type: str
     category_id: Optional[int] = None
+    is_duplicate: bool = False
 
 
 class ImportPreviewResponse(BaseModel):

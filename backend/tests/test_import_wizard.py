@@ -59,3 +59,68 @@ def test_xls_engine_is_installed():
         parse_bank_file(b"not an xls", "xls", "dmy")
     except ValueError as exc:
         assert "Excel" in str(exc)
+
+
+from datetime import date
+
+from tests.factories import make_account, make_transaction
+
+
+def _preview(client, batch_id, **params):
+    return client.get(f"/api/import/preview/{batch_id}", params=params)
+
+
+def test_preview_lists_rows_with_type_and_line(client):
+    batch_id = _upload(client, CSV).json()["batch_id"]
+    rows = _preview(client, batch_id).json()["transactions"]
+    assert [(r["id"], r["line"], r["date"], r["amount"], r["type"]) for r in rows] == [
+        (1, 2, "2026-07-01", -4.5, "expense"),
+        (2, 4, "2026-07-02", 1500.0, "income"),
+    ]
+    assert all(r["is_duplicate"] is False for r in rows)
+
+
+def test_preview_invert_signs_flips_type(client):
+    batch_id = _upload(client, CSV).json()["batch_id"]
+    rows = _preview(client, batch_id, invert_signs=True).json()["transactions"]
+    assert [(r["amount"], r["type"]) for r in rows] == [(4.5, "income"), (-1500.0, "expense")]
+
+
+def test_preview_flags_rows_already_in_account(client, db, seed_user):
+    account = make_account(db, seed_user)
+    make_transaction(db, seed_user, account, amount=4.5, type="expense",
+                     tx_date=date(2026, 7, 2), description="COFFEE")
+    batch_id = _upload(client, CSV).json()["batch_id"]
+    body = _preview(client, batch_id, account_id=account.id).json()
+    assert [r["is_duplicate"] for r in body["transactions"]] == [True, False]
+    assert [r["id"] for r in body["duplicates"]] == [1]
+
+
+def test_preview_does_not_flag_same_amount_with_different_description(client, db, seed_user):
+    account = make_account(db, seed_user)
+    make_transaction(db, seed_user, account, amount=4.5, type="expense",
+                     tx_date=date(2026, 7, 1), description="Bakery")
+    batch_id = _upload(client, CSV).json()["batch_id"]
+    rows = _preview(client, batch_id, account_id=account.id).json()["transactions"]
+    assert rows[0]["is_duplicate"] is False
+
+
+def test_preview_rejects_someone_elses_account(client, db):
+    from app.models import User
+
+    other = User(email="other@example.com", hashed_password="x", full_name="O", is_active=True)
+    db.add(other); db.commit()
+    account = make_account(db, other)
+    batch_id = _upload(client, CSV).json()["batch_id"]
+    assert _preview(client, batch_id, account_id=account.id).status_code == 404
+
+
+def test_preview_reads_legacy_batches(client, db, seed_user):
+    from app.models import ImportBatch
+
+    batch = ImportBatch(user_id=seed_user.id, filename="old.csv", file_type="csv", status="pending",
+                        total_rows=1, processed_rows=0,
+                        parsed_data=[{"date": "2026-07-01T00:00:00", "description": "Old", "amount": -3.0}])
+    db.add(batch); db.commit()
+    rows = _preview(client, batch.id).json()["transactions"]
+    assert (rows[0]["date"], rows[0]["line"]) == ("2026-07-01", None)

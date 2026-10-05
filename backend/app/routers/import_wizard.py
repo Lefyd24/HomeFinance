@@ -12,6 +12,7 @@ from app.schemas import (
     ImportConfirmRequest,
     ImportPreviewResponse,
 )
+from app.services import import_service, rule_service
 from app.utils import linked_accounts
 from app.utils.file_parsers import DATE_ORDERS, parse_bank_file
 from app.utils.security import get_current_user
@@ -165,56 +166,66 @@ def get_supported_formats():
 @router.get("/preview/{batch_id}", response_model=ImportPreviewResponse)
 def preview_transactions(
     batch_id: int,
+    account_id: int | None = None,
+    invert_signs: bool = False,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    """Preview parsed transactions before import."""
+    """Parsed rows with suggested categories, flagged against `account_id` for duplicates."""
     batch = (
         db.query(ImportBatch)
         .filter(ImportBatch.id == batch_id, ImportBatch.user_id == current_user.id)
         .first()
     )
-
     if not batch:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Import batch not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Import batch not found")
 
-    from app.services import rule_service
+    rows = import_service.batch_rows(batch.parsed_data, invert_signs)
+
+    duplicate_ids: set[int] = set()
+    if account_id is not None:
+        account = (
+            db.query(Account)
+            .filter(Account.id == account_id, Account.user_id == current_user.id)
+            .first()
+        )
+        if not account:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Account not found")
+        duplicate_ids = import_service.find_duplicate_row_ids(db, current_user.id, account_id, rows)
 
     rules = rule_service.load_rules(db, current_user.id)
-    # Get parsed transactions from batch
     transactions = []
-    if batch.parsed_data:
-        for i, tx in enumerate(batch.parsed_data):
-            amount = abs(float(tx.get("amount") or 0))
-            tx_type = "income" if float(tx.get("amount") or 0) > 0 else "expense"
-            suggested = rule_service.categorise(
-                db,
-                current_user.id,
-                {
-                    "description": tx.get("description") or "",
-                    "amount": amount,
-                    "type": tx_type,
-                    "category_id": None,
-                },
-                rules=rules,
-                record_stats=False,
-            )
-            transactions.append(
-                {
-                    "id": i + 1,
-                    "date": tx.get("date", ""),
-                    "description": tx.get("description", ""),
-                    "amount": tx.get("amount", 0),
-                    "suggested_category": suggested,
-                    "is_duplicate": False,
-                    "category_id": suggested,
-                }
-            )
+    for row in rows:
+        suggested = rule_service.categorise(
+            db,
+            current_user.id,
+            {
+                "description": row["description"],
+                "amount": row["abs_amount"],
+                "type": row["type"],
+                "account_id": account_id,
+                "category_id": None,
+            },
+            rules=rules,
+            record_stats=False,
+        )
+        transactions.append(
+            {
+                "id": row["row_id"],
+                "line": row["line"],
+                "date": row["date"].isoformat(),
+                "description": row["description"],
+                "amount": row["amount"],
+                "type": row["type"],
+                "category_id": suggested,
+                "is_duplicate": row["row_id"] in duplicate_ids,
+            }
+        )
 
     return ImportPreviewResponse(
-        transactions=transactions, duplicates=[], total=len(transactions)
+        transactions=transactions,
+        duplicates=[t for t in transactions if t["is_duplicate"]],
+        total=len(transactions),
     )
 
 
@@ -250,8 +261,6 @@ def auto_categorize_preview(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Import batch not found"
         )
-
-    from app.services import rule_service
 
     rules = rule_service.load_rules(db, current_user.id)
     assigned = 0
@@ -340,9 +349,7 @@ def confirm_import(
 
             category_id = tx_data.get("category_id")
             if category_id is None:
-                from app.services import rule_service
-
-                category_id = rule_service.categorise(
+                            category_id = rule_service.categorise(
                     db,
                     current_user.id,
                     {
