@@ -1,7 +1,7 @@
 import logging
 from datetime import datetime
 
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
+from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
 from sqlalchemy.orm import Session
 
 from app.database import get_db
@@ -12,7 +12,7 @@ from app.schemas import (
     ImportPreviewResponse,
 )
 from app.utils import linked_accounts
-from app.utils.file_parsers import parse_bank_file
+from app.utils.file_parsers import DATE_ORDERS, parse_bank_file
 from app.utils.security import get_current_user
 
 logger = logging.getLogger("app")
@@ -23,6 +23,7 @@ router = APIRouter(prefix="/import", tags=["Import"])
 @router.post("/upload")
 def upload_file(
     file: UploadFile | None = File(None),
+    date_format: str = Form(...),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
@@ -39,6 +40,12 @@ def upload_file(
     if not file.filename:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="File has no filename"
+        )
+
+    if date_format not in DATE_ORDERS:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Choose a date format: day first, month first or year first.",
         )
 
     logger.info(
@@ -86,26 +93,21 @@ def upload_file(
         logger.debug("File size: %d bytes", len(content))
 
         # Parse file
-        transactions = parse_bank_file(content, file_type)
+        result = parse_bank_file(content, file_type, date_format)
 
-        logger.info("Parsed %d transactions from %s", len(transactions), file.filename)
+        logger.info("Parsed %d transactions from %s", len(result.transactions), file.filename)
 
-        # Serialize transactions for JSON storage
-        serialized_transactions = []
-        for tx in transactions:
-            serialized_tx = {
-                "date": tx["date"].isoformat()
-                if isinstance(tx.get("date"), datetime)
-                else str(tx.get("date", "")),
-                "description": tx.get("description", ""),
-                "amount": float(tx.get("amount", 0)),
-            }
-            serialized_transactions.append(serialized_tx)
-
-        # Update batch info
-        batch.total_rows = len(transactions)
+        batch.total_rows = len(result.transactions)
         batch.status = "pending"
-        batch.parsed_data = serialized_transactions
+        batch.parsed_data = [
+            {
+                "line": tx["line"],
+                "date": tx["date"].isoformat(),
+                "description": tx["description"],
+                "amount": tx["amount"],
+            }
+            for tx in result.transactions
+        ]
         db.commit()
 
         return {
