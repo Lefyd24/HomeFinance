@@ -79,7 +79,7 @@ Visit **http://localhost:8223** and sign in with the email and password from ste
 
 By default the port is bound to `127.0.0.1` only. To reach it from other devices, see [Deployment](deployment.md).
 
-## 5. Promote the admin and invite your household
+## 5. Promote the admin and invite other people
 
 The script already makes the account an admin, so the Admin page is available right away. If you later want to promote additional accounts, list their emails in `.env`:
 
@@ -88,6 +88,8 @@ ADMIN_EMAILS=["you@example.com","partner@example.com"]
 ```
 
 Restart the container. Anyone listed who **already has an account** is promoted. This setting never creates accounts.
+
+Each person you invite gets a **separate, private space**: their own accounts, transactions, budgets, debts, goals and settings. Nothing is shared between users. There are no joint accounts or combined household budget, and admins cannot see other users' finances. If two people want to track the same money together, they share one login.
 
 To invite someone:
 

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Home Finance: self-hosted household budget app</title>
+<title>Home Finance: self-hosted personal finance app</title>
 <meta name="description" content="Accounts, budgets, debts, goals, bank sync, investments and an AI advisor in one self-hosted app. One Docker container, one SQLite file, no subscription.">
 <link rel="canonical" href="https://lefyd24.github.io/HomeFinance/">
 <link rel="alternate" hreflang="en" href="https://lefyd24.github.io/HomeFinance/">
@@ -14,7 +14,7 @@
 <link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
 <meta property="og:type" content="website">
-<meta property="og:title" content="Home Finance: your household budget, on your own server">
+<meta property="og:title" content="Home Finance: your finances, on your own server">
 <meta property="og:description" content="One Docker container. One SQLite file. No subscription, no third party reading your statements.">
 <meta property="og:url" content="https://lefyd24.github.io/HomeFinance/">
 <meta property="og:image" content="https://lefyd24.github.io/HomeFinance/assets/img/og.jpg">
@@ -25,13 +25,13 @@
 </script>
 <link rel="stylesheet" href="assets/styles.css">
 <script type="application/ld+json">
-{"@context":"https://schema.org","@type":"SoftwareApplication","name":"Home Finance","applicationCategory":"FinanceApplication","operatingSystem":"Linux, macOS, Windows (Docker)","description":"Self-hosted household budget app: accounts, budgets, debts, goals, bank sync, investments and an AI advisor.","url":"https://lefyd24.github.io/HomeFinance/","codeRepository":"https://github.com/Lefyd24/HomeFinance","license":"https://opensource.org/license/isc-license-txt","offers":{"@type":"Offer","price":"0","priceCurrency":"EUR"},"inLanguage":["en","el"]}
+{"@context":"https://schema.org","@type":"SoftwareApplication","name":"Home Finance","applicationCategory":"FinanceApplication","operatingSystem":"Linux, macOS, Windows (Docker)","description":"Self-hosted personal finance app: accounts, budgets, debts, goals, bank sync, investments and an AI advisor.","url":"https://lefyd24.github.io/HomeFinance/","codeRepository":"https://github.com/Lefyd24/HomeFinance","license":"https://opensource.org/license/isc-license-txt","offers":{"@type":"Offer","price":"0","priceCurrency":"EUR"},"inLanguage":["en","el"]}
 </script>
 <script type="application/ld+json">
 {"@context":"https://schema.org","@type":"FAQPage","mainEntity":[
 {"@type":"Question","name":"Does my financial data leave my server?","acceptedAnswer":{"@type":"Answer","text":"Not by default. There is no analytics, telemetry or vendor account. AI chat, bank sync, brokerage sync, market data and email only contact an outside service if you turn them on."}},
 {"@type":"Question","name":"What does it cost?","acceptedAnswer":{"@type":"Answer","text":"The software is free and open source under the ISC license. You need a machine you control. The optional AI advisor uses your own OpenRouter key and shows the cost of every answer."}},
-{"@type":"Question","name":"Can my household share it?","acceptedAnswer":{"@type":"Answer","text":"Yes. Registration is invite-only, and every person gets a separate login and separate data."}},
+{"@type":"Question","name":"Can other people in my home use it?","acceptedAnswer":{"@type":"Answer","text":"Yes, each in their own private space. Registration is invite-only, and everyone you invite gets a separate login with separate accounts, transactions and budgets. Data is not shared between users, so there are no joint accounts or combined household budget."}},
 {"@type":"Question","name":"How do I back it up?","acceptedAnswer":{"@type":"Answer","text":"Your data is one SQLite file in a data folder. Back up that folder and your two secret keys."}}
 ]}
 </script>
@@ -65,8 +65,8 @@
     <div class="hero-copy">
       <p class="eyebrow" data-i18n="hero.eyebrow">Self-hosted · Open source · EN / EL</p>
       <h1>
-        <span class="l"><span data-i18n="h1.1">The household</span></span>
-        <span class="l"><span data-i18n="h1.2">budget that lives</span></span>
+        <span class="l"><span data-i18n="h1.1">Personal finance</span></span>
+        <span class="l"><span data-i18n="h1.2">that lives</span></span>
         <span class="l"><span data-i18n="h1.3">on your server.</span></span>
       </h1>
       <p class="lede" data-i18n="hero.lede">Accounts, budgets, debts, goals, bank sync, investments and an AI advisor. One Docker container and one SQLite file, with no subscription and no third party reading your statements.</p>
@@ -77,7 +77,7 @@
       <div class="facts">
         <span data-i18n="fact.1">No telemetry</span>
         <span data-i18n="fact.2">amd64 &amp; arm64</span>
-        <span data-i18n="fact.3">Invite-only household logins</span>
+        <span data-i18n="fact.3">A private login for each person</span>
       </div>
     </div>
 
@@ -225,7 +225,7 @@
         <details><summary data-i18n="q2">What does it cost?</summary><p data-i18n="a2">Nothing. It's open source under the ISC license. The optional AI advisor uses your own OpenRouter key and shows the cost of every answer, with monthly caps.</p></details>
       </div>
       <div>
-        <details><summary data-i18n="q3">Can my household share it?</summary><p data-i18n="a3">Yes. Registration is invite-only, and every person gets a separate login and separate data.</p></details>
+        <details><summary data-i18n="q3">Can other people in my home use it?</summary><p data-i18n="a3">Yes, each in their own private space. Registration is invite-only, and everyone you invite gets a separate login with separate accounts, transactions and budgets. Data is not shared between users, so there are no joint accounts or combined household budget.</p></details>
         <details><summary data-i18n="q4">How do I back it up?</summary><p data-i18n="a4">Your data is one SQLite file in a data folder. Back up that folder and your two secret keys.</p></details>
       </div>
     </div>

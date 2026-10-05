@@ -113,7 +113,7 @@ Your first screen: total balance, this month's income, spending and net saved, a
 ## Account settings and people
 
 - **Investor profile** and **API keys** are under the user menu.
-- **Multiple people, one server**: each person has their own login and data. Registration is invite-only, and admins create and revoke invite codes and activate or deactivate users from the **Admin** page. See [Getting started](getting-started.md#5-promote-the-admin-and-invite-your-household).
+- **Multiple people, one server**: each person has their own login and their own private data. Accounts, transactions and budgets are never shared between users, so there is no joint account or combined household view, and admins can't see other users' finances. Registration is invite-only, and admins create and revoke invite codes and activate or deactivate users from the **Admin** page. See [Getting started](getting-started.md#5-promote-the-admin-and-invite-other-people).
 - Email verification and a self-service forgot-password flow are built in. Login, registration and reset attempts are rate-limited per IP and per email.
 
 ## Language and appearance

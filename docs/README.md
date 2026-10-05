@@ -6,7 +6,7 @@ Everything you need to install, run, operate and extend **Home Finance**. If you
 
 | Guide | What's inside |
 |---|---|
-| [Getting started](getting-started.md) | Install with Docker in five minutes, create the first admin, invite your household |
+| [Getting started](getting-started.md) | Install with Docker in five minutes, create the first admin, invite other people |
 | [User guide](user-guide.md) | Every feature, from accounts and transactions to reports and documents |
 | [Configuration reference](configuration.md) | Every environment variable, its default, and the startup checks |
 | [Deployment](deployment.md) | Reverse proxies, Tailscale Funnel, systemd, and a production checklist |

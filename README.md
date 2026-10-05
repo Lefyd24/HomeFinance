@@ -8,7 +8,7 @@
 
 # Home Finance
 
-**Your whole household budget, in one place. On your own server.**
+**Your finances, in one place. On your own server, with a private login for everyone in your home.**
 
 Accounts, budgets, debts, goals, bank sync, investments and an AI advisor in one self-hosted app.<br>
 One Docker container. One SQLite file. No subscription, no third party reading your statements.
@@ -34,7 +34,7 @@ One Docker container. One SQLite file. No subscription, no third party reading y
 
 Most finance apps want your bank login, a monthly fee and a copy of your data. Home Finance is built the other way round: it's a normal progressive web app (PWA) you open from your phone or laptop, but the data lives in a **plain SQLite file on a machine you control**.
 
-- 🏠 **Built for a household.** Several people, separate logins and separate data, invite-only registration.
+- 🏠 **One server, a private space for each person.** Invite the people you live with and each gets their own login, accounts, transactions and budgets. Data is never shared between users (there are no joint accounts or combined household view), and admins can't see anyone else's finances.
 - 🔒 **Private by default.** Nothing phones home. Every outside connection is optional and documented line by line in [Security & privacy](docs/security.md).
 - 🪶 **Simple to run.** One container, one port, one folder to back up.
 - 🧮 **Honest numbers.** Reports and calculators are deterministic math. The AI advisor looks up your real data and is never allowed to do arithmetic itself.
@@ -166,7 +166,7 @@ docker compose run --rm -v "$PWD/scripts:/app/scripts:ro" \
   app python /app/scripts/create_admin.py you@example.com 'a-strong-password' "Your Name"
 ```
 
-Open **http://localhost:8223** and sign in. Then invite your household from **Admin → Invite Codes**.
+Open **http://localhost:8223** and sign in. Then invite other people from **Admin → Invite Codes**. Each person you invite gets their own separate, private data.
 
 That's it. Your data is in `./data`. The full walkthrough is in [Getting started](docs/getting-started.md).
 
