@@ -19,7 +19,8 @@ export function useImportPreview(batchId: number | null, accountId: number | nul
 export function useConfirmImport() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: importApi.confirmImport,
+    // Wrapped so TanStack's extra mutation-context argument never reaches the API call.
+    mutationFn: (input: importApi.ConfirmImportInput) => importApi.confirmImport(input),
     // New transactions move balances, budgets, reports and the dashboard.
     onSuccess: () => queryClient.invalidateQueries(),
   })

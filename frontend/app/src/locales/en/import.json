@@ -1,1 +1,72 @@
-{}
+{
+  "title": "Import transactions",
+  "description": "Bring in a CSV or Excel export from your bank, check the rows, then add them to an account.",
+  "guide": {
+    "title": "What file can I import?",
+    "intro": "A CSV, XLSX or XLS export with a header row. Column names are matched in English, Greek or Dutch, ignoring case and accents.",
+    "template": "Download template",
+    "columns": {
+      "date": { "label": "Date", "help": "Date, Transaction date, Booking date, Ημερομηνία, Ημ/νία κίνησης…" },
+      "description": { "label": "Description", "help": "Description, Details, Narrative, Περιγραφή, Αιτιολογία…" },
+      "amount": { "label": "Amount", "help": "Amount, Value, Ποσό. Negative is money out, positive is money in." },
+      "debitCredit": { "label": "…or Debit and Credit", "help": "Two columns instead of Amount: Debit / Χρέωση is money out, Credit / Πίστωση is money in." }
+    },
+    "notes": {
+      "header": "Lines above the header row, like the bank name or account number, are skipped automatically.",
+      "dates": "Dates are read exactly in the format you pick below, never guessed. The template uses year first (2026-01-05).",
+      "amounts": "Both 1.234,56 and 1,234.56 work. Currency symbols are ignored.",
+      "linked": "Accounts connected through bank sync can't receive imports, because the bank already provides their transactions."
+    }
+  },
+  "dateFormat": {
+    "legend": "How are dates written in your file?",
+    "help": "Pick this before choosing the file. Dates that don't match are listed as skipped, never guessed.",
+    "dmy": "Day first",
+    "mdy": "Month first",
+    "ymd": "Year first",
+    "chosen": "Date format: {{format}}"
+  },
+  "upload": {
+    "choose": "Choose file",
+    "pickFormatFirst": "Choose the date format first",
+    "uploading": "Reading file…",
+    "types": "CSV, XLSX or XLS, up to 10 MB",
+    "failed": "The file could not be read."
+  },
+  "review": {
+    "title_one": "{{count}} row found in {{file}}",
+    "title_other": "{{count}} rows found in {{file}}",
+    "account": "Import into account",
+    "accountPlaceholder": "Choose an account",
+    "noAccounts": "You need an account that isn't connected to bank sync. Create one on the Accounts page first.",
+    "invert": "Flip signs",
+    "invertHelp": "Use this for credit-card exports that show purchases as positive amounts.",
+    "duplicateBadge": "Possible duplicate",
+    "duplicatesNote_one": "{{count}} row looks like a transaction already in this account, so it was unticked.",
+    "duplicatesNote_other": "{{count}} rows look like transactions already in this account, so they were unticked.",
+    "include": "Include {{description}}",
+    "category": "Category",
+    "noCategory": "No category",
+    "skipped_one": "{{count}} line was skipped",
+    "skipped_other": "{{count}} lines were skipped",
+    "skipReason": {
+      "missing_date": "Line {{line}}: no date",
+      "invalid_date": "Line {{line}}: unreadable date \"{{value}}\"",
+      "invalid_amount": "Line {{line}}: unreadable amount \"{{value}}\"",
+      "zero_amount": "Line {{line}}: amount is zero"
+    },
+    "loading": "Loading rows…",
+    "confirm_one": "Import {{count}} transaction",
+    "confirm_other": "Import {{count}} transactions",
+    "importing": "Importing…",
+    "startOver": "Choose another file",
+    "confirmFailed": "The import failed. Nothing was saved."
+  },
+  "done": {
+    "title_one": "Imported {{count}} transaction",
+    "title_other": "Imported {{count}} transactions",
+    "description": "They're now in {{account}}.",
+    "viewTransactions": "View transactions",
+    "another": "Import another file"
+  }
+}
