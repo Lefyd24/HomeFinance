@@ -216,3 +216,25 @@ def test_confirm_requires_at_least_one_row(client, db, seed_user):
 
 def test_row_update_stub_is_gone(client):
     assert client.post("/api/import/preview/1/update").status_code in (404, 405)
+
+
+def _upload_cols(client, content: bytes, **columns):
+    return client.post(
+        "/api/import/upload",
+        files={"file": ("t.csv", content, "text/csv")},
+        data={"date_format": "ymd", **columns},
+    )
+
+
+def test_upload_accepts_custom_column_names(client):
+    content = b"Booking date,Value date,Details,Amount\n2026-07-01,2026-07-03,Coffee,-4.50\n"
+    res = _upload_cols(client, content, date_column="Value date")
+    assert res.status_code == 200, res.text
+    batch_id = res.json()["batch_id"]
+    assert _preview(client, batch_id).json()["transactions"][0]["date"] == "2026-07-03"
+
+
+def test_upload_reports_unknown_custom_column(client):
+    res = _upload_cols(client, CSV, date_column="Nope")
+    assert res.status_code == 400
+    assert "Nope" in res.json()["detail"]

@@ -26,6 +26,11 @@ router = APIRouter(prefix="/import", tags=["Import"])
 def upload_file(
     file: UploadFile | None = File(None),
     date_format: str = Form(...),
+    date_column: str | None = Form(None),
+    description_column: str | None = Form(None),
+    amount_column: str | None = Form(None),
+    debit_column: str | None = Form(None),
+    credit_column: str | None = Form(None),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
@@ -96,7 +101,18 @@ def upload_file(
         logger.debug("File size: %d bytes", len(content))
 
         # Parse file
-        result = parse_bank_file(content, file_type, date_format)
+        result = parse_bank_file(
+            content,
+            file_type,
+            date_format,
+            columns={
+                "date": date_column,
+                "description": description_column,
+                "amount": amount_column,
+                "debit": debit_column,
+                "credit": credit_column,
+            },
+        )
 
         logger.info("Parsed %d transactions from %s", len(result.transactions), file.filename)
 

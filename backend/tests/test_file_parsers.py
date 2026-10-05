@@ -209,3 +209,51 @@ def test_debit_credit_signs_use_absolute_values():
     # Some banks write debits as negative numbers, others as positive ones.
     content = b"Date,Description,Debit,Credit\n2026-07-01,A,-10,\n2026-07-02,B,10,\n2026-07-03,C,,5\n"
     assert [t["amount"] for t in parse_bank_file(content, "csv", "ymd").transactions] == [-10.0, -10.0, 5.0]
+
+
+MULTI = (
+    b"Booking date,Value date,Details,Reference,Amount\n"
+    b"2026-07-01,2026-07-03,Coffee,REF-1,-4.50\n"
+)
+
+
+def test_custom_column_names_pick_between_several_dates_and_descriptions():
+    result = parse_bank_file(
+        MULTI, "csv", "ymd", columns={"date": "Value date", "description": "Reference"}
+    )
+    assert _rows(result) == [(date(2026, 7, 3), "REF-1", -4.5)]
+
+
+def test_custom_column_names_match_ignoring_case_and_accents():
+    content = "Ημ/νία Αξίας;Αιτιολογία;Ποσό\n05/01/2026;Rent;-800,00\n".encode("utf-8")
+    result = parse_bank_file(content, "csv", "dmy", columns={"date": "ημ/νια αξιασ"})
+    assert _rows(result) == [(date(2026, 1, 5), "Rent", -800.0)]
+
+
+def test_custom_columns_for_unusual_headers():
+    content = b"Day,What,Sum\n2026-07-01,Coffee,-4.50\n"
+    result = parse_bank_file(
+        content, "csv", "ymd", columns={"date": "Day", "description": "What", "amount": "Sum"}
+    )
+    assert _rows(result) == [(date(2026, 7, 1), "Coffee", -4.5)]
+
+
+def test_custom_debit_credit_columns_ignore_a_stray_amount_column():
+    content = b"Date,Description,Amount,Out,In\n2026-07-01,A,999,10,\n2026-07-02,B,999,,5\n"
+    result = parse_bank_file(
+        content, "csv", "ymd", columns={"debit": "Out", "credit": "In"}
+    )
+    assert [t["amount"] for t in result.transactions] == [-10.0, 5.0]
+
+
+def test_custom_column_name_that_is_not_in_the_file_raises_readable_error():
+    with pytest.raises(ValueError, match="Value dat"):
+        parse_bank_file(
+            b"Date,Description,Amount\n2026-07-01,A,1\n", "csv", "ymd", columns={"date": "Value dat"}
+        )
+
+
+def test_blank_custom_names_fall_back_to_automatic_detection():
+    content = b"Date,Description,Amount\n2026-07-01,A,1\n"
+    result = parse_bank_file(content, "csv", "ymd", columns={"date": "  ", "amount": ""})
+    assert len(result.transactions) == 1

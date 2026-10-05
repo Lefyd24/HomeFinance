@@ -6,10 +6,22 @@
     "intro": "A CSV, XLSX or XLS export with a header row. Column names are matched in English, Greek or Dutch, ignoring case and accents.",
     "template": "Download template",
     "columns": {
-      "date": { "label": "Date", "help": "Date, Transaction date, Booking date, Ημερομηνία, Ημ/νία κίνησης…" },
-      "description": { "label": "Description", "help": "Description, Details, Narrative, Περιγραφή, Αιτιολογία…" },
-      "amount": { "label": "Amount", "help": "Amount, Value, Ποσό. Negative is money out, positive is money in." },
-      "debitCredit": { "label": "…or Debit and Credit", "help": "Two columns instead of Amount: Debit / Χρέωση is money out, Credit / Πίστωση is money in." }
+      "date": {
+        "label": "Date",
+        "help": "Date, Transaction date, Booking date, Ημερομηνία, Ημ/νία κίνησης…"
+      },
+      "description": {
+        "label": "Description",
+        "help": "Description, Details, Narrative, Περιγραφή, Αιτιολογία…"
+      },
+      "amount": {
+        "label": "Amount",
+        "help": "Amount, Value, Ποσό. Negative is money out, positive is money in."
+      },
+      "debitCredit": {
+        "label": "…or Debit and Credit",
+        "help": "Two columns instead of Amount: Debit / Χρέωση is money out, Credit / Πίστωση is money in."
+      }
     },
     "notes": {
       "header": "Lines above the header row, like the bank name or account number, are skipped automatically.",
@@ -68,5 +80,33 @@
     "description": "They're now in {{account}}.",
     "viewTransactions": "View transactions",
     "another": "Import another file"
+  },
+  "columns": {
+    "title": "Column names (optional)",
+    "help": "Leave these empty and the columns are found automatically. If your file has several dates or descriptions (for example a booking date and a value date), type the exact header of the one to use. Capitals and accents don't matter.",
+    "auto": "Automatic",
+    "date": "Date column",
+    "description": "Description column",
+    "amount": "Amount column",
+    "debit": "Debit column (money out)",
+    "credit": "Credit column (money in)"
+  },
+  "table": {
+    "search": "Search rows",
+    "searchPlaceholder": "Search description, date or amount…",
+    "noMatches": "No rows match your search.",
+    "selectAll": "Select all rows",
+    "selectAllMatching": "Select all matching rows",
+    "date": "Date",
+    "description": "Description",
+    "amount": "Amount",
+    "category": "Category",
+    "pagination": "Pages",
+    "showing": "{{from}}–{{to}} of {{total}}",
+    "page": "Page {{page}} of {{pages}}",
+    "previous": "Previous",
+    "next": "Next",
+    "rowsPerPage": "Rows per page",
+    "perPage": "{{count}} / page"
   }
 }

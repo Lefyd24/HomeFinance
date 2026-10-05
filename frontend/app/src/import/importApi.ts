@@ -6,6 +6,15 @@ export type SkipReason = 'missing_date' | 'invalid_date' | 'invalid_amount' | 'z
 export type DateFormat = 'dmy' | 'mdy' | 'ymd'
 export const DATE_FORMATS: readonly DateFormat[] = ['dmy', 'mdy', 'ymd']
 
+/** Header names typed by the user; a blank or missing entry means "detect automatically". */
+export interface ImportColumns {
+  date?: string
+  description?: string
+  amount?: string
+  debit?: string
+  credit?: string
+}
+
 export interface SkippedRow {
   line: number
   reason: SkipReason
@@ -49,10 +58,17 @@ export interface ConfirmImportResult {
   imported_count: number
 }
 
-export function uploadImportFile(file: File, dateFormat: DateFormat): Promise<UploadResult> {
+export function uploadImportFile(
+  file: File,
+  dateFormat: DateFormat,
+  columns?: ImportColumns,
+): Promise<UploadResult> {
   const formData = new FormData()
   formData.append('file', file)
   formData.append('date_format', dateFormat)
+  for (const [key, value] of Object.entries(columns ?? {})) {
+    if (value?.trim()) formData.append(`${key}_column`, value.trim())
+  }
   return apiFetch<UploadResult>('/import/upload', { method: 'POST', body: formData })
 }
 

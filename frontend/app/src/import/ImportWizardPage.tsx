@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { CheckCircle2, Upload } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
 import { cn } from '@/lib/utils'
@@ -12,7 +13,7 @@ import { Select } from '../ui/Select'
 import { useAccounts } from '../accounts/useAccounts'
 import { useCategories } from '../categories/useCategories'
 import * as importApi from './importApi'
-import type { DateFormat, ImportPreviewRow, UploadResult } from './importApi'
+import type { DateFormat, ImportColumns, ImportPreviewRow, UploadResult } from './importApi'
 import { ImportFormatGuide } from './ImportFormatGuide'
 import { ImportPreviewRows } from './ImportPreviewRows'
 import { useConfirmImport, useImportPreview } from './useImport'
@@ -26,11 +27,14 @@ const DATE_FORMAT_EXAMPLES: Record<DateFormat, string> = {
   ymd: '2026-12-31',
 }
 
+const COLUMN_FIELDS = ['date', 'description', 'amount', 'debit', 'credit'] as const
+
 export function ImportWizardPage() {
   const { t } = useTranslation('import')
   // Deliberately no default: the user must say how their bank writes dates
   // before anything is parsed.
   const [dateFormat, setDateFormat] = useState<DateFormat | null>(null)
+  const [columns, setColumns] = useState<ImportColumns>({})
   const [upload, setUpload] = useState<UploadResult | null>(null)
   const [uploadError, setUploadError] = useState<string | null>(null)
   const [uploading, setUploading] = useState(false)
@@ -75,7 +79,12 @@ export function ImportWizardPage() {
     reset()
     setUploading(true)
     try {
-      setUpload(await importApi.uploadImportFile(file, dateFormat))
+      const named = Object.values(columns).some((value) => value?.trim())
+      setUpload(
+        await (named
+          ? importApi.uploadImportFile(file, dateFormat, columns)
+          : importApi.uploadImportFile(file, dateFormat)),
+      )
     } catch (err) {
       setUploadError(err instanceof Error && err.message ? err.message : t('upload.failed'))
     } finally {
@@ -155,6 +164,27 @@ export function ImportWizardPage() {
             ))}
           </div>
         </fieldset>
+      )}
+
+      {!upload && (
+        <details className="glass-panel rounded-xl p-4 mb-4">
+          <summary className="cursor-pointer font-medium text-foreground">{t('columns.title')}</summary>
+          <p className="text-xs text-muted-foreground mt-2">{t('columns.help')}</p>
+          <div className="mt-3 grid gap-3 sm:grid-cols-2">
+            {COLUMN_FIELDS.map((field) => (
+              <div key={field} className="flex flex-col gap-1.5">
+                <Label htmlFor={`import-column-${field}`}>{t(`columns.${field}`)}</Label>
+                <Input
+                  id={`import-column-${field}`}
+                  value={columns[field] ?? ''}
+                  onChange={(e) => setColumns((prev) => ({ ...prev, [field]: e.target.value }))}
+                  placeholder={t('columns.auto')}
+                  autoComplete="off"
+                />
+              </div>
+            ))}
+          </div>
+        </details>
       )}
 
       {!upload && (
@@ -268,6 +298,9 @@ export function ImportWizardPage() {
               isIncluded={isIncluded}
               categoryFor={categoryFor}
               onToggle={(rowId, value) => setIncluded((prev) => ({ ...prev, [rowId]: value }))}
+              onToggleMany={(rowIds, value) =>
+                setIncluded((prev) => ({ ...prev, ...Object.fromEntries(rowIds.map((id) => [id, value])) }))
+              }
               onCategoryChange={(rowId, categoryId) =>
                 setCategoryOverrides((prev) => ({ ...prev, [rowId]: categoryId }))
               }

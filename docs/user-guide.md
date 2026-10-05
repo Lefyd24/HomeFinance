@@ -47,6 +47,7 @@ The **Import** page brings in a bank export (`.csv`, `.xlsx` or `.xls`, up to 10
 - A header row with a **date** column, a **description** column, and either an **amount** column or separate **debit** and **credit** columns. Names are matched in English, Greek or Dutch, ignoring case and accents (for example `Date`, `Ημερομηνία`, `Ημ/νία κίνησης`, `Description`, `Αιτιολογία`, `Amount`, `Ποσό`, `Χρέωση`, `Πίστωση`).
 - Lines above the header (bank name, account number) are skipped.
 - Before choosing the file you pick how its dates are written: **day first** (`31/12/2026`), **month first** (`12/31/2026`) or **year first** (`2026-12-31`). Nothing is guessed: a date that doesn't match your choice is listed as skipped. Dates with a written month (`5 Jan 2026`) and real date cells in Excel work with any choice.
+- If the file has several dates or descriptions (say a booking date and a value date), open **Column names** on the Import page and type the exact header of the column to use. Leave a box empty to detect that column automatically; capitals and accents don't matter.
 - Amounts can use `1.234,56` or `1,234.56`; currency symbols are ignored. Negative means money out.
 - The page has a **Download template** button with a ready-made example.
 
@@ -54,7 +55,7 @@ The **Import** page brings in a bank export (`.csv`, `.xlsx` or `.xls`, up to 10
 
 1. Pick the date format, then upload the file. Lines whose date or amount can't be read are listed as skipped, with the reason, instead of being guessed.
 2. Pick the account. Rows that look like transactions already in that account (same amount and direction, dates within a day, matching description) are marked **Possible duplicate** and unticked.
-3. Untick rows you don't want, change categories (your [rules](#categorization-rules) pre-fill them), and use **Flip signs** for credit-card exports that list purchases as positive.
+3. Long files are shown in pages (10 to 100 rows each). Use the search box to filter by description, date or amount, and the checkbox above the list to tick or untick every matching row at once. Untick rows you don't want, change categories (your [rules](#categorization-rules) pre-fill them), and use **Flip signs** for credit-card exports that list purchases as positive.
 4. **Import**. Each upload can be imported once; the account balance is updated.
 
 Imports are rejected for bank-linked accounts, because the bank already provides their transactions. See [Bank connection](bank-sync.md).

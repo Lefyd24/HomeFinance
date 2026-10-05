@@ -133,4 +133,18 @@ describe('ImportWizardPage', () => {
     await userEvent.click(screen.getByRole('switch', { name: /flip signs/i }))
     expect(preview).toHaveBeenLastCalledWith(1, { accountId: 7, invertSigns: true })
   })
+
+  it('sends the column names the user typed with the upload', async () => {
+    vi.spyOn(accountsApi, 'listAccounts').mockResolvedValue([account])
+    vi.spyOn(categoriesApi, 'listCategories').mockResolvedValue([])
+    mockUpload()
+    vi.spyOn(importApi, 'getImportPreview').mockResolvedValue({ transactions: [], duplicates: [], total: 0 })
+    const upload = vi.mocked(importApi.uploadImportFile)
+    renderPage()
+
+    await userEvent.type(screen.getByLabelText(/^date column/i), 'Value date')
+    await userEvent.type(screen.getByLabelText(/^description column/i), 'Reference')
+    await chooseFileWithFormat()
+    expect(upload).toHaveBeenCalledWith(expect.any(File), 'dmy', { date: 'Value date', description: 'Reference' })
+  })
 })

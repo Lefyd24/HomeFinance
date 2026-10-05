@@ -210,13 +210,38 @@ def _read_grid(content: bytes, file_type: str) -> list[list]:
     raise ValueError(f"Unsupported file type: {file_type}")
 
 
-def _match_columns(cells: list) -> dict[str, int] | None:
+COLUMN_KEYS = tuple(_ALIASES)
+
+
+def _clean_overrides(columns: dict[str, str | None] | None) -> dict[str, str]:
+    """Keep only the column names the user actually typed (blank means auto-detect)."""
+    return {
+        key: value.strip()
+        for key, value in (columns or {}).items()
+        if key in COLUMN_KEYS and value and value.strip()
+    }
+
+
+def _alias_sets(overrides: dict[str, str]) -> dict[str, frozenset[str]]:
+    """A typed name replaces the built-in aliases for that column, so a file with
+    several date or description columns uses the one the user named."""
+    sets = dict(COLUMN_ALIASES)
+    for key, name in overrides.items():
+        sets[key] = frozenset({normalize_header(name)})
+    # Typing debit/credit names means "use those", even if the file also has a
+    # generic Amount column.
+    if ("debit" in overrides or "credit" in overrides) and "amount" not in overrides:
+        sets["amount"] = frozenset()
+    return sets
+
+
+def _match_columns(cells: list, alias_sets: dict[str, frozenset[str]] = COLUMN_ALIASES) -> dict[str, int] | None:
     found: dict[str, int] = {}
     for index, cell in enumerate(cells):
         if _is_blank(cell):
             continue
         key = normalize_header(cell)
-        for standard, aliases in COLUMN_ALIASES.items():
+        for standard, aliases in alias_sets.items():
             if standard not in found and key in aliases:
                 found[standard] = index
     has_money = "amount" in found or ("debit" in found and "credit" in found)
@@ -235,7 +260,12 @@ def _as_text(value: object) -> str:
     return "" if _is_blank(value) else str(value).strip()
 
 
-def parse_bank_file(content: bytes, file_type: str, date_order: str) -> ParseResult:
+def parse_bank_file(
+    content: bytes,
+    file_type: str,
+    date_order: str,
+    columns: dict[str, str | None] | None = None,
+) -> ParseResult:
     if date_order not in DATE_ORDERS:
         raise ValueError("Choose a date format: day first, month first or year first.")
     if not content or not content.strip():
@@ -245,13 +275,24 @@ def parse_bank_file(content: bytes, file_type: str, date_order: str) -> ParseRes
     if not any(any(not _is_blank(c) for c in row) for row in grid):
         raise ValueError("The file is empty.")
 
+    overrides = _clean_overrides(columns)
+    alias_sets = _alias_sets(overrides)
     header_index, columns = None, None
     for index, row in enumerate(grid[:HEADER_SCAN_ROWS]):
-        columns = _match_columns(row)
+        columns = _match_columns(row, alias_sets)
         if columns:
             header_index = index
             break
     if columns is None or header_index is None:
+        if overrides:
+            seen = {normalize_header(c) for row in grid[:HEADER_SCAN_ROWS] for c in row if not _is_blank(c)}
+            missing = [name for name in overrides.values() if normalize_header(name) not in seen]
+            if missing:
+                raise ValueError(
+                    "Could not find these column names in the file: "
+                    + ", ".join(f'"{name}"' for name in missing)
+                    + ". Check the spelling against the header row of your file."
+                )
         raise ValueError(
             "Could not find the column headers. The file needs a date column, a description "
             "column, and either an amount column or debit and credit columns. See the Import "
