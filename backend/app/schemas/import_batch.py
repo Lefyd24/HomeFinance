@@ -1,4 +1,4 @@
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, Field, field_validator
 from datetime import datetime
 from typing import Optional, List, Union
 
@@ -35,7 +35,13 @@ class ImportBatchResponse(BaseModel):
         from_attributes = True
 
 
+class ImportConfirmRow(BaseModel):
+    row_id: int = Field(ge=1)
+    category_id: Optional[int] = None
+
+
 class ImportConfirmRequest(BaseModel):
     batch_id: int
     account_id: int
-    transactions: List[dict]
+    invert_signs: bool = False
+    rows: List[ImportConfirmRow] = Field(min_length=1)

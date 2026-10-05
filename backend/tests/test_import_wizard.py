@@ -124,3 +124,95 @@ def test_preview_reads_legacy_batches(client, db, seed_user):
     db.add(batch); db.commit()
     rows = _preview(client, batch.id).json()["transactions"]
     assert (rows[0]["date"], rows[0]["line"]) == ("2026-07-01", None)
+
+
+from tests.factories import make_category
+from app.models import ImportBatch, Transaction
+
+
+def _confirm(client, batch_id, account_id, rows, **extra):
+    return client.post(
+        "/api/import/confirm",
+        json={"batch_id": batch_id, "account_id": account_id, "rows": rows, **extra},
+    )
+
+
+def test_confirm_imports_only_selected_rows_from_the_batch(client, db, seed_user):
+    account = make_account(db, seed_user, balance=100.0)
+    category = make_category(db, seed_user, name="Coffee")
+    batch_id = _upload(client, CSV).json()["batch_id"]
+
+    res = _confirm(client, batch_id, account.id, [{"row_id": 1, "category_id": category.id}])
+    assert res.status_code == 200, res.text
+    assert res.json()["imported_count"] == 1
+
+    txs = db.query(Transaction).filter(Transaction.account_id == account.id).all()
+    assert [(t.description, t.amount, t.type, t.date, t.category_id, t.is_imported) for t in txs] == [
+        ("Coffee", 4.5, "expense", date(2026, 7, 1), category.id, True)
+    ]
+    db.refresh(account)
+    assert account.balance == 95.5
+    assert db.get(ImportBatch, batch_id).status == "completed"
+
+
+def test_confirm_twice_imports_once(client, db, seed_user):
+    account = make_account(db, seed_user, balance=0.0)
+    batch_id = _upload(client, CSV).json()["batch_id"]
+    rows = [{"row_id": 1, "category_id": None}, {"row_id": 2, "category_id": None}]
+
+    assert _confirm(client, batch_id, account.id, rows).status_code == 200
+    second = _confirm(client, batch_id, account.id, rows)
+    assert second.status_code == 409
+    assert db.query(Transaction).count() == 2
+    db.refresh(account)
+    assert account.balance == 1495.5
+
+
+def test_confirm_with_invert_signs_creates_expenses(client, db, seed_user):
+    account = make_account(db, seed_user, balance=0.0)
+    batch_id = _upload(client, b"Date,Description,Amount\n2026-07-01,Card purchase,25.00\n").json()["batch_id"]
+    res = _confirm(client, batch_id, account.id, [{"row_id": 1, "category_id": None}], invert_signs=True)
+    assert res.status_code == 200, res.text
+    tx = db.query(Transaction).one()
+    assert (tx.type, tx.amount) == ("expense", 25.0)
+    db.refresh(account)
+    assert account.balance == -25.0
+
+
+def test_confirm_rejects_unknown_row(client, db, seed_user):
+    account = make_account(db, seed_user)
+    batch_id = _upload(client, CSV).json()["batch_id"]
+    res = _confirm(client, batch_id, account.id, [{"row_id": 99, "category_id": None}])
+    assert res.status_code == 400
+    assert db.query(Transaction).count() == 0
+    assert db.get(ImportBatch, batch_id).status == "pending"
+
+
+def test_confirm_rejects_someone_elses_category(client, db, seed_user):
+    from app.models import User
+
+    other = User(email="other@example.com", hashed_password="x", full_name="O", is_active=True)
+    db.add(other); db.commit()
+    foreign = make_category(db, other)
+    account = make_account(db, seed_user)
+    batch_id = _upload(client, CSV).json()["batch_id"]
+    res = _confirm(client, batch_id, account.id, [{"row_id": 1, "category_id": foreign.id}])
+    assert res.status_code == 400
+
+
+def test_confirm_rejects_linked_account(client, db, seed_user):
+    account = make_account(db, seed_user, is_linked=True)
+    batch_id = _upload(client, CSV).json()["batch_id"]
+    res = _confirm(client, batch_id, account.id, [{"row_id": 1, "category_id": None}])
+    assert res.status_code == 400
+    assert db.query(Transaction).count() == 0
+
+
+def test_confirm_requires_at_least_one_row(client, db, seed_user):
+    account = make_account(db, seed_user)
+    batch_id = _upload(client, CSV).json()["batch_id"]
+    assert _confirm(client, batch_id, account.id, []).status_code == 422
+
+
+def test_row_update_stub_is_gone(client):
+    assert client.post("/api/import/preview/1/update").status_code in (404, 405)

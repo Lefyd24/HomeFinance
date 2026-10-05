@@ -229,21 +229,6 @@ def preview_transactions(
     )
 
 
-@router.post("/preview/{row_id}/update")
-def update_preview_row(
-    row_id: int,
-    description: str | None = None,
-    amount: float | None = None,
-    date: datetime | None = None,
-    category_id: int | None = None,
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db),
-):
-    """Update a preview row before import."""
-    # In a real implementation, update temporary preview data
-    return {"message": "Preview row updated"}
-
-
 @router.post("/preview/{batch_id}/categorize")
 def auto_categorize_preview(
     batch_id: int,
@@ -299,126 +284,100 @@ def confirm_import(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    """Confirm and import transactions."""
+    """Import the selected rows of a pending batch into an account, once."""
     batch = (
         db.query(ImportBatch)
-        .filter(
-            ImportBatch.id == request.batch_id, ImportBatch.user_id == current_user.id
-        )
+        .filter(ImportBatch.id == request.batch_id, ImportBatch.user_id == current_user.id)
         .first()
     )
-
     if not batch:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Import batch not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Import batch not found")
 
-    # Verify account belongs to user
     account = (
         db.query(Account)
         .filter(Account.id == request.account_id, Account.user_id == current_user.id)
         .first()
     )
-
     if not account:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Account not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Account not found")
 
     # A CSV import into a bank-linked account would double every row against
     # what the sync already pulled: file rows carry no external_id, so the dedup
     # index cannot see them as duplicates.
     linked_accounts.reject_if_linked(account, action="imported into")
 
-    imported_count = 0
-    imported_transactions = []
+    rows_by_id = {r["row_id"]: r for r in import_service.batch_rows(batch.parsed_data, request.invert_signs)}
+    selected: dict[int, int | None] = {}
+    for choice in request.rows:
+        if choice.row_id not in rows_by_id:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Row {choice.row_id} is not part of this upload.",
+            )
+        selected[choice.row_id] = choice.category_id
+
+    category_ids = {c for c in selected.values() if c is not None}
+    if category_ids:
+        owned = {
+            cid
+            for (cid,) in db.query(Category.id).filter(
+                Category.id.in_(category_ids), Category.user_id == current_user.id
+            )
+        }
+        if owned != category_ids:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Unknown category.")
+
+    # Claim the batch atomically. A double-click or retry races here: SQLite
+    # serialises the two UPDATEs, and the loser matches zero rows.
+    claimed = (
+        db.query(ImportBatch)
+        .filter(ImportBatch.id == batch.id, ImportBatch.status == "pending")
+        .update({"status": "importing"}, synchronize_session=False)
+    )
+    if not claimed:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="This file has already been imported."
+            if batch.status == "completed"
+            else "This upload can no longer be imported. Upload the file again.",
+        )
 
     try:
-        for tx_data in request.transactions:
-            # Determine transaction type based on amount
-            amount = abs(tx_data["amount"])
-            tx_type = "income" if tx_data["amount"] > 0 else "expense"
-
-            # Parse date string to datetime object
-            tx_date = tx_data["date"]
-            if isinstance(tx_date, str):
-                # Parse ISO format date string (YYYY-MM-DD)
-                tx_date = datetime.strptime(tx_date, "%Y-%m-%d")
-            elif not isinstance(tx_date, datetime):
-                tx_date = datetime.now()
-
-            category_id = tx_data.get("category_id")
-            if category_id is None:
-                            category_id = rule_service.categorise(
-                    db,
-                    current_user.id,
-                    {
-                        "description": tx_data["description"],
-                        "amount": amount,
-                        "type": tx_type,
-                        "account_id": request.account_id,
-                        "category_id": None,
-                    },
+        for row_id, category_id in selected.items():
+            row = rows_by_id[row_id]
+            db.add(
+                Transaction(
+                    user_id=current_user.id,
+                    account_id=account.id,
+                    category_id=category_id,
+                    amount=row["abs_amount"],
+                    type=row["type"],
+                    description=row["description"],
+                    date=row["date"],
+                    is_imported=True,
+                    import_batch_id=str(batch.id),
+                    source_file=batch.filename,
                 )
-
-            # Create transaction
-            transaction = Transaction(
-                user_id=current_user.id,
-                account_id=request.account_id,
-                category_id=category_id,
-                amount=amount,
-                type=tx_type,
-                description=tx_data["description"],
-                date=tx_date,
-                is_imported=True,
-                import_batch_id=str(request.batch_id),
-                source_file=batch.filename,
             )
-            db.add(transaction)
-            db.flush()  # Flush to get the transaction ID
+            account.balance = round(account.balance + row["amount"], 2)
 
-            # Store imported transaction info
-            imported_transactions.append(
-                {
-                    "id": transaction.id,
-                    "amount": amount,
-                    "date": tx_date.strftime("%Y-%m-%d"),
-                    "description": tx_data["description"],
-                    "type": tx_type,
-                }
-            )
-
-            # Update account balance with proper rounding to avoid floating-point precision errors
-            if tx_type == "income":
-                account.balance = round(account.balance + amount, 2)
-            else:
-                account.balance = round(account.balance - amount, 2)
-
-            imported_count += 1
-
-        # Update batch status
         batch.status = "completed"
-        batch.processed_rows = imported_count
+        batch.processed_rows = len(selected)
         batch.completed_at = datetime.utcnow()
         db.commit()
-
-        return {
-            "message": f"Successfully imported {imported_count} transactions",
-            "imported_count": imported_count,
-            "imported_transactions": imported_transactions,
-        }
-
-    except Exception as e:
-        batch.status = "error"
-        batch.error_message = str(e)
-        db.commit()
-        logger.exception(
-            "Error importing transactions for batch_id=%s", request.batch_id
-        )
+    except Exception:
+        db.rollback()
+        logger.exception("Error importing transactions for batch_id=%s", batch.id)
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Error importing transactions. Please check the data and try again.",
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="The import failed and nothing was saved. Please try again.",
         )
+
+    return {
+        "message": f"Imported {len(selected)} transactions",
+        "imported_count": len(selected),
+    }
 
 
 @router.get("/batches", response_model=list[ImportBatchResponse])
