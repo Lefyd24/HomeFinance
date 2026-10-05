@@ -6,6 +6,8 @@ Releases that add database migrations or new `.env` settings say so, so you know
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-10-05
+
 ### Added
 - File import wizard is complete: pick the file's date format, choose the account, review rows, skip duplicates, set categories, flip signs, and import. The page explains the accepted file format and offers a template. (#37)
 - Import review is a paginated table with search and select-all, and you can name the date, description and amount columns when a file has several candidates.
@@ -68,7 +70,8 @@ First public release.
 - The Privacy Policy and Terms pages read the operator's name, contact email and jurisdiction from the server instead of compiled-in values. **Action required:** set `LEGAL_OPERATOR_NAME`, `LEGAL_CONTACT_EMAIL` and `LEGAL_JURISDICTION` in `.env`. Until you do, those pages show a "not configured" notice. See [Configuration](docs/configuration.md#legal-pages).
 - `docker-compose.yml` now names the published image. `docker compose pull && docker compose up -d` updates without building.
 
-[Unreleased]: https://github.com/Lefyd24/HomeFinance/compare/v1.1.0...HEAD
+[Unreleased]: https://github.com/Lefyd24/HomeFinance/compare/v1.2.0...HEAD
+[1.2.0]: https://github.com/Lefyd24/HomeFinance/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/Lefyd24/HomeFinance/compare/v1.0.1...v1.1.0
 [1.0.1]: https://github.com/Lefyd24/HomeFinance/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/Lefyd24/HomeFinance/releases/tag/v1.0.0
