@@ -4,6 +4,7 @@ from datetime import datetime
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
 from sqlalchemy.orm import Session
 
+from app.config import settings
 from app.database import get_db
 from app.models import Account, Category, ImportBatch, Transaction, User
 from app.schemas import (
@@ -70,6 +71,13 @@ def upload_file(
             detail="Unsupported file type. Please upload CSV or Excel files (.csv, .xlsx, .xls)",
         )
 
+    content = file.file.read(settings.MAX_UPLOAD_SIZE + 1)
+    if len(content) > settings.MAX_UPLOAD_SIZE:
+        raise HTTPException(
+            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            detail=f"The file is larger than {settings.MAX_UPLOAD_SIZE // (1024 * 1024)} MB.",
+        )
+
     # Create import batch record
     batch = ImportBatch(
         user_id=current_user.id,
@@ -84,12 +92,6 @@ def upload_file(
     db.refresh(batch)
 
     try:
-        # Read file content
-        content = file.file.read()
-
-        if not content:
-            raise ValueError("File is empty")
-
         logger.debug("File size: %d bytes", len(content))
 
         # Parse file
@@ -114,7 +116,10 @@ def upload_file(
             "batch_id": batch.id,
             "filename": batch.filename,
             "total_rows": batch.total_rows,
-            "message": "File uploaded successfully. Call /preview to review transactions.",
+            "skipped": [
+                {"line": s.line, "reason": s.reason, "value": s.value} for s in result.skipped
+            ],
+            "message": "File uploaded. Review the rows before importing.",
         }
 
     except ValueError as ve:
@@ -125,9 +130,9 @@ def upload_file(
         db.commit()
         logger.info("Validation error parsing file %s: %s", file.filename, ve)
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(ve))
-    except Exception as e:
+    except Exception:
         batch.status = "error"
-        batch.error_message = str(e)
+        batch.error_message = "Unexpected error while parsing"
         db.commit()
         logger.exception("Error parsing file %s", file.filename)
         raise HTTPException(

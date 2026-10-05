@@ -29,6 +29,7 @@ dependencies = [
     "markdown-it-py>=4.2.0",
     "nh3>=0.3.7",
     "fpdf2>=2.8.9",
+    "xlrd>=2.0.1",
 ]
 
 [dependency-groups]
