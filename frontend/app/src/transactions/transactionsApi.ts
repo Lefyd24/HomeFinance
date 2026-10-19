@@ -154,6 +154,11 @@ export function setTransactionTrackers(
   })
 }
 
+/** Transfers and pending rows can't be linked; bank sync replaces pending rows wholesale. */
+export function canLinkReimbursement(transaction: Transaction): boolean {
+  return transaction.type !== 'transfer' && !transaction.is_pending
+}
+
 export function isLinkedPayment(transaction: Transaction): boolean {
   return Boolean(transaction.debt_payment_id || transaction.recurring_payment_id)
 }

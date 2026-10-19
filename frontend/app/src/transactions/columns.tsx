@@ -6,6 +6,7 @@ import {
   ArrowUpRight01Icon,
   Delete02Icon,
   Exchange01Icon,
+  MoneyReceiveSquareIcon,
   MoreVerticalIcon,
   PencilEdit02Icon,
   ViewIcon,
@@ -21,12 +22,14 @@ import { Button } from '@/components/ui/button'
 import { DataTableColumnHeader } from '@/components/data-table/data-table-column-header'
 import { Amount, CategoryChip, flowOfType, flowSurface } from '../ui/money'
 import { cn } from '@/lib/utils'
-import type { Transaction } from './transactionsApi'
+import { formatCurrency } from '../lib/format'
+import { canLinkReimbursement, type Transaction } from './transactionsApi'
 
 interface ColumnHandlers {
   onView: (transaction: Transaction) => void
   onEdit: (transaction: Transaction) => void
   onDelete: (transaction: Transaction) => void
+  onLinkReimbursement: (transaction: Transaction) => void
 }
 
 type Translate = (key: string, options?: Record<string, unknown>) => string
@@ -180,11 +183,41 @@ export function createColumns(
         <DataTableColumnHeader column={column} title={t('columns.amount')} className="justify-end" />
       ),
       cell: ({ row }) => {
-        const { amount, type, date } = row.original
+        const { amount, effective_amount, reimbursed_amount, reimbursements, type, date } =
+          row.original
         const { day } = splitDate(date)
+        const flow = flowOfType(type)
+        const reimbursed = reimbursed_amount > 0
+        // An income that was entirely used to pay someone back no longer counts as income.
+        const fullyAllocated = reimbursed && effective_amount < 0.005
         return (
           <div className="flex flex-col items-end gap-0.5">
-            <Amount value={amount} flow={flowOfType(type)} className="text-sm font-semibold" />
+            {reimbursed ? (
+              <div
+                className="flex flex-col items-end"
+                title={t(`reimbursement.columns.${type === 'income' ? 'incomeHint' : 'expenseHint'}`, {
+                  amount: formatCurrency(reimbursed_amount),
+                  count: reimbursements.length,
+                })}
+              >
+                <Amount
+                  value={effective_amount}
+                  flow={flow}
+                  muted={fullyAllocated}
+                  className="text-sm font-semibold"
+                />
+                <span className="text-[0.7rem] tabular-nums text-muted-foreground line-through">
+                  {formatCurrency(amount)}
+                </span>
+                {fullyAllocated && (
+                  <span className="rounded-full bg-muted px-1.5 py-0.5 text-[0.6rem] font-medium uppercase tracking-wide text-muted-foreground">
+                    {t('reimbursement.columns.badge')}
+                  </span>
+                )}
+              </div>
+            ) : (
+              <Amount value={amount} flow={flow} className="text-sm font-semibold" />
+            )}
             {/* Mobile only — the date column is hidden below `sm`, so it rides
                 along here instead of disappearing. */}
             <span className="text-[0.7rem] tabular-nums text-muted-foreground sm:hidden">
@@ -226,6 +259,12 @@ export function createColumns(
                   <HugeiconsIcon icon={PencilEdit02Icon} strokeWidth={2} />
                   {t('common:actions.edit')}
                 </DropdownMenuItem>
+                {canLinkReimbursement(transaction) && (
+                  <DropdownMenuItem onClick={() => handlers.onLinkReimbursement(transaction)}>
+                    <HugeiconsIcon icon={MoneyReceiveSquareIcon} strokeWidth={2} />
+                    {t(`reimbursement.menu.${transaction.type === 'income' ? 'income' : 'expense'}`)}
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuItem
                   variant="destructive"
                   onClick={() => handlers.onDelete(transaction)}

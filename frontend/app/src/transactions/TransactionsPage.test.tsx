@@ -103,7 +103,7 @@ describe('TransactionsPage', () => {
     vi.spyOn(transactionsApi, 'listTransactions').mockResolvedValue({
       items: [
         sampleTransaction,
-        { ...sampleTransaction, id: 2, type: 'income', amount: 100, description: 'Salary' },
+        { ...sampleTransaction, id: 2, type: 'income', amount: 100, effective_amount: 100, description: 'Salary' },
       ],
       total: 2,
       page: 1,

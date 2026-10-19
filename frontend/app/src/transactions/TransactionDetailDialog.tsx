@@ -17,6 +17,7 @@ import { Dialog } from '../ui/Dialog'
 import { Amount, CategoryChip, flowOfType } from '../ui/money'
 import { formatDate } from '../lib/format'
 import { cn } from '@/lib/utils'
+import { ReimbursementList } from './ReimbursementList'
 import { useUnmarkTransfer } from './useTransactions'
 import type { Transaction } from './transactionsApi'
 
@@ -27,6 +28,7 @@ interface TransactionDetailDialogProps {
   onEdit: (transaction: Transaction) => void
   onDelete: (transaction: Transaction) => void
   onMarkTransfer: (transaction: Transaction) => void
+  onLinkReimbursement: (transaction: Transaction) => void
 }
 
 const FLOW_ICON = {
@@ -51,6 +53,7 @@ export function TransactionDetailDialog({
   onEdit,
   onDelete,
   onMarkTransfer,
+  onLinkReimbursement,
 }: TransactionDetailDialogProps) {
   const { t } = useTranslation('transactions')
   const unmarkTransfer = useUnmarkTransfer()
@@ -151,6 +154,16 @@ export function TransactionDetailDialog({
           />
           <p className="mt-1 text-xs text-muted-foreground">{formatDate(transaction.date)}</p>
         </div>
+
+        {transaction.reimbursements.length > 0 && (
+          <ReimbursementList
+            transaction={transaction}
+            onLink={() => {
+              onLinkReimbursement(transaction)
+              onOpenChange(false)
+            }}
+          />
+        )}
 
         <div className="flex flex-col">
           <Row label={isTransfer ? t('detail.rows.route') : t('detail.rows.account')}>

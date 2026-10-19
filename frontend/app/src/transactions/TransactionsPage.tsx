@@ -45,6 +45,7 @@ import { TransactionFilterBar, type DatePreset } from './TransactionFilterBar'
 import { TransactionFormDialog } from './TransactionFormDialog'
 import { TransactionDetailDialog } from './TransactionDetailDialog'
 import { MarkTransferDialog } from './MarkTransferDialog'
+import { ReimbursementDialog } from './ReimbursementDialog'
 import { currentMonthRange, toLocalIsoDate as iso } from '../lib/format'
 import { isLinkedPayment, type Transaction, type TransactionFilters } from './transactionsApi'
 import { Alert01Icon } from '@hugeicons/core-free-icons'
@@ -102,6 +103,7 @@ export function TransactionsPage() {
   const [editDialogOpen, setEditDialogOpen] = useState(false)
   const [detailDialogOpen, setDetailDialogOpen] = useState(false)
   const [markTransferDialogOpen, setMarkTransferDialogOpen] = useState(false)
+  const [reimbursementDialogOpen, setReimbursementDialogOpen] = useState(false)
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null)
   const [linkedDeleteTarget, setLinkedDeleteTarget] = useState<Transaction | null>(null)
 
@@ -131,6 +133,11 @@ export function TransactionsPage() {
   const handleMarkTransfer = (transaction: Transaction) => {
     setSelectedTransaction(transaction)
     setMarkTransferDialogOpen(true)
+  }
+
+  const handleLinkReimbursement = (transaction: Transaction) => {
+    setSelectedTransaction(transaction)
+    setReimbursementDialogOpen(true)
   }
 
   async function performDelete(transaction: Transaction, affectLinked: boolean) {
@@ -191,6 +198,7 @@ export function TransactionsPage() {
           onView: handleView,
           onEdit: handleEdit,
           onDelete: handleDelete,
+          onLinkReimbursement: handleLinkReimbursement,
         },
         t,
       ),
@@ -260,13 +268,17 @@ export function TransactionsPage() {
     const items = transactionData?.items ?? []
     return items.reduce(
       (acc, t) => {
-        if (t.type === 'income') acc.in += t.amount
-        else if (t.type === 'expense') acc.out += t.amount
+        if (t.type === 'income') acc.in += t.effective_amount
+        else if (t.type === 'expense') acc.out += t.effective_amount
         return acc
       },
       { in: 0, out: 0 },
     )
   }, [transactionData])
+
+  // The dialogs that edit links must see the refetched row, not the snapshot taken when it was clicked.
+  const liveSelected =
+    transactionData?.items.find((item) => item.id === selectedTransaction?.id) ?? selectedTransaction
 
   return (
     <PageContainer wide className="flex flex-col gap-4">
@@ -398,10 +410,16 @@ export function TransactionsPage() {
       <TransactionDetailDialog
         open={detailDialogOpen}
         onOpenChange={setDetailDialogOpen}
-        transaction={selectedTransaction}
+        transaction={liveSelected}
         onEdit={handleEdit}
         onDelete={handleDelete}
         onMarkTransfer={handleMarkTransfer}
+        onLinkReimbursement={handleLinkReimbursement}
+      />
+      <ReimbursementDialog
+        open={reimbursementDialogOpen}
+        onOpenChange={setReimbursementDialogOpen}
+        transaction={liveSelected}
       />
       <MarkTransferDialog
         open={markTransferDialogOpen}
