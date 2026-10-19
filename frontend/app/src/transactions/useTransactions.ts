@@ -10,6 +10,8 @@ function invalidateFinanceQueries(queryClient: ReturnType<typeof useQueryClient>
   queryClient.invalidateQueries({ queryKey: ['spendingReport'] })
   queryClient.invalidateQueries({ queryKey: ['cashflowReport'] })
   queryClient.invalidateQueries({ queryKey: ['netWorthReport'] })
+  // The Reports page keys its queries under 'reports'.
+  queryClient.invalidateQueries({ queryKey: ['reports'] })
 }
 
 export function useTransactions(filters: TransactionFilters = {}, options: { enabled?: boolean } = {}) {
@@ -100,5 +102,42 @@ export function useUnmarkTransfer() {
   return useMutation({
     mutationFn: (id: number) => transactionsApi.unmarkTransfer(id),
     onSuccess: () => invalidateFinanceQueries(queryClient),
+  })
+}
+
+export function useReimbursementCandidates(
+  id: number,
+  search: string,
+  options: { enabled?: boolean } = {},
+) {
+  return useQuery({
+    queryKey: ['reimbursementCandidates', id, search],
+    queryFn: () => transactionsApi.getReimbursementCandidates(id, search),
+    enabled: options.enabled,
+  })
+}
+
+// Linking moves totals everywhere (budgets, reports, dashboard) and changes
+// which rows are still free to link, so refresh all of it.
+function invalidateReimbursementQueries(queryClient: ReturnType<typeof useQueryClient>) {
+  invalidateFinanceQueries(queryClient)
+  queryClient.invalidateQueries({ queryKey: queryKeys.trackers })
+  queryClient.invalidateQueries({ queryKey: ['reimbursementCandidates'] })
+}
+
+export function useLinkReimbursement() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, counterpartId, amount }: { id: number; counterpartId: number; amount?: number }) =>
+      transactionsApi.linkReimbursement(id, { counterpart_id: counterpartId, amount }),
+    onSuccess: () => invalidateReimbursementQueries(queryClient),
+  })
+}
+
+export function useUnlinkReimbursement() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (linkId: number) => transactionsApi.unlinkReimbursement(linkId),
+    onSuccess: () => invalidateReimbursementQueries(queryClient),
   })
 }

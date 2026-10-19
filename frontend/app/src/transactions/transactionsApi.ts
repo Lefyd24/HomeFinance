@@ -40,6 +40,32 @@ export interface Transaction {
   /** Trackers this transaction has been filed under. Manual assignment only. */
   tracker_ids?: number[]
   tracker_names?: string[]
+  /** Total of the repayments linked to this row (as expense or as income). */
+  reimbursed_amount: number
+  /** What counts in totals: `amount` minus `reimbursed_amount`. */
+  effective_amount: number
+  reimbursements: ReimbursementLink[]
+}
+
+/** One link between an expense and an income, seen from the requesting row. */
+export interface ReimbursementLink {
+  id: number
+  amount: number
+  /** The transaction on the other side of the link. */
+  transaction_id: number
+  description: string
+  date: string
+  account_name?: string | null
+}
+
+/** A transaction that could still be linked, with how much of it is free. */
+export interface ReimbursementCandidate {
+  id: number
+  description: string
+  date: string
+  amount: number
+  remaining: number
+  account_name?: string | null
 }
 
 export interface TransactionList {
@@ -184,4 +210,28 @@ export function unmarkTransfer(id: number): Promise<Transaction> {
   return apiFetch<Transaction>(`/transactions/${id}/unmark-transfer`, {
     method: 'POST',
   })
+}
+
+/** Opposite-type transactions that still have unlinked money, nearest date first. */
+export function getReimbursementCandidates(
+  id: number,
+  search?: string,
+): Promise<ReimbursementCandidate[]> {
+  const qs = search ? `?search=${encodeURIComponent(search)}` : ''
+  return apiFetch<ReimbursementCandidate[]>(`/transactions/${id}/reimbursement-candidates${qs}`)
+}
+
+/** Link a repayment to a shared expense; `amount` defaults to the most both sides can take. */
+export function linkReimbursement(
+  id: number,
+  body: { counterpart_id: number; amount?: number },
+): Promise<Transaction> {
+  return apiFetch<Transaction>(`/transactions/${id}/reimbursements`, {
+    method: 'POST',
+    body: JSON.stringify(body),
+  })
+}
+
+export function unlinkReimbursement(linkId: number): Promise<void> {
+  return apiFetch<void>(`/transactions/reimbursements/${linkId}`, { method: 'DELETE' })
 }

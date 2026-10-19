@@ -40,6 +40,9 @@ const sampleTransaction: transactionsApi.Transaction = {
   updated_at: '',
   account_name: 'Checking',
   category_name: 'Groceries',
+  reimbursed_amount: 0,
+  effective_amount: 42.5,
+  reimbursements: [],
 }
 
 describe('TransactionsPage', () => {
