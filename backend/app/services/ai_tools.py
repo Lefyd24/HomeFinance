@@ -70,10 +70,12 @@ def _transaction_row(db: Session, t) -> dict:
         "category": t.category.name if t.category else None,
         "account": t.account.name if t.account else None,
     }
+    if t.reimbursed_amount <= 0:
+        return row
     links = ReimbursementService.links_for(db, t)
-    if links and t.type == "expense":
+    if t.type == "expense":
         row["reimbursed_by"] = [link.income_id for link in links]
-    elif links:
+    else:
         row["reimbursement_of"] = [link.expense_id for link in links]
     return row
 
