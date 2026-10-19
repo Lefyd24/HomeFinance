@@ -249,7 +249,9 @@ export function createColumns(
                 </span>
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
+            {/* The menu is portalled, but React still bubbles its clicks to the
+                row, whose onClick would open the detail dialog as well. */}
+            <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
               <DropdownMenuGroup>
                 <DropdownMenuItem onClick={() => handlers.onView(transaction)}>
                   <HugeiconsIcon icon={ViewIcon} strokeWidth={2} />
