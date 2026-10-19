@@ -310,7 +310,7 @@ def get_income_vs_spending(
     
     income_data = db.query(
         date_grouping.label('period'),
-        func.sum(Transaction.amount).label('total')
+        func.sum(Transaction.effective_amount).label('total')
     ).filter(
         Transaction.user_id == current_user.id,
         Transaction.type == "income",
@@ -320,7 +320,7 @@ def get_income_vs_spending(
     
     spending_data = db.query(
         date_grouping.label('period'),
-        func.sum(Transaction.amount).label('total')
+        func.sum(Transaction.effective_amount).label('total')
     ).filter(
         Transaction.user_id == current_user.id,
         Transaction.type == "expense",

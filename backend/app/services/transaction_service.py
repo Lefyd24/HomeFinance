@@ -99,13 +99,13 @@ class TransactionService:
         if not group_by:
             income = float(
                 query.filter(Transaction.type == "income")
-                .with_entities(func.coalesce(func.sum(Transaction.amount), 0))
+                .with_entities(func.coalesce(func.sum(Transaction.effective_amount), 0))
                 .scalar()
                 or 0
             )
             expenses = float(
                 query.filter(Transaction.type == "expense")
-                .with_entities(func.coalesce(func.sum(Transaction.amount), 0))
+                .with_entities(func.coalesce(func.sum(Transaction.effective_amount), 0))
                 .scalar()
                 or 0
             )
@@ -124,7 +124,7 @@ class TransactionService:
             query.filter(Transaction.type == "income")
             .with_entities(
                 period_expr.label("period"),
-                func.coalesce(func.sum(Transaction.amount), 0).label("total"),
+                func.coalesce(func.sum(Transaction.effective_amount), 0).label("total"),
             )
             .group_by("period")
             .order_by("period")
@@ -134,7 +134,7 @@ class TransactionService:
             query.filter(Transaction.type == "expense")
             .with_entities(
                 period_expr.label("period"),
-                func.coalesce(func.sum(Transaction.amount), 0).label("total"),
+                func.coalesce(func.sum(Transaction.effective_amount), 0).label("total"),
             )
             .group_by("period")
             .order_by("period")
@@ -485,11 +485,11 @@ class TransactionService:
             query = query.filter(Transaction.date <= end_date)
         
         income = query.filter(Transaction.type == "income").with_entities(
-            func.sum(Transaction.amount)
+            func.sum(Transaction.effective_amount)
         ).scalar() or 0
         
         expenses = query.filter(Transaction.type == "expense").with_entities(
-            func.sum(Transaction.amount)
+            func.sum(Transaction.effective_amount)
         ).scalar() or 0
         
         return {

@@ -37,7 +37,7 @@ class SpendingForecaster:
         
         results = self.db.query(
             Transaction.date,
-            func.sum(Transaction.amount).label('total')
+            func.sum(Transaction.effective_amount).label('total')
         ).filter(
             Transaction.user_id == self.user_id,
             Transaction.type == 'expense',
@@ -71,7 +71,7 @@ class SpendingForecaster:
         weekly_totals = defaultdict(float)
         for tx in transactions:
             week_key = tx.date.isocalendar()[:2]
-            weekly_totals[week_key] += tx.amount
+            weekly_totals[week_key] += tx.effective_amount
         
         sorted_weeks = sorted(weekly_totals.keys())
         return [weekly_totals[week] for week in sorted_weeks]
@@ -83,7 +83,7 @@ class SpendingForecaster:
         
         results = self.db.query(
             func.strftime('%Y-%m', Transaction.date).label('month'),
-            func.sum(Transaction.amount).label('total')
+            func.sum(Transaction.effective_amount).label('total')
         ).filter(
             Transaction.user_id == self.user_id,
             Transaction.type == 'expense',
@@ -245,7 +245,7 @@ class SpendingForecaster:
         results = self.db.query(
             Category.name,
             func.strftime('%Y-%m', Transaction.date).label('month'),
-            func.sum(Transaction.amount).label('total')
+            func.sum(Transaction.effective_amount).label('total')
         ).join(Transaction).filter(
             Transaction.user_id == self.user_id,
             Transaction.type == 'expense',
@@ -301,13 +301,13 @@ class CashflowProjector:
         end_date = date.today()
         start_date = end_date - timedelta(days=30 * months)
         
-        income = self.db.query(func.sum(Transaction.amount)).filter(
+        income = self.db.query(func.sum(Transaction.effective_amount)).filter(
             Transaction.user_id == self.user_id,
             Transaction.type == 'income',
             Transaction.date >= start_date
         ).scalar() or 0
         
-        expenses = self.db.query(func.sum(Transaction.amount)).filter(
+        expenses = self.db.query(func.sum(Transaction.effective_amount)).filter(
             Transaction.user_id == self.user_id,
             Transaction.type == 'expense',
             Transaction.date >= start_date

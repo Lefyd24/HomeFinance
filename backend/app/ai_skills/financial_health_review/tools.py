@@ -84,7 +84,7 @@ def _rows(db: Session, user_id: int, start: date, end: date, tx_type: str):
         db.query(
             Transaction.id,
             Transaction.date,
-            Transaction.amount,
+            Transaction.effective_amount.label("amount"),
             Transaction.description,
             Transaction.category_id,
         )
@@ -93,6 +93,8 @@ def _rows(db: Session, user_id: int, start: date, end: date, tx_type: str):
             Transaction.type == tx_type,
             Transaction.date >= start,
             Transaction.date <= end,
+            # a fully repaid income is not an earnings source
+            Transaction.effective_amount > 0,
         )
         .all()
     )
@@ -444,8 +446,9 @@ def detect_spending_anomalies_tool(db: Session, user_id: int, months: int = 6) -
     # 3. Merchants that look recurring and started recently (first ever sighting in the last
     #    3 complete months, seen in >= 2 distinct months, amounts within ~15% of each other).
     history = (
-        db.query(Transaction.date, Transaction.amount, Transaction.description)
-        .filter(Transaction.user_id == user_id, Transaction.type == "expense", Transaction.date <= end)
+        db.query(Transaction.date, Transaction.effective_amount.label("amount"), Transaction.description)
+        .filter(Transaction.user_id == user_id, Transaction.type == "expense", Transaction.date <= end,
+                Transaction.effective_amount > 0)
         .all()
     )
     merchants: dict[str, list] = defaultdict(list)

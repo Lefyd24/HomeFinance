@@ -223,7 +223,7 @@ def get_budget_report(
     
     category_breakdown = []
     for bc in budget.budget_categories:
-        spent_query = db.query(func.sum(Transaction.amount)).filter(
+        spent_query = db.query(func.sum(Transaction.effective_amount)).filter(
             Transaction.user_id == current_user.id,
             Transaction.category_id == bc.category_id,
             Transaction.type == "expense"
@@ -326,7 +326,7 @@ def get_budget_summary(
 
     for p_start, p_end, label in periods:
         period_txs = [tx for tx in all_transactions if p_start <= tx.date <= p_end]
-        spent = sum(float(tx.amount) for tx in period_txs)
+        spent = sum(float(tx.effective_amount) for tx in period_txs)
         remaining = budget.amount - spent
         percentage = (spent / budget.amount * 100) if budget.amount > 0 else 0
 
@@ -614,7 +614,7 @@ def calculate_budget_progress(db: Session, budget: Budget) -> BudgetResponse:
     category_ids = [bc.category_id for bc in budget.budget_categories]
     period_start, period_end = get_period_dates(budget)
 
-    query = db.query(func.sum(Transaction.amount)).filter(
+    query = db.query(func.sum(Transaction.effective_amount)).filter(
         Transaction.user_id == budget.user_id,
         Transaction.type == "expense"
     )

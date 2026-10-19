@@ -58,12 +58,12 @@ class SpendingClusterAnalyzer:
 
         for tx in transactions:
             if tx.category:
-                category_spending[tx.category.name] += tx.amount
-            daily_spending[tx.date.isoformat()] += tx.amount
-            weekday_spending[tx.date.weekday()] += tx.amount
-            monthly_spending[tx.date.strftime("%Y-%m")] += tx.amount
+                category_spending[tx.category.name] += tx.effective_amount
+            daily_spending[tx.date.isoformat()] += tx.effective_amount
+            weekday_spending[tx.date.weekday()] += tx.effective_amount
+            monthly_spending[tx.date.strftime("%Y-%m")] += tx.effective_amount
 
-        total_spent = sum(tx.amount for tx in transactions)
+        total_spent = sum(tx.effective_amount for tx in transactions)
         avg_transaction = total_spent / len(transactions) if transactions else 0
 
         weekend_spending = weekday_spending.get(5, 0) + weekday_spending.get(6, 0)
@@ -324,7 +324,7 @@ class BudgetOptimizer:
         start_date = end_date - timedelta(days=30 * months)
 
         results = (
-            self.db.query(Category.name, func.sum(Transaction.amount).label("total"))
+            self.db.query(Category.name, func.sum(Transaction.effective_amount).label("total"))
             .join(Transaction)
             .filter(
                 Transaction.user_id == self.user_id,
@@ -348,7 +348,7 @@ class BudgetOptimizer:
         start_date = end_date - timedelta(days=30 * months)
 
         total_income = (
-            self.db.query(func.sum(Transaction.amount))
+            self.db.query(func.sum(Transaction.effective_amount))
             .filter(
                 Transaction.user_id == self.user_id,
                 Transaction.type == "income",
@@ -633,7 +633,7 @@ class FinancialHealthScorer:
         start_date = end_date - timedelta(days=90)
 
         income = (
-            self.db.query(func.sum(Transaction.amount))
+            self.db.query(func.sum(Transaction.effective_amount))
             .filter(
                 Transaction.user_id == self.user_id,
                 Transaction.type == "income",
@@ -644,7 +644,7 @@ class FinancialHealthScorer:
         )
 
         expenses = (
-            self.db.query(func.sum(Transaction.amount))
+            self.db.query(func.sum(Transaction.effective_amount))
             .filter(
                 Transaction.user_id == self.user_id,
                 Transaction.type == "expense",
@@ -689,7 +689,7 @@ class FinancialHealthScorer:
         end_date = date.today()
         start_date = end_date - timedelta(days=90)
         monthly_income = (
-            self.db.query(func.sum(Transaction.amount))
+            self.db.query(func.sum(Transaction.effective_amount))
             .filter(
                 Transaction.user_id == self.user_id,
                 Transaction.type == "income",
@@ -734,7 +734,7 @@ class FinancialHealthScorer:
 
             current_month_start = date.today().replace(day=1)
             spent = (
-                self.db.query(func.sum(Transaction.amount))
+                self.db.query(func.sum(Transaction.effective_amount))
                 .filter(
                     Transaction.user_id == self.user_id,
                     Transaction.type == "expense",
@@ -766,7 +766,7 @@ class FinancialHealthScorer:
         monthly_spending = (
             self.db.query(
                 func.strftime("%Y-%m", Transaction.date).label("month"),
-                func.sum(Transaction.amount).label("total"),
+                func.sum(Transaction.effective_amount).label("total"),
             )
             .filter(
                 Transaction.user_id == self.user_id,
@@ -814,7 +814,7 @@ class FinancialHealthScorer:
         end_date = date.today()
         start_date = end_date - timedelta(days=90)
         monthly_expenses = (
-            self.db.query(func.sum(Transaction.amount))
+            self.db.query(func.sum(Transaction.effective_amount))
             .filter(
                 Transaction.user_id == self.user_id,
                 Transaction.type == "expense",
@@ -930,7 +930,7 @@ class SpendingHeatmapAnalyzer:
 
         for tx in transactions:
             weekday = tx.date.weekday()
-            day_spending[weekday] += tx.amount
+            day_spending[weekday] += tx.effective_amount
             day_transaction_counts[weekday] += 1
 
         day_names = [
@@ -1006,7 +1006,7 @@ class CategoryCorrelationAnalyzer:
 
         for tx, cat_name in transactions:
             week_key = tx.date.isocalendar()[:2]
-            weekly_spending[cat_name][week_key] += tx.amount
+            weekly_spending[cat_name][week_key] += tx.effective_amount
 
         categories = list(weekly_spending.keys())
         if len(categories) < 2:

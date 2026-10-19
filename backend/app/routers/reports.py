@@ -79,7 +79,7 @@ def get_spending_report(
     # Build query
     query = db.query(
         Category.name,
-        func.sum(Transaction.amount).label("total")
+        func.sum(Transaction.effective_amount).label("total")
     ).join(Transaction).filter(
         Transaction.user_id == current_user.id,
         Transaction.type == "expense",
@@ -115,7 +115,7 @@ def get_income_report(
 
     query = db.query(
         Category.name,
-        func.sum(Transaction.amount).label("total")
+        func.sum(Transaction.effective_amount).label("total")
     ).join(Transaction).filter(
         Transaction.user_id == current_user.id,
         Transaction.type == "income",
@@ -164,7 +164,7 @@ def get_cashflow_report(
     # Get income by period
     income_query = db.query(
         date_trunc.label("period"),
-        func.sum(Transaction.amount).label("total")
+        func.sum(Transaction.effective_amount).label("total")
     ).filter(
         Transaction.user_id == current_user.id,
         Transaction.type == "income",
@@ -177,7 +177,7 @@ def get_cashflow_report(
     # Get expenses by period
     expense_query = db.query(
         date_trunc.label("period"),
-        func.sum(Transaction.amount).label("total")
+        func.sum(Transaction.effective_amount).label("total")
     ).filter(
         Transaction.user_id == current_user.id,
         Transaction.type == "expense",
@@ -219,7 +219,7 @@ def get_category_breakdown(
     query = db.query(
         Category.name,
         Category.color,
-        func.sum(Transaction.amount).label("total"),
+        func.sum(Transaction.effective_amount).label("total"),
         func.count(Transaction.id).label("count")
     ).join(Transaction).filter(
         Transaction.user_id == current_user.id,
@@ -261,7 +261,7 @@ def get_trend_report(
 
     query = db.query(
         func.strftime("%Y-%m", Transaction.date).label("month"),
-        func.sum(Transaction.amount).label("total")
+        func.sum(Transaction.effective_amount).label("total")
     ).filter(
         Transaction.user_id == current_user.id,
         Transaction.date >= start_date,
@@ -318,7 +318,7 @@ def get_balance_history(
     for account in accounts:
         balances = []
         for i, d in enumerate(dates):
-            # Calculate balance up to this date
+            # Calculate balance up to this date (raw amount: reimbursed cash really moved)
             balance_query = db.query(func.sum(
                 case(
                     (Transaction.type == "income", Transaction.amount),
@@ -362,7 +362,7 @@ def get_top_merchants(
     # Note: Transaction has no `payee` column; `description` holds the merchant/payee text.
     query = db.query(
         Transaction.description.label("merchant"),
-        func.sum(Transaction.amount).label("total")
+        func.sum(Transaction.effective_amount).label("total")
     ).filter(
         Transaction.user_id == current_user.id,
         Transaction.type == type,
@@ -373,7 +373,7 @@ def get_top_merchants(
     query = _apply_filters(query, account_ids, category_ids)
 
     results = query.group_by(Transaction.description).order_by(
-        func.sum(Transaction.amount).desc()
+        func.sum(Transaction.effective_amount).desc()
     ).limit(limit).all()
 
     return {
@@ -401,7 +401,7 @@ def get_weekday_heatmap(
     # SQLite strftime('%w', date): 0=Sunday .. 6=Saturday
     query = db.query(
         func.strftime("%w", Transaction.date).label("w"),
-        func.sum(Transaction.amount).label("total")
+        func.sum(Transaction.effective_amount).label("total")
     ).filter(
         Transaction.user_id == current_user.id,
         Transaction.type == type,
@@ -438,7 +438,7 @@ def get_spending_mom(
 
     query = db.query(
         func.strftime("%Y-%m", Transaction.date).label("month"),
-        func.sum(Transaction.amount).label("total")
+        func.sum(Transaction.effective_amount).label("total")
     ).filter(
         Transaction.user_id == current_user.id,
         Transaction.type == "expense",
@@ -478,7 +478,7 @@ def get_savings_rate(
     def totals_by_month(tx_type):
         q = db.query(
             func.strftime("%Y-%m", Transaction.date).label("month"),
-            func.sum(Transaction.amount).label("total")
+            func.sum(Transaction.effective_amount).label("total")
         ).filter(
             Transaction.user_id == current_user.id,
             Transaction.type == tx_type,
@@ -515,6 +515,7 @@ def get_net_worth(
     if not end_date:
         end_date = date.today()
 
+    # Raw amount, not effective_amount: net worth follows cash that really moved.
     query = db.query(
         func.strftime("%Y-%m", Transaction.date).label("month"),
         func.sum(case(
