@@ -9,6 +9,7 @@ from app.models import Transaction, Account, Category, Debt, DebtPayment
 from app.models.recurring_expense import RecurringExpense, RecurringExpensePayment
 from app.models.tracker import TrackerTransaction
 from app.schemas import TransactionCreate, TransactionUpdate
+from app.services.reimbursement_service import ReimbursementService
 
 
 def _rewind_due_date(current: date, interval: int, unit: str) -> date:
@@ -225,6 +226,11 @@ class TransactionService:
         transaction_data: TransactionUpdate
     ) -> Transaction:
         """Update a transaction and adjust account balance(s)."""
+        # Checked first: nothing below may run (and move balances) if refused.
+        ReimbursementService.assert_can_change(
+            transaction, new_type=transaction_data.type, new_amount=transaction_data.amount
+        )
+
         # Store old values
         old_amount = transaction.amount
         old_type = transaction.type
@@ -364,6 +370,8 @@ class TransactionService:
             TrackerTransaction.transaction_id == transaction.id
         ).delete(synchronize_session=False)
 
+        ReimbursementService.delete_links_for(db, [transaction.id])
+
         db.delete(transaction)
         db.commit()
 
@@ -380,6 +388,8 @@ class TransactionService:
             raise ValueError("Both legs of a transfer must have the same amount")
         if tx_a.account_id == tx_b.account_id:
             raise ValueError("A transfer cannot be paired with itself")
+        ReimbursementService.assert_unlinked(tx_a)
+        ReimbursementService.assert_unlinked(tx_b)
 
         for leg, other in ((tx_a, tx_b), (tx_b, tx_a)):
             leg.original_type = leg.type
@@ -403,6 +413,8 @@ class TransactionService:
         from if it was income (money arrived at the linked account, having
         left the destination).
         """
+        ReimbursementService.assert_unlinked(transaction)
+
         destination = db.query(Account).filter(Account.id == destination_account_id).first()
         if not destination:
             raise ValueError("Destination account not found")

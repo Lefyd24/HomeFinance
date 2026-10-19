@@ -6,6 +6,7 @@ from app.database import get_db
 from app.utils.security import get_current_user_authenticated
 from app.schemas import AccountCreate, AccountUpdate, AccountResponse
 from app.models import User, Account, Transaction
+from app.services.reimbursement_service import ReimbursementService
 
 router = APIRouter(prefix="/accounts", tags=["Accounts"])
 
@@ -172,15 +173,13 @@ def delete_account(
     # This includes both regular transactions and transfer destination transactions.
     # The user_id filter matters: account ids are global, so without it a crafted
     # request could delete another user's transactions by id collision.
-    deleted_count = (
-        db.query(Transaction)
-        .filter(
-            Transaction.user_id == current_user.id,
-            (Transaction.account_id == account_id)
-            | (Transaction.destination_account_id == account_id),
-        )
-        .delete(synchronize_session=False)
+    doomed = db.query(Transaction).filter(
+        Transaction.user_id == current_user.id,
+        (Transaction.account_id == account_id)
+        | (Transaction.destination_account_id == account_id),
     )
+    ReimbursementService.delete_links_for(db, [tx_id for (tx_id,) in doomed.with_entities(Transaction.id)])
+    deleted_count = doomed.delete(synchronize_session=False)
 
     # Now delete the account
     db.delete(account)

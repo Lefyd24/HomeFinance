@@ -23,6 +23,7 @@ from app.models.recurring_expense import RecurringExpensePayment
 from app.models.tracker import TrackerTransaction
 from app.schemas.tracker import TrackerAssignment
 from app.routers.trackers import set_transaction_trackers
+from app.services.reimbursement_service import ReimbursementError, ReimbursementService
 
 router = APIRouter(prefix="/transactions", tags=["Transactions"])
 
@@ -519,6 +520,8 @@ def update_transaction(
         updated_transaction = TransactionService.update_transaction(
             db, transaction, transaction_data
         )
+    except ReimbursementError as e:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e))
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
@@ -677,6 +680,11 @@ def split_transaction(
             detail="Transfers cannot be split — they move money rather than categorise it.",
         )
 
+    try:
+        ReimbursementService.assert_unlinked(transaction)
+    except ReimbursementError as e:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e))
+
     # Compared in cents: summing floats will not land exactly on the total.
     total_cents = round(transaction.amount * 100)
     parts_cents = sum(round(part.amount * 100) for part in request.parts)
@@ -785,6 +793,8 @@ def pair_transfer(
 
     try:
         TransactionService.pair_as_transfer(db, transaction, partner)
+    except ReimbursementError as e:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e))
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
@@ -820,6 +830,8 @@ def retag_transfer(
 
     try:
         TransactionService.retag_as_transfer(db, transaction, request.destination_account_id)
+    except ReimbursementError as e:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e))
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
@@ -869,6 +881,14 @@ def bulk_update_transactions(
     # only bank-owned fields are refused.
     for transaction in transactions:
         linked_accounts.reject_synced_field_edits(transaction, update_data)
+        try:
+            ReimbursementService.assert_can_change(
+                transaction,
+                new_type=update_data.get("type"),
+                new_amount=update_data.get("amount"),
+            )
+        except ReimbursementError as e:
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e))
     linked_accounts.reject_linked_account_ids(
         db,
         current_user.id,
