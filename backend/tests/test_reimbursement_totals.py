@@ -8,7 +8,8 @@ import pytest
 
 from app.models import BudgetCategory, TrackerTransaction, TransactionReimbursement
 from app.models.tracker import Tracker
-from app.services import TransactionService
+from app.ai_skills.financial_health_review import tools as fh
+from app.services import TransactionService, ai_tools, ai_tools_planning
 from app.services.forecast_service import CashflowProjector
 from tests.factories import (
     make_account,
@@ -90,6 +91,31 @@ def test_balances_and_net_worth_ignore_links(client, db, seed_user, shared_dinne
     # Cash really moved: -100 + 33 + 33 + 1000.
     assert account.balance == 1000.0
     assert net_worth == 966.0
+
+
+def test_ai_tools_report_net_figures(db, seed_user, shared_dinner):
+    totals = ai_tools.get_totals_tool(db, seed_user.id)
+    assert (totals["income"], totals["expenses"]) == (1000.0, 34.0)
+
+    rows = {t["description"]: t for t in ai_tools.get_transactions_tool(db, seed_user.id)["transactions"]}
+    dinner, george = rows["Dinner"], rows["George"]
+    assert (dinner["amount"], dinner["reimbursed_amount"], dinner["effective_amount"]) == (100.0, 66.0, 34.0)
+    assert len(dinner["reimbursed_by"]) == 2
+    assert george["effective_amount"] == 0.0
+    assert george["reimbursement_of"] == [dinner["id"]]
+    assert "reimbursed_by" not in rows["Salary"] and "reimbursement_of" not in rows["Salary"]
+
+    surplus = ai_tools_planning.get_investable_surplus_tool(db, seed_user.id, months_lookback=1)
+    assert surplus["average_monthly_net"] == 966.0
+
+
+def test_financial_health_rows_are_net_and_skip_repaid_income(db, seed_user, shared_dinner):
+    today = date.today()
+    incomes = fh._rows(db, seed_user.id, today, today, "income")
+    expenses = fh._rows(db, seed_user.id, today, today, "expense")
+
+    assert [float(r.amount) for r in incomes] == [1000.0]
+    assert [float(r.amount) for r in expenses] == [34.0]
 
 
 # Files allowed to sum the raw amount. Empty: the balance reconstructions (net worth and

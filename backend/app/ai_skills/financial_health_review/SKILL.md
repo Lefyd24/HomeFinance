@@ -39,7 +39,9 @@ Write in the user's language. No price predictions, no product pushing.
    only if investing comes up.
 
 Transfers between the user's own accounts are already excluded by every tool here (only
-income and expense count), so never add transfers back or "correct" the totals.
+income and expense count), so never add transfers back or "correct" the totals. They are
+also net of reimbursements (friends repaying a shared expense), so do not treat a repayment as
+income.
 
 ## 2. Analyse, in this order
 

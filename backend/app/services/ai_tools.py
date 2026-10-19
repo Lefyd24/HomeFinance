@@ -16,6 +16,7 @@ from app.models import Account, Budget, Debt, RecurringExpense
 from app.routers.budgets import calculate_budget_progress
 from app.routers.notifications import _get_or_create_settings
 from app.services import investor_profile_service, mail_service, email_templates
+from app.services.reimbursement_service import ReimbursementService
 from app.services.transaction_service import TransactionService
 
 MAX_TRANSACTIONS_LIMIT = 200
@@ -53,19 +54,28 @@ def get_transactions_tool(
     return {
         "count": total,
         "returned": len(transactions),
-        "transactions": [
-            {
-                "id": t.id,
-                "date": t.date.isoformat() if t.date else None,
-                "description": t.description,
-                "amount": float(t.amount),
-                "type": t.type,
-                "category": t.category.name if t.category else None,
-                "account": t.account.name if t.account else None,
-            }
-            for t in transactions
-        ],
+        "transactions": [_transaction_row(db, t) for t in transactions],
     }
+
+
+def _transaction_row(db: Session, t) -> dict:
+    row = {
+        "id": t.id,
+        "date": t.date.isoformat() if t.date else None,
+        "description": t.description,
+        "amount": float(t.amount),
+        "reimbursed_amount": float(t.reimbursed_amount),
+        "effective_amount": float(t.effective_amount),
+        "type": t.type,
+        "category": t.category.name if t.category else None,
+        "account": t.account.name if t.account else None,
+    }
+    links = ReimbursementService.links_for(db, t)
+    if links and t.type == "expense":
+        row["reimbursed_by"] = [link.income_id for link in links]
+    elif links:
+        row["reimbursement_of"] = [link.expense_id for link in links]
+    return row
 
 def get_totals_tool(
     db: Session,
@@ -321,7 +331,9 @@ TOOLS = [
             "description": (
                 "Get the user's total income, expenses, and net for the given period. "
                 "Omit group_by for a single overall total. Pass group_by as day, month, "
-                "or year to get a period-keyed summary (e.g. monthly breakdown) plus overall totals."
+                "or year to get a period-keyed summary (e.g. monthly breakdown) plus overall totals. "
+                "Figures are net of reimbursements: income excludes money friends paid back for "
+                "shared expenses; expenses count only the user's own share."
             ),
             "parameters": {
                 "type": "object",
