@@ -514,7 +514,7 @@ def _release_account(
             | (Transaction.destination_account_id == account.id),
         )
         ReimbursementService.delete_links_for(
-            db, [tx_id for (tx_id,) in doomed.with_entities(Transaction.id)]
+            db, doomed.with_entities(Transaction.id).scalar_subquery()
         )
         removed = doomed.delete(synchronize_session=False)
         db.delete(account)

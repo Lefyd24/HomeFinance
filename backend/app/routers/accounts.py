@@ -178,7 +178,7 @@ def delete_account(
         (Transaction.account_id == account_id)
         | (Transaction.destination_account_id == account_id),
     )
-    ReimbursementService.delete_links_for(db, [tx_id for (tx_id,) in doomed.with_entities(Transaction.id)])
+    ReimbursementService.delete_links_for(db, doomed.with_entities(Transaction.id).scalar_subquery())
     deleted_count = doomed.delete(synchronize_session=False)
 
     # Now delete the account

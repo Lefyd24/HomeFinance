@@ -1,6 +1,6 @@
-from typing import List, Optional
+from typing import List, Optional, Union
 
-from sqlalchemy import func, or_
+from sqlalchemy import ScalarSelect, func, or_
 from sqlalchemy.orm import Session
 
 from app.models import Transaction, TransactionReimbursement
@@ -121,15 +121,15 @@ class ReimbursementService:
         return query.order_by(distance).limit(limit).all()
 
     @staticmethod
-    def delete_links_for(db: Session, tx_ids: List[int]) -> None:
+    def delete_links_for(db: Session, tx_ids: Union[List[int], ScalarSelect]) -> None:
         """Drop every link touching these transactions.
 
         Called by each delete path: SQLite does not enforce foreign keys here,
         so nothing cascades and links would be left pointing at nothing.
+        `tx_ids` may be a SELECT of ids, so deleting a whole account does not
+        bind one parameter per transaction (SQLite caps those).
         Does not commit; the caller's delete does.
         """
-        if not tx_ids:
-            return
         db.query(TransactionReimbursement).filter(
             or_(
                 TransactionReimbursement.expense_id.in_(tx_ids),
