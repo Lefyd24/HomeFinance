@@ -6,6 +6,21 @@ Releases that add database migrations or new `.env` settings say so, so you know
 
 ## [Unreleased]
 
+## [1.3.0] - 2026-10-20
+
+Adds migration `025`. No new `.env` settings. Migrations apply automatically on start, so [back up first](docs/operations.md#backups).
+
+### Added
+- **Shared expenses.** When you pay a bill for a group and friends send you their share, link those repayments to the expense. Totals then count only what you really spent: a €100 dinner repaid with €33 + €33 counts as €34 of spending, and the repayments no longer count as income. One expense can take several repayments and one transfer can cover several expenses. Account balances are unchanged. (#46)
+  - Link from the row menu ("Link repayment…" / "Mark as repayment…") or from a transaction's details, which list the links with an unlink button and show what was paid, paid back and counted.
+  - Works for bank-synced transactions too; pending ones can be linked once the bank books them.
+  - Reports, the CSV export, budgets, trackers, budget alerts, forecasts, insights and the AI advisor all use the amounts after repayments.
+- Right-click (or long-press) a transaction to open its actions menu.
+
+### Fixed
+- Choosing an action from a transaction's row menu no longer also opens its details behind it.
+- The Reports page refreshes after a transaction changes.
+
 ## [1.2.0] - 2026-10-05
 
 ### Added
@@ -70,7 +85,8 @@ First public release.
 - The Privacy Policy and Terms pages read the operator's name, contact email and jurisdiction from the server instead of compiled-in values. **Action required:** set `LEGAL_OPERATOR_NAME`, `LEGAL_CONTACT_EMAIL` and `LEGAL_JURISDICTION` in `.env`. Until you do, those pages show a "not configured" notice. See [Configuration](docs/configuration.md#legal-pages).
 - `docker-compose.yml` now names the published image. `docker compose pull && docker compose up -d` updates without building.
 
-[Unreleased]: https://github.com/Lefyd24/HomeFinance/compare/v1.2.0...HEAD
+[Unreleased]: https://github.com/Lefyd24/HomeFinance/compare/v1.3.0...HEAD
+[1.3.0]: https://github.com/Lefyd24/HomeFinance/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/Lefyd24/HomeFinance/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/Lefyd24/HomeFinance/compare/v1.0.1...v1.1.0
 [1.0.1]: https://github.com/Lefyd24/HomeFinance/compare/v1.0.0...v1.0.1
