@@ -6,6 +6,9 @@ Releases that add database migrations or new `.env` settings say so, so you know
 
 ## [Unreleased]
 
+### Fixed
+- A transaction's details no longer crowd the footer with buttons that overlap. Linking a repayment now lives in a **Repayments** box in the body.
+
 ## [1.3.0] - 2026-10-20
 
 Adds migration `025`. No new `.env` settings. Migrations apply automatically on start, so [back up first](docs/operations.md#backups).

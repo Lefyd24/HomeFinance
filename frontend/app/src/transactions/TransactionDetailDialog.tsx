@@ -8,7 +8,6 @@ import {
   ArrowUpRight01Icon,
   Delete02Icon,
   Exchange01Icon,
-  MoneyReceiveSquareIcon,
   PencilEdit02Icon,
   Undo02Icon,
 } from '@hugeicons/core-free-icons'
@@ -66,7 +65,6 @@ export function TransactionDetailDialog({
   // created transfer, which the normal edit form already handles).
   const isRetaggedTransfer = Boolean(transaction.original_type)
   const canMarkAsTransfer = transaction.is_bank_synced && !isTransfer
-  const hasReimbursements = transaction.reimbursements.length > 0
   const linkReimbursement = () => {
     onLinkReimbursement(transaction)
     onOpenChange(false)
@@ -122,17 +120,6 @@ export function TransactionDetailDialog({
               {t('markTransfer.action')}
             </Button>
           )}
-          {/* Once links exist, the list below carries its own "link another" button. */}
-          {canLinkReimbursement(transaction) && !hasReimbursements && (
-            <Button variant="outline" onClick={linkReimbursement}>
-              <HugeiconsIcon
-                icon={MoneyReceiveSquareIcon}
-                strokeWidth={2}
-                data-icon="inline-start"
-              />
-              {t(`reimbursement.action.${transaction.type === 'income' ? 'income' : 'expense'}`)}
-            </Button>
-          )}
           {isRetaggedTransfer && (
             <Button
               variant="outline"
@@ -172,7 +159,8 @@ export function TransactionDetailDialog({
           <p className="mt-1 text-xs text-muted-foreground">{formatDate(transaction.date)}</p>
         </div>
 
-        {hasReimbursements && (
+        {/* Kept in the body: the footer has no room for a fourth action. */}
+        {(canLinkReimbursement(transaction) || transaction.reimbursements.length > 0) && (
           <ReimbursementList transaction={transaction} onLink={linkReimbursement} />
         )}
 
