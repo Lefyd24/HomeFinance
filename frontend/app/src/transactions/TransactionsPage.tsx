@@ -12,6 +12,7 @@ import { Add01Icon, FileImportIcon, Invoice01Icon } from '@hugeicons/core-free-i
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
+import { ContextMenuGroup, ContextMenuItem } from '@/components/ui/context-menu'
 import {
   Empty,
   EmptyContent,
@@ -41,6 +42,7 @@ import { useAccounts } from '../accounts/useAccounts'
 import { useCategories } from '../categories/useCategories'
 import { useTransactions, useDeleteTransaction } from './useTransactions'
 import { createColumns } from './columns'
+import { TransactionMenuItems, type TransactionRowHandlers } from './TransactionMenuItems'
 import { TransactionFilterBar, type DatePreset } from './TransactionFilterBar'
 import { TransactionFormDialog } from './TransactionFormDialog'
 import { TransactionDetailDialog } from './TransactionDetailDialog'
@@ -191,17 +193,15 @@ export function TransactionsPage() {
     })
   }
 
+  const rowHandlers: TransactionRowHandlers = {
+    onView: handleView,
+    onEdit: handleEdit,
+    onDelete: handleDelete,
+    onLinkReimbursement: handleLinkReimbursement,
+  }
+
   const columns = useMemo(
-    () =>
-      createColumns(
-        {
-          onView: handleView,
-          onEdit: handleEdit,
-          onDelete: handleDelete,
-          onLinkReimbursement: handleLinkReimbursement,
-        },
-        t,
-      ),
+    () => createColumns(rowHandlers, t),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [t],
   )
@@ -278,7 +278,8 @@ export function TransactionsPage() {
 
   // The dialogs that edit links must see the refetched row, not the snapshot taken when it was clicked.
   const liveSelected =
-    transactionData?.items.find((item) => item.id === selectedTransaction?.id) ?? selectedTransaction
+    transactionData?.items.find((item) => item.id === selectedTransaction?.id) ??
+    selectedTransaction
 
   return (
     <PageContainer wide className="flex flex-col gap-4">
@@ -363,6 +364,16 @@ export function TransactionsPage() {
             table={table}
             columns={columns}
             onRowClick={handleView}
+            rowContextMenu={(transaction) => (
+              <ContextMenuGroup>
+                <TransactionMenuItems
+                  transaction={transaction}
+                  handlers={rowHandlers}
+                  t={t}
+                  Item={ContextMenuItem}
+                />
+              </ContextMenuGroup>
+            )}
             striped={false}
             stickyHeader
             getRowClassName={(row) => flowRail[flowOfType(row.original.type)]}

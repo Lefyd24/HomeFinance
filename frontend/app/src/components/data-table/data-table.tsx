@@ -13,6 +13,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import { ContextMenu, ContextMenuContent, ContextMenuTrigger } from '@/components/ui/context-menu'
 import { cn } from '@/lib/utils'
 
 /** Per-column presentation, read off `columnDef.meta`. */
@@ -25,6 +26,8 @@ interface DataTableProps<TData, TValue> {
   table: TanstackTable<TData>
   columns: ColumnDef<TData, TValue>[]
   onRowClick?: (row: TData) => void
+  /** Items for a row's right-click (long-press on touch) menu. */
+  rowContextMenu?: (row: TData) => ReactNode
   emptyMessage?: string
   className?: string
   getRowClassName?: (row: Row<TData>) => string | undefined
@@ -40,6 +43,7 @@ export function DataTable<TData, TValue>({
   table,
   columns,
   onRowClick,
+  rowContextMenu,
   emptyMessage = 'No results.',
   className,
   getRowClassName,
@@ -50,18 +54,10 @@ export function DataTable<TData, TValue>({
   const rows = table.getRowModel().rows
 
   return (
-    <div
-      className={cn(
-        'glass-panel overflow-hidden rounded-xl border',
-        className,
-      )}
-    >
+    <div className={cn('glass-panel overflow-hidden rounded-xl border', className)}>
       <Table>
         <TableHeader
-          className={cn(
-            'bg-muted [&_tr]:border-border',
-            stickyHeader && 'sticky top-0 z-10',
-          )}
+          className={cn('bg-muted [&_tr]:border-border', stickyHeader && 'sticky top-0 z-10')}
         >
           {table.getHeaderGroups().map((headerGroup) => (
             <TableRow key={headerGroup.id} className="border-border hover:bg-transparent">
@@ -86,28 +82,39 @@ export function DataTable<TData, TValue>({
         </TableHeader>
         <TableBody>
           {rows.length ? (
-            rows.map((row, index) => (
-              <TableRow
-                key={row.id}
-                data-state={row.getIsSelected() && 'selected'}
-                className={cn(
-                  'group/row border-border',
-                  striped && index % 2 === 1 && 'bg-muted/30',
-                  onRowClick && 'cursor-pointer',
-                  getRowClassName?.(row),
-                )}
-                onClick={() => onRowClick?.(row.original)}
-              >
-                {row.getVisibleCells().map((cell) => {
-                  const meta = cell.column.columnDef.meta as DataTableColumnMeta | undefined
-                  return (
-                    <TableCell key={cell.id} className={meta?.cellClassName}>
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                    </TableCell>
-                  )
-                })}
-              </TableRow>
-            ))
+            rows.map((row, index) => {
+              const tableRow = (
+                <TableRow
+                  key={row.id}
+                  data-state={row.getIsSelected() && 'selected'}
+                  className={cn(
+                    'group/row border-border',
+                    striped && index % 2 === 1 && 'bg-muted/30',
+                    onRowClick && 'cursor-pointer',
+                    getRowClassName?.(row),
+                  )}
+                  onClick={() => onRowClick?.(row.original)}
+                >
+                  {row.getVisibleCells().map((cell) => {
+                    const meta = cell.column.columnDef.meta as DataTableColumnMeta | undefined
+                    return (
+                      <TableCell key={cell.id} className={meta?.cellClassName}>
+                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      </TableCell>
+                    )
+                  })}
+                </TableRow>
+              )
+              if (!rowContextMenu) return tableRow
+              // The menu sits beside the row rather than inside it, so clicks on
+              // its (portalled) items never bubble to the row's onClick.
+              return (
+                <ContextMenu key={row.id}>
+                  <ContextMenuTrigger asChild>{tableRow}</ContextMenuTrigger>
+                  <ContextMenuContent>{rowContextMenu(row.original)}</ContextMenuContent>
+                </ContextMenu>
+              )
+            })
           ) : (
             <TableRow>
               <TableCell

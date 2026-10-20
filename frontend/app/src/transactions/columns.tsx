@@ -4,12 +4,8 @@ import {
   ArrowDownLeft01Icon,
   ArrowRight01Icon,
   ArrowUpRight01Icon,
-  Delete02Icon,
   Exchange01Icon,
-  MoneyReceiveSquareIcon,
   MoreVerticalIcon,
-  PencilEdit02Icon,
-  ViewIcon,
 } from '@hugeicons/core-free-icons'
 import {
   DropdownMenu,
@@ -23,14 +19,8 @@ import { DataTableColumnHeader } from '@/components/data-table/data-table-column
 import { Amount, CategoryChip, flowOfType, flowSurface } from '../ui/money'
 import { cn } from '@/lib/utils'
 import { formatCurrency } from '../lib/format'
-import { canLinkReimbursement, type Transaction } from './transactionsApi'
-
-interface ColumnHandlers {
-  onView: (transaction: Transaction) => void
-  onEdit: (transaction: Transaction) => void
-  onDelete: (transaction: Transaction) => void
-  onLinkReimbursement: (transaction: Transaction) => void
-}
+import type { Transaction } from './transactionsApi'
+import { TransactionMenuItems, type TransactionRowHandlers } from './TransactionMenuItems'
 
 type Translate = (key: string, options?: Record<string, unknown>) => string
 
@@ -50,7 +40,7 @@ function splitDate(iso: string) {
 }
 
 export function createColumns(
-  handlers: ColumnHandlers,
+  handlers: TransactionRowHandlers,
   t: Translate,
 ): ColumnDef<Transaction>[] {
   const FLOW_LABEL = {
@@ -253,27 +243,12 @@ export function createColumns(
                 row, whose onClick would open the detail dialog as well. */}
             <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
               <DropdownMenuGroup>
-                <DropdownMenuItem onClick={() => handlers.onView(transaction)}>
-                  <HugeiconsIcon icon={ViewIcon} strokeWidth={2} />
-                  {t('columns.menu.view')}
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handlers.onEdit(transaction)}>
-                  <HugeiconsIcon icon={PencilEdit02Icon} strokeWidth={2} />
-                  {t('common:actions.edit')}
-                </DropdownMenuItem>
-                {canLinkReimbursement(transaction) && (
-                  <DropdownMenuItem onClick={() => handlers.onLinkReimbursement(transaction)}>
-                    <HugeiconsIcon icon={MoneyReceiveSquareIcon} strokeWidth={2} />
-                    {t(`reimbursement.menu.${transaction.type === 'income' ? 'income' : 'expense'}`)}
-                  </DropdownMenuItem>
-                )}
-                <DropdownMenuItem
-                  variant="destructive"
-                  onClick={() => handlers.onDelete(transaction)}
-                >
-                  <HugeiconsIcon icon={Delete02Icon} strokeWidth={2} />
-                  {t('common:actions.delete')}
-                </DropdownMenuItem>
+                <TransactionMenuItems
+                  transaction={transaction}
+                  handlers={handlers}
+                  t={t}
+                  Item={DropdownMenuItem}
+                />
               </DropdownMenuGroup>
             </DropdownMenuContent>
           </DropdownMenu>
