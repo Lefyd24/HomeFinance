@@ -8,6 +8,7 @@ import {
   ArrowUpRight01Icon,
   Delete02Icon,
   Exchange01Icon,
+  MoneyReceiveSquareIcon,
   PencilEdit02Icon,
   Undo02Icon,
 } from '@hugeicons/core-free-icons'
@@ -19,7 +20,7 @@ import { formatDate } from '../lib/format'
 import { cn } from '@/lib/utils'
 import { ReimbursementList } from './ReimbursementList'
 import { useUnmarkTransfer } from './useTransactions'
-import type { Transaction } from './transactionsApi'
+import { canLinkReimbursement, type Transaction } from './transactionsApi'
 
 interface TransactionDetailDialogProps {
   open: boolean
@@ -65,6 +66,11 @@ export function TransactionDetailDialog({
   // created transfer, which the normal edit form already handles).
   const isRetaggedTransfer = Boolean(transaction.original_type)
   const canMarkAsTransfer = transaction.is_bank_synced && !isTransfer
+  const hasReimbursements = transaction.reimbursements.length > 0
+  const linkReimbursement = () => {
+    onLinkReimbursement(transaction)
+    onOpenChange(false)
+  }
   const flow = flowOfType(transaction.type)
   const FLOW_TITLE = {
     in: t('detail.flowTitle.in'),
@@ -116,6 +122,17 @@ export function TransactionDetailDialog({
               {t('markTransfer.action')}
             </Button>
           )}
+          {/* Once links exist, the list below carries its own "link another" button. */}
+          {canLinkReimbursement(transaction) && !hasReimbursements && (
+            <Button variant="outline" onClick={linkReimbursement}>
+              <HugeiconsIcon
+                icon={MoneyReceiveSquareIcon}
+                strokeWidth={2}
+                data-icon="inline-start"
+              />
+              {t(`reimbursement.action.${transaction.type === 'income' ? 'income' : 'expense'}`)}
+            </Button>
+          )}
           {isRetaggedTransfer && (
             <Button
               variant="outline"
@@ -155,14 +172,8 @@ export function TransactionDetailDialog({
           <p className="mt-1 text-xs text-muted-foreground">{formatDate(transaction.date)}</p>
         </div>
 
-        {transaction.reimbursements.length > 0 && (
-          <ReimbursementList
-            transaction={transaction}
-            onLink={() => {
-              onLinkReimbursement(transaction)
-              onOpenChange(false)
-            }}
-          />
+        {hasReimbursements && (
+          <ReimbursementList transaction={transaction} onLink={linkReimbursement} />
         )}
 
         <div className="flex flex-col">
