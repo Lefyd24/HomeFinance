@@ -279,7 +279,7 @@ def budget_breaches(db, user, today):
 def _budget_spend(db, user, budget, today):
     category_ids = [bc.category_id for bc in budget.budget_categories]
     period_start, period_end = get_period_dates(budget, today)
-    query = db.query(func.sum(Transaction.amount)).filter(
+    query = db.query(func.sum(Transaction.effective_amount)).filter(
         Transaction.user_id == user.id, Transaction.type == "expense")
     if category_ids:
         query = query.filter(Transaction.category_id.in_(category_ids))

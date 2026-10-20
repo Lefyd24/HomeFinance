@@ -149,6 +149,11 @@ from app.schemas.notification import (
     NotificationSettingsUpdate,
     PushSubscriptionCreate,
 )
+from app.schemas.reimbursement import (
+    ReimbursementCandidate,
+    ReimbursementCreate,
+    ReimbursementLinkResponse,
+)
 from app.schemas.report import (
     BalanceHistoryReport,
     CashflowReport,
@@ -187,6 +192,10 @@ from app.schemas.transaction import (
 from app.schemas.user import UserBase, UserCreate, UserInDB, UserResponse, UserUpdate
 
 __all__ = [
+    # Reimbursement schemas
+    "ReimbursementCandidate",
+    "ReimbursementCreate",
+    "ReimbursementLinkResponse",
     # User schemas
     "UserBase",
     "UserCreate",

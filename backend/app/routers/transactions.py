@@ -17,14 +17,30 @@ from app.schemas import (
     TransactionSplitRequest,
     PairTransferRequest,
     RetagTransferRequest,
+    ReimbursementCandidate,
+    ReimbursementCreate,
 )
-from app.models import User, Transaction, Account, Category, DebtPayment
+from app.models import User, Transaction, TransactionReimbursement, Account, Category, DebtPayment
 from app.models.recurring_expense import RecurringExpensePayment
 from app.models.tracker import TrackerTransaction
 from app.schemas.tracker import TrackerAssignment
 from app.routers.trackers import set_transaction_trackers
+from app.services.reimbursement_service import ReimbursementError, ReimbursementService
 
 router = APIRouter(prefix="/transactions", tags=["Transactions"])
+
+
+def _reimbursement_link(link: TransactionReimbursement, tx: Transaction) -> dict:
+    """A link seen from `tx`: the counterpart is whichever side `tx` is not."""
+    other = link.income if link.expense_id == tx.id else link.expense
+    return {
+        "id": link.id,
+        "amount": link.amount,
+        "transaction_id": other.id,
+        "description": other.description,
+        "date": other.date,
+        "account_name": other.account.name if other.account else None,
+    }
 
 
 def _serialize_transaction(db: Session, tx: Transaction) -> dict:
@@ -91,6 +107,11 @@ def _serialize_transaction(db: Session, tx: Transaction) -> dict:
         "tracker_ids": [link.tracker_id for link in tracker_links],
         "tracker_names": [
             link.tracker.name for link in tracker_links if link.tracker is not None
+        ],
+        "reimbursed_amount": tx.reimbursed_amount,
+        "effective_amount": tx.effective_amount,
+        "reimbursements": [
+            _reimbursement_link(link, tx) for link in ReimbursementService.links_for(db, tx)
         ],
     }
 
@@ -257,31 +278,7 @@ def create_transaction(
     db.commit()
     db.refresh(db_transaction)
 
-    # Add account and category names
-    result = db_transaction.__dict__.copy()
-    result["account_name"] = account.name
-    result["destination_account_name"] = (
-        destination_account.name
-        if transaction_data.type == "transfer"
-        and transaction_data.destination_account_id
-        else None
-    )
-    result["category_name"] = (
-        db_transaction.category.name if db_transaction.category else None
-    )
-    result["category_color"] = (
-        db_transaction.category.color if db_transaction.category else None
-    )
-
-    # Initialize link fields (populated if linked later in the same request flow)
-    result["debt_payment_id"] = None
-    result["debt_id"] = None
-    result["debt_name"] = None
-    result["recurring_payment_id"] = None
-    result["recurring_expense_id"] = None
-    result["recurring_expense_name"] = None
-
-    return result
+    return _serialize_transaction(db, db_transaction)
 
 
 @router.get("/income-vs-spending")
@@ -313,7 +310,7 @@ def get_income_vs_spending(
     
     income_data = db.query(
         date_grouping.label('period'),
-        func.sum(Transaction.amount).label('total')
+        func.sum(Transaction.effective_amount).label('total')
     ).filter(
         Transaction.user_id == current_user.id,
         Transaction.type == "income",
@@ -323,7 +320,7 @@ def get_income_vs_spending(
     
     spending_data = db.query(
         date_grouping.label('period'),
-        func.sum(Transaction.amount).label('total')
+        func.sum(Transaction.effective_amount).label('total')
     ).filter(
         Transaction.user_id == current_user.id,
         Transaction.type == "expense",
@@ -388,50 +385,7 @@ def get_transaction(
             status_code=status.HTTP_404_NOT_FOUND, detail="Transaction not found"
         )
 
-    # Add account, category, and debt payment info
-    result = transaction.__dict__.copy()
-    result["account_name"] = transaction.account.name if transaction.account else None
-    result["destination_account_name"] = (
-        transaction.destination_account.name
-        if transaction.destination_account
-        else None
-    )
-    result["category_name"] = (
-        transaction.category.name if transaction.category else None
-    )
-    result["category_color"] = (
-        transaction.category.color if transaction.category else None
-    )
-
-    # Check if transaction has a linked debt / recurring payment
-    debt_payment = (
-        db.query(DebtPayment)
-        .filter(DebtPayment.transaction_id == transaction.id)
-        .first()
-    )
-    result["debt_payment_id"] = debt_payment.id if debt_payment else None
-    result["debt_id"] = debt_payment.debt_id if debt_payment else None
-    result["debt_name"] = (
-        debt_payment.debt.name if debt_payment and debt_payment.debt else None
-    )
-    recurring_payment = (
-        db.query(RecurringExpensePayment)
-        .filter(RecurringExpensePayment.transaction_id == transaction.id)
-        .first()
-    )
-    result["recurring_payment_id"] = (
-        recurring_payment.id if recurring_payment else None
-    )
-    result["recurring_expense_id"] = (
-        recurring_payment.recurring_expense_id if recurring_payment else None
-    )
-    result["recurring_expense_name"] = (
-        recurring_payment.recurring_expense.name
-        if recurring_payment and recurring_payment.recurring_expense
-        else None
-    )
-
-    return result
+    return _serialize_transaction(db, transaction)
 
 
 @router.put("/{transaction_id}", response_model=TransactionResponse)
@@ -519,55 +473,12 @@ def update_transaction(
         updated_transaction = TransactionService.update_transaction(
             db, transaction, transaction_data
         )
+    except ReimbursementError as e:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e))
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
-    # Add account, category, and debt payment info
-    result = updated_transaction.__dict__.copy()
-    result["account_name"] = (
-        updated_transaction.account.name if updated_transaction.account else None
-    )
-    result["destination_account_name"] = (
-        updated_transaction.destination_account.name
-        if updated_transaction.destination_account
-        else None
-    )
-    result["category_name"] = (
-        updated_transaction.category.name if updated_transaction.category else None
-    )
-    result["category_color"] = (
-        updated_transaction.category.color if updated_transaction.category else None
-    )
-
-    # Check if transaction has a linked debt / recurring payment
-    debt_payment = (
-        db.query(DebtPayment)
-        .filter(DebtPayment.transaction_id == updated_transaction.id)
-        .first()
-    )
-    result["debt_payment_id"] = debt_payment.id if debt_payment else None
-    result["debt_id"] = debt_payment.debt_id if debt_payment else None
-    result["debt_name"] = (
-        debt_payment.debt.name if debt_payment and debt_payment.debt else None
-    )
-    recurring_payment = (
-        db.query(RecurringExpensePayment)
-        .filter(RecurringExpensePayment.transaction_id == updated_transaction.id)
-        .first()
-    )
-    result["recurring_payment_id"] = (
-        recurring_payment.id if recurring_payment else None
-    )
-    result["recurring_expense_id"] = (
-        recurring_payment.recurring_expense_id if recurring_payment else None
-    )
-    result["recurring_expense_name"] = (
-        recurring_payment.recurring_expense.name
-        if recurring_payment and recurring_payment.recurring_expense
-        else None
-    )
-
-    return result
+    return _serialize_transaction(db, updated_transaction)
 
 
 @router.delete("/{transaction_id}")
@@ -677,6 +588,11 @@ def split_transaction(
             detail="Transfers cannot be split — they move money rather than categorise it.",
         )
 
+    try:
+        ReimbursementService.assert_unlinked(transaction)
+    except ReimbursementError as e:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e))
+
     # Compared in cents: summing floats will not land exactly on the total.
     total_cents = round(transaction.amount * 100)
     parts_cents = sum(round(part.amount * 100) for part in request.parts)
@@ -785,6 +701,8 @@ def pair_transfer(
 
     try:
         TransactionService.pair_as_transfer(db, transaction, partner)
+    except ReimbursementError as e:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e))
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
@@ -820,6 +738,8 @@ def retag_transfer(
 
     try:
         TransactionService.retag_as_transfer(db, transaction, request.destination_account_id)
+    except ReimbursementError as e:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e))
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
@@ -847,6 +767,73 @@ def unmark_transfer(
     return _serialize_transaction(db, transaction)
 
 
+@router.get(
+    "/{transaction_id}/reimbursement-candidates",
+    response_model=List[ReimbursementCandidate],
+)
+def get_reimbursement_candidates(
+    transaction_id: int,
+    search: Optional[str] = None,
+    limit: int = Query(20, ge=1, le=100),
+    current_user: User = Depends(get_current_user_authenticated),
+    db: Session = Depends(get_db),
+):
+    """Transactions that could be linked to this one, nearest in date first."""
+    transaction = _owned_transaction(db, current_user.id, transaction_id)
+
+    try:
+        candidates = ReimbursementService.candidates(
+            db, current_user.id, transaction, search=search, limit=limit
+        )
+    except ReimbursementError as e:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e))
+
+    return [
+        {
+            "id": candidate.id,
+            "description": candidate.description,
+            "date": candidate.date,
+            "amount": candidate.amount,
+            "remaining": ReimbursementService.remaining(candidate),
+            "account_name": candidate.account.name if candidate.account else None,
+        }
+        for candidate in candidates
+    ]
+
+
+@router.post("/{transaction_id}/reimbursements", response_model=TransactionResponse)
+def link_reimbursement(
+    transaction_id: int,
+    request: ReimbursementCreate,
+    current_user: User = Depends(get_current_user_authenticated),
+    db: Session = Depends(get_db),
+):
+    """Link this transaction to an expense/income on the other side of a repayment."""
+    transaction = _owned_transaction(db, current_user.id, transaction_id)
+    counterpart = _owned_transaction(db, current_user.id, request.counterpart_id)
+
+    try:
+        ReimbursementService.link(db, current_user.id, transaction, counterpart, request.amount)
+    except ReimbursementError as e:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e))
+
+    return _serialize_transaction(db, transaction)
+
+
+@router.delete(
+    "/reimbursements/{link_id}", status_code=status.HTTP_204_NO_CONTENT
+)
+def unlink_reimbursement(
+    link_id: int,
+    current_user: User = Depends(get_current_user_authenticated),
+    db: Session = Depends(get_db),
+):
+    try:
+        ReimbursementService.unlink(db, current_user.id, link_id)
+    except LookupError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+
+
 @router.post("/bulk-update")
 def bulk_update_transactions(
     bulk_data: BulkTransactionUpdate,
@@ -869,6 +856,14 @@ def bulk_update_transactions(
     # only bank-owned fields are refused.
     for transaction in transactions:
         linked_accounts.reject_synced_field_edits(transaction, update_data)
+        try:
+            ReimbursementService.assert_can_change(
+                transaction,
+                new_type=update_data.get("type"),
+                new_amount=update_data.get("amount"),
+            )
+        except ReimbursementError as e:
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e))
     linked_accounts.reject_linked_account_ids(
         db,
         current_user.id,

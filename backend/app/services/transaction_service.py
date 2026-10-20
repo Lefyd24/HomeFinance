@@ -9,6 +9,7 @@ from app.models import Transaction, Account, Category, Debt, DebtPayment
 from app.models.recurring_expense import RecurringExpense, RecurringExpensePayment
 from app.models.tracker import TrackerTransaction
 from app.schemas import TransactionCreate, TransactionUpdate
+from app.services.reimbursement_service import ReimbursementService
 
 
 def _rewind_due_date(current: date, interval: int, unit: str) -> date:
@@ -98,13 +99,13 @@ class TransactionService:
         if not group_by:
             income = float(
                 query.filter(Transaction.type == "income")
-                .with_entities(func.coalesce(func.sum(Transaction.amount), 0))
+                .with_entities(func.coalesce(func.sum(Transaction.effective_amount), 0))
                 .scalar()
                 or 0
             )
             expenses = float(
                 query.filter(Transaction.type == "expense")
-                .with_entities(func.coalesce(func.sum(Transaction.amount), 0))
+                .with_entities(func.coalesce(func.sum(Transaction.effective_amount), 0))
                 .scalar()
                 or 0
             )
@@ -123,7 +124,7 @@ class TransactionService:
             query.filter(Transaction.type == "income")
             .with_entities(
                 period_expr.label("period"),
-                func.coalesce(func.sum(Transaction.amount), 0).label("total"),
+                func.coalesce(func.sum(Transaction.effective_amount), 0).label("total"),
             )
             .group_by("period")
             .order_by("period")
@@ -133,7 +134,7 @@ class TransactionService:
             query.filter(Transaction.type == "expense")
             .with_entities(
                 period_expr.label("period"),
-                func.coalesce(func.sum(Transaction.amount), 0).label("total"),
+                func.coalesce(func.sum(Transaction.effective_amount), 0).label("total"),
             )
             .group_by("period")
             .order_by("period")
@@ -225,6 +226,11 @@ class TransactionService:
         transaction_data: TransactionUpdate
     ) -> Transaction:
         """Update a transaction and adjust account balance(s)."""
+        # Checked first: nothing below may run (and move balances) if refused.
+        ReimbursementService.assert_can_change(
+            transaction, new_type=transaction_data.type, new_amount=transaction_data.amount
+        )
+
         # Store old values
         old_amount = transaction.amount
         old_type = transaction.type
@@ -364,6 +370,8 @@ class TransactionService:
             TrackerTransaction.transaction_id == transaction.id
         ).delete(synchronize_session=False)
 
+        ReimbursementService.delete_links_for(db, [transaction.id])
+
         db.delete(transaction)
         db.commit()
 
@@ -380,6 +388,8 @@ class TransactionService:
             raise ValueError("Both legs of a transfer must have the same amount")
         if tx_a.account_id == tx_b.account_id:
             raise ValueError("A transfer cannot be paired with itself")
+        ReimbursementService.assert_unlinked(tx_a)
+        ReimbursementService.assert_unlinked(tx_b)
 
         for leg, other in ((tx_a, tx_b), (tx_b, tx_a)):
             leg.original_type = leg.type
@@ -403,6 +413,8 @@ class TransactionService:
         from if it was income (money arrived at the linked account, having
         left the destination).
         """
+        ReimbursementService.assert_unlinked(transaction)
+
         destination = db.query(Account).filter(Account.id == destination_account_id).first()
         if not destination:
             raise ValueError("Destination account not found")
@@ -473,11 +485,11 @@ class TransactionService:
             query = query.filter(Transaction.date <= end_date)
         
         income = query.filter(Transaction.type == "income").with_entities(
-            func.sum(Transaction.amount)
+            func.sum(Transaction.effective_amount)
         ).scalar() or 0
         
         expenses = query.filter(Transaction.type == "expense").with_entities(
-            func.sum(Transaction.amount)
+            func.sum(Transaction.effective_amount)
         ).scalar() or 0
         
         return {

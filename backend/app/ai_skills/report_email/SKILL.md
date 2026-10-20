@@ -36,6 +36,8 @@ choose or change it, and you must never claim to have sent anything elsewhere.
   for the last 3 months"), gather it first: load the matching skill with `load_skill_tool`
   (financial-health-review for personal finances, portfolio-review for the portfolio), or use
   the core tools (`get_totals_tool` and friends). Then write the report from those results.
+- Figures from the core tools are net of reimbursements (friends repaying shared expenses); use
+  `effective_amount`, never raw `amount`, if you total transactions yourself.
 - Never write a report from memory or general knowledge. If the data is missing, say so in
   the report's data notes instead of filling the gap.
 

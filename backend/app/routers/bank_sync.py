@@ -30,6 +30,7 @@ from app.schemas import (
     SyncResultResponse,
 )
 from app.services import bank_sync_service, enable_banking_client as eb
+from app.services.reimbursement_service import ReimbursementService
 from app.utils import crypto
 from app.utils.security import get_current_user_authenticated
 
@@ -507,15 +508,15 @@ def _release_account(
     — clearing `external_id` — cannot drift between the two.
     """
     if delete_account:
-        removed = (
-            db.query(Transaction)
-            .filter(
-                Transaction.user_id == user_id,
-                (Transaction.account_id == account.id)
-                | (Transaction.destination_account_id == account.id),
-            )
-            .delete(synchronize_session=False)
+        doomed = db.query(Transaction).filter(
+            Transaction.user_id == user_id,
+            (Transaction.account_id == account.id)
+            | (Transaction.destination_account_id == account.id),
         )
+        ReimbursementService.delete_links_for(
+            db, doomed.with_entities(Transaction.id).scalar_subquery()
+        )
+        removed = doomed.delete(synchronize_session=False)
         db.delete(account)
         return removed, 0
 

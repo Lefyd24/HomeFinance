@@ -2,6 +2,8 @@ from pydantic import BaseModel, Field
 from datetime import datetime
 from typing import Optional, List
 
+from app.schemas.reimbursement import ReimbursementLinkResponse
+
 
 class TransactionBase(BaseModel):
     account_id: int
@@ -64,6 +66,11 @@ class TransactionResponse(TransactionBase):
     # Trackers this transaction has been filed under, manually.
     tracker_ids: List[int] = []
     tracker_names: List[str] = []
+    # Money that others paid back for this transaction, or that this income
+    # paid back for an expense. `effective_amount` is what counts in totals.
+    reimbursed_amount: float = 0.0
+    effective_amount: Optional[float] = None
+    reimbursements: List[ReimbursementLinkResponse] = []
 
     class Config:
         from_attributes = True

@@ -472,7 +472,7 @@ class EmergencyFundCalculator:
         end_date = date.today()
         start_date = end_date - timedelta(days=30 * months)
         
-        total = self.db.query(func.sum(Transaction.amount)).filter(
+        total = self.db.query(func.sum(Transaction.effective_amount)).filter(
             Transaction.user_id == self.user_id,
             Transaction.type == 'expense',
             Transaction.date >= start_date
@@ -504,7 +504,7 @@ class EmergencyFundCalculator:
         if not essential_category_ids:
             return self.get_monthly_expenses(months) * 0.7
         
-        total = self.db.query(func.sum(Transaction.amount)).filter(
+        total = self.db.query(func.sum(Transaction.effective_amount)).filter(
             Transaction.user_id == self.user_id,
             Transaction.type == 'expense',
             Transaction.category_id.in_(essential_category_ids),
@@ -697,13 +697,13 @@ class NetWorthTracker:
                     'net_worth': round(running_net_worth, 2)
                 })
             else:
-                month_income = self.db.query(func.sum(Transaction.amount)).filter(
+                month_income = self.db.query(func.sum(Transaction.effective_amount)).filter(
                     Transaction.user_id == self.user_id,
                     Transaction.type == 'income',
                     func.strftime('%Y-%m', Transaction.date) == month_date.strftime('%Y-%m')
                 ).scalar() or 0
                 
-                month_expenses = self.db.query(func.sum(Transaction.amount)).filter(
+                month_expenses = self.db.query(func.sum(Transaction.effective_amount)).filter(
                     Transaction.user_id == self.user_id,
                     Transaction.type == 'expense',
                     func.strftime('%Y-%m', Transaction.date) == month_date.strftime('%Y-%m')
@@ -728,13 +728,13 @@ class NetWorthTracker:
             end_date = date.today()
             start_date = end_date - timedelta(days=90)
             
-            income = self.db.query(func.sum(Transaction.amount)).filter(
+            income = self.db.query(func.sum(Transaction.effective_amount)).filter(
                 Transaction.user_id == self.user_id,
                 Transaction.type == 'income',
                 Transaction.date >= start_date
             ).scalar() or 0
             
-            expenses = self.db.query(func.sum(Transaction.amount)).filter(
+            expenses = self.db.query(func.sum(Transaction.effective_amount)).filter(
                 Transaction.user_id == self.user_id,
                 Transaction.type == 'expense',
                 Transaction.date >= start_date

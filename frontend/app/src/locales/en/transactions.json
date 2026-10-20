@@ -232,5 +232,56 @@
     },
     "pending": "Pending",
     "pendingHint": "Not yet booked by your bank. It may change or disappear."
+  },
+  "reimbursement": {
+    "menu": {
+      "expense": "Link repayment…",
+      "income": "Mark as repayment…"
+    },
+    "action": {
+      "expense": "Link a repayment",
+      "income": "Link to a shared expense"
+    },
+    "title": {
+      "expense": "Link repayments",
+      "income": "Mark as repayment"
+    },
+    "description": {
+      "expense": "Pick the payments in which friends paid you back for this expense. Only the part you really paid counts in your totals.",
+      "income": "Pick the shared expense this payment paid back. The linked part stops counting as income."
+    },
+    "header": {
+      "total": "Amount",
+      "linked": "Paid back",
+      "remaining": "Left to link"
+    },
+    "searchPlaceholder": "Search by description",
+    "candidatesLoading": "Looking for transactions…",
+    "noCandidates": "No transactions available to link.",
+    "fullyLinked": "This transaction is fully linked.",
+    "candidateRemaining": "{{amount}} left",
+    "amountLabel": "Amount to link",
+    "amountHint": "At most {{max}}.",
+    "amountInvalid": "Enter an amount between 0 and {{max}}.",
+    "confirm": "Link",
+    "done": "Done",
+    "summary": {
+      "expense": "{{total}} paid · {{linked}} paid back · {{counted}} counted",
+      "income": "{{total}} received · {{linked}} used to pay back · {{counted}} counted as income"
+    },
+    "listTitle": "Linked transactions",
+    "unlink": "Unlink {{description}}",
+    "toast": {
+      "linked": "Linked",
+      "unlinked": "Link removed",
+      "error": "Couldn't update the link. Try again."
+    },
+    "columns": {
+      "badge": "Reimbursement",
+      "expenseHint_one": "{{amount}} paid back by {{count}} transaction",
+      "expenseHint_other": "{{amount}} paid back by {{count}} transactions",
+      "incomeHint_one": "{{amount}} used to pay back {{count}} expense",
+      "incomeHint_other": "{{amount}} used to pay back {{count}} expenses"
+    }
   }
 }

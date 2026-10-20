@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { render, screen, within } from '@testing-library/react'
+import { fireEvent, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { MemoryRouter } from 'react-router-dom'
@@ -40,6 +40,9 @@ const sampleTransaction: transactionsApi.Transaction = {
   updated_at: '',
   account_name: 'Checking',
   category_name: 'Groceries',
+  reimbursed_amount: 0,
+  effective_amount: 42.5,
+  reimbursements: [],
 }
 
 describe('TransactionsPage', () => {
@@ -100,7 +103,7 @@ describe('TransactionsPage', () => {
     vi.spyOn(transactionsApi, 'listTransactions').mockResolvedValue({
       items: [
         sampleTransaction,
-        { ...sampleTransaction, id: 2, type: 'income', amount: 100, description: 'Salary' },
+        { ...sampleTransaction, id: 2, type: 'income', amount: 100, effective_amount: 100, description: 'Salary' },
       ],
       total: 2,
       page: 1,
@@ -112,6 +115,39 @@ describe('TransactionsPage', () => {
     expect(await screen.findByText('On this page')).toBeInTheDocument()
     // 100 in, 42.50 out — the net figure only appears in the summary strip.
     expect(screen.getByText(`+${formatCurrency(57.5)}`)).toBeInTheDocument()
+  })
+
+  function mockOneExpense() {
+    vi.spyOn(accountsApi, 'listAccounts').mockResolvedValue([])
+    vi.spyOn(categoriesApi, 'listCategories').mockResolvedValue([])
+    vi.spyOn(transactionsApi, 'getReimbursementCandidates').mockResolvedValue([])
+    vi.spyOn(transactionsApi, 'listTransactions').mockResolvedValue({
+      items: [sampleTransaction],
+      total: 1,
+      page: 1,
+      per_page: 50,
+    })
+  }
+
+  it('offers the row actions on right-click, without also opening the details', async () => {
+    mockOneExpense()
+    renderPage()
+
+    fireEvent.contextMenu(await screen.findByText('Groceries run'))
+    await userEvent.click(await screen.findByRole('menuitem', { name: 'Link repayment…' }))
+
+    expect(screen.getByRole('heading', { name: 'Link repayments' })).toBeInTheDocument()
+    expect(screen.getAllByRole('dialog')).toHaveLength(1)
+  })
+
+  it('links a repayment from the details dialog of an unlinked transaction', async () => {
+    mockOneExpense()
+    renderPage()
+
+    await userEvent.click(await screen.findByText('Groceries run'))
+    await userEvent.click(await screen.findByRole('button', { name: 'Link a repayment' }))
+
+    expect(await screen.findByRole('heading', { name: 'Link repayments' })).toBeInTheDocument()
   })
 
   it('opens the add-transaction dialog', async () => {

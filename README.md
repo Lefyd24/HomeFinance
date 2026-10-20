@@ -94,7 +94,7 @@ Most finance apps want your bank login, a monthly fee and a copy of your data. H
 
 | | |
 |---|---|
-| **Accounts & transactions** | Checking, savings, credit, cash and investment accounts. Income, expenses and transfers, with split, bulk edit and transfer pairing. |
+| **Accounts & transactions** | Checking, savings, credit, cash and investment accounts. Income, expenses and transfers, with split, bulk edit and transfer pairing. Shared expenses: link the repayments friends send you to the bill you paid, and totals count only your share. |
 | **Categories & rules** | Colour-coded categories and "if the description contains X, use category Y" rules that categorize every future import and synced transaction automatically. |
 | **Reports** | Overview, cash flow, spending, budgets and debt tabs with a shared filter bar, saved views, scheduled report emails and CSV export. |
 | **Dashboard** | Cash flow, net worth, spending by category, bills due and goals on one screen. |

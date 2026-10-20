@@ -57,9 +57,9 @@ def _serialize_tracker(db: Session, tracker: Tracker) -> dict:
     total = 0.0
     for tx in transactions:
         if tx.type == "income":
-            total -= tx.amount
+            total -= tx.effective_amount
         else:
-            total += tx.amount
+            total += tx.effective_amount
     total = round(total, 2)
 
     dates = [tx.date for tx in transactions if tx.date]
@@ -197,7 +197,7 @@ def get_tracker_transactions(
     ]
 
     total = round(
-        sum(-tx.amount if tx.type == "income" else tx.amount for tx in transactions), 2
+        sum(-tx.effective_amount if tx.type == "income" else tx.effective_amount for tx in transactions), 2
     )
 
     return TrackerTransactionList(items=items, total_amount=total, count=len(items))
