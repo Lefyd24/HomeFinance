@@ -11,16 +11,16 @@ dependencies = [
     "alembic>=1.20.0",
     "bcrypt>=5.0.0",
     "email-validator>=2.3.0",
-    "fastapi>=0.142.2",
+    "fastapi>=0.143.1",
     "httpx>=0.28.0",
     "openpyxl>=3.1.5",
     "pandas>=3.0.6",
-    "pydantic>=2.13.5",
-    "pydantic-settings>=2.15.0",
+    "pydantic>=2.14.1",
+    "pydantic-settings>=2.16.0",
     "python-jose>=3.5.0",
     "python-multipart>=0.0.32",
     "scikit-learn>=1.9.1",
-    "sqlalchemy>=2.1.1",
+    "sqlalchemy>=2.1.4",
     "statsmodels>=0.15.0",
     "uvicorn>=0.54.0",
     "tradernet-sdk>=2.2.0",
@@ -34,7 +34,7 @@ dependencies = [
 
 [dependency-groups]
 dev = [
-    "pypdf>=6.19.0",
+    "pypdf>=6.20.1",
     "pytest>=8.3.0",
 ]
 
