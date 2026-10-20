@@ -6,6 +6,13 @@ Releases that add database migrations or new `.env` settings say so, so you know
 
 ## [Unreleased]
 
+## [1.3.1] - 2026-10-20
+
+No new migrations and no new `.env` settings.
+
+### Fixed
+- A transaction's details no longer crowd the footer with buttons that overlap. Linking a repayment now lives in a **Repayments** box in the body.
+
 ## [1.3.0] - 2026-10-20
 
 Adds migration `025`. No new `.env` settings. Migrations apply automatically on start, so [back up first](docs/operations.md#backups).
@@ -85,7 +92,8 @@ First public release.
 - The Privacy Policy and Terms pages read the operator's name, contact email and jurisdiction from the server instead of compiled-in values. **Action required:** set `LEGAL_OPERATOR_NAME`, `LEGAL_CONTACT_EMAIL` and `LEGAL_JURISDICTION` in `.env`. Until you do, those pages show a "not configured" notice. See [Configuration](docs/configuration.md#legal-pages).
 - `docker-compose.yml` now names the published image. `docker compose pull && docker compose up -d` updates without building.
 
-[Unreleased]: https://github.com/Lefyd24/HomeFinance/compare/v1.3.0...HEAD
+[Unreleased]: https://github.com/Lefyd24/HomeFinance/compare/v1.3.1...HEAD
+[1.3.1]: https://github.com/Lefyd24/HomeFinance/compare/v1.3.0...v1.3.1
 [1.3.0]: https://github.com/Lefyd24/HomeFinance/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/Lefyd24/HomeFinance/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/Lefyd24/HomeFinance/compare/v1.0.1...v1.1.0

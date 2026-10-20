@@ -269,7 +269,11 @@
       "expense": "{{total}} paid · {{linked}} paid back · {{counted}} counted",
       "income": "{{total}} received · {{linked}} used to pay back · {{counted}} counted as income"
     },
-    "listTitle": "Linked transactions",
+    "emptyHint": {
+      "expense": "Paid for others too? Link the repayments they sent you, so only your share counts.",
+      "income": "A friend paying you back? Link it to the shared expense, so it doesn't count as income."
+    },
+    "listTitle": "Repayments",
     "unlink": "Unlink {{description}}",
     "toast": {
       "linked": "Linked",
