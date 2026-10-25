@@ -6,8 +6,12 @@ Releases that add database migrations or new `.env` settings say so, so you know
 
 ## [Unreleased]
 
+## [1.3.2] - 2026-10-25
+
+Adds migration `026`. No new `.env` settings. Migrations apply automatically on start, so [back up first](docs/operations.md#backups).
+
 ### Fixed
-- Reconnecting a bank after its consent expired no longer creates a duplicate account and re-imports its history. Accounts are matched by Enable Banking's stable account hash, since the account id changes with each authorisation. Accounts linked before this fix are matched while the old authorisation is still active, so reconnect before it lapses.
+- Reconnecting a bank no longer creates a duplicate account and re-imports its history. Accounts are matched by Enable Banking's stable account hash, since the account id changes with each authorisation. Accounts linked before this fix learn their hash on the next sync, so sync once after updating and reconnect before the old authorisation lapses. Accounts already duplicated by the old behaviour are not merged. (#59)
 
 ## [1.3.1] - 2026-10-20
 
