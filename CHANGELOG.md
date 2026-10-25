@@ -6,6 +6,9 @@ Releases that add database migrations or new `.env` settings say so, so you know
 
 ## [Unreleased]
 
+### Fixed
+- Reconnecting a bank after its consent expired no longer creates a duplicate account and re-imports its history. Accounts are matched by Enable Banking's stable account hash, since the account id changes with each authorisation. Accounts linked before this fix are matched while the old authorisation is still active, so reconnect before it lapses.
+
 ## [1.3.1] - 2026-10-20
 
 No new migrations and no new `.env` settings.

@@ -75,7 +75,7 @@ Optional tuning is in the [configuration reference](configuration.md#bank-sync-e
 What happens to accounts:
 
 - There is **no manual mapping step**. Each account the bank exposes becomes a local account (type `checking`, named after the bank's product or `<Bank> <last 4 of IBAN>`).
-- If you reconnect, existing accounts are matched by the bank's account id and re-attached, so history, budgets and rules are kept.
+- If you reconnect, existing accounts are matched by the bank's stable account identifier and re-attached, so history, budgets and rules are kept.
 - Bank-linked accounts are **read-only for balances and manual entries**. The bank balance is the source of truth, and manual transactions and file imports are rejected on them.
 
 Tip: if you already track an account manually, remove the overlap with `backend/scripts/delete_transactions_range.py --dry-run` after the first sync, so you don't have duplicates.

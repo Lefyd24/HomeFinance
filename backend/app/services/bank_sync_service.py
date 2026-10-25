@@ -559,6 +559,36 @@ def sync_account(db: Session, account: Account) -> dict[str, Any]:
     }
 
 
+_hash_lookup_attempted: set[int] = set()
+
+
+def _learn_identification_hashes(
+    db: Session, connection: BankConnection, accounts: list[Account]
+) -> None:
+    """Store hashes for accounts linked before they were kept.
+
+    Done while the session is healthy so a later reconnect can match the account
+    even if the old session is unreadable by then. Best-effort.
+    """
+    missing = [a for a in accounts if not a.identification_hash and a.external_account_id]
+    # One attempt per process: a bank that returns no hashes must not cost a call per tick.
+    if not missing or connection.id in _hash_lookup_attempted:
+        return
+    _hash_lookup_attempted.add(connection.id)
+    try:
+        data = eb.get_session(crypto.decrypt(connection.session_id_encrypted or ""))
+    except (crypto.DecryptionError, eb.EnableBankingError) as exc:
+        logger.warning("Could not read hashes for connection %s: %s", connection.id, exc)
+        return
+    hashes = {
+        item["uid"]: item["identification_hash"]
+        for item in data.get("accounts_data") or []
+        if isinstance(item, dict) and item.get("uid") and item.get("identification_hash")
+    }
+    for account in missing:
+        account.identification_hash = hashes.get(account.external_account_id)
+
+
 def sync_connection(db: Session, connection: BankConnection) -> dict[str, Any]:
     """Sync every linked account on one connection.
 
@@ -601,6 +631,8 @@ def sync_connection(db: Session, connection: BankConnection) -> dict[str, Any]:
         )
         .all()
     )
+
+    _learn_identification_hashes(db, connection, accounts)
 
     for account in accounts:
         try:

@@ -1244,6 +1244,103 @@ def test_callback_does_not_trust_a_user_id_in_the_query_string(client, db, seed_
     assert db.get(BankConnection, conn_id).user_id == seed_user.id
 
 
+# --- matching accounts across authorisations ------------------------------
+
+
+def test_reconnect_matches_account_by_identification_hash_when_uid_changes(
+    db, seed_user, linked_account
+):
+    """Enable Banking's uid is only valid within one session, so a re-authorisation
+    issues a new one. The identification_hash is the key that survives, and it is
+    what must re-attach the account; otherwise every reconnect duplicates it and
+    re-imports the whole history.
+    """
+    linked_account.identification_hash = "hash-1"
+    fresh = BankConnection(
+        user_id=seed_user.id, aspsp_name="Eurobank", aspsp_country="GR", status="active"
+    )
+    db.add(fresh)
+    db.commit()
+
+    created = bank_sync_router._link_accounts(
+        db, fresh, [{"uid": "uid-new", "identification_hash": "hash-1"}]
+    )
+    db.commit()
+    db.refresh(linked_account)
+
+    assert created == 1
+    assert db.query(Account).filter(Account.user_id == seed_user.id).count() == 1
+    assert linked_account.bank_connection_id == fresh.id
+    # Sync addresses the account by uid, so it must point at the new session's one.
+    assert linked_account.external_account_id == "uid-new"
+
+
+def test_new_account_stores_its_identification_hash(db, seed_user):
+    fresh = BankConnection(
+        user_id=seed_user.id, aspsp_name="Eurobank", aspsp_country="GR", status="active"
+    )
+    db.add(fresh)
+    db.commit()
+
+    bank_sync_router._link_accounts(
+        db, fresh, [{"uid": "uid-1", "identification_hash": "hash-1", "name": "Current"}]
+    )
+    db.commit()
+
+    account = db.query(Account).filter(Account.user_id == seed_user.id).one()
+    assert account.identification_hash == "hash-1"
+
+
+def test_backfill_reads_hashes_from_the_old_session_before_relinking(
+    db, seed_user, connection, linked_account, monkeypatch
+):
+    """Accounts linked before hashes were stored have only the old uid. While the
+    old session is still authorised its session data maps uid -> hash, which is
+    enough to re-attach them on reconnect instead of duplicating them.
+    """
+    requested = []
+
+    def fake_get_session(session_id):
+        requested.append(session_id)
+        return {"accounts_data": [{"uid": "uid-1", "identification_hash": "hash-1"}]}
+
+    monkeypatch.setattr(eb, "get_session", fake_get_session)
+    fresh = BankConnection(
+        user_id=seed_user.id, aspsp_name="Eurobank", aspsp_country="GR", status="active"
+    )
+    db.add(fresh)
+    db.commit()
+
+    bank_sync_router._backfill_identification_hashes(db, fresh)
+    db.commit()
+    db.refresh(linked_account)
+
+    assert requested == ["session-abc"]
+    assert linked_account.identification_hash == "hash-1"
+
+
+def test_backfill_failure_does_not_block_reconnect(
+    db, seed_user, connection, linked_account, monkeypatch
+):
+    """The old session may already be gone; the reconnect must still succeed."""
+
+    def gone(session_id):
+        raise eb.EnableBankingError("session gone")
+
+    monkeypatch.setattr(eb, "get_session", gone)
+    fresh = BankConnection(
+        user_id=seed_user.id, aspsp_name="Eurobank", aspsp_country="GR", status="active"
+    )
+    db.add(fresh)
+    db.commit()
+
+    bank_sync_router._backfill_identification_hashes(db, fresh)
+    db.commit()
+    db.refresh(linked_account)
+
+    assert linked_account.identification_hash is None
+
+
 # --- reconnecting after an expiry -----------------------------------------
 
 
@@ -1629,3 +1726,122 @@ def test_pending_connections_are_hidden_from_the_list(client, db, seed_user):
     )
     db.commit()
     assert client.get("/api/bank-sync/connections").json() == []
+
+
+# --- legacy reconnect, end to end -----------------------------------------
+
+
+def test_callback_reattaches_legacy_account_without_duplicating(
+    client, db, seed_user, connection, linked_account, monkeypatch
+):
+    """Account linked before hashes were stored: only the old session knows the hash.
+
+    Runs through the real callback so backfill and linking share one unflushed
+    session, which is where a duplicate used to slip in.
+    """
+    fresh = BankConnection(
+        user_id=seed_user.id,
+        aspsp_name="Eurobank",
+        aspsp_country="GR",
+        status="pending",
+        state="legacy-state",
+        state_expires_at=datetime.utcnow() + timedelta(minutes=10),
+    )
+    db.add(fresh)
+    db.commit()
+    account_id = linked_account.id
+
+    monkeypatch.setattr(
+        eb,
+        "create_session",
+        lambda code: {
+            "session_id": "session-new",
+            "accounts": [{"uid": "uid-new", "identification_hash": "hash-1"}],
+        },
+    )
+    monkeypatch.setattr(
+        eb,
+        "get_session",
+        lambda sid: {"accounts_data": [{"uid": "uid-1", "identification_hash": "hash-1"}]},
+    )
+    monkeypatch.setattr(bank_sync_router, "_revoke_session", lambda conn: None)
+    monkeypatch.setattr(bank_sync_router, "_fetch_bank_icon", lambda *a: None)
+
+    _callback(client, code="c", state="legacy-state")
+
+    db.expire_all()
+    accounts = db.query(Account).filter(Account.user_id == seed_user.id).all()
+    assert [a.id for a in accounts] == [account_id]
+    assert accounts[0].external_account_id == "uid-new"
+    assert accounts[0].bank_connection_id == fresh.id
+
+
+def test_link_accounts_never_maps_two_raw_accounts_to_one(db, seed_user, linked_account):
+    linked_account.identification_hash = "dup"
+    fresh = BankConnection(
+        user_id=seed_user.id, aspsp_name="Eurobank", aspsp_country="GR", status="active"
+    )
+    db.add(fresh)
+    db.commit()
+
+    created = bank_sync_router._link_accounts(
+        db,
+        fresh,
+        [
+            {"uid": "u-a", "identification_hash": "dup"},
+            {"uid": "u-b", "identification_hash": "dup", "name": "Other"},
+        ],
+    )
+    db.commit()
+
+    assert created == 2
+    assert db.query(Account).filter(Account.user_id == seed_user.id).count() == 2
+
+
+def test_sync_connection_learns_missing_hashes(db, connection, linked_account, monkeypatch):
+    svc._hash_lookup_attempted.clear()
+    monkeypatch.setattr(
+        eb,
+        "get_session",
+        lambda sid: {"accounts_data": [{"uid": "uid-1", "identification_hash": "hash-1"}]},
+    )
+    monkeypatch.setattr(svc, "sync_account", lambda db, a: {"imported": 0})
+
+    svc.sync_connection(db, connection)
+    db.refresh(linked_account)
+
+    assert linked_account.identification_hash == "hash-1"
+
+
+def test_hash_lookup_is_attempted_once_per_connection(
+    db, connection, linked_account, monkeypatch
+):
+    svc._hash_lookup_attempted.clear()
+    calls = []
+
+    def no_hashes(sid):
+        calls.append(sid)
+        return {"accounts_data": []}
+
+    monkeypatch.setattr(eb, "get_session", no_hashes)
+    monkeypatch.setattr(svc, "sync_account", lambda db, a: {"imported": 0})
+
+    svc.sync_connection(db, connection)
+    svc.sync_connection(db, connection)
+
+    assert len(calls) == 1
+    assert linked_account.identification_hash is None
+
+
+def test_sync_survives_hash_lookup_failure(db, connection, linked_account, monkeypatch):
+    svc._hash_lookup_attempted.clear()
+
+    def boom(sid):
+        raise eb.EnableBankingError("down")
+
+    monkeypatch.setattr(eb, "get_session", boom)
+    monkeypatch.setattr(svc, "sync_account", lambda db, a: {"imported": 0})
+
+    result = svc.sync_connection(db, connection)
+
+    assert result["errors"] == []

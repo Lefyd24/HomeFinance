@@ -277,6 +277,7 @@ def bank_callback(
         )
 
     icon_filename = _fetch_bank_icon(connection.aspsp_name, connection.aspsp_country)
+    _backfill_identification_hashes(db, connection)
     created = _link_accounts(db, connection, session.get("accounts") or [], icon_filename)
     _drop_superseded_connections(db, connection)
     db.commit()
@@ -315,6 +316,54 @@ def _fetch_bank_icon(aspsp_name: str, aspsp_country: str) -> str | None:
         return None
 
 
+def _backfill_identification_hashes(db: Session, connection: BankConnection) -> None:
+    """Learn the identification hash of accounts linked before hashes were stored.
+
+    Reads each superseded session for this bank while it is still authorised and
+    maps the account uid to its hash. Best-effort: if a session is gone the
+    accounts keep matching by uid only, which cannot survive a reconnect.
+    """
+    stale = (
+        db.query(BankConnection)
+        .filter(
+            BankConnection.user_id == connection.user_id,
+            BankConnection.id != connection.id,
+            BankConnection.aspsp_name == connection.aspsp_name,
+            BankConnection.aspsp_country == connection.aspsp_country,
+            BankConnection.session_id_encrypted.isnot(None),
+        )
+        .all()
+    )
+    for old in stale:
+        unmatched = (
+            db.query(Account)
+            .filter(
+                Account.bank_connection_id == old.id,
+                Account.identification_hash.is_(None),
+                Account.external_account_id.isnot(None),
+            )
+            .all()
+        )
+        if not unmatched:
+            continue
+        try:
+            data = eb.get_session(crypto.decrypt(old.session_id_encrypted))
+        except (crypto.DecryptionError, eb.EnableBankingError) as exc:
+            logger.warning("Could not read session for connection %s: %s", old.id, exc)
+            continue
+
+        hashes = {
+            item["uid"]: item["identification_hash"]
+            for item in data.get("accounts_data") or []
+            if isinstance(item, dict) and item.get("uid") and item.get("identification_hash")
+        }
+        for account in unmatched:
+            account.identification_hash = hashes.get(account.external_account_id)
+
+    # autoflush is off; _link_accounts queries by hash and must see these.
+    db.flush()
+
+
 def _link_accounts(
     db: Session,
     connection: BankConnection,
@@ -323,23 +372,45 @@ def _link_accounts(
 ) -> int:
     """Create or re-attach Account rows for the accounts a session exposes."""
     created = 0
+    claimed: set[int] = set()
     for raw in raw_accounts:
         uid = raw.get("uid") if isinstance(raw, dict) else str(raw)
         if not uid:
             continue
+        # The uid is per-session, so after a reconnect only the hash still matches.
+        id_hash = raw.get("identification_hash") if isinstance(raw, dict) else None
 
-        existing = (
-            db.query(Account)
-            .filter(
-                Account.user_id == connection.user_id,
-                Account.external_account_id == uid,
+        existing = None
+        if id_hash:
+            existing = (
+                db.query(Account)
+                .filter(
+                    Account.user_id == connection.user_id,
+                    Account.identification_hash == id_hash,
+                    Account.id.notin_(claimed),
+                )
+                .order_by(Account.id)
+                .first()
             )
-            .first()
-        )
+        if existing is None:
+            existing = (
+                db.query(Account)
+                .filter(
+                    Account.user_id == connection.user_id,
+                    Account.external_account_id == uid,
+                    Account.id.notin_(claimed),
+                )
+                .order_by(Account.id)
+                .first()
+            )
         if existing:
+            claimed.add(existing.id)
             # Re-linking after a consent expiry: point the account at the new
-            # connection rather than creating a duplicate.
+            # connection and session uid rather than creating a duplicate.
             existing.bank_connection_id = connection.id
+            existing.external_account_id = uid
+            if id_hash and not existing.identification_hash:
+                existing.identification_hash = id_hash
             existing.is_linked = True
             existing.is_active = True
             if icon_filename and not existing.icon:
@@ -370,6 +441,7 @@ def _link_accounts(
                 user_id=connection.user_id,
                 bank_connection_id=connection.id,
                 external_account_id=uid,
+                identification_hash=id_hash,
                 is_linked=True,
                 icon=icon_filename,
                 name=str(name)[:100],
@@ -380,6 +452,7 @@ def _link_accounts(
                 sync_status="never",
             )
         )
+        db.flush()
         created += 1
 
     return created

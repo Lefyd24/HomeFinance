@@ -26,6 +26,8 @@ class Account(Base):
     # routers/transactions.py). Unlinked accounts behave exactly as before.
     bank_connection_id = Column(Integer, ForeignKey("bank_connections.id"), nullable=True)
     external_account_id = Column(String(255), nullable=True)  # Enable Banking account UID
+    # Stable across authorisations, unlike the uid. Re-attaches the account on reconnect.
+    identification_hash = Column(String(255), nullable=True)
     is_linked = Column(Boolean, nullable=False, default=False)
     sync_status = Column(String(20), nullable=True)  # ok | error | rate_limited | never
 
