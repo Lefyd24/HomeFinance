@@ -1,0 +1,107 @@
+{
+  "page": {
+    "title": "Budgets",
+    "description": "Legen Sie Ausgabenlimits für Kategorien und Zeiträume fest.",
+    "createButton": "Budget erstellen"
+  },
+  "summary": {
+    "of": "von {{amount}}",
+    "envelopes_one": "{{count}} Budget",
+    "envelopes_other": "{{count}} Budgets",
+    "overLimit": "{{count}} über dem Limit",
+    "over": "über",
+    "left": "übrig"
+  },
+  "empty": {
+    "title": "Noch keine Budgets erstellt",
+    "description": "Erstellen Sie ein Budget, um Ihre Ausgaben zu kontrollieren.",
+    "cta": "Erstes Budget erstellen"
+  },
+  "period": {
+    "monthly": "Monatlich",
+    "yearly": "Jährlich",
+    "custom": "Benutzerdefiniert"
+  },
+  "status": {
+    "over": "Überschritten",
+    "watch": "Fast erreicht",
+    "unused": "Ungenutzt",
+    "good": "Im Rahmen"
+  },
+  "card": {
+    "actionsAria": "Aktionen für {{name}}",
+    "edit": "Bearbeiten",
+    "periodDetails": "Details zum Zeitraum",
+    "delete": "Löschen",
+    "ofLimit": "von {{amount}} Limit",
+    "over": "drüber",
+    "remaining": "verbleibend",
+    "allCategories": "Alle Kategorien",
+    "more": "+{{count}}"
+  },
+  "deleteDialog": {
+    "title": "{{name}} löschen?",
+    "description": "Ihre Ausgaben bleiben erhalten; nur das Budget wird entfernt.",
+    "confirmLabel": "Budget löschen"
+  },
+  "toasts": {
+    "deleted": "Budget gelöscht",
+    "deleteError": "Fehler beim Löschen des Budgets",
+    "created": "Budget erstellt",
+    "updated": "Budget aktualisiert",
+    "createError": "Fehler beim Erstellen des Budgets",
+    "updateError": "Fehler beim Aktualisieren des Budgets"
+  },
+  "form": {
+    "createTitle": "Budget erstellen",
+    "editTitle": "Budget bearbeiten",
+    "name": "Budgetname",
+    "amount": "Betrag",
+    "period": "Zeitraum",
+    "selectPeriod": "Zeitraum auswählen",
+    "startDate": "Startdatum",
+    "endDate": "Enddatum",
+    "categories": "Kategorien",
+    "noExpenseCategories": "Keine Ausgabenkategorien verfügbar.",
+    "submitCreate": "Budget erstellen",
+    "submitUpdate": "Budget aktualisieren",
+    "validation": {
+      "nameRequired": "Budgetname ist erforderlich",
+      "amountPositive": "Betrag muss größer als null sein"
+    }
+  },
+  "details": {
+    "titleFallback": "Budget-Details",
+    "description": "Nutzung für {{year}}.",
+    "prevYearAria": "Vorheriges Jahr {{year}}",
+    "nextYearAria": "Nächstes Jahr {{year}}",
+    "unableToLoad": "Budget-Details konnten nicht geladen werden.",
+    "budgetPeriod": "Budget {{suffix}}",
+    "perMonth": "/Monat",
+    "perYear": "/Jahr",
+    "yearBudget": "Jahresbudget",
+    "yearSpent": "Im Jahr ausgegeben",
+    "yearRemaining": "Im Jahr verbleibend",
+    "yearUsage": "Jahresauslastung",
+    "noDataForYear": "Keine Daten für dieses Jahr",
+    "current": "Aktuell",
+    "statusOver": "Drüber",
+    "statusAlmost": "Fast voll",
+    "statusNoSpending": "Keine Ausgaben",
+    "noTransactions": "Keine Transaktionen in diesem Zeitraum",
+    "table": {
+      "date": "Datum",
+      "description": "Beschreibung",
+      "category": "Kategorie",
+      "account": "Konto",
+      "amount": "Betrag",
+      "uncategorized": "Nicht kategorisiert"
+    },
+    "totalMobile": "Gesamt ({{count}})",
+    "totalDesktop_one": "Gesamt ({{count}} Transaktion)",
+    "totalDesktop_other": "Gesamt ({{count}} Transaktionen)",
+    "percentUsed": "{{percent}} % des Budgets genutzt",
+    "over": "über",
+    "left": "übrig"
+  }
+}

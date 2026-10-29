@@ -1,0 +1,107 @@
+{
+  "page": {
+    "title": "Budgets",
+    "description": "Fixez des plafonds de dépenses par catégorie et par période. Gardez le contrôle sur l'ensemble de vos enveloppes.",
+    "createButton": "Créer un budget"
+  },
+  "summary": {
+    "of": "sur {{amount}}",
+    "envelopes_one": "{{count}} enveloppe",
+    "envelopes_other": "{{count}} enveloppes",
+    "overLimit": "{{count}} au-dessus de la limite",
+    "over": "dépassé de",
+    "left": "restant"
+  },
+  "empty": {
+    "title": "Aucun budget créé pour l'instant",
+    "description": "Créez un budget pour surveiller vos dépenses par catégorie avant la fin de la période.",
+    "cta": "Créer votre premier budget"
+  },
+  "period": {
+    "monthly": "Mensuel",
+    "yearly": "Annuel",
+    "custom": "Personnalisé"
+  },
+  "status": {
+    "over": "Dépassé",
+    "watch": "Attention",
+    "unused": "Non utilisé",
+    "good": "Sous contrôle"
+  },
+  "card": {
+    "actionsAria": "Actions pour {{name}}",
+    "edit": "Modifier",
+    "periodDetails": "Détails de la période",
+    "delete": "Supprimer",
+    "ofLimit": "sur la limite de {{amount}}",
+    "over": "en dépassement de",
+    "remaining": "restants",
+    "allCategories": "Toutes les catégories",
+    "more": "+{{count}}"
+  },
+  "deleteDialog": {
+    "title": "Supprimer {{name}} ?",
+    "description": "Vos opérations sont conservées ; seul le budget et sa limite seront supprimés.",
+    "confirmLabel": "Supprimer le budget"
+  },
+  "toasts": {
+    "deleted": "Budget supprimé",
+    "deleteError": "Échec de la suppression du budget",
+    "created": "Budget créé",
+    "updated": "Budget mis à jour",
+    "createError": "Échec de la création du budget",
+    "updateError": "Échec de la mise à jour du budget"
+  },
+  "form": {
+    "createTitle": "Créer un budget",
+    "editTitle": "Modifier le budget",
+    "name": "Nom du budget",
+    "amount": "Montant",
+    "period": "Période",
+    "selectPeriod": "Sélectionner une période",
+    "startDate": "Date de début",
+    "endDate": "Date de fin",
+    "categories": "Catégories",
+    "noExpenseCategories": "Aucune catégorie de dépenses disponible.",
+    "submitCreate": "Créer le budget",
+    "submitUpdate": "Mettre à jour le budget",
+    "validation": {
+      "nameRequired": "Le nom du budget est obligatoire",
+      "amountPositive": "Le montant doit être supérieur à zéro"
+    }
+  },
+  "details": {
+    "titleFallback": "Détails du budget",
+    "description": "Utilisation période par période pour {{year}}, incluant les dépenses associées.",
+    "prevYearAria": "Année précédente {{year}}",
+    "nextYearAria": "Année suivante {{year}}",
+    "unableToLoad": "Impossible de charger les détails du budget.",
+    "budgetPeriod": "Budget {{suffix}}",
+    "perMonth": "/mois",
+    "perYear": "/an",
+    "yearBudget": "Budget annuel",
+    "yearSpent": "Dépensé cette année",
+    "yearRemaining": "Reste annuel",
+    "yearUsage": "Consommation annuelle",
+    "noDataForYear": "Aucune donnée pour cette année",
+    "current": "Actuel",
+    "statusOver": "Dépassé",
+    "statusAlmost": "Attention",
+    "statusNoSpending": "Aucune dépense",
+    "noTransactions": "Aucune transaction sur cette période",
+    "table": {
+      "date": "Date",
+      "description": "Description",
+      "category": "Catégorie",
+      "account": "Compte",
+      "amount": "Montant",
+      "uncategorized": "Non catégorisé"
+    },
+    "totalMobile": "Total ({{count}})",
+    "totalDesktop_one": "Total ({{count}} transaction)",
+    "totalDesktop_other": "Total ({{count}} transactions)",
+    "percentUsed": "{{percent}} % du budget utilisé",
+    "over": "en dépassement de",
+    "left": "restants"
+  }
+}

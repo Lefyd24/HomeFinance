@@ -1,0 +1,230 @@
+{
+  "page": {
+    "title": "Berichte",
+    "description": "Pick a window, then read what happened in it."
+  },
+  "tabs": {
+    "overview": "Overview",
+    "cashflow": "Cashflow",
+    "spending": "Spending",
+    "budgets": "Budgets",
+    "debt": "Schuld"
+  },
+  "viewSelect": {
+    "report": "Bericht"
+  },
+  "filters": {
+    "range": {
+      "mtd": "Monat bis Datum",
+      "30d": "Zuletzt 30 days",
+      "3m": "Zuletzt 3 months",
+      "6m": "Zuletzt 6 months",
+      "ytd": "Jahr bis Datum",
+      "1y": "Zuletzt 12 months",
+      "custom": "Custom"
+    },
+    "startDateAria": "Beginn Datum",
+    "endDateAria": "Ende Datum",
+    "accounts": "Konten",
+    "categories": "Categories",
+    "noAccounts": "Keine Konten yet",
+    "noCategories": "Keine categories yet",
+    "clearFilters": "Filter löschen",
+    "clear": "Löschen"
+  },
+  "periodBand": {
+    "eyebrow": "Der Zeitraum in einer Zeile",
+    "askAdvisor": "Den Finanzberater dazu fragen",
+    "metrics": {
+      "moneyIn": "Money in",
+      "moneyOut": "Money out",
+      "net": "Net",
+      "savingsRate": "Savings rate",
+      "noRate": "—"
+    },
+    "delta": {
+      "flatVsPrior": "Flat vs prior",
+      "vsPrior": "{{value}}{{unit}} vs prior"
+    }
+  },
+  "read": {
+    "noActivityHeadline": "In diesem Zeitraum wurden keine Aktivitäten erfasst.",
+    "noActivityDetail": "Erweitern Sie den Zeitraum oder entfernen Sie einen Filter, um hier Inhalte zu sehen.",
+    "keptHeadline": "Sie kept {{net}} von der {{income}} das came in.",
+    "overspentHeadline": "Sie ausgegeben {{net}} mehr than Sie brought in.",
+    "savingsRateDetail": "Das ist a {{rate}}% savings rate",
+    "spendingUpJoined": "und spending ist up {{pct}}% am der Zeitraum vor",
+    "spendingDownJoined": "und spending ist down {{pct}}% am der Zeitraum vor",
+    "yourSpendingUp": "Ihr spending ist up {{pct}}% am der Zeitraum vor",
+    "yourSpendingDown": "Ihr spending ist down {{pct}}% am der Zeitraum vor"
+  },
+  "advisorPrompt": {
+    "template": "Looking at {{start}} bis {{end}}, tell me {{focus}}. Use my actual Transaktionen.",
+    "focus": {
+      "overview": "what stands out about my finances",
+      "cashflow": "how my Bargeld flow moved und whether der trend ist healthy",
+      "spending": "where my spending went und what I could cut",
+      "budgets": "which Budgets I am at Risiko von blowing",
+      "debt": "which Schuld I should attack erst und why"
+    }
+  },
+  "chart": {
+    "defaultEmpty": "Nothing bis chart für dieser Zeitraum."
+  },
+  "series": {
+    "moneyIn": "Money in",
+    "moneyOut": "Money out",
+    "net": "Net",
+    "other": "Sonstiges",
+    "otherCount": "Other ({{count}})",
+    "total": "Gesamt",
+    "changeInBalance": "Kontostandsänderung"
+  },
+  "months": {
+    "jan": "Jan",
+    "feb": "Feb",
+    "mar": "Mar",
+    "apr": "Apr",
+    "may": "May",
+    "jun": "Jun",
+    "jul": "Jul",
+    "aug": "Aug",
+    "sep": "Sep",
+    "oct": "Oct",
+    "nov": "Nov",
+    "dec": "Dec"
+  },
+  "periodLabel": {
+    "week": "W{{week}} {{year}}",
+    "monthDay": "{{day}} {{month}}",
+    "monthYear": "{{month}} {{year}}"
+  },
+  "weekdays": {
+    "Mon": "Mon",
+    "Tue": "Tue",
+    "Wed": "Wed",
+    "Thu": "Thu",
+    "Fri": "Fri",
+    "Sat": "Sat",
+    "Sun": "Sun"
+  },
+  "overview": {
+    "cashflow": {
+      "title": "Geldeingänge, money out, und what war übrig",
+      "hint": "Bars sind der two flows; der line ist what survived each Zeitraum.",
+      "empty": "In diesem Zeitraum gab es keine Einnahmen oder Ausgaben."
+    },
+    "ranked": {
+      "title": "Where it went",
+      "hint": "Ausgabe categories, largest erst.",
+      "empty": "Keine kategorisierten Ausgaben in diesem Zeitraum."
+    },
+    "savingsRate": {
+      "title": "Sparquote von Monat",
+      "hint": "Share von each month's Einnahmen Sie did nicht spend. Below der line means Sie dipped into reserves.",
+      "empty": "Needs at least one Monat mit recorded Einnahmen."
+    }
+  },
+  "cashflow": {
+    "waterfall": {
+      "title": "What each Monat did bis Ihr Kontostand",
+      "hint": "Each bar starts where der zuletzt one ended, so der steps trace Ihr running Gesamt.",
+      "empty": "Keine Transaktionen in diesem Zeitraum.",
+      "tooltipAdded": "Added {{amount}}",
+      "tooltipDrewDown": "Drew down {{amount}}",
+      "tooltipRunningTotal": "Running Gesamt {{amount}}"
+    },
+    "balanceHistory": {
+      "title": "Kontostandsverlauf",
+      "hint": "Täglich running Kontostand per Konto. Gesamt ist der thick line.",
+      "empty": "Keine aktiven Konten entsprechen diesem Filter."
+    },
+    "table": {
+      "title": "Zeitraum von Zeitraum",
+      "hint": "Der same numbers as a table, für when Sie need der exact figure.",
+      "empty": "Keine Transaktionen in diesem Zeitraum.",
+      "period": "Zeitraum",
+      "moneyIn": "Money in",
+      "moneyOut": "Money out",
+      "net": "Net"
+    }
+  },
+  "spending": {
+    "byCategory": {
+      "title": "Spending von Kategorie",
+      "hint": "Tile area ist der share von Gesamt spend.",
+      "empty": "Keine kategorisierten Ausgaben in diesem Zeitraum.",
+      "tooltipShare": "{{pct}}% von spend · {{count}} Transaktionen"
+    },
+    "merchants": {
+      "title": "Top 10 payees",
+      "hint": "Grouped von der Beschreibung am each Transaktion.",
+      "empty": "Keine Ausgaben in diesem Zeitraum."
+    },
+    "weekday": {
+      "title": "Ihr Woche",
+      "hintDefault": "Spend split across der days von der Woche.",
+      "hintPeak": "{{day}} ist Ihr heaviest Tag — {{pct}}% von everything Sie ausgegeben in dieser Zeitraum.",
+      "empty": "Keine Ausgaben in diesem Zeitraum.",
+      "tooltip": "{{day}}: {{amount}}"
+    },
+    "mom": {
+      "title": "Monat-am-Monat change",
+      "hint": "How each month's spend compares mit der one vor it.",
+      "empty": "Needs at least two months von Ausgaben bis compare.",
+      "tooltipSpent": "{{amount}} ausgegeben",
+      "tooltipChange": "{{arrow}} {{pct}}% am der Monat vor"
+    }
+  },
+  "budgets": {
+    "empty": {
+      "title": "Keine Budgets zu prüfen",
+      "description": "Erstellen Sie ein Budget, um hier zu sehen, wie nah jedes Budget an seiner Grenze liegt."
+    },
+    "summary": {
+      "allComfortable": "Alle Budgets liegen deutlich innerhalb ihrer Grenzen.",
+      "over_one": "{{count}} Budget ist über der limit.",
+      "over_other": "{{count}} Budgets sind über der limit.",
+      "tight_one": "{{count}} Budget ist schließen bis der limit.",
+      "tight_other": "{{count}} Budgets sind schließen bis der limit.",
+      "description": "{{spent}} ausgegeben against {{limit}} budgeted, across {{count}} Budget. Sorted von how much von each ist used.",
+      "description_other": "{{spent}} ausgegeben against {{limit}} budgeted, across {{count}} Budgets. Sorted von how much von each ist used."
+    },
+    "status": {
+      "over": "Über",
+      "tight": "Schließen",
+      "ok": "Am track"
+    },
+    "row": {
+      "spentOf": "{{spent}} von {{limit}} · {{pct}}%",
+      "overLimit": "{{amount}} über der limit."
+    }
+  },
+  "debt": {
+    "empty": {
+      "title": "Keine Schulden tracked",
+      "description": "Add a Schuld und dieser tab will anzeigen payoff progress, interest cost, und which one bis löschen erst."
+    },
+    "stats": {
+      "stillOwed": "Still owed",
+      "across_one": "Across {{count}} Schuld",
+      "across_other": "Across {{count}} Schulden",
+      "paidDown": "Paid down",
+      "paidDownHint": "{{pct}}% von der original {{amount}}",
+      "interestPaid": "Interest paid so far",
+      "interestHint": "Der part von Ihr Zahlungen das bought nothing"
+    },
+    "recommendation": {
+      "title": "Leeren {{name}} erst.",
+      "description": "At {{rate}}% it ist Ihr most expensive Schuld, so every euro sent there saves mehr than der same euro sent anywhere else. Keep der minimum Zahlung am der rest while Sie do it."
+    },
+    "progress": {
+      "title": "Payoff progress",
+      "description": "Ordered von interest rate — most expensive erst.",
+      "leftOf": "{{current}} übrig von {{original}}",
+      "paidOff": "{{pct}}% paid off",
+      "clearBy": " · löschen von {{date}} at der aktuell minimum Zahlung",
+      "setMinimum": " · set a minimum Zahlung bis project a payoff Datum"
+    }
+  }
+}

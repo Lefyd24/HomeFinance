@@ -1,0 +1,196 @@
+{
+  "categories": {
+    "emergencyFund": "Emergency Fonds",
+    "vacation": "Vacation",
+    "car": "Car Purchase",
+    "home": "Home Purchase",
+    "education": "Education",
+    "retirement": "Retirement",
+    "other": "Autre",
+    "general": "General"
+  },
+  "icons": {
+    "target": "Objectif",
+    "money": "Money",
+    "home": "Home",
+    "car": "Car",
+    "travel": "Travel",
+    "education": "Education",
+    "health": "Health",
+    "gift": "Gift"
+  },
+  "page": {
+    "title": "Objectifs",
+    "description": "Chase targets avec a effacer finish line — contribute, track, et celebrate.",
+    "addGoal": "Add objectif",
+    "createFirstGoal": "Créer un premier objectif",
+    "yourGoals": "Vos objectifs",
+    "tabs": {
+      "active": "Actif",
+      "completed": "Terminé",
+      "all": "Tout"
+    },
+    "empty": {
+      "title": "Aucun objectifs yet",
+      "description": "Créer votre premier financial objectif à début tracking progress toward a objectif."
+    },
+    "noGoalsInView": {
+      "all": "Aucun objectifs dans ce voir.",
+      "active": "Aucun actif objectifs dans ce voir.",
+      "completed": "Aucun terminé objectifs dans ce voir."
+    },
+    "onlyGoalInView": {
+      "all": "L’objectif mis en avant ci-dessus est votre seul objectif.",
+      "active": "L’objectif mis en avant ci-dessus est votre seul objectif actif.",
+      "completed": "L’objectif mis en avant ci-dessus est votre seul objectif terminé."
+    },
+    "toasts": {
+      "deleted": "Objectif deleted",
+      "deleteFailed": "Échoué à supprimer objectif",
+      "markedComplete": "Objectif marked complete",
+      "updateFailed": "Impossible de mettre à jour l’objectif"
+    },
+    "deleteDialog": {
+      "title": "Supprimer {{name}}?",
+      "description": "L’objectif et son historique de progression seront supprimés. Cette action est irréversible.",
+      "confirmLabel": "Supprimer objectif"
+    }
+  },
+  "journey": {
+    "ariaLabel": "Savings journey",
+    "title": "Savings journey",
+    "ofTargeted": "sur {{amount}} visés",
+    "summary_one": "{{saved}} épargné across {{count}} objectif · {{active}} actif · {{completed}} terminé",
+    "summary_other": "{{saved}} épargné across {{count}} objectifs · {{active}} actif · {{completed}} terminé"
+  },
+  "hero": {
+    "primaryGoalAria": "Objectif principal : {{name}}",
+    "spotlight": "Spotlight",
+    "primary": "Primary",
+    "completed": "Terminé",
+    "ofTarget": "de {{amount}}",
+    "toGo": "Encore {{amount}}",
+    "saveToArrive": "Enregistrer {{amount}}/mois à arrive par {{date}}",
+    "targetDate": "Objectif {{date}}",
+    "daysLeft": "{{count}} days restant",
+    "contribute": "Contribute",
+    "details": "Détails",
+    "edit": "Modifier"
+  },
+  "list": {
+    "primary": "Primary",
+    "done": "Done",
+    "left": "{{amount}} restant",
+    "contribute": "Contribute",
+    "actionsFor": "{{name}} actions",
+    "menu": {
+      "contribute": "Contribute",
+      "details": "Détails",
+      "edit": "Modifier",
+      "markComplete": "Mark complete",
+      "delete": "Supprimer"
+    }
+  },
+  "form": {
+    "titleEdit": "Modifier objectif",
+    "titleCreate": "Créer objectif",
+    "updating": "Updating",
+    "newTarget": "Nouveau savings objectif",
+    "untitledGoal": "Untitled objectif",
+    "name": {
+      "label": "Objectif nom",
+      "placeholder": "e.g. Emergency fonds"
+    },
+    "description": {
+      "label": "Description",
+      "placeholder": "Facultatif notes"
+    },
+    "targetAmount": {
+      "label": "Objectif montant"
+    },
+    "currency": {
+      "label": "Devise"
+    },
+    "category": {
+      "label": "Catégorie",
+      "placeholder": "Select catégorie",
+      "selectPlaceholder": "Select catégorie"
+    },
+    "targetDate": {
+      "label": "Date cible"
+    },
+    "icon": {
+      "label": "Icon",
+      "placeholder": "Icon"
+    },
+    "color": {
+      "label": "Color"
+    },
+    "setAsPrimary": "Set as primary objectif",
+    "cancel": "Cancel",
+    "saveChanges": "Enregistrer changes",
+    "saveGoal": "Enregistrer objectif",
+    "toasts": {
+      "updated": "Objectif mis à jour",
+      "created": "Objectif créé",
+      "updateFailed": "Impossible de mettre à jour l’objectif",
+      "createFailed": "Impossible de créer l’objectif"
+    },
+    "validation": {
+      "nameRequired": "Objectif nom est obligatoire",
+      "targetAmountPositive": "Objectif montant must be greater than 0"
+    }
+  },
+  "contribute": {
+    "title": "Add contribution",
+    "descriptionWithGoal": "{{name}} · {{amount}} remaining",
+    "descriptionNoGoal": "Contribuer toward a objectif",
+    "amount": {
+      "label": "Montant"
+    },
+    "type": {
+      "label": "Type",
+      "contribution": "Contribution (add à objectif)",
+      "withdrawal": "Retrait (retirer de objectif)"
+    },
+    "description": {
+      "label": "Description",
+      "placeholder": "e.g. Mensuel savings"
+    },
+    "date": {
+      "label": "Date"
+    },
+    "submitWithdrawal": "Record withdrawal",
+    "submitContribution": "Add contribution",
+    "toasts": {
+      "contributionAdded": "Contribution ajoutée",
+      "withdrawalRecorded": "Withdrawal recorded",
+      "failed": "Impossible d’ajouter la transaction"
+    },
+    "validation": {
+      "amountPositive": "Montant must be greater than 0",
+      "dateRequired": "La date est obligatoire"
+    }
+  },
+  "details": {
+    "primary": "Primary",
+    "completed": "Terminé",
+    "complete": "complete",
+    "saved": "Épargné",
+    "target": "Objectif",
+    "remaining": "Remaining",
+    "targetDate": "Date cible",
+    "daysLeft": "Days restant",
+    "saveToReach": "Enregistrer {{amount}}/mois à reach par {{date}}",
+    "onTrack": "Sur track",
+    "behindPace": "Behind pace",
+    "avgPerMonth": "avg {{amount}}/mo",
+    "recentActivity": "Activité récente",
+    "noContributions": "Aucun contributions yet",
+    "contribution": "Contribution",
+    "withdrawal": "Retrait",
+    "contribute": "Contribute",
+    "edit": "Modifier",
+    "close": "Fermer"
+  }
+}

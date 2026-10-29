@@ -1,0 +1,105 @@
+{
+  "brand": {
+    "name": "Home Finance",
+    "tagline": "Personal",
+    "madeBy": "Made par"
+  },
+  "workspace": "Workspace",
+  "items": {
+    "dashboard": "Dashboard",
+    "transactions": "Transactions",
+    "accounts": "Comptes",
+    "investments": "Investissements",
+    "budgets": "Budgets",
+    "notifications": "Notifications",
+    "categories": "Categories",
+    "debts": "Dettes",
+    "goals": "Objectifs",
+    "recurring": "Recurring",
+    "trackers": "Suivi",
+    "reports": "Rapports",
+    "advice": "Conseils",
+    "documents": "Documents",
+    "import": "Import",
+    "marketNews": "Actualités des marchés",
+    "companyResearch": "Analyse",
+    "tickerCompare": "Comparer",
+    "investmentsOverview": "Overview",
+    "backtest": "Backtest",
+    "scenarioLibrary": "Scénarios",
+    "technicalAnalysis": "Analyse technique"
+  },
+  "groups": {
+    "overview": "Overview",
+    "planning": "Planning",
+    "insights": "Insights",
+    "portfolio": "Portefeuille",
+    "market": "Marché",
+    "sandbox": "Sandbox"
+  },
+  "dock": {
+    "home": "Home",
+    "transactions": "Txns",
+    "portfolio": "Portefeuille",
+    "news": "Actualités",
+    "research": "Analyse",
+    "compare": "Comparer",
+    "backtest": "Backtest",
+    "scenarios": "Scénarios",
+    "technical": "Technicals"
+  },
+  "investmentsSection": "Investissements",
+  "backToDashboard": "Back à Dashboard",
+  "more": "Plus",
+  "moreSheet": {
+    "description": "Planification, insights, et compte tools"
+  },
+  "primaryNav": "Primary",
+  "moreNavigationAria": "Plus navigation",
+  "sidebar": {
+    "collapse": "Collapse sidebar",
+    "expand": "Expand sidebar",
+    "expandTooltip": "Expand"
+  },
+  "userMenu": {
+    "accountMenu": "Compte menu",
+    "bankConnections": "Bank connections",
+    "rules": "Règles de catégorisation",
+    "investorProfile": "Investor profile",
+    "apiKeys": "API Keys",
+    "admin": "Admin",
+    "defaultAccountName": "Compte"
+  },
+  "speedDial": {
+    "label": "Quick actions",
+    "open": "Ouvrir quick actions",
+    "close": "Fermer quick actions",
+    "addTransaction": "Ajouter une transaction",
+    "aiAdvisor": "Finance Assistant"
+  },
+  "themeToggle": {
+    "changeTheme": "Change theme"
+  },
+  "balanceToggle": {
+    "hide": "Hide balances",
+    "show": "Afficher balances"
+  },
+  "languageToggle": {
+    "changeLanguage": "Change language"
+  },
+  "notificationsPanel": {
+    "title": "Notifications",
+    "ariaLabel": "Notifications",
+    "ariaLabelWithCount": "Notifications, {{count}} dans le dernier jour",
+    "inLastDay": "{{count}} dans le dernier jour",
+    "nothingNew": "Nothing nouveau",
+    "empty": "Aucun alerts yet.",
+    "emptyHint": "Budget et bill règles post here when they fire.",
+    "time": {
+      "justNow": "Just now",
+      "minutesAgo": "{{count}}m ago",
+      "hoursAgo": "{{count}}h ago",
+      "daysAgo": "{{count}}d ago"
+    }
+  }
+}

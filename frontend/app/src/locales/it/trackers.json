@@ -1,0 +1,163 @@
+{
+  "page": {
+    "title": "Tracker",
+    "description": "Group transazioni into buckets like a trip o a renovation, e watch what they add up a.",
+    "addTracker": "Nuovo tracker",
+    "createFirst": "Crea il tuo primo tracker",
+    "yourTrackers": "I tuoi tracker",
+    "empty": {
+      "title": "Nessun tracker yet",
+      "description": "A tracker collects transazioni sotto one nome — \"Trip a Italy\", \"Kitchen renovation\" — so tu can see il real totale. Add transazioni a it da il transazione editor, o straight da here."
+    },
+    "tabs": {
+      "active": "Attivo",
+      "inactive": "Inattivo",
+      "all": "Tutti"
+    },
+    "noneInView": {
+      "active": "Nessun tracker attivo.",
+      "inactive": "Nessun tracker inattivo.",
+      "all": "Nessun tracker."
+    },
+    "deleteDialog": {
+      "title": "Elimina \"{{name}}\"?",
+      "description": "Il tracker verrà eliminato. Le transazioni contenute resteranno invariate.",
+      "confirmLabel": "Elimina tracker"
+    },
+    "toasts": {
+      "deleted": "Tracker deleted",
+      "deleteFailed": "Impossibile eliminare il tracker",
+      "activated": "Tracker activated",
+      "deactivated": "Tracker deactivated",
+      "updateFailed": "Impossibile aggiornare il tracker"
+    }
+  },
+  "card": {
+    "entries_one": "{{count}} transazione",
+    "entries_other": "{{count}} transazioni",
+    "inactive": "Inattivo",
+    "ofTarget": "di {{amount}}",
+    "addTransaction": "Add",
+    "actionsFor": "Actions per {{name}}",
+    "menu": {
+      "edit": "Modifica",
+      "activate": "Attiva",
+      "deactivate": "Disattiva",
+      "delete": "Elimina"
+    },
+    "lastEntry": "Ultimo: {{date}}",
+    "overTarget": "{{amount}} oltre"
+  },
+  "details": {
+    "active": "Attivo",
+    "inactive": "Inattivo",
+    "createdOn": "Creato il {{date}}",
+    "total": "Totale tracked",
+    "entries": "Transazioni",
+    "created": "Created",
+    "lastEntry": "Ultimo entry",
+    "leftOfTarget": "{{amount}} restante di {{target}}",
+    "overBy": "{{amount}} oltre obiettivo",
+    "transactions": "Transazioni in questo tracker",
+    "noTransactions": "Nothing here yet. Add a transazione below, o tick questo tracker while editing an existing one.",
+    "removeFromTracker": "Rimuovi da tracker",
+    "removeFromTrackerNamed": "Rimuovi \"{{description}}\" da questo tracker",
+    "addTransaction": "Aggiungi transazione",
+    "edit": "Modifica",
+    "close": "Chiudi",
+    "toasts": {
+      "removed": "Rimuovid da tracker",
+      "removeFailed": "Could non rimuovi il transazione"
+    }
+  },
+  "form": {
+    "titleCreate": "Nuovo tracker",
+    "titleEdit": "Modifica tracker",
+    "description": "Nome il thing tu want a follow. A obiettivo è facoltativo.",
+    "untitled": "Untitled tracker",
+    "noTarget": "Nessun obiettivo",
+    "targetPreview": "Obiettivo {{amount}}",
+    "create": "Crea tracker",
+    "saveChanges": "Salva changes",
+    "name": {
+      "label": "Nome",
+      "placeholder": "Trip a Italy"
+    },
+    "descriptionField": {
+      "label": "Descrizione",
+      "placeholder": "What does questo tracker cover?"
+    },
+    "target": {
+      "label": "Obiettivo importo",
+      "placeholder": "Facoltativo",
+      "hint": "Leave empty a just track il totale."
+    },
+    "currency": {
+      "label": "Valuta"
+    },
+    "icon": {
+      "label": "Icon"
+    },
+    "color": {
+      "label": "Colour"
+    },
+    "active": {
+      "label": "Attivo",
+      "hint": "Only attivo tracker mostra up when tu modifica a transazione."
+    },
+    "validation": {
+      "nameRequired": "Nome è obbligatorio",
+      "targetPositive": "Obiettivo must be greater than 0"
+    },
+    "toasts": {
+      "created": "Tracker created",
+      "updated": "Tracker updated",
+      "createFailed": "Could non crea il tracker",
+      "updateFailed": "Impossibile aggiornare il tracker"
+    }
+  },
+  "transactionForm": {
+    "title": "Aggiungi transazione",
+    "description": "Creates a real transazione e files it sotto \"{{name}}\".",
+    "descriptionNoTracker": "Creates a real transazione e files it sotto questo tracker.",
+    "submit": "Aggiungi transazione",
+    "type": {
+      "label": "Direction",
+      "expense": "Spesa",
+      "income": "Entrate",
+      "hint": "Entrate inside a tracker (a refund, say) è subtracted da its totale."
+    },
+    "amount": {
+      "label": "Importo"
+    },
+    "descriptionField": {
+      "label": "Descrizione",
+      "placeholder": "Hotel in Rome"
+    },
+    "account": {
+      "label": "Conto",
+      "placeholder": "Select an conto"
+    },
+    "category": {
+      "label": "Categoria",
+      "none": "Nessun categoria"
+    },
+    "date": {
+      "label": "Data"
+    },
+    "notes": {
+      "label": "Notes",
+      "placeholder": "Anything worth remembering"
+    },
+    "validation": {
+      "amountPositive": "Importo must be greater than 0",
+      "accountRequired": "Conto è obbligatorio",
+      "descriptionRequired": "Descrizione è obbligatorio",
+      "dateRequired": "Data è obbligatorio"
+    },
+    "toasts": {
+      "added": "Transazione added a il tracker",
+      "failed": "Could non add il transazione"
+    }
+  }
+}

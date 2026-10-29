@@ -1,0 +1,180 @@
+{
+  "page": {
+    "title": "Уведомления",
+    "description": "Выберите, как вы хотите получать оповещения о балансе, бюджетах и отчётах по расписанию."
+  },
+  "hourNone": "Нет",
+  "channels": {
+    "title": "Каналы уведомлений",
+    "email": {
+      "title": "Уведомления по email",
+      "description": "Отправлять оповещения на адрес электронной почты вашей учётной записи"
+    },
+    "push": {
+      "title": "Push-уведомления",
+      "description": "Уведомления в браузере на компьютере, если включены"
+    },
+    "enableDesktop": "Включить уведомления на компьютере",
+    "disableDesktop": "Отключить уведомления на компьютере",
+    "notSupported": "Уведомления на компьютере не поддерживаются",
+    "checkRulesNow": "Проверить правила сейчас",
+    "sendTestPush": "Отправить тестовое уведомление",
+    "status": {
+      "vapidNotConfigured": "Серверные push-уведомления не настроены — задайте ключи VAPID на сервере",
+      "enabled": "Уведомления на компьютере включены для этого браузера",
+      "subscribedNotRegistered": "Браузер подписан, но не зарегистрирован на сервере — нажмите «Включить» ещё раз",
+      "clickEnable": "Нажмите «Включить», чтобы разрешить уведомления в браузере"
+    }
+  },
+  "general": {
+    "title": "Общие настройки",
+    "defaultDaysBefore": "За сколько дней по умолчанию",
+    "defaultDaysBeforeHint": "Для регулярных расходов и напоминаний о долгах",
+    "quietHoursStart": "Начало тихих часов",
+    "quietHoursStartHint": "Час (0–23), уведомления не отправляются",
+    "quietHoursEnd": "Конец тихих часов",
+    "quietHoursEndHint": "Час (0–23)",
+    "save": "Сохранить настройки"
+  },
+  "smtp": {
+    "title": "Собственный SMTP",
+    "description": "Необязательные SMTP-настройки пользователя. Незаполненные поля берутся из конфигурации сервера.",
+    "host": "SMTP-хост",
+    "hostPlaceholder": "smtp.example.com",
+    "port": "SMTP-порт",
+    "portPlaceholder": "587",
+    "user": "SMTP-пользователь",
+    "password": "SMTP-пароль",
+    "passwordPlaceholder": "Оставьте пустым, чтобы сохранить текущий",
+    "passwordSaved": "Пароль уже сохранён",
+    "from": "Адрес отправителя",
+    "fromPlaceholder": "noreply@example.com",
+    "useTls": "Использовать TLS",
+    "enableTls": "Включить TLS",
+    "sendTestEmail": "Отправить тестовое письмо",
+    "save": "Сохранить настройки SMTP"
+  },
+  "rules": {
+    "title": "Правила уведомлений",
+    "description": "Собственные оповещения о низком балансе, расходе бюджета и отчётах по расписанию.",
+    "add": "Добавить правило",
+    "empty": {
+      "title": "Правил уведомлений пока нет",
+      "description": "Добавьте правило, чтобы получать оповещения о балансе, бюджетах или отчётах.",
+      "addFirst": "Добавить первое правило"
+    },
+    "table": {
+      "name": "Название",
+      "type": "Тип",
+      "details": "Детали",
+      "channels": "Каналы",
+      "status": "Статус",
+      "actions": "Действия"
+    },
+    "typeLabels": {
+      "balance_below": "Баланс",
+      "budget_percent": "Бюджет",
+      "scheduled_report": "Отчёт",
+      "investment_return_below": "Доходность портфеля",
+      "investment_scheduled": "Сводка по портфелю"
+    },
+    "statusActive": "Активно",
+    "statusInactive": "Неактивно",
+    "actionsFor": "Действия: {{name}}",
+    "describe": {
+      "accountFallback": "Счёт №{{id}}",
+      "budgetFallback": "Бюджет №{{id}}",
+      "balanceBelow": "{{target}}: ниже {{amount}}",
+      "budgetPercent": "{{target}}: {{percent}}%",
+      "scheduleEveryNDays": "каждые {{count}} дн.",
+      "scheduleFallback": "по расписанию",
+      "scheduledReport": "{{report}}, {{schedule}}",
+      "investmentReturnBelow": "{{target}}: доходность ниже {{percent}}%",
+      "investmentScheduled": "{{target}}, {{schedule}}"
+    }
+  },
+  "deleteConfirm": {
+    "title": "Удалить «{{name}}»?",
+    "description": "Это правило уведомлений перестанет работать сразу же.",
+    "confirmLabel": "Удалить правило"
+  },
+  "toasts": {
+    "desktopEnableFailed": "Не удалось включить уведомления на компьютере",
+    "desktopDisableFailed": "Не удалось отключить уведомления на компьютере",
+    "channelsUpdated": "Настройки каналов обновлены",
+    "channelsFailed": "Не удалось обновить каналы",
+    "generalSaved": "Настройки уведомлений сохранены",
+    "generalFailed": "Не удалось сохранить настройки",
+    "smtpSaved": "Настройки SMTP сохранены",
+    "smtpFailed": "Не удалось сохранить настройки SMTP",
+    "desktopEnabled": "Уведомления на компьютере включены",
+    "desktopDisabled": "Уведомления на компьютере отключены",
+    "rulesCheckFailed": "Не удалось проверить правила",
+    "testEmailSent": "Тестовое письмо отправлено — проверьте почту",
+    "testEmailFailed": "Не удалось отправить тестовое письмо: {{detail}}",
+    "testEmailFailedGeneric": "проверьте настройки SMTP",
+    "testPushSent": "Тестовое уведомление отправлено",
+    "testPushFailed": "Не удалось отправить тестовое push-уведомление: {{detail}}",
+    "testPushFailedGeneric": "проверьте конфигурацию",
+    "testFailed": "Тест не удался",
+    "ruleDeleted": "Правило удалено",
+    "ruleDeleteFailed": "Не удалось удалить правило",
+    "ruleUpdated": "Правило обновлено",
+    "ruleCreated": "Правило создано",
+    "ruleUpdateFailed": "Не удалось обновить правило",
+    "ruleCreateFailed": "Не удалось создать правило"
+  },
+  "ruleForm": {
+    "titleEdit": "Редактирование правила уведомлений",
+    "titleCreate": "Добавление правила уведомлений",
+    "ruleType": "Тип правила",
+    "selectType": "Выберите тип",
+    "name": "Название",
+    "namePlaceholder": "например, Низкий баланс на текущем счёте",
+    "account": "Счёт",
+    "budget": "Бюджет",
+    "investmentAccount": "Инвестиционный счёт",
+    "selectTarget": "Выберите…",
+    "balanceThreshold": "Порог баланса",
+    "usageThreshold": "Порог расхода (%)",
+    "returnThreshold": "Порог доходности (%)",
+    "returnThresholdHint": "Оповещение, когда общая доходность портфеля опускается ниже этого процента — укажите отрицательное число, чтобы получать оповещения только при убытке.",
+    "reportType": "Тип отчёта",
+    "selectReport": "Выберите отчёт",
+    "schedule": "Расписание",
+    "selectSchedule": "Выберите расписание",
+    "everyDays": "Каждые (дней)",
+    "channels": "Каналы",
+    "channelEmail": "Email",
+    "channelPush": "Push",
+    "ruleActive": "Правило активно",
+    "updateRule": "Обновить правило",
+    "saveRule": "Сохранить правило",
+    "typeOptions": {
+      "balance_below": "Баланс ниже порога",
+      "budget_percent": "Процент расхода бюджета",
+      "scheduled_report": "Отчёт по расписанию",
+      "investment_return_below": "Доходность портфеля ниже порога",
+      "investment_scheduled": "Сводка по портфелю по расписанию"
+    },
+    "reportTypes": {
+      "spending": "Расходы",
+      "cashflow": "Денежный поток",
+      "income": "Доходы"
+    },
+    "scheduleKinds": {
+      "every_n_days": "Каждые N дней",
+      "weekly": "Еженедельно",
+      "monthly": "Ежемесячно"
+    },
+    "validation": {
+      "nameRequired": "Укажите название",
+      "selectTarget": "Выберите объект",
+      "validThreshold": "Введите корректный порог"
+    }
+  },
+  "actions": {
+    "edit": "Изменить",
+    "delete": "Удалить"
+  }
+}

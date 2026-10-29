@@ -1,0 +1,1390 @@
+{
+  "page": {
+    "title": "Investitionen",
+    "description": "Depotkonten werden automatisch mit Ihrem Anbieter synchronisiert.",
+    "connectAccount": "Konto verbinden"
+  },
+  "empty": {
+    "title": "Noch keine Anlagekonten",
+    "description": "Verbinden Sie ein Freedom24-Konto, um Kontostand, Positionen und Trades automatisch zu verfolgen."
+  },
+  "summary": {
+    "accountCount": "{{count}} Konto",
+    "accountCount_other": "{{count}} Konten"
+  },
+  "headline": {
+    "totalAssets": "Gesamtvermögen"
+  },
+  "ticker": {
+    "totalValue": "Gesamtwert",
+    "today": "Heute",
+    "allTime": "Seit Beginn",
+    "cash": "Bargeld",
+    "cashShare": "{{pct}} % insgesamt",
+    "noQuote": "Keine Echtzeitnotierung",
+    "syncAll": "Alle synchronisieren",
+    "syncAccount": "{{name}} synchronisieren",
+    "syncAllHint": "Aktualisiert alle {{count}} Konten"
+  },
+  "tiles": {
+    "portfolioReturn": "Portfoliorendite",
+    "allocation": "Aufteilung",
+    "movers": "Heutige Veränderungen",
+    "holdings": "Positionen",
+    "activity": "Letzte Aktivitäten",
+    "dailyReturn": "Täglich Rendite",
+    "cumulativeReturn": "Kumulierte Rendite",
+    "otherHoldings": "{{count}} weitere",
+    "otherHoldings_other": "{{count}} weitere",
+    "quotedCount": "Basiert auf {{quoted}} von {{total}} Positionen mit Echtzeitkurs",
+    "noQuotes": "Derzeit keine Echtzeitkurse.",
+    "noMovers": "Heute gab es keine Veränderungen.",
+    "currencyExposure": "Währungsrisiko",
+    "singleCurrency": "Alles ist in {{currency}} – kein Wechselkursrisiko zu verfolgen.",
+    "tradingCosts": "Handelskosten",
+    "tradingCostsCount": "{{count}} aktuell",
+    "totalCommissions": "Gezahlte Provisionen insgesamt",
+    "noTradingCosts": "Keine Handelskosten erfasst.",
+    "cashFlow": "Cashflow",
+    "noCashFlow": "Keine Ein- oder Auszahlungen erfasst.",
+    "earnPositions": "Earn-Positionen",
+    "earnFlexible": "Flexibel",
+    "earnLocked": "Gesperrt",
+    "earnApr": "{{pct}} % Jahreszins",
+    "earnUnlocks": "Freigabe am {{date}}",
+    "noEarnPositions": "Derzeit keine Simple-Earn-Positionen.",
+    "activityMore": "{{count}} weitere nicht angezeigt",
+    "activityMore_other": "{{count}} weitere nicht angezeigt"
+  },
+  "holding": {
+    "sortBy": "Sortieren nach",
+    "open": "{{symbol}} öffnen",
+    "openHint": "Wählen Sie eine Position für alle Details aus",
+    "close": "Schließen",
+    "costBasis": "Einstandskosten",
+    "pricedAt": "Kurs aktualisiert",
+    "hints": {
+      "currentPrice": "Aktueller Wert einer Einheit.",
+      "costBasis": "Gesamtbetrag, den Sie ursprünglich für diese Position bezahlt haben.",
+      "weight": "Anteil Ihres investierten Geldes in dieser Position.",
+      "pricedAt": "Zeitpunkt der letzten Kursaktualisierung."
+    },
+    "research": {
+      "title": "Aus der Unternehmensanalyse",
+      "sector": "Sektor",
+      "beta": "Beta",
+      "dividendYield": "Dividendenrendite",
+      "expenseRatio": "Kostenquote",
+      "category": "Kategorie",
+      "topHolding": "Größte Position"
+    },
+    "breakdown": {
+      "paidTitle": "Gezahlter Betrag",
+      "costFormula": "{{quantity}} × {{price}} at Ihr Durchschnitt Kurs.",
+      "fees": "Gezahlte Provision",
+      "feesHint_one": "{{count}} charge am dieser holding's trades.",
+      "feesHint_other": "{{count}} charges am dieser holding's trades.",
+      "feesNone": "Der Broker hat für diese Position keine Provision gemeldet.",
+      "totalPaid": "Gesamtausgaben",
+      "totalPaidHint": "Cost plus commission — what actually übrig der Konto.",
+      "nowTitle": "Ergebnis",
+      "grossReturn": "Rendite vor Gebühren",
+      "netReturn": "Rendite nach Gebühren",
+      "netReturnHint": "Derselbe Gewinn abzüglich der Provision.",
+      "todayTitle": "Heute",
+      "todayPrice": "Kursbewegung",
+      "todayValue": "Ihre Position"
+    },
+    "history": {
+      "chartTitle": "Wert seit dem Kauf",
+      "investedLine": "Eingezahlter Betrag",
+      "investedLabel": "Anlagekosten",
+      "openedMarker": "Eröffnet",
+      "subtitle": "{{name}} · held since {{date}} · {{account}}",
+      "netReturnHint": "Der same Rendite mit der commission taken off.",
+      "noSeries": "Nicht enough Kurs Verlauf yet bis draw dieser position.",
+      "emptyTitle": "Keine Verlauf für dieser Position",
+      "emptyDescription": "There sind keine trades recorded unter dieser ticker am dieser Konto.",
+      "dailyTable": "Tageswerte",
+      "sourceYahoo": "Priced von Yahoo Finance's täglich closes für {{ticker}}, matched bis Ihr broker's ticker und confirmed against der currency it trades in. Quantities come von Ihr own trades; der zuletzt point ist der neueste synchronisiert valuation, und historical figures use today's exchange rate.",
+      "sourceBroker": "Dieser ticker could nicht be matched bis a Yahoo Finance listing, so der line uses der broker's own täglich closes — which may nicht reach back as far. Quantities come von Ihr own trades, und der zuletzt point ist der neueste synchronisiert valuation.",
+      "sourceNone": "Keine täglich Kurs series could be found für dieser ticker, am Yahoo Finance oder von der broker, so there ist nothing bis chart yet.",
+      "legendValue": "Ihre Position",
+      "legendAhead": "Über dem Kaufpreis",
+      "legendBehind": "Unter dem Kaufpreis",
+      "notHeldYet": "Sie hielten diese Position zu diesem Zeitpunkt noch nicht.",
+      "rangeLabel": "Diagrammzeitraum",
+      "range": {
+        "entry": "Seit Einstieg",
+        "1m": "1M",
+        "3m": "3M",
+        "6m": "6M",
+        "1y": "1Y",
+        "5y": "5Y",
+        "max": "Max"
+      },
+      "matchTitle": "Ticker-Zuordnung",
+      "currencyConfirmed": "{{currency}} bestätigt",
+      "currencyMismatch": "broker {{broker}} vs {{yahoo}}",
+      "matchFallback": "Keine Zuordnung – Brokerkurse werden verwendet",
+      "matchNone": "Keine Kursreihe gefunden",
+      "rejectCurrency": "rejected: priced in {{currency}}, Ihr broker Berichte {{broker}}",
+      "rejectNoData": "rejected: Yahoo Finance lists keine Kurse für it",
+      "rejectError": "rejected: der lookup fehlgeschlagen",
+      "bandHeight": "Bandbreite",
+      "viewLabel": "Diagrammbasis",
+      "viewPrice": "Pro Einheit",
+      "viewValue": "Gesamt",
+      "marketPriceLine": "Markt Kurs",
+      "avgCostLine": "Ihr durchschnittlicher Einstandspreis",
+      "unitsHeld_one": "{{count}} unit held, worth",
+      "unitsHeld_other": "{{count}} units held, worth",
+      "investedHint": "War Sie bezahlt haben für der units Sie still hold.",
+      "marketValueHint": "Aktueller Wert dieser Einheiten.",
+      "grossReturnHint": "Aktueller Wert im Verhältnis zu den Kosten, vor Provision.",
+      "viewCandles": "Kerzen",
+      "panelLabel": "Unteres Feld",
+      "panelPnl": "Gewinn / Verlust",
+      "panelDrawdown": "Kursrückgang",
+      "overlayMa": "GD 20/50",
+      "zoomHint": "Pinch oder drag der bar unter der chart bis zoom into a window.",
+      "boughtMarker": "Gekauft",
+      "unitsHeldShort": "Gehalten",
+      "candleUp": "Tag im Plus",
+      "candleDown": "Tag im Minus",
+      "stats": {
+        "periodReturn": "Rendite im Zeitraum",
+        "maxDrawdown": "Maximaler Rückgang",
+        "volatility": "Volatilität",
+        "bestDay": "Bester Tag",
+        "worstDay": "Schlechtester Tag",
+        "upDays": "{{up}} von {{total}} days closed up"
+      },
+      "mapping": {
+        "manualBadge": "Von Ihnen ausgewählt",
+        "autoBadge": "Automatisch zugeordnet",
+        "changeAction": "Ändern",
+        "setAction": "Ticker festlegen",
+        "resetAction": "Automatic",
+        "searchPlaceholder": "Yahoo-Finance-Ticker suchen",
+        "searchHint": "Typ at least two characters, oder der exact Yahoo ticker.",
+        "noResults": "Nichts gefunden – der exakte Ticker funktioniert weiterhin.",
+        "useExact": "Use “{{ticker}}” exactly",
+        "saved": "Now priced von {{ticker}}.",
+        "reset": "Back bis der automatic Treffer.",
+        "rejected": "Yahoo Finance has keine Kurs Verlauf für {{ticker}}.",
+        "failed": "Could nicht speichern das ticker."
+      }
+    },
+    "list": {
+      "today": "Heute",
+      "total": "Gesamt"
+    },
+    "actions": {
+      "history": "Vollständiger Verlauf",
+      "research": "Analyse",
+      "technical": "Technisch"
+    }
+  },
+  "insights": {
+    "concentrated": "{{pct}}% von Ihr money ist in {{symbol}} alone — dieser Portfolio largely rises und falls mit das one Position.",
+    "diversified": "Ihr money ist spread across {{count}} Positionen, behaving like roughly {{effective}} independent ones — keine single position dominates.",
+    "cashHeavy": "{{pct}}% ist sitting in Bargeld rather than invested, so das part isn't growing oder falling mit der Markt.",
+    "upOverall": "Overall you're up {{pct}}% am what Sie paid.",
+    "downOverall": "Overall you're down {{pct}}% am what Sie paid.",
+    "bestHolding": "{{symbol}} has made Sie der most money so far.",
+    "worstHolding": "{{symbol}} has lost Sie der most so far.",
+    "partialQuotes": "Only {{quoted}} von {{total}} Positionen have a live Kurs right now, so today's figures sind partial."
+  },
+  "status": {
+    "ok": "Synchronisiert",
+    "error": "Synchronisierungsfehler",
+    "pending": "Ausstehend"
+  },
+  "card": {
+    "actionsLabel": "Kontoaktionen",
+    "selectAccount": "Anzeigen {{name}}",
+    "edit": "Konto bearbeiten",
+    "delete": "Trennen",
+    "totalValue": "Gesamtwert",
+    "invested": "Investiert",
+    "cash": "Bargeld",
+    "today": "Heute",
+    "holdings": "{{count}} Position",
+    "holdings_other": "{{count}} Positionen",
+    "holdingsShort": "Positionen",
+    "lastSynced": "Zuletzt synchronisiert: {{date}}",
+    "neverSynced": "Noch nicht synchronisiert",
+    "allocation": "Aufteilung"
+  },
+  "deleteDialog": {
+    "title": "Trennen {{name}}?",
+    "description": "Dieser removes der Konto und its synchronisiert positions, snapshots und Transaktionen von der app. Nothing changes am Freedom24 itself.",
+    "confirmLabel": "Trennen Konto"
+  },
+  "toasts": {
+    "deleted": "Konto getrennt",
+    "deleteFailed": "Konto konnte nicht getrennt werden. Versuchen Sie es erneut."
+  },
+  "connect": {
+    "title": "Anlagekonto verbinden",
+    "description": "Enter der API-Schlüssels generated am Ihr broker's site — der app uses them only bis read Ihr Kontostand, Positionen und trade Verlauf.",
+    "nameLabel": "Kontoname",
+    "namePlaceholder": "e.g., Freedom24 Brokerage",
+    "providerLabel": "Anbieter",
+    "providerFreedom24": "Freedom24",
+    "providerBinance": "Binance",
+    "currencyLabel": "Währung",
+    "currencyOptions": {
+      "usd": "USD — US Dollar",
+      "eur": "EUR — Euro",
+      "gbp": "GBP — British Pound"
+    },
+    "publicKeyLabel": "Öffentlicher Schlüssel",
+    "publicKeyPlaceholder": "Public API key",
+    "privateKeyLabel": "Privater Schlüssel",
+    "privateKeyPlaceholder": "Private API key",
+    "keysHint": "Generate a key pair at freedom24.com/tradernet-api/auth-api. Keys sind stored encrypted und can't be viewed erneut nach Speichern.",
+    "apiKeyLabel": "API key",
+    "apiKeyPlaceholder": "Binance API key",
+    "secretKeyLabel": "Secret key",
+    "secretKeyPlaceholder": "Binance secret key",
+    "keysHintBinance": "Erstellen a read-only API-Schlüssel at binance.com/en/my/Einstellungen/api-management — disable trading und withdrawal permissions am it. Keys sind stored encrypted und can't be viewed erneut nach Speichern.",
+    "connecting": "Verbindung wird hergestellt …",
+    "connect": "Konto verbinden",
+    "toasts": {
+      "connected": "Konto verbunden",
+      "connectFailed": "Verbindung fehlgeschlagen – prüfen Sie Ihre Schlüssel und versuchen Sie es erneut."
+    }
+  },
+  "detail": {
+    "lastSynced": "Zuletzt synchronisiert: {{date}}",
+    "neverSynced": "Noch nicht synchronisiert",
+    "syncNow": "Jetzt synchronisieren",
+    "syncing": "Synchronisierung läuft …",
+    "syncCooldown": "Just synchronisiert — Sie can synchronisieren erneut in a minute.",
+    "allocationTitle": "Aufteilung",
+    "historyTitle": "Wertentwicklung",
+    "positionsTitle": "Positionen",
+    "transactionsTitle": "Letzte Aktivitäten",
+    "loadingActivity": "Aktivitäten werden geladen …",
+    "activityCount": "{{count}} aktuell Transaktion",
+    "activityCount_other": "{{count}} aktuell Transaktionen",
+    "gainLossLegend": "Bars share one scale across Positionen",
+    "holdingCount": "{{count}} Position",
+    "holdingCount_other": "{{count}} Positionen",
+    "noPositions": "Keine Positionen vorhanden.",
+    "noHistory": "Noch kein Verlauf – prüfen Sie es nach der nächsten Synchronisierung erneut.",
+    "noTransactions": "Keine Aktivitäten vorhanden.",
+    "ranges": {
+      "1m": "1M",
+      "3m": "3M",
+      "6m": "6M",
+      "1y": "1Y",
+      "all": "Alle"
+    },
+    "summary": {
+      "totalValue": "Gesamtwert",
+      "marketValue": "Marktwert",
+      "costBasis": "Einstandskosten",
+      "unrealised": "Unrealised P/L",
+      "today": "Heute",
+      "invested": "Investiert",
+      "cash": "Bargeld",
+      "cashHint": "including {{amount}} Bargeld",
+      "noQuote": "Noch keine Kursnotierung"
+    },
+    "chart": {
+      "totalValue": "Gesamtwert",
+      "invested": "Investiert",
+      "cash": "Bargeld"
+    },
+    "table": {
+      "symbol": "Symbol",
+      "quantity": "Menge",
+      "avgPrice": "Durchschnittskurs",
+      "currentPrice": "Aktueller Kurs",
+      "dayChange": "Tag",
+      "marketValue": "Marktwert",
+      "gainLoss": "Gewinn / Verlust",
+      "unrealizedPnl": "Unrealised P/L",
+      "returnPct": "Rendite",
+      "weight": "Gewichtung",
+      "total": "Gesamt"
+    },
+    "txnTypes": {
+      "buy": "Kaufen",
+      "sell": "Verkaufen",
+      "fx": "Währung",
+      "dividend": "Dividende",
+      "fee": "Gebühr",
+      "deposit": "Einzahlung",
+      "withdrawal": "Auszahlung",
+      "tax": "Steuer"
+    },
+    "toasts": {
+      "synced": "Konto synchronisiert",
+      "syncFailed": "Synchronisierung fehlgeschlagen – versuchen Sie es gleich erneut."
+    }
+  },
+  "news": {
+    "title": "Marktnachrichten",
+    "description": "Headlines von Ihr selected Markt-Daten provider, filtered von Position oder Suche term.",
+    "searchPlaceholder": "Suche headlines und tickers…",
+    "searchAction": "Suchen",
+    "filterByHolding": "Filter",
+    "filterBySymbol": "Anzeigen only {{symbol}}",
+    "allStories": "Alle Meldungen",
+    "resultCount": "{{count}} Meldung",
+    "resultCount_other": "{{count}} Meldungen",
+    "clearFilters": "Filter löschen",
+    "loading": "Wird geladen …",
+    "loadMore": "Mehr laden",
+    "emptyTitle": "Keine Treffer",
+    "emptyDescription": "Versuchen a different term, oder löschen der filters bis see der whole feed.",
+    "failedTitle": "Couldn't laden der newsfeed",
+    "failedDescription": "Der provider didn't answer. Versuchen erneut shortly.",
+    "needsAccount": "Anlagekonto verbinden erst — Nachrichten comes von Ihr broker's feed.",
+    "storyFailed": "Couldn't laden dieser Meldung. Versuchen erneut shortly.",
+    "noBody": "Dieser Meldung has keine article text. Öffnen der original bis read it.",
+    "openOriginal": "Original öffnen",
+    "textArticle": "Textartikel",
+    "sentiment": {
+      "positive": "Positiv",
+      "negative": "Negativ",
+      "neutral": "Neutral"
+    }
+  },
+  "search": {
+    "title": "Tickersuche",
+    "description": "Look up any instrument via Ihr selected Markt-Daten provider, mit its neueste quote.",
+    "placeholder": "Suchen von symbol, Unternehmen Name oder ISIN…",
+    "action": "Suchen",
+    "resultCount": "{{count}} Treffer",
+    "resultCount_other": "{{count}} Treffer",
+    "viewNews": "Nachrichten",
+    "viewResearch": "Analyse",
+    "idleTitle": "Instrument suchen",
+    "idleDescription": "Typ at least two characters — versuchen a ticker like AAPL, oder a Unternehmen Name.",
+    "emptyTitle": "Keine Treffer",
+    "emptyDescription": "Nothing found für \"{{query}}\". Versuchen a shorter term oder a different spelling.",
+    "failedTitle": "Suche didn't run",
+    "failedDescription": "Der provider didn't answer. Versuchen erneut shortly.",
+    "needsAccountTitle": "Kein Broker verbunden",
+    "needsAccount": "Anlagekonto verbinden erst — Suche runs against Ihr broker's instrument list.",
+    "table": {
+      "symbol": "Symbol",
+      "name": "Name",
+      "exchange": "Börse",
+      "type": "Typ",
+      "lastPrice": "Letzter Kurs",
+      "dayChange": "Tag",
+      "actions": ""
+    },
+    "viewTechnical": "Technicals"
+  },
+  "providers": {
+    "label": "Datenquelle",
+    "freedom24": "Freedom24",
+    "binance": "Binance",
+    "yahoo": "Yahoo Finance",
+    "comingSoonTitle": "{{provider}} ist coming soon",
+    "comingSoonDescription": "Dieser Daten Quelle isn't wired up yet. Stick mit Yahoo Finance für now."
+  },
+  "research": {
+    "title": "Unternehmensanalyse",
+    "description": "Look up any listed Unternehmen oder Fonds am Yahoo Finance — profile, quote und key stats.",
+    "placeholder": "Enter a ticker, e.g. AAPL oder MSFT…",
+    "action": "Analyse",
+    "idleTitle": "Unternehmen analysieren",
+    "idleDescription": "Enter a ticker symbol bis see its profile, valuation und business summary.",
+    "failedTitle": "Couldn't laden dieser Unternehmen",
+    "failedDescription": "Keine Yahoo Finance Daten für \"{{symbol}}\". Check der ticker und versuchen erneut.",
+    "viewNews": "Ähnliche Nachrichten",
+    "website": "Website",
+    "quoteTitle": "Kurs",
+    "aboutTitle": "Über",
+    "stats": {
+      "marketCap": "Marktkapitalisierung",
+      "pe": "Kurs-Gewinn-Verhältnis",
+      "forwardPe": "Erwartetes KGV",
+      "dividendYield": "Dividendenrendite",
+      "beta": "Beta",
+      "target": "Kursziel",
+      "recommendation": "Konsens",
+      "employees": "Mitarbeiter",
+      "open": "Eröffnung",
+      "previousClose": "Vorheriger Schlusskurs",
+      "dayHigh": "Tageshoch",
+      "dayLow": "Tagestief",
+      "weekHigh": "52-Wochen-Hoch",
+      "weekLow": "52-Wochen-Tief",
+      "volume": "Volumen",
+      "avgVolume": "Durchschnittsvolumen"
+    },
+    "viewTechnical": "Technische Analyse",
+    "valuationTitle": "Bewertung",
+    "performanceTitle": "Wertentwicklung (1 Jahr)",
+    "chartTitle": "Kursverlauf",
+    "saveWatch": "Unternehmen beobachten",
+    "removeWatch": "Nicht mehr beobachten",
+    "watchedCompanies": "Beobachtete Unternehmen",
+    "watchedDescription": "Companies you're tracking. Click one bis see full research, oder Beginn a neu Suche.",
+    "newResearch": "Neue Analyse",
+    "backToWatchlist": "Zurück zur Beobachtungsliste",
+    "backToResults": "Zurück zu den Ergebnissen",
+    "lastUpdated": "Updated {{when}}",
+    "priceToBook": "P/B",
+    "evToEbitda": "EV/EBITDA",
+    "evToSales": "EV/Sales",
+    "fcfYield": "FCF Rendite",
+    "roe": "ROE",
+    "debtToEquity": "D/E",
+    "grossMargin": "Gross margin",
+    "revenueGrowth": "Umsatz Wachstum",
+    "payoutRatio": "Payout ratio",
+    "bookValue": "Book Wert",
+    "earningsGrowth": "EPS Wachstum",
+    "expenseRatio": "Kostenquote",
+    "aum": "AUM",
+    "category": "Kategorie",
+    "yield": "Rendite",
+    "circulatingSupply": "Circ. supply",
+    "volume24h": "24h Volumen",
+    "oneYearReturn": "1Y Rendite",
+    "oneYearVolatility": "1Y volatility",
+    "maxDrawdown1y": "Max drawdown (1Y)",
+    "sharpe1y": "Sharpe (1Y)",
+    "noValuationData": "Keine valuation Daten verfügbar für dieser instrument",
+    "rangeBarLabel": "52-Woche Zeitraum",
+    "targetHint": "Ziel {{value}}",
+    "showMore": "Mehr lesen",
+    "showLess": "Weniger anzeigen",
+    "factsTitle": "Unternehmensdaten",
+    "headquarters": "Hauptsitz",
+    "firstTraded": "Erster Handelstag",
+    "currency": "Währung",
+    "rangeLabel": "Diagrammzeitraum",
+    "chartEmpty": "Keine Kurs Verlauf verfügbar für dieser Zeitraum.",
+    "ranges": {
+      "1m": "1M",
+      "3m": "3M",
+      "6m": "6M",
+      "ytd": "Seit Jahresbeginn",
+      "1y": "1Y",
+      "5y": "5Y",
+      "max": "Max"
+    },
+    "series": {
+      "close": "Schließen",
+      "volume": "Volumen",
+      "sma50": "SMA 50",
+      "sma200": "SMA 200"
+    },
+    "rollingTitle": "Rollierendes Risiko",
+    "distributionTitle": "Tagesrenditen",
+    "distributionCount": "{{count}} trading days",
+    "distributionBin": "Around {{range}}",
+    "distributionDays": "days",
+    "signalsTitle": "Technische Signale",
+    "signalsUnavailable": "Signale aren't verfügbar für dieser symbol.",
+    "horizonsTitle": "Risiko und Rendite",
+    "metricColumn": "Kennzahl",
+    "profitabilityTitle": "Rentabilität",
+    "balanceSheetTitle": "Bilanz",
+    "earningsTitle": "Ergebnisse und Schätzungen",
+    "surpriseTitle": "EPS actual / estimate",
+    "pegRatio": "PEG",
+    "priceToSales": "P/S",
+    "earningsYield": "Earnings Rendite",
+    "roa": "ROA",
+    "operatingMargin": "Operating margin",
+    "profitMargin": "Net margin",
+    "totalCash": "Gesamt Bargeld",
+    "totalDebt": "Gesamt Schuld",
+    "netCash": "Net Bargeld",
+    "debtToEbitda": "Schuld / EBITDA",
+    "currentRatio": "Aktuell ratio",
+    "quickRatio": "Quick ratio",
+    "revenueTtm": "Umsatz (TTM)",
+    "ebitda": "EBITDA",
+    "trailingEps": "EPS (TTM)",
+    "forwardEps": "Forward EPS",
+    "analystCount": "Analysts covering",
+    "newsTitle": "Neueste Nachrichten",
+    "viewAllNews": "Alle anzeigen",
+    "newsEmpty": "Keine aktuellen Nachrichten zu diesem Symbol.",
+    "newsUnavailable": "Nachrichten couldn't be loaded right now.",
+    "compositionTitle": "Fonds-Zusammensetzung",
+    "holdingsTitle": "Größte Positionen",
+    "sectorWeightings": "Sektorgewichtung",
+    "assetMix": "Anlageklassen",
+    "assetClasses": {
+      "stock": "Aktien",
+      "bond": "Anleihen",
+      "cash": "Bargeld",
+      "preferred": "Vorzugsaktien",
+      "other": "Sonstiges"
+    }
+  },
+  "edit": {
+    "title": "Bearbeiten Anlage Konto",
+    "description": "Name, icon und Beschreibung sind yours bis bearbeiten. Kontostand, positions und Transaktionen sind always set von der {{provider}} synchronisieren.",
+    "nameLabel": "Kontoname",
+    "descriptionLabel": "Beschreibung",
+    "descriptionPlaceholder": "Optional notes about dieser Konto",
+    "saveChanges": "Speichern changes",
+    "saving": "Speichern…",
+    "rotateKeys": "Rotate API keys",
+    "toasts": {
+      "updated": "Konto updated",
+      "updateFailed": "Konto konnte nicht aktualisiert werden. Versuchen Sie es erneut."
+    },
+    "rotateDialog": {
+      "title": "Rotate API keys",
+      "description": "Replace der stored public/private key pair für dieser Konto. Der nächste synchronisieren runs immediately bis confirm der neu keys work.",
+      "rotate": "Rotate keys",
+      "rotating": "Rotating…",
+      "toasts": {
+        "rotated": "API keys updated",
+        "rotateFailed": "Could nicht aktualisieren der keys — check them und versuchen erneut."
+      }
+    }
+  },
+  "compare": {
+    "title": "Vergleichen",
+    "description": "See Risiko, Rendite, und Wert side von side für up bis five tickers.",
+    "help": "What does {{metric}} mean?",
+    "confidenceBand": "95% confidence interval: {{low}} bis {{high}}. If two Investitionen' ranges overlap heavily, der difference between them ist probably noise.",
+    "source": {
+      "computed": "Computed von Yahoo Finance adjusted täglich closes"
+    },
+    "saved": {
+      "title": "Gespart",
+      "empty": "Keine gespart comparisons yet.",
+      "delete": "Löschen \"{{name}}\""
+    },
+    "saveDialog": {
+      "trigger": "Speichern",
+      "title": "Speichern dieser comparison",
+      "description": "Keep these tickers, benchmark und Zeitraum so Sie can come back bis them later.",
+      "nameLabel": "Name",
+      "namePlaceholder": "e.g. {{symbols}}",
+      "save": "Speichern comparison",
+      "saving": "Speichern…",
+      "toasts": {
+        "saved": "Comparison gespart",
+        "saveFailed": "Could nicht speichern dieser comparison. Versuchen erneut."
+      }
+    },
+    "picker": {
+      "addTicker": "Add ticker",
+      "remove": "Entfernen {{symbol}}",
+      "benchmark": "Benchmark",
+      "benchmarkNone": "Keine",
+      "period": "Zeitraum",
+      "currency": "Währung",
+      "save": "Speichern…",
+      "maxReached": "Beyond five lines der chart stops being readable.",
+      "quickAdd": "Ihr Positionen"
+    },
+    "periods": {
+      "1m": "1M",
+      "3m": "3M",
+      "6m": "6M",
+      "ytd": "Seit Jahresbeginn",
+      "1y": "1Y",
+      "3y": "3Y",
+      "5y": "5Y",
+      "10y": "10Y",
+      "max": "MAX"
+    },
+    "headline": {
+      "riskAdjusted": "Risiko-adjusted Rendite (Sortino)",
+      "totalReturn": "Gesamt Rendite"
+    },
+    "verdict": {
+      "title": "Verdict",
+      "whatDoesThisMean": "What does dieser mean?",
+      "clearly_better_risk_adjusted": "Über dieser Zeitraum, {{leader}} delivered better Risiko-adjusted returns than {{runnerUp}}, und der gap ist large enough bis be unlikely bis be luck (≈{{confidence}}% confidence).",
+      "likely_better": "Über dieser Zeitraum, {{leader}} likely delivered better Risiko-adjusted returns than {{runnerUp}} (≈{{confidence}}% confidence) — but der two sind schließen enough das dieser could still be noise.",
+      "too_close_to_call": "Über dieser Zeitraum, {{leader}} und {{runnerUp}} sind too schließen bis call am Risiko-adjusted Rendite — der difference ist well within der Zeitraum von ordinary luck.",
+      "likely_worse": "Über dieser Zeitraum, {{leader}} likely underperformed {{runnerUp}} am Risiko-adjusted Rendite (≈{{confidence}}% confidence), though der gap ist nicht decisive.",
+      "clearly_worse_risk_adjusted": "Über dieser Zeitraum, {{leader}} clearly underperformed {{runnerUp}} am Risiko-adjusted Rendite (≈{{confidence}}% confidence)."
+    },
+    "tiles": {
+      "returns": "Gesamt Rendite",
+      "returnsSubtitle": "How much each Anlage actually gained oder lost über der selected Zeitraum, including dividends.",
+      "growth": "Wachstum von 100",
+      "growthSubtitle": "What 100 invested in each von these at der Beginn von der Zeitraum would be worth now, am der same scale.",
+      "growthLogToggle": "Log scale",
+      "growthLogHint": "A log scale keeps equal percentage moves der same height everywhere am der chart — der right way bis compare long-horizon Wachstum.",
+      "drawdown": "Kursrückgang",
+      "drawdownSubtitle": "How far each Anlage fell von its own prior peak, at any point in der Zeitraum — nicht von today's Kurs.",
+      "riskVsReturn": "Risiko vs Rendite",
+      "riskVsReturnCaption": "Up und bis der übrig ist better: mehr Rendite für less Risiko.",
+      "riskVsReturnEmpty": "Nicht enough Daten bis plot Risiko versus Rendite yet.",
+      "correlation": "Correlation",
+      "correlationLegend": "Higher = less diversification",
+      "correlationEmpty": "Add at least two tickers bis see correlation.",
+      "riskAdjustedMetrics": "Risiko-adjusted metrics",
+      "valuation": "Bewertung",
+      "stress": "How they behaved in past shocks",
+      "notApplicableFund": "n/a für Fonds",
+      "notApplicableCrypto": "Traditional valuation ratios do nicht apply bis crypto.",
+      "notApplicableIndex": "Kurs only — index levels usually exclude dividends."
+    },
+    "drawdown": {
+      "worstMoment": "{{symbol}}'s worst moment: {{depth}}, von {{peakDatum}} bis {{troughDatum}}, {{recovery}}",
+      "recovered": "recovered {{date}}",
+      "notRecovered": "nicht yet recovered"
+    },
+    "empty": {
+      "title": "Pick two oder mehr tickers bis compare",
+      "description": "See Risiko-adjusted Rendite, correlation, drawdown und valuation side von side.",
+      "presetSp500Nasdaq": "S&P 500 vs Nasdaq 100",
+      "presetVooVti": "VOO vs VTI (nearly identical — see why)",
+      "presetBtcGold": "Bitcoin vs Gold"
+    },
+    "loading": "Fetching {{count}} Kurs histories…",
+    "partial": {
+      "shortHistory": "Only {{days}} days von Verlauf — Risiko metrics need at least 60."
+    },
+    "error": {
+      "symbolFailed": "Couldn't laden {{symbol}}",
+      "generic": "Couldn't laden dieser comparison. Versuchen erneut."
+    },
+    "footer": {
+      "disclaimer": "Past Wertentwicklung does nicht indicate future Ergebnisse. Dieser ist analysis, nicht advice.",
+      "period": "Zeitraum: {{period}}",
+      "dataSource": "Daten: Yahoo Finance, adjusted täglich closes",
+      "totalReturnBasis": "Rendites sind Gesamt Rendite (split- und dividend-adjusted) unless noted otherwise.",
+      "riskFreeSource": {
+        "irx": "Risiko-free rate: 13-Woche T-bill (^IRX)",
+        "fallback_constant": "Risiko-free rate: fallback constant (13-Woche T-bill nicht verfügbar)",
+        "user_override": "Risiko-free rate: manually set"
+      }
+    },
+    "alignmentNote": "Some instruments trade am different calendars — charts und correlations use only der days every selected instrument has Kurse für.",
+    "totalReturnFootnote": "Dieser ist a Kurs index; its level usually excludes dividends, so its Rendite understates der true Gesamt Rendite von roughly 1.5–2%/yr.",
+    "metrics": {
+      "sharpe": {
+        "label": "Sharpe ratio",
+        "short": "Rendite earned für each unit von Risiko taken.",
+        "body": "Für every unit von Kurs swing dieser Anlage put Sie through, it returned dieser many units von Rendite above Bargeld. It treats upside und downside swings as equally bad, which ist why we anzeigen Sortino nächste bis it.",
+        "scale": "Above 1.0 ist generally considered good, above 2.0 excellent.",
+        "caveat": "Sharpe ratios estimated über a few years carry a lot von uncertainty — der Zeitraum shown nach der ± ist der 95% confidence interval. If two Investitionen' ranges overlap heavily, der difference between them ist probably noise."
+      },
+      "sortino": {
+        "label": "Sortino ratio",
+        "short": "Rendite earned für each unit von downside Risiko taken.",
+        "body": "Like Sharpe, but only counts downward swings as Risiko. Upside surprises don't count against it. Usually higher than Sharpe; a Sortino much higher than der Sharpe means most von dieser investment's volatility war bis der upside.",
+        "scale": "Above 1.0 ist generally considered good, above 2.0 excellent."
+      },
+      "calmar": {
+        "label": "Calmar ratio",
+        "short": "Annual Rendite per unit von worst drawdown.",
+        "body": "How much annual Rendite Sie got für der worst peak-bis-trough fall Sie would have lived through. Der most intuitive Risiko-adjusted ratio: Rendite per unit von worst pain.",
+        "scale": "Above 0.5 ist decent, above 1.0 ist strong."
+      },
+      "martin": {
+        "label": "Martin ratio (UPI)",
+        "short": "Annual Rendite per unit von der Ulcer Index.",
+        "body": "Like Calmar, but uses der whole drawdown path — how deep und how long — rather than just der single worst point. A mehr complete picture von how uncomfortable der ride war.",
+        "scale": "Higher ist better; compare it only against other instruments über der same Zeitraum."
+      },
+      "volatility": {
+        "label": "Volatilität",
+        "short": "How much der Kurs swings, annualised.",
+        "body": "Der annualised standard deviation von täglich returns. Shown für reference, but deliberately nicht der headline Risiko figure here — research shows investors feel drawdowns, nicht Tag-bis-Tag wiggle, so we lead mit max drawdown instead."
+      },
+      "maxDrawdown": {
+        "label": "Maximaler Rückgang",
+        "short": "Der worst peak-bis-trough fall über dieser Zeitraum.",
+        "body": "If Sie had bought at der worst possible moment, dieser ist how far down Sie would have been vor it recovered — der single number das best predicts whether a real investor would have panic-sold."
+      },
+      "timeUnderWater": {
+        "label": "Zeit unter water",
+        "short": "How long it took bis get back bis even.",
+        "body": "Der span von der prior peak bis full recovery. Dieser ist der number das actually determines whether a retail investor capitulates — nicht der depth von der fall, but how long they'd have had bis wait it out."
+      },
+      "ulcerIndex": {
+        "label": "Ulcer Index",
+        "short": "A single number für how deep und how long der drawdowns waren.",
+        "body": "Squares each day's drawdown depth vor averaging, so it penalises deep, prolonged declines far mehr than brief dips — closer bis how a loss actually feels than plain volatility."
+      },
+      "var95": {
+        "label": "Wert at Risiko (95%)",
+        "short": "Der threshold für a bad-but-nicht-worst Tag.",
+        "body": "Am der worst 1 Tag in 20 über dieser Zeitraum, der loss war at least dieser large. It says nothing about how much worse der remaining 5% von days could get — see CVaR für das."
+      },
+      "cvar95": {
+        "label": "Expected shortfall (95%)",
+        "short": "Der Durchschnitt loss am der worst days.",
+        "body": "Der Durchschnitt loss across only der worst 5% von days — answers \"und when it ist das bad, how bad am Durchschnitt?\". Strictly mehr informative than VaR alone."
+      },
+      "beta": {
+        "label": "Beta",
+        "short": "How much dieser moves für each 1% move in der benchmark.",
+        "body": "A beta von 1.2 means it typically moved 1.2% when der benchmark moved 1%.",
+        "caveat": "Always check der R² nächste bis it: if R² ist Tief, der benchmark explains very little von dieser instrument's movement und der beta isn't telling Sie much."
+      },
+      "alpha": {
+        "label": "Alpha (annualised)",
+        "short": "Rendite übrig über nach accounting für Markt exposure.",
+        "body": "Der annualised Rendite dieser instrument produced beyond what its beta bis der benchmark would predict.",
+        "caveat": "A single-factor alpha against one benchmark ist nicht strong evidence von skill — check its own confidence interval und R² vor reading much into it."
+      },
+      "rSquared": {
+        "label": "R²",
+        "short": "How much von der movement der benchmark actually explains.",
+        "body": "Der share von dieser instrument's variance explained von der benchmark in der beta/alpha regression. Professionals always check dieser nächste bis beta — a beta von a regression mit Tief R² ist mostly noise."
+      },
+      "upCapture": {
+        "label": "Up capture",
+        "short": "How much von der benchmark's up days dieser captured.",
+        "body": "Am days der benchmark rose, dieser instrument captured dieser percentage von das move am Durchschnitt."
+      },
+      "downCapture": {
+        "label": "Down capture",
+        "short": "How much von der benchmark's down days dieser captured.",
+        "body": "Am days der benchmark fell, dieser instrument captured dieser percentage von das fall am Durchschnitt. Lower ist better here — it means smaller losses am der benchmark's bad days."
+      },
+      "informationRatio": {
+        "label": "Information ratio",
+        "short": "Aktiv Rendite per unit von tracking Fehler versus der benchmark.",
+        "body": "Der right way bis answer \"war dieser better than der index, und how consistently?\" — aktiv Rendite divided von how much das Rendite varied."
+      },
+      "trackingError": {
+        "label": "Tracking Fehler",
+        "short": "How much dieser instrument's Rendite diverges von der benchmark's.",
+        "body": "Der annualised volatility von der Rendite difference between dieser instrument und der benchmark. A near-index Fonds has a tracking Fehler schließen bis zero."
+      },
+      "correlation": {
+        "label": "Correlation",
+        "short": "How closely two instruments move together.",
+        "body": "Von −1 bis +1. Above about 0.8 means Position both gives Sie much less diversification than it looks like — they will usually move together.",
+        "scale": "Below 0.3 ist meaningfully diversifying; above 0.8 ist schließen bis redundant."
+      },
+      "downsideCorrelation": {
+        "label": "Downside correlation",
+        "short": "Korrelation measured only am der benchmark's worst days.",
+        "body": "Diversification matters most exactly when things go wrong, und correlations usually rise in a crash.",
+        "caveat": "If dieser number ist much higher than der headline correlation, these two won't protect Sie when it counts."
+      },
+      "diversificationRatio": {
+        "label": "Diversification ratio",
+        "short": "How much combining these actually reduced Risiko.",
+        "body": "Der weighted Durchschnitt von each instrument's own volatility, divided von der volatility von Position them together in equal Gewichtung. A ratio well above 1.0 means real diversification benefit; near 1.0 means Position them together barely helped."
+      },
+      "cagr": {
+        "label": "CAGR",
+        "short": "Compound annual Wachstum rate über dieser Zeitraum.",
+        "body": "Der constant annual Wachstum rate das would take der starting Kurs bis der ending Kurs über dieser exact span, am a calendar-Tag basis so periods von different lengths sind comparable."
+      },
+      "cumulativeReturn": {
+        "label": "Kumulierte Rendite",
+        "short": "Gesamt Rendite über der whole Zeitraum, uncompounded bis a jährlich rate.",
+        "body": "How much a single Anlage made oder lost von der Beginn von der Zeitraum bis der Ende, including dividends."
+      },
+      "trailingPe": {
+        "label": "Trailing P/E",
+        "short": "Kurs divided von der zuletzt 12 months von earnings.",
+        "body": "How many years von aktuell earnings you're paying für at today's Kurs. Always read against a peer oder Sektor reference — a P/E von 28 means nothing am its own.",
+        "caveat": "Undefined oder misleading when earnings sind negativ oder unusually depressed/inflated."
+      },
+      "forwardPe": {
+        "label": "Erwartetes KGV",
+        "short": "Kurs divided von nächste year's expected earnings.",
+        "body": "Like trailing P/E, but based am analyst estimates rather than reported Ergebnisse — mehr forward-looking, but only as reliable as der estimates behind it.",
+        "caveat": "Depends am analyst consensus estimates, which can be wrong oder sparse für smaller names."
+      },
+      "priceToBook": {
+        "label": "Kurs bis book",
+        "short": "Kurs relative bis accounting net Vermögenswert Wert.",
+        "body": "How der Markt values der Unternehmen relative bis what its Kontostand sheet says it's worth.",
+        "caveat": "Schließen bis meaningless für Vermögenswert-light software businesses; für financials it ist often der primary valuation metric."
+      },
+      "evToEbitda": {
+        "label": "EV / EBITDA",
+        "short": "Enterprise Wert relative bis operating earnings.",
+        "body": "Capital-structure-neutral, so it compares companies fairly regardless von how much Schuld they carry — der multiple professionals actually use für cross-Unternehmen comparison."
+      },
+      "evToSales": {
+        "label": "EV / Sales",
+        "short": "Enterprise Wert relative bis Umsatz.",
+        "body": "Der fallback valuation multiple when earnings sind negativ — which ist exactly when P/E goes blank."
+      },
+      "dividendYield": {
+        "label": "Dividendenrendite",
+        "short": "Annual dividends as a percentage von Kurs.",
+        "body": "How much Bargeld Einnahmen der aktuell Kurs buys Sie per Jahr, vor any Kurs change.",
+        "caveat": "A Hoch Rendite alone can be a warning sign (a \"Rendite trap\") — always check der payout ratio nächste bis it bis see whether der dividend ist sustainable."
+      },
+      "payoutRatio": {
+        "label": "Payout ratio",
+        "short": "Der share von earnings paid out as dividends.",
+        "body": "What fraction von profit goes bis dividends rather than being reinvested oder retained. A ratio near oder above 100% leaves little cushion if earnings dip."
+      },
+      "fcfYield": {
+        "label": "Free Bargeld flow Rendite",
+        "short": "Free Bargeld flow as a percentage von Markt Wert.",
+        "body": "Free Bargeld flow ist harder bis manipulate mit accounting choices than reported earnings, und it's defined even when P/E ist nicht (negativ earnings)."
+      },
+      "roe": {
+        "label": "Rendite am equity",
+        "short": "Profit generated per unit von shareholder equity.",
+        "body": "A quality measure: how efficiently der Unternehmen turns shareholders' capital into profit.",
+        "caveat": "Leverage inflates ROE mechanically — always check Schuld/equity alongside it."
+      },
+      "debtToEquity": {
+        "label": "Schuld / equity",
+        "short": "Gesamt Schuld relative bis shareholder equity.",
+        "body": "A core solvency measure — Hoch leverage ist der single best predictor von permanent capital loss in a downturn."
+      },
+      "expenseRatio": {
+        "label": "Kostenquote",
+        "short": "Der fund's annual fee, taken automatically von its Wert.",
+        "body": "Der most reliable predictor von how a Fonds performs against its peers — in any Markt, net returns equal gross returns minus costs, so der Tief-cost Fonds tends bis win von arithmetic.",
+        "caveat": "A 1%/Jahr difference compounds bis roughly a quarter von terminal wealth über 30 years."
+      },
+      "psr": {
+        "label": "Probabilistic Sharpe Ratio",
+        "short": "Der probability der true Sharpe ratio ist genuinely above zero.",
+        "body": "Converts a point estimate into a confidence statement, accounting für sample size, skew und fat tails — der honest version von \"ist dieser actually good, oder did it just get lucky?\"",
+        "caveat": "A statement about der past, calculated von der sample shown — nicht a forecast."
+      }
+    }
+  },
+  "backtest": {
+    "title": "Backtest",
+    "description": "See what a hypothetical Anlage would have been worth, oder track one von heute forward.",
+    "form": {
+      "mode": "Mode",
+      "modeBacktest": "Backtest — what would have happened",
+      "modeForward": "Forward — track von heute",
+      "ticker": "Ticker",
+      "tickerPlaceholder": "Choose a ticker",
+      "amount": "Betrag",
+      "currency": "Währung",
+      "from": "Von",
+      "to": "Bis",
+      "benchmark": "Benchmark",
+      "contribute": "Add regularly",
+      "contributionAmount": "Contribution Betrag",
+      "contributionFreq": {
+        "none": "Keine",
+        "weekly": "Wöchentlich",
+        "monthly": "Monatlich",
+        "quarterly": "Quarterly"
+      },
+      "advancedShow": "Advanced: trading cost, dividends",
+      "advancedHide": "Hide advanced options",
+      "costBps": "Trading cost",
+      "costFlat": "Flat fee per trade",
+      "dividends": "Dividends",
+      "dividendTreatment": {
+        "reinvest": "Reinvested",
+        "cash": "Paid as Bargeld",
+        "ignore": "Kurs only (ignored)"
+      },
+      "withholding": "Withholding tax",
+      "run": "Run",
+      "running": "Running…",
+      "save": "Speichern bis library",
+      "saving": "Speichern…",
+      "saveName": "Name",
+      "saveNamePlaceholder": "e.g. MSFT since Jan 2022",
+      "saveNote": "Note (optional)"
+    },
+    "headline": {
+      "finalValue": "Wert heute",
+      "invested": "Sie invested",
+      "profit": "Profit",
+      "vsBenchmark": "vs {{symbol}}"
+    },
+    "sentence": {
+      "base": "{{amount}} invested in {{symbol}} am {{date}} would be worth {{finalWert}} heute — a gain von {{returnPct}}, oder {{cagr}} per Jahr. Der same money in der benchmark would be worth {{benchmarkWert}}.",
+      "baseNoBenchmark": "{{amount}} invested in {{symbol}} am {{date}} would be worth {{finalWert}} heute — a gain von {{returnPct}}, oder {{cagr}} per Jahr.",
+      "drawdown": "Along der way Sie would have been down {{worst}} at der worst point, in {{worstDatum}}.",
+      "recovery": "It took {{days}} days bis get back bis even.",
+      "twrMwrGap": "Zeit-weighted Rendite ({{twr}}/Jahr) und money-weighted Rendite ({{mwr}}/Jahr) differ von mehr than a percentage point — Ihr money's timing mattered, which ist normal mit regular contributions und mostly luck."
+    },
+    "journey": {
+      "title": "Der journey",
+      "investedLine": "Investiert",
+      "viewToggle": "Chart anzeigen",
+      "viewValue": "Wert",
+      "viewNormalized": "Wachstum von 100",
+      "showInvested": "Anzeigen invested line"
+    },
+    "tiles": {
+      "worstMoment": "Der worst moment",
+      "riskAdjusted": "Risiko-adjusted",
+      "cost": "What it cost",
+      "peak": "Peak",
+      "trough": "Trough",
+      "recovered": "Recovered",
+      "notRecovered": "Nicht yet recovered",
+      "noDrawdown": "Keine drawdown über dieser Zeitraum.",
+      "exitCost": "If Sie sold heute",
+      "dividendsReceived": "Dividends received"
+    },
+    "sensitivity": {
+      "title": "If Sie had entered a few weeks earlier oder later",
+      "median": "median {{value}}",
+      "p25": "25th percentile",
+      "p75": "75th percentile",
+      "caption": "Sie picked one Datum. Entering anywhere in der Monat either side would have produced final values between {{min}} und {{max}}. Ihr Datum landed in der {{percentile}}th percentile von das Zeitraum — a measurement, nicht a repeatable edge."
+    },
+    "honesty": {
+      "title": "Read dieser vor Sie trust der numbers above",
+      "hindsight": {
+        "title": "Hindsight",
+        "body": "Sie chose these dates knowing what happened. Dieser shows what did happen in dieser window, nicht what will happen nächste."
+      },
+      "survivorship": {
+        "title": "Survivorship bias",
+        "body": "Sie can only backtest instruments das still exist und sind still listed. Companies das went bis zero sind nicht in dieser dataset. Recherche am der US Markt (Bessembinder, 2018) found der median listed Aktie underperformed Treasury bills über its lifetime — der winners Sie can still see sind der survivors."
+      },
+      "costs": {
+        "title": "Cost realism",
+        "body": "Dieser assumes 0.10% per Transaktion und fractional shares. It excludes taxes, currency conversion spreads, bid–ask spreads, und platform Konto fees."
+      },
+      "data": {
+        "title": "Daten basis",
+        "body": "Kurse sind Yahoo Finance täglich adjusted closes, which assume dividends sind reinvested at der closing Kurs am der ex-dividend Datum."
+      },
+      "deflated": {
+        "title": "Adjusted für how many tries dieser took",
+        "body": "Sie have run {{nTrials}} backtests. Even mit keine skill at alle, der best von das many tries would be expected bis anzeigen a Sharpe von about {{expected}} von luck alone. Dieser one's ist {{actual}}."
+      }
+    },
+    "warnings": {
+      "staleData": "Der zuletzt verfügbar Kurs ist von {{date}} — dieser instrument may be delisted oder suspended.",
+      "dataGaps": "There {{count, plural, one {ist a gap} other {sind # gaps}}} in der Kurs Verlauf über dieser Zeitraum (a halt oder delisting) — der simulation runs across it.",
+      "fxApplied": "Part von dieser Rendite reflects currency movement — der instrument trades in a different currency than dieser scenario.",
+      "periodTooShort": "Dieser Zeitraum ist unter 30 days, so annualised figures (CAGR, Sharpe, Sortino) would be meaningless und sind hidden. Wert und Rendite sind still shown above."
+    },
+    "empty": {
+      "title": "Run a backtest bis see it here",
+      "description": "Pick a ticker, an Betrag und a Beginn Datum — der Ergebnis appears below der form.",
+      "noResult": "Keine Ergebnis yet."
+    },
+    "errors": {
+      "generic": "Something went wrong running dieser scenario. Please versuchen erneut."
+    },
+    "toasts": {
+      "saved": "Scenario gespart bis Ihr library.",
+      "saveFailed": "Could nicht speichern dieser scenario. Please versuchen erneut."
+    },
+    "footer": {
+      "dataSource": "Kurse sind Yahoo Finance täglich adjusted closes. Figures sind recomputed von der cached Kurs Verlauf each Zeit Sie anzeigen them."
+    },
+    "metrics": {
+      "twr": {
+        "label": "Zeit-weighted Rendite",
+        "short": "How der Anlage performed, ignoring when Sie added money.",
+        "body": "Zeit-weighted Rendite measures how der Anlage performed, ignoring when Sie added money. It ist what a Fonds Berichte."
+      },
+      "mwr": {
+        "label": "Money-weighted Rendite",
+        "short": "How Sie performed, including der timing von Ihr contributions.",
+        "body": "Money-weighted Rendite (IRR) measures how Sie performed, including der timing von Ihr contributions. If it ist lower than der Zeit-weighted Rendite, Ihr money arrived at less fortunate moments — which ist normal und mostly luck."
+      },
+      "deflatedSharpe": {
+        "label": "Deflated Sharpe ratio",
+        "short": "Sharpe, adjusted für how many scenarios Sie have tried.",
+        "body": "When Sie versuchen many strategies, der best-looking one ist partly lucky. Dieser adjusts der score für how many scenarios Sie have run, so a good-looking Ergebnis has bis be genuinely good rather than der best von many tries."
+      },
+      "entrySensitivity": {
+        "label": "Entry-Datum sensitivity",
+        "short": "How much der Ergebnis depends am der exact Tag Sie started.",
+        "body": "Der same Anlage started a few weeks earlier oder later. A wide spread means der Ergebnis depends heavily am der exact Tag Sie picked — which Sie chose knowing what happened nächste."
+      },
+      "costDrag": {
+        "label": "Cost drag",
+        "short": "Kumuliert trading fees, compounded.",
+        "body": "Trading fees, compounded. Small percentages become large amounts über long periods — dieser ist der single most reliable way bis improve returns, because unlike returns, costs sind certain."
+      }
+    }
+  },
+  "scenarios": {
+    "title": "Scenario library",
+    "detailTitle": "Scenario",
+    "description": "Every hypothetical you've gespart, backtest und forward, und how Ihr track record holds up.",
+    "newScenario": "Neu scenario",
+    "kind": {
+      "backtest": "Backtest",
+      "forward": "Forward"
+    },
+    "status": {
+      "active": "Aktiv",
+      "closed": "Closed",
+      "error": "Fehler"
+    },
+    "filters": {
+      "kind": {
+        "all": "Alle",
+        "backtest": "Backtests",
+        "forward": "Forward"
+      },
+      "status": {
+        "all": "Alle",
+        "active": "Aktiv",
+        "closed": "Closed"
+      },
+      "sort": {
+        "newest": "Newest",
+        "best": "Best",
+        "worst": "Worst"
+      }
+    },
+    "trackRecord": {
+      "title": "Ihr track record",
+      "empty": "Schließen oder grow a scenario past 30 days bis Beginn building a track record.",
+      "matured": "Matured scenarios",
+      "hitRate": "Beat der benchmark",
+      "hitRateValue": "{{beating}} von {{total}} ({{pct}}%)",
+      "meanExcess": "Mean excess Rendite",
+      "medianExcess": "Median excess Rendite",
+      "verdict": {
+        "too_few": "Mit only {{count}} matured scenarios, there isn't enough evidence yet bis say anything about Ihr Aktie-picking either way.",
+        "no_evidence_of_skill": "Across Ihr {{count}} matured scenarios, {{beating}} beat der benchmark und der rest did nicht — a {{pct}}% hit rate. Durchschnitt excess Rendite: {{meanExcess}} percentage points. Mit dieser few scenarios, a {{pct}}% hit rate ist well within what coin-flipping produces (p = {{pWert}}) — dieser ist nicht yet enough bis say anything about Ihr Aktie-picking either way.",
+        "some_evidence": "Across Ihr {{count}} matured scenarios, {{beating}} beat der benchmark und der rest did nicht — a {{pct}}% hit rate. Durchschnitt excess Rendite: {{meanExcess}} percentage points. Das hit rate would be unusual von coin-flipping alone (p = {{pWert}}) — early evidence, nicht proof."
+      }
+    },
+    "card": {
+      "since": "since {{date}}",
+      "vsBenchmark": "vs benchmark",
+      "error": "Dieser scenario could nicht be revalued."
+    },
+    "empty": {
+      "title": "Keine scenarios yet",
+      "description": "It costs nothing bis erstellen a forward scenario, und in six months it will tell Sie something true about Ihr instincts.",
+      "exampleOne": {
+        "name": "MSFT since Jan 2022",
+        "detail": "Backtest · +68.2%"
+      },
+      "exampleTwo": {
+        "name": "VOO, tracked von heute",
+        "detail": "Forward · updated täglich"
+      }
+    },
+    "detail": {
+      "subtitle": "{{symbol}} · since {{date}}",
+      "lockedNotice": "Entry terms sind locked — that's what makes der track record meaningful. Erstellen a neu scenario bis versuchen different terms.",
+      "note": "Note",
+      "notePlaceholder": "Why did Sie set dieser scenario up? What waren Sie expecting?",
+      "saveNote": "Speichern note",
+      "noteSaved": "Note gespart.",
+      "noteSaveFailed": "Could nicht speichern der note. Please versuchen erneut.",
+      "rebuild": "Rebuild",
+      "rebuilt": "Scenario rebuilt von der neueste Kurse.",
+      "close": "Schließen",
+      "reopen": "Reopen",
+      "closed": "Scenario closed.",
+      "reopened": "Scenario reopened.",
+      "delete": "Löschen",
+      "deleted": "Scenario deleted.",
+      "actionFailed": "Something went wrong. Please versuchen erneut.",
+      "deleteConfirm": {
+        "title": "Löschen \"{{name}}\"?",
+        "description": "Dieser removes der scenario und its valuation Verlauf. Dieser can't be undone.",
+        "confirm": "Löschen scenario"
+      },
+      "errorTitle": "Dieser scenario couldn't be revalued",
+      "noResultTitle": "Keine Ergebnis verfügbar yet.",
+      "dailyTable": "Täglich valuation Verlauf",
+      "table": {
+        "date": "Datum",
+        "value": "Wert",
+        "invested": "Investiert",
+        "benchmark": "Benchmark"
+      }
+    }
+  },
+  "technical": {
+    "title": "Technisch Analysis",
+    "description": "Indicators und a distributional forward anzeigen — never a buy oder sell Signal.",
+    "periods": {
+      "3m": "3M",
+      "6m": "6M",
+      "1y": "1Y",
+      "2y": "2Y",
+      "5y": "5Y"
+    },
+    "loading": "Laden technisch Daten…",
+    "error": "Could nicht laden technisch Daten für {{symbol}}.",
+    "regime": {
+      "caption": "Dieser ist der context every indicator below should be read in.",
+      "trendLabel": "Trend",
+      "trendUp": "Up",
+      "trendDown": "Down",
+      "trendSideways": "Sideways",
+      "strengthLabel": "Strength",
+      "strengthWeak": "ADX {{adx}} — weak / sideways",
+      "strengthModerate": "ADX {{adx}} — moderate",
+      "strengthStrong": "ADX {{adx}} — strong",
+      "volatilityLabel": "Volatilität",
+      "volatilityCalm": "{{vol}} — {{percentile}}th percentile, calm",
+      "volatilityNormal": "{{vol}} — {{percentile}}th percentile, normal",
+      "volatilityElevated": "{{vol}} — {{percentile}}th percentile, elevated",
+      "volatilityUnknown": "{{vol}}",
+      "randomWalkLabel": "Random-walk test",
+      "randomWalkTrending": "Trending (p={{p}})",
+      "randomWalkMeanReverting": "Mean-reverting (p={{p}})",
+      "randomWalkInconclusive": "Indistinguishable von random walk (p={{p}})",
+      "squeezeLabel": "Bollinger",
+      "squeezeYes": "Squeeze ({{percentile}}th percentile bandwidth)",
+      "squeezeNo": "Keine squeeze",
+      "heroTitle": "Markt Regime",
+      "heroBadge": {
+        "strongUp": "Strong Uptrend",
+        "up": "Uptrend",
+        "sideways": "Sideways / Choppy",
+        "down": "Downtrend",
+        "strongDown": "Strong Downtrend"
+      },
+      "summary": "{{symbol}} ist in {{trendPhrase}} mit {{volPhrase}}. {{weightHint}}",
+      "weightTrending": "Trend-following Signale carry mehr Gewichtung than overbought/oversold Signale in dieser environment.",
+      "weightRanging": "Overbought/oversold Signale have historically been mehr meaningful than trend Signale in dieser sideways environment.",
+      "kpiAdxLabel": "Trend strength (ADX)",
+      "kpiVolatilityLabel": "Annualized volatility",
+      "kpiVarianceLabel": "Random-walk test",
+      "kpiSqueezeLabel": "Bollinger squeeze"
+    },
+    "price": {
+      "title": "Kurs",
+      "candles": "Kerzen",
+      "line": "Line",
+      "legendHint": "Click a series in der legend bis anzeigen oder hide it."
+    },
+    "levels": {
+      "title": "Key Kurs levels",
+      "support": "Support",
+      "resistance": "Resistance",
+      "touches": "{{count}} touches",
+      "distanceAbove": "{{pct}} above",
+      "distanceBelow": "{{pct}} below",
+      "empty": "Nicht enough confirmed pivots yet bis identify a level.",
+      "caption": "Kurs areas where dieser instrument has repeatedly reversed. They sind nicht floors oder ceilings — they break regularly.",
+      "ladderTitle": "Kurs ladder",
+      "currentPriceLabel": "Aktueller Kurs"
+    },
+    "crossovers": {
+      "golden": "Golden cross",
+      "death": "Death cross"
+    },
+    "panes": {
+      "rsi": "Momentum — RSI",
+      "macd": "Momentum — MACD",
+      "obv": "Volumen — OBV",
+      "rsiOverboughtMuted": "Overbought/oversold lines sind muted — less meaningful in a strong trend.",
+      "obvDivergenceHint": "Shaded Zeitraum: Kurs und Volumen flow have been moving in different directions.",
+      "currentLabel": "Aktuell"
+    },
+    "signals": {
+      "title": "What der indicators sind saying together",
+      "confluence": "{{positive}} lean positiv · {{negative}} lean negativ · {{neutral}} neutral",
+      "footer": "Professional analysts look für agreement across several indicators. Disagreement ist information too — it usually means keine löschen Signal.",
+      "ids": {
+        "priceVsSma200": "Kurs vs SMA200",
+        "smaCross": "SMA50 vs SMA200",
+        "rsi": "RSI (14)",
+        "macd": "MACD histogram",
+        "bollinger": "%B (Bollinger)",
+        "obv": "OBV slope",
+        "adx": "Trend strength (ADX)"
+      },
+      "states": {
+        "bullish": "Bullish-leaning",
+        "bearish": "Bearish-leaning",
+        "neutral": "Neutral",
+        "context": "Context"
+      },
+      "detail": {
+        "priceVsSma200": {
+          "above": "Kurs ist above its 200-Tag moving Durchschnitt, a conventional (if crude) long-term uptrend marker.",
+          "below": "Kurs ist below its 200-Tag moving Durchschnitt, a conventional (if crude) long-term downtrend marker.",
+          "neutral": "Kurs ist within 1% von its 200-Tag moving Durchschnitt — too schließen bis call a löschen trend von dieser alone."
+        },
+        "smaCross": {
+          "golden": "Der 50-Tag Durchschnitt ist above der 200-Tag Durchschnitt (a “golden cross” regime) — a conventional bullish trend marker.",
+          "death": "Der 50-Tag Durchschnitt ist below der 200-Tag Durchschnitt (a “death cross” regime) — a conventional bearish trend marker.",
+          "neutral": "Der 50- und 200-Tag averages sind too schließen bis call a löschen regime."
+        },
+        "rsi": {
+          "trending_overbought": "RSI ist {{rsi}}, above der conventional 70 “overbought” line. But ADX ist {{adx}}, which says dieser instrument ist in a strong trend — und in strong trends RSI routinely stays above 70 für weeks oder months. In dieser context an elevated RSI ist much weaker evidence than it would be in a sideways Markt.",
+          "ranging_overbought": "RSI ist {{rsi}} und ADX ist {{adx}}, meaning Kurs has been moving sideways rather than trending. Overbought readings have historically been mehr meaningful in Zeitraum-bound conditions than in trending ones — but ‘mehr meaningful’ ist nicht der same as reliable.",
+          "trending_oversold": "RSI ist {{rsi}}, below der conventional 30 “oversold” line, while ADX ({{adx}}) shows a strong trend in place — in a strong downtrend RSI can stay depressed für a long Zeit.",
+          "ranging_oversold": "RSI ist {{rsi}} und ADX ist {{adx}} (Zeitraum-bound). Oversold readings have historically carried a little mehr Gewichtung in sideways conditions.",
+          "random_walk": "Statistically, dieser instrument's aktuell Kurs movements sind indistinguishable von a random walk (variance-ratio test, p={{p}}). Trend-following indicators assume der opposite. Treat what follows as Beschreibung, nicht prediction.",
+          "neutral": "RSI ist {{rsi}}, within der conventional 30–70 neutral band."
+        },
+        "macd": {
+          "bullish": "Der MACD histogram ist positiv und rising — short-term momentum has turned upward relative bis der longer term. Dieser ist a lagging measure von construction.",
+          "bearish": "Der MACD histogram ist negativ und falling — short-term momentum has turned downward relative bis der longer term. Dieser ist a lagging measure von construction.",
+          "neutral": "Der MACD histogram ist schließen bis zero — keine löschen momentum shift either way right now."
+        },
+        "bollinger": {
+          "above": "Kurs ist above der upper Bollinger Band (%B > 1). Kurs spends about 95% von its Zeit inside der bands, so dieser ist uncommon but nicht exceptional am its own.",
+          "below": "Kurs ist below der lower Bollinger Band (%B < 0).",
+          "inside": "Kurs ist within der Bollinger Bands (0 ≤ %B ≤ 1), where it spends most von its Zeit."
+        },
+        "obv": {
+          "divergence_bearish": "Kurs has been making neu highs while am-Kontostand Volumen has nicht — der move looks like it ist happening am thinner participation than der zuletzt one.",
+          "divergence_bullish": "Kurs has been making neu lows while am-Kontostand Volumen has nicht fallen mit it — selling pressure looks like it may be thinning.",
+          "confirming": "Am-Kontostand Volumen ist moving in der same direction as Kurs, mit keine divergence detected über der trailing window.",
+          "unavailable": "Volumen Daten isn't verfügbar für dieser instrument, so OBV can't be computed."
+        },
+        "adx": {
+          "context": "ADX measures trend strength, nicht direction. At {{adx}} dieser instrument ist {{state}} — use it bis weigh how much bis trust der trend-following indicators above."
+        }
+      },
+      "confluenceHeading": "{{positive}} bullish · {{negative}} bearish · {{neutral}} neutral",
+      "groups": {
+        "trend": "Trend Signale",
+        "momentum": "Momentum Signale",
+        "volume": "Volumen Signale"
+      },
+      "lowConfidenceNote": "Lower confidence: short Verlauf, an insignificant random-walk test, oder thin Volumen weakens dieser reading."
+    },
+    "monteCarlo": {
+      "title": "Possible paths von here",
+      "horizon": {
+        "30d": "30d",
+        "90d": "90d",
+        "180d": "180d",
+        "1y": "1y"
+      },
+      "modelLabel": "Model",
+      "models": {
+        "bootstrap": "Historical patterns (recommended)",
+        "gbm": "Simple bell curve (textbook)",
+        "student_t": "Fat-tailed bell curve"
+      },
+      "modelHints": {
+        "bootstrap": "Resamples blocks von dieser instrument's own historical täglich moves, which preserves real patterns von calm und turbulent stretches.",
+        "gbm": "Der textbook random-walk model: returns drawn von a normal distribution. Its tails sind visibly thinner than what markets actually produce.",
+        "student_t": "A normal-shaped model mit fatter tails than der plain bell curve, closer bis how markets actually behave but still nicht a resampling von real Verlauf."
+      },
+      "driftLabel": "Drift",
+      "drifts": {
+        "zero": "Keine drift",
+        "historical": "Historical Durchschnitt",
+        "risk_free": "Risiko-free rate"
+      },
+      "sentenceIntro": "Based am how {{symbol}} has actually behaved über der past {{years}} years, in {{horizon}} trading days:",
+      "bulletMiddleHalf": "der middle half von simulated outcomes land between {{low}} und {{high}}",
+      "bulletOneIn20Below": "about 1 in 20 simulations Ende below {{value}}",
+      "bulletAboveToday": "{{pct}} von paths finish above today's Kurs",
+      "bulletDrawdown20": "in {{pct}} von paths, der Kurs fell mehr than 20% at some point along der way",
+      "calibrationNote": "Dieser ist nicht a forecast. It resamples {{symbol}}'s actual täglich moves von {{start}} bis {{end}} in blocks, which preserves its real pattern von calm und turbulent stretches. It assumes {{driftNote}}. It cannot know about anything das has nicht happened vor — an earnings surprise, a takeover, a Markt crash von a neu kind.",
+      "calibrationVolNote": " Aktuell volatility ist in der {{percentile}}th percentile von der zuletzt three years, so if conditions Rendite bis normal, der real Zeitraum would be wider than shown.",
+      "driftNoteZero": "keine expected drift, so it says nothing about direction",
+      "driftNoteHistorical": "a historical drift von {{drift}}/yr (±{{se}} standard Fehler — treat der direction mit real skepticism)",
+      "driftNoteRiskFree": "drift at der Risiko-free rate, der Risiko-neutral convention",
+      "targetLabel": "Ziel Kurs",
+      "probAboveTarget": "{{pct}} von paths finish above {{target}}",
+      "settingsLabel": "Simulation Einstellungen",
+      "todayLabel": "Heute",
+      "kpiMiddleHalfLabel": "50% von outcomes",
+      "kpiWorstCaseLabel": "5% worst case",
+      "kpiAboveTodayLabel": "Probability above heute",
+      "kpiDrawdownLabel": "Probability von 20%+ drawdown"
+    },
+    "outcomeHistogram": {
+      "title": "Where it could Ende up",
+      "xAxisLabel": "Simulated Kurs at horizon",
+      "meanLabel": "Mean"
+    },
+    "glossary": {
+      "rsi": {
+        "label": "RSI",
+        "body": "A 0–100 momentum gauge comparing aktuell gains bis aktuell losses. Above 70 ist conventionally called 'overbought', below 30 'oversold'. These sind conventions, nicht laws — in a strong trend RSI can sit above 70 für months while der Kurs keeps rising. Read it alongside der trend strength shown above."
+      },
+      "macd": {
+        "label": "MACD",
+        "body": "Der gap between a fast und a slow moving Durchschnitt. When der bars flip von below bis above zero, short-term momentum has turned upward relative bis der longer term. It ist a lagging measure von construction — it describes what has already changed."
+      },
+      "bollinger": {
+        "label": "Bollinger Bands",
+        "body": "A moving Durchschnitt mit bands two standard deviations above und below. Kurs spends about 95% von its Zeit inside der bands, so touching a band ist common, nicht exceptional. When der bands squeeze tight, der instrument has been unusually calm — und calm periods have historically been mehr often followed von large moves, in either direction."
+      },
+      "atr": {
+        "label": "ATR",
+        "body": "Der typical size von a day's Kurs Zeitraum, in currency. An ATR von 4.20 means a 4 move am a given Tag ist ordinary, nicht Nachrichten. Traders use it bis size stop-losses; long-term investors can use it bis calibrate what 'normal' looks like."
+      },
+      "obv": {
+        "label": "OBV",
+        "body": "Adds der day's Volumen when Kurs closes up und subtracts it when Kurs closes down. If Kurs ist making neu highs while dieser line ist nicht, der move ist happening am thinner trading than der vorherige one."
+      },
+      "adx": {
+        "label": "ADX",
+        "body": "Measures how strongly Kurs ist trending, ohne saying in which direction. Below 20 means sideways; above 25 means a real trend ist in place. It ist der context das decides how much Gewichtung bis give der other indicators."
+      },
+      "varianceRatio": {
+        "label": "Variance ratio test",
+        "body": "A statistical test von whether Kurs movements have any memory. If der Ergebnis ist nicht significant, dieser instrument's aktuell movements sind indistinguishable von coin flips — which ist what most academic finance predicts, und it means trend indicators have little bis work mit here."
+      },
+      "monteCarlo": {
+        "label": "Monte Carlo simulation",
+        "body": "Thousands von simulated futures built von reshuffling dieser instrument's own historical täglich moves. It shows der Zeitraum von what its past behaviour makes plausible — nicht a prediction. Der width von der fan ist der message."
+      },
+      "supportResistance": {
+        "label": "Support & resistance",
+        "body": "Kurs areas where dieser instrument has repeatedly stopped und turned around. They matter because other Markt participants watch them und place orders around them, which can make them partly self-fulfilling. They sind nicht floors oder ceilings — they break regularly."
+      }
+    },
+    "states": {
+      "insufficientHistory": "Needs at least 200 days von Verlauf — dieser instrument has {{bars}}.",
+      "noVolume": "Volumen Daten isn't verfügbar für dieser instrument, so am-Kontostand Volumen isn't shown.",
+      "crypto": "Crypto trades 24/7, so täglich-bar indicators here behave a little differently than für Aktien."
+    },
+    "footer": {
+      "priceBasis": "Der Kurs chart, moving averages und levels use unadjusted Kurse — der Kurse das actually traded — while volatility und der simulation use dividend-adjusted Gesamt-Rendite Kurse.",
+      "disclaimer": "Nothing am dieser page ist Anlage advice, a recommendation, oder a buy/sell Signal."
+    },
+    "sections": {
+      "indicators": "Technisch Indicators",
+      "levels": "Support & Resistance",
+      "signals": "What der Indicators Sind Saying Together",
+      "forward": "Forward Simulation",
+      "summary": "Executive Summary"
+    },
+    "summary": {
+      "title": "Executive Summary",
+      "leansBullish": "Overall, technicals lean bullish für {{symbol}}.",
+      "leansBearish": "Overall, technicals lean bearish für {{symbol}}.",
+      "mixed": "Overall, technicals sind mixed für {{symbol}}.",
+      "regimeClause": "Der regime ist {{regimeBadge}}.",
+      "signalClause": "{{positive}} von {{total}} indicators lean positiv.",
+      "monteCarloClause": "Der {{horizon}}-Tag simulation puts der middle half von outcomes between {{low}} und {{high}}."
+    },
+    "warnings": {
+      "shortHistoryTitle": "Limited Verlauf",
+      "cryptoTitle": "24/7 Markt"
+    }
+  },
+  "pdf": {
+    "exportAction": "Export PDF",
+    "exporting": "Preparing…",
+    "page": "Page {{page}} von {{total}}",
+    "generatedOn": "Generated {{date}}",
+    "toasts": {
+      "preparing": "Building Ihr PDF…",
+      "ready": "Gespart {{filename}}",
+      "failed": "Couldn't build der PDF. Versuchen erneut."
+    },
+    "compare": {
+      "eyebrow": "Ticker comparison",
+      "headlineSection": "Auf einen Blick",
+      "bestValueNote": "Der best Wert in each row ist highlighted. {{benchmark}} ist der benchmark — shown für reference, never scored."
+    },
+    "research": {
+      "fundamentals": "Fundamentaldaten",
+      "eyebrow": "Unternehmensanalyse"
+    }
+  }
+}

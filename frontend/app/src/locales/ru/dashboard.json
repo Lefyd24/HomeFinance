@@ -1,0 +1,93 @@
+{
+  "title": "Панель",
+  "subtitle": "Этот месяц с одного взгляда.",
+  "panel": {
+    "viewAll": "Показать все"
+  },
+  "bankAlert": {
+    "title_one": "{{banks}} больше не синхронизируется.",
+    "title_few": "{{banks}} больше не синхронизируются.",
+    "title_many": "{{banks}} больше не синхронизируются.",
+    "title_other": "{{banks}} больше не синхронизируются.",
+    "action": "Переподключите, чтобы возобновить — ваши счета и история сохранятся."
+  },
+  "summary": {
+    "ariaLabel": "Этот месяц",
+    "totalBalance": "Общий баланс",
+    "accountsCount_one": "на {{count}} счёте",
+    "accountsCount_few": "на {{count}} счетах",
+    "accountsCount_many": "на {{count}} счетах",
+    "accountsCount_other": "на {{count}} счетах",
+    "incomeThisMonth": "Поступило за месяц",
+    "expensesThisMonth": "Потрачено за месяц",
+    "netSaved": "Сэкономлено"
+  },
+  "accounts": {
+    "title": "Счета",
+    "hint": "",
+    "empty": "Счетов пока нет. Добавьте счёт на странице «Счета».",
+    "linked": "Привязан",
+    "groups": {
+      "daily": "Повседневные",
+      "savings": "Накопления",
+      "investments": "Инвестиции"
+    }
+  },
+  "due": {
+    "title": "Платежи на 30 дней",
+    "hintEmpty": "Ничего не запланировано",
+    "hintSummary": "{{amount}}, платежей: {{count}}",
+    "empty": "В ближайшие 30 дней платежей нет.",
+    "overdue": "Просрочено",
+    "dueToday": "Срок сегодня",
+    "inDays_one": "Через {{count}} день",
+    "inDays_few": "Через {{count}} дня",
+    "inDays_many": "Через {{count}} дней",
+    "inDays_other": "Через {{count}} дней",
+    "types": {
+      "debt": "долг",
+      "recurring": "регулярный"
+    }
+  },
+  "spending": {
+    "title": "Расходы по категориям",
+    "reportsLink": "Отчёты",
+    "hintSummary_one": "{{amount}} по {{count}} категории",
+    "hintSummary_few": "{{amount}} по {{count}} категориям",
+    "hintSummary_many": "{{amount}} по {{count}} категориям",
+    "hintSummary_other": "{{amount}} по {{count}} категориям",
+    "mostOn": " · больше всего на «{{category}}»"
+  },
+  "spendingChart": {
+    "noData": "Нет данных о расходах за этот период."
+  },
+  "budgets": {
+    "title": "Бюджеты",
+    "hint": "",
+    "empty": "Бюджетов пока нет."
+  },
+  "recent": {
+    "title": "Последние операции",
+    "hint": "Шесть последних записей",
+    "empty": "Записей пока нет."
+  },
+  "goals": {
+    "title": "Цели",
+    "hint": "Прогресс по вашим целям",
+    "empty": "Активных целей нет.",
+    "progressAmount": "{{current}} из {{target}}",
+    "targetDate": " · к {{date}}"
+  },
+  "cashflowChart": {
+    "legend": {
+      "income": "Доходы",
+      "expenses": "Расходы",
+      "netWorth": "Чистые активы"
+    },
+    "yAxis": {
+      "cashflow": "Денежный поток",
+      "netWorth": "Чистые активы"
+    },
+    "noData": "Нет данных о денежном потоке за этот период."
+  }
+}

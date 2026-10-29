@@ -1,0 +1,196 @@
+{
+  "categories": {
+    "emergencyFund": "Emergency Fondo",
+    "vacation": "Vacation",
+    "car": "Car Purchase",
+    "home": "Home Purchase",
+    "education": "Education",
+    "retirement": "Retirement",
+    "other": "Altro",
+    "general": "General"
+  },
+  "icons": {
+    "target": "Obiettivo",
+    "money": "Money",
+    "home": "Home",
+    "car": "Car",
+    "travel": "Travel",
+    "education": "Education",
+    "health": "Health",
+    "gift": "Gift"
+  },
+  "page": {
+    "title": "Obiettivi",
+    "description": "Chase targets con a cancella finish line — contribute, track, e celebrate.",
+    "addGoal": "Add obiettivo",
+    "createFirstGoal": "Crea il primo obiettivo",
+    "yourGoals": "I tuoi obiettivi",
+    "tabs": {
+      "active": "Attivo",
+      "completed": "Completato",
+      "all": "Tutti"
+    },
+    "empty": {
+      "title": "Nessun obiettivi yet",
+      "description": "Crea tuo primo financial obiettivo a inizio tracking progress toward a obiettivo."
+    },
+    "noGoalsInView": {
+      "all": "Nessun obiettivi in questo visualizza.",
+      "active": "Nessun attivo obiettivi in questo visualizza.",
+      "completed": "Nessun completato obiettivi in questo visualizza."
+    },
+    "onlyGoalInView": {
+      "all": "L’obiettivo in evidenza sopra è il tuo unico obiettivo.",
+      "active": "L’obiettivo in evidenza sopra è il tuo unico obiettivo attivo.",
+      "completed": "L’obiettivo in evidenza sopra è il tuo unico obiettivo completato."
+    },
+    "toasts": {
+      "deleted": "Obiettivo deleted",
+      "deleteFailed": "Non riuscito a elimina obiettivo",
+      "markedComplete": "Obiettivo marked complete",
+      "updateFailed": "Impossibile aggiornare l’obiettivo"
+    },
+    "deleteDialog": {
+      "title": "Elimina {{name}}?",
+      "description": "L’obiettivo e la cronologia dei progressi verranno rimossi. L’operazione non può essere annullata.",
+      "confirmLabel": "Elimina obiettivo"
+    }
+  },
+  "journey": {
+    "ariaLabel": "Savings journey",
+    "title": "Savings journey",
+    "ofTargeted": "su {{amount}} previsti",
+    "summary_one": "{{saved}} risparmiato across {{count}} obiettivo · {{active}} attivo · {{completed}} completato",
+    "summary_other": "{{saved}} risparmiato across {{count}} obiettivi · {{active}} attivo · {{completed}} completato"
+  },
+  "hero": {
+    "primaryGoalAria": "Obiettivo principale: {{name}}",
+    "spotlight": "Spotlight",
+    "primary": "Primary",
+    "completed": "Completato",
+    "ofTarget": "di {{amount}}",
+    "toGo": "Mancano {{amount}}",
+    "saveToArrive": "Salva {{amount}}/mese a arrive da {{date}}",
+    "targetDate": "Obiettivo {{date}}",
+    "daysLeft": "{{count}} days restante",
+    "contribute": "Contribute",
+    "details": "Dettagli",
+    "edit": "Modifica"
+  },
+  "list": {
+    "primary": "Primary",
+    "done": "Done",
+    "left": "{{amount}} restante",
+    "contribute": "Contribute",
+    "actionsFor": "{{name}} actions",
+    "menu": {
+      "contribute": "Contribute",
+      "details": "Dettagli",
+      "edit": "Modifica",
+      "markComplete": "Mark complete",
+      "delete": "Elimina"
+    }
+  },
+  "form": {
+    "titleEdit": "Modifica obiettivo",
+    "titleCreate": "Crea obiettivo",
+    "updating": "Updating",
+    "newTarget": "Nuovo savings obiettivo",
+    "untitledGoal": "Untitled obiettivo",
+    "name": {
+      "label": "Obiettivo nome",
+      "placeholder": "e.g. Emergency fondo"
+    },
+    "description": {
+      "label": "Descrizione",
+      "placeholder": "Facoltativo notes"
+    },
+    "targetAmount": {
+      "label": "Obiettivo importo"
+    },
+    "currency": {
+      "label": "Valuta"
+    },
+    "category": {
+      "label": "Categoria",
+      "placeholder": "Select categoria",
+      "selectPlaceholder": "Select categoria"
+    },
+    "targetDate": {
+      "label": "Data obiettivo"
+    },
+    "icon": {
+      "label": "Icon",
+      "placeholder": "Icon"
+    },
+    "color": {
+      "label": "Color"
+    },
+    "setAsPrimary": "Set as primary obiettivo",
+    "cancel": "Cancel",
+    "saveChanges": "Salva changes",
+    "saveGoal": "Salva obiettivo",
+    "toasts": {
+      "updated": "Obiettivo aggiornato",
+      "created": "Obiettivo creato",
+      "updateFailed": "Impossibile aggiornare l’obiettivo",
+      "createFailed": "Impossibile creare l’obiettivo"
+    },
+    "validation": {
+      "nameRequired": "Obiettivo nome è obbligatorio",
+      "targetAmountPositive": "Obiettivo importo must be greater than 0"
+    }
+  },
+  "contribute": {
+    "title": "Add contribution",
+    "descriptionWithGoal": "{{name}} · {{amount}} remaining",
+    "descriptionNoGoal": "Contribuisci toward a obiettivo",
+    "amount": {
+      "label": "Importo"
+    },
+    "type": {
+      "label": "Tipo",
+      "contribution": "Contributo (add a obiettivo)",
+      "withdrawal": "Prelievo (rimuovi da obiettivo)"
+    },
+    "description": {
+      "label": "Descrizione",
+      "placeholder": "e.g. Mensile savings"
+    },
+    "date": {
+      "label": "Data"
+    },
+    "submitWithdrawal": "Record withdrawal",
+    "submitContribution": "Add contribution",
+    "toasts": {
+      "contributionAdded": "Contributo aggiunto",
+      "withdrawalRecorded": "Withdrawal recorded",
+      "failed": "Impossibile aggiungere la transazione"
+    },
+    "validation": {
+      "amountPositive": "Importo must be greater than 0",
+      "dateRequired": "Data è obbligatorio"
+    }
+  },
+  "details": {
+    "primary": "Primary",
+    "completed": "Completato",
+    "complete": "complete",
+    "saved": "Risparmiato",
+    "target": "Obiettivo",
+    "remaining": "Remaining",
+    "targetDate": "Data obiettivo",
+    "daysLeft": "Days restante",
+    "saveToReach": "Salva {{amount}}/mese a reach da {{date}}",
+    "onTrack": "Su track",
+    "behindPace": "Behind pace",
+    "avgPerMonth": "avg {{amount}}/mo",
+    "recentActivity": "Attività recente",
+    "noContributions": "Nessun contributions yet",
+    "contribution": "Contribution",
+    "withdrawal": "Prelievo",
+    "contribute": "Contribute",
+    "edit": "Modifica",
+    "close": "Chiudi"
+  }
+}

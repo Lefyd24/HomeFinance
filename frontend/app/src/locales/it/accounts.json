@@ -1,0 +1,119 @@
+{
+  "page": {
+    "title": "Conti",
+    "description": "Dove si trovano i tuoi soldi e in quale quantità.",
+    "addAccount": "Aggiungi conto"
+  },
+  "empty": {
+    "title": "Ancora nessun conto",
+    "description": "Aggiungi il tuo primo conto per iniziare a tracciare i saldi e collegare le transazioni."
+  },
+  "allocationLabel": "Ripartizione del saldo",
+  "summary": {
+    "totalHeld": "Totale detenuto",
+    "liquid": "Liquidi",
+    "credit": "Credito",
+    "net": "Netto"
+  },
+  "card": {
+    "inactive": "Inattivo",
+    "synced": "Sincronizzato",
+    "outstanding": "In sospeso",
+    "balance": "Saldo",
+    "sharePct": "{{percent}}% detenuto",
+    "transactions": "Transazioni",
+    "actionsLabel": "Azioni conto",
+    "edit": "Modifica",
+    "deactivate": "Disattiva",
+    "reactivate": "Riattiva",
+    "delete": "Elimina",
+    "bankSynced": "Sincronizzato con la banca",
+    "manageConnection": "Gestisci connessione",
+    "deleteLinked": "Elimina (prima disconnetti)",
+    "lastSyncedAt": "Ultima sincronizzazione {{when}}",
+    "neverSynced": "Non ancora sincronizzato"
+  },
+  "retired": {
+    "heading": "Inattivi",
+    "show": "Mostra",
+    "hide": "Nascondi",
+    "description": "Questi conti sono nascosti dalla tua dashboard e non rientrano nei totali. Le transazioni rimangono intatte e puoi comunque filtrarle nell'app."
+  },
+  "deactivateDialog": {
+    "title": "Disattivare {{name}}?",
+    "description": "Scomparirà dalla tua dashboard e non verrà più conteggiato nei saldi. Non viene eliminato nulla.",
+    "confirmLabel": "Disattiva"
+  },
+  "deleteDialog": {
+    "title": "Eliminare {{name}}?",
+    "description": "Le transazioni registrate su questo conto verranno rimosse insieme ad esso. Questa azione non può essere annullata.",
+    "confirmLabel": "Elimina conto"
+  },
+  "toasts": {
+    "deleted": "Conto eliminato",
+    "deleteFailed": "Impossibile eliminare il conto. Riprova.",
+    "deactivated": "Conto disattivato — lo trovi sotto Inattivi",
+    "reactivated": "Conto riattivato",
+    "activeChangeFailed": "Impossibile modificare il conto. Riprova.",
+    "updated": "Conto aggiornato",
+    "created": "Conto creato",
+    "updateFailed": "Aggiornamento del conto fallito",
+    "createFailed": "Creazione del conto fallita"
+  },
+  "types": {
+    "checking": {
+      "label": "Conto corrente",
+      "plural": "Conti correnti"
+    },
+    "savings": {
+      "label": "Risparmio",
+      "plural": "Conti di risparmio"
+    },
+    "credit": {
+      "label": "Carta di credito",
+      "plural": "Carte di credito"
+    },
+    "cash": {
+      "label": "Contanti",
+      "plural": "Contanti"
+    },
+    "investment": {
+      "label": "Investimento",
+      "plural": "Investimenti"
+    }
+  },
+  "form": {
+    "titleEdit": "Modifica conto",
+    "titleAdd": "Aggiungi un conto",
+    "description": "La scheda sottostante mostra esattamente come apparirà nella pagina Conti.",
+    "newAccountPreview": "Nuovo conto",
+    "nameLabel": "Nome del conto",
+    "namePlaceholder": "es. Conto Corrente Eurobank",
+    "typeLabel": "Tipo di conto",
+    "typePlaceholder": "Scegli un tipo",
+    "currencyLabel": "Valuta",
+    "currencyPlaceholder": "Valuta",
+    "balanceLabel": "Saldo attuale",
+    "balanceHint": "Utilizza un valore negativo per le carte di credito con saldo debitore.",
+    "iconLabel": "Icona conto",
+    "iconDefault": "Predefinita",
+    "descriptionLabel": "Descrizione",
+    "descriptionPlaceholder": "Note opzionali su questo conto",
+    "providerSyncedNote": "Saldo, tipo e valuta sono gestiti automaticamente dalla sincronizzazione {{provider}}.",
+    "saving": "Salvataggio…",
+    "saveChanges": "Salva modifiche",
+    "createAccount": "Crea conto",
+    "typeOptions": {
+      "checking": "Conto corrente",
+      "savings": "Risparmio",
+      "credit": "Carta di credito",
+      "cash": "Contanti",
+      "investment": "Investimento"
+    },
+    "currencyOptions": {
+      "eur": "EUR — Euro",
+      "usd": "USD — Dollaro Statunitense",
+      "gbp": "GBP — Sterlina Britannica"
+    }
+  }
+}

@@ -1,0 +1,163 @@
+{
+  "page": {
+    "title": "Suivi",
+    "description": "Group transactions into buckets like a trip ou a renovation, et watch what they add up à.",
+    "addTracker": "Nouveau suivi",
+    "createFirst": "Créez votre premier suivi",
+    "yourTrackers": "Vos suivis",
+    "empty": {
+      "title": "Aucun suivis yet",
+      "description": "A suivi collects transactions en dessous one nom — \"Trip à Italy\", \"Kitchen renovation\" — so vous can see le real total. Add transactions à it de le transaction editor, ou straight de here."
+    },
+    "tabs": {
+      "active": "Actif",
+      "inactive": "Inactif",
+      "all": "Tout"
+    },
+    "noneInView": {
+      "active": "Aucun suivi actif.",
+      "inactive": "Aucun suivi inactif.",
+      "all": "Aucun suivi."
+    },
+    "deleteDialog": {
+      "title": "Supprimer \"{{name}}\"?",
+      "description": "Le suivi sera supprimé. Les transactions qu’il contient resteront inchangées.",
+      "confirmLabel": "Supprimer suivi"
+    },
+    "toasts": {
+      "deleted": "Suivi deleted",
+      "deleteFailed": "Impossible de supprimer le suivi",
+      "activated": "Suivi activated",
+      "deactivated": "Suivi deactivated",
+      "updateFailed": "Impossible de modifier le suivi"
+    }
+  },
+  "card": {
+    "entries_one": "{{count}} transaction",
+    "entries_other": "{{count}} transactions",
+    "inactive": "Inactif",
+    "ofTarget": "de {{amount}}",
+    "addTransaction": "Add",
+    "actionsFor": "Actions pour {{name}}",
+    "menu": {
+      "edit": "Modifier",
+      "activate": "Activer",
+      "deactivate": "Désactiver",
+      "delete": "Supprimer"
+    },
+    "lastEntry": "Dernier : {{date}}",
+    "overTarget": "{{amount}} au-dessus"
+  },
+  "details": {
+    "active": "Actif",
+    "inactive": "Inactif",
+    "createdOn": "Créé le {{date}}",
+    "total": "Total tracked",
+    "entries": "Transactions",
+    "created": "Created",
+    "lastEntry": "Dernier entry",
+    "leftOfTarget": "{{amount}} restant de {{target}}",
+    "overBy": "{{amount}} au-dessus objectif",
+    "transactions": "Transactions dans ce suivi",
+    "noTransactions": "Nothing here yet. Add a transaction below, ou tick ce suivi while editing an existing one.",
+    "removeFromTracker": "Retirer de suivi",
+    "removeFromTrackerNamed": "Retirer \"{{description}}\" de ce suivi",
+    "addTransaction": "Ajouter une transaction",
+    "edit": "Modifier",
+    "close": "Fermer",
+    "toasts": {
+      "removed": "Retirerd de suivi",
+      "removeFailed": "Pourrait pas retirer le transaction"
+    }
+  },
+  "form": {
+    "titleCreate": "Nouveau suivi",
+    "titleEdit": "Modifier suivi",
+    "description": "Nom le thing vous want à follow. A objectif est facultatif.",
+    "untitled": "Untitled suivi",
+    "noTarget": "Aucun objectif",
+    "targetPreview": "Objectif {{amount}}",
+    "create": "Créer suivi",
+    "saveChanges": "Enregistrer changes",
+    "name": {
+      "label": "Nom",
+      "placeholder": "Trip à Italy"
+    },
+    "descriptionField": {
+      "label": "Description",
+      "placeholder": "What does ce suivi cover?"
+    },
+    "target": {
+      "label": "Objectif montant",
+      "placeholder": "Facultatif",
+      "hint": "Leave empty à just track le total."
+    },
+    "currency": {
+      "label": "Devise"
+    },
+    "icon": {
+      "label": "Icon"
+    },
+    "color": {
+      "label": "Colour"
+    },
+    "active": {
+      "label": "Actif",
+      "hint": "Only actif suivis afficher up when vous modifier a transaction."
+    },
+    "validation": {
+      "nameRequired": "Nom est obligatoire",
+      "targetPositive": "Objectif must be greater than 0"
+    },
+    "toasts": {
+      "created": "Suivi created",
+      "updated": "Suivi updated",
+      "createFailed": "Pourrait pas créer le suivi",
+      "updateFailed": "Impossible de modifier le suivi"
+    }
+  },
+  "transactionForm": {
+    "title": "Ajouter une transaction",
+    "description": "Creates a real transaction et files it en dessous \"{{name}}\".",
+    "descriptionNoTracker": "Creates a real transaction et files it en dessous ce suivi.",
+    "submit": "Ajouter une transaction",
+    "type": {
+      "label": "Direction",
+      "expense": "Dépense",
+      "income": "Revenu",
+      "hint": "Revenus inside a suivi (a refund, say) est subtracted de its total."
+    },
+    "amount": {
+      "label": "Montant"
+    },
+    "descriptionField": {
+      "label": "Description",
+      "placeholder": "Hotel dans Rome"
+    },
+    "account": {
+      "label": "Compte",
+      "placeholder": "Select an compte"
+    },
+    "category": {
+      "label": "Catégorie",
+      "none": "Aucun catégorie"
+    },
+    "date": {
+      "label": "Date"
+    },
+    "notes": {
+      "label": "Notes",
+      "placeholder": "Anything worth remembering"
+    },
+    "validation": {
+      "amountPositive": "Montant must be greater than 0",
+      "accountRequired": "Compte est obligatoire",
+      "descriptionRequired": "Description est obligatoire",
+      "dateRequired": "La date est obligatoire"
+    },
+    "toasts": {
+      "added": "Transaction added à le suivi",
+      "failed": "Pourrait pas add le transaction"
+    }
+  }
+}

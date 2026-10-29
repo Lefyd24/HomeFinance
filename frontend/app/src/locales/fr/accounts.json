@@ -1,0 +1,119 @@
+{
+  "page": {
+    "title": "Comptes",
+    "description": "Où se trouve votre argent et quelle quantité se trouve où.",
+    "addAccount": "Ajouter un compte"
+  },
+  "empty": {
+    "title": "Aucun compte pour le moment",
+    "description": "Ajoutez votre premier compte pour commencer à suivre les soldes et lier les transactions."
+  },
+  "allocationLabel": "Répartition du solde",
+  "summary": {
+    "totalHeld": "Total détenu",
+    "liquid": "Disponible",
+    "credit": "Crédit",
+    "net": "Net"
+  },
+  "card": {
+    "inactive": "Inactif",
+    "synced": "Synchronisé",
+    "outstanding": "En cours",
+    "balance": "Solde",
+    "sharePct": "{{percent}} % détenus",
+    "transactions": "Transactions",
+    "actionsLabel": "Actions du compte",
+    "edit": "Modifier",
+    "deactivate": "Désactiver",
+    "reactivate": "Réactiver",
+    "delete": "Supprimer",
+    "bankSynced": "Synchronisé avec la banque",
+    "manageConnection": "Gérer la connexion",
+    "deleteLinked": "Supprimer (déconnecter d'abord)",
+    "lastSyncedAt": "Dernière synchronisation {{when}}",
+    "neverSynced": "Pas encore synchronisé"
+  },
+  "retired": {
+    "heading": "Inactifs",
+    "show": "Afficher",
+    "hide": "Masquer",
+    "description": "Ces comptes sont masqués de votre tableau de bord et exclus de vos totaux. Leurs transactions restent intactes et vous pouvez toujours les filtrer partout dans l'application."
+  },
+  "deactivateDialog": {
+    "title": "Désactiver {{name}} ?",
+    "description": "Il disparaîtra de votre tableau de bord et ne sera plus pris en compte dans vos soldes. Rien n'est supprimé : ses transactions restent et vous pouvez toujours le filtrer. Réactivez-le à tout moment.",
+    "confirmLabel": "Désactiver"
+  },
+  "deleteDialog": {
+    "title": "Supprimer {{name}} ?",
+    "description": "Les transactions enregistrées sur ce compte seront supprimées avec lui. Cette action est irréversible. Pour le masquer sans rien perdre, désactivez-le plutôt.",
+    "confirmLabel": "Supprimer le compte"
+  },
+  "toasts": {
+    "deleted": "Compte supprimé",
+    "deleteFailed": "Impossible de supprimer le compte. Réessayez.",
+    "deactivated": "Compte désactivé — retrouvez-le sous Inactifs",
+    "reactivated": "Compte réactivé",
+    "activeChangeFailed": "Impossible de modifier le compte. Réessayez.",
+    "updated": "Compte mis à jour",
+    "created": "Compte créé",
+    "updateFailed": "Échec de la mise à jour du compte",
+    "createFailed": "Échec de la création du compte"
+  },
+  "types": {
+    "checking": {
+      "label": "Compte courant",
+      "plural": "Comptes courants"
+    },
+    "savings": {
+      "label": "Épargne",
+      "plural": "Comptes d'épargne"
+    },
+    "credit": {
+      "label": "Crédit",
+      "plural": "Cartes de crédit"
+    },
+    "cash": {
+      "label": "Espèces",
+      "plural": "Espèces"
+    },
+    "investment": {
+      "label": "Investissement",
+      "plural": "Investissements"
+    }
+  },
+  "form": {
+    "titleEdit": "Modifier le compte",
+    "titleAdd": "Ajouter un compte",
+    "description": "La carte ci-dessous est exactement telle qu'elle apparaîtra sur la page Comptes.",
+    "newAccountPreview": "Nouveau compte",
+    "nameLabel": "Nom du compte",
+    "namePlaceholder": "ex. Compte courant Eurobank",
+    "typeLabel": "Type de compte",
+    "typePlaceholder": "Choisissez un type",
+    "currencyLabel": "Devise",
+    "currencyPlaceholder": "Devise",
+    "balanceLabel": "Solde actuel",
+    "balanceHint": "Utilisez une valeur négative pour les cartes de crédit avec un solde débiteur.",
+    "iconLabel": "Icône du compte",
+    "iconDefault": "Par défaut",
+    "descriptionLabel": "Description",
+    "descriptionPlaceholder": "Notes facultatives sur ce compte",
+    "providerSyncedNote": "Le solde, le type et la devise sont gérés automatiquement par la synchronisation {{provider}} — modifiez-les depuis la page Investissements.",
+    "saving": "Enregistrement…",
+    "saveChanges": "Enregistrer les modifications",
+    "createAccount": "Créer le compte",
+    "typeOptions": {
+      "checking": "Compte courant",
+      "savings": "Épargne",
+      "credit": "Carte de crédit",
+      "cash": "Espèces",
+      "investment": "Investissement"
+    },
+    "currencyOptions": {
+      "eur": "EUR — Euro",
+      "usd": "USD — Dollar américain",
+      "gbp": "GBP — Livre sterling"
+    }
+  }
+}

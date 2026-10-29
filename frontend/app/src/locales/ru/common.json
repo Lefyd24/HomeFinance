@@ -1,0 +1,28 @@
+{
+  "actions": {
+    "save": "Сохранить",
+    "cancel": "Отмена",
+    "delete": "Удалить",
+    "edit": "Изменить",
+    "add": "Добавить",
+    "close": "Закрыть",
+    "confirm": "Подтвердить",
+    "back": "Назад"
+  },
+  "logout": "Выйти",
+  "settings": "Настройки",
+  "language": "Язык",
+  "languages": {
+    "en": "English",
+    "el": "Ελληνικά",
+    "ru": "Русский",
+    "fr": "Français",
+    "de": "Deutsch",
+    "it": "Italiano"
+  },
+  "theme": {
+    "light": "Светлая",
+    "dark": "Тёмная",
+    "system": "Системная"
+  }
+}

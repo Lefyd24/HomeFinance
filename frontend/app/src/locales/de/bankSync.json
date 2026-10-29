@@ -1,0 +1,105 @@
+{
+  "page": {
+    "title": "Bankverbindungen",
+    "description": "Synchronisiere Transaktionen direkt von deiner Bank, statt sie manuell einzugeben.",
+    "connect": "Bank verbinden"
+  },
+  "empty": {
+    "title": "Keine Bank verbunden",
+    "description": "Verbinde eine Bank, um Transaktionen automatisch zu importieren. Bargeld und andere Konten kannst du weiterhin manuell erfassen."
+  },
+  "status": {
+    "active": "aktiv",
+    "pending": "ausstehend",
+    "expired": "abgelaufen",
+    "revoked": "widerrufen",
+    "error": "Fehler"
+  },
+  "connection": {
+    "lastSynced": "Zuletzt synchronisiert: {{when}}",
+    "never": "nie",
+    "syncNow": "Jetzt synchronisieren",
+    "syncing": "Synchronisierung läuft…",
+    "disconnect": "Verbindung trennen",
+    "reconnect": "Erneut verbinden",
+    "reconnectNow": "Jetzt erneut verbinden",
+    "reconnecting": "Erneute Verbindung wird hergestellt…",
+    "expiredNotice": "Diese Verbindung ist abgelaufen und wird nicht mehr synchronisiert. Stelle die Verbindung erneut her, um fortzufahren – deine Konten und deren Verlauf bleiben erhalten.",
+    "prematureNotice": "Deine Bank hat diese Sitzung vorzeitig beendet, noch vor dem vereinbarten Ablaufdatum. Das ist normal und kann nach einer bankseitigen Sicherheitsprüfung oder dann passieren, wenn dasselbe Konto an anderer Stelle autorisiert wurde. Stelle die Verbindung erneut her, um fortzufahren – deine Konten und deren Verlauf bleiben erhalten.",
+    "revokedNotice": "Der Zugriff auf diese Bank wurde widerrufen. Stelle die Verbindung erneut her, um die Synchronisierung fortzusetzen – deine Konten und deren Verlauf bleiben erhalten.",
+    "errorNotice": "Diese Verbindung konnte nicht abgeschlossen werden und synchronisiert nicht. Stelle sie erneut her, um es noch einmal zu versuchen – deine Konten und deren Verlauf bleiben erhalten.",
+    "expiringNotice": "Der Zugriff läuft in {{days}} Tag(en) ab. Stelle die Verbindung erneut her, damit Transaktionen weiter synchronisiert werden.",
+    "noAccounts": "Mit dieser Verbindung sind keine Konten verknüpft. Sie müssen in der Enable-Banking-Systemsteuerung freigegeben werden, bevor sie hier erscheinen.",
+    "unlinkAccount": "Synchronisierung dieses Kontos beenden",
+    "unlinkAccountFor": "Synchronisierung von {{account}} beenden"
+  },
+  "disconnectDialog": {
+    "title": "Verbindung zu {{bank}} trennen?",
+    "description": "Die Synchronisierung wird beendet und die Bankeinwilligung widerrufen. Anschließend kannst du auswählen, was mit den Konten und ihren Transaktionen geschehen soll.",
+    "confirmLabel": "Verbindung trennen"
+  },
+  "dialog": {
+    "title": "Bank verbinden",
+    "description": "Du wirst zu deiner Bank weitergeleitet, um dich anzumelden und den Zugriff zu genehmigen. Wir sehen deine Zugangsdaten niemals.",
+    "search": "Banken suchen…",
+    "noMatches": "Keine Bank entspricht „{{query}}“.",
+    "loadFailed": "Die Bankenliste konnte nicht geladen werden.",
+    "redirecting": "Weiterleitung…",
+    "cancel": "Abbrechen",
+    "whitelistNote": "Deine Konten müssen in der Enable-Banking-Systemsteuerung verknüpft werden, bevor sie hier synchronisiert werden können. Wenn die Verbindung erfolgreich ist, aber keine Konten angezeigt werden, fehlt dieser Schritt.",
+    "readOnlyNote": "Der Zugriff ist schreibgeschützt – Zahlungen sind nicht möglich. Lies unsere <privacy>Datenschutzerklärung</privacy> und unsere <terms>Nutzungsbedingungen</terms>."
+  },
+  "toasts": {
+    "connected": "Bank verbunden",
+    "connectedWithAccounts": "Bank verbunden – {{count}} Konto/Konten verknüpft",
+    "imported": "{{count}} neue Transaktion(en) importiert",
+    "upToDate": "Bereits aktuell",
+    "partialFailure": "{{count}} Konto/Konten konnten nicht synchronisiert werden",
+    "syncFailed": "Synchronisierung fehlgeschlagen",
+    "disconnected": "Verbindung zu {{bank}} getrennt",
+    "disconnectFailed": "Verbindung konnte nicht getrennt werden",
+    "startFailed": "Verbindung konnte nicht gestartet werden",
+    "disconnectedAndKept": "Verbindung zu {{bank}} getrennt – Konten bleiben erhalten und können jetzt bearbeitet werden",
+    "disconnectedAndDeleted": "Verbindung zu {{bank}} getrennt – {{count}} Transaktion(en) gelöscht",
+    "accountUnlinked": "{{account}} wird nicht mehr synchronisiert – das Konto bleibt erhalten und kann jetzt bearbeitet werden",
+    "accountDeleted": "{{account}} gelöscht – {{count}} Transaktion(en) entfernt",
+    "connectionRemoved": "Dies war das letzte Konto der Bank, daher wurde auch die Verbindung entfernt"
+  },
+  "callbackErrors": {
+    "missing_state": "Die Bank hat nicht genügend Informationen zurückgesendet. Bitte versuche es erneut.",
+    "invalid_state": "Dieser Verbindungsversuch ist nicht mehr gültig. Bitte starte erneut.",
+    "state_expired": "Der Verbindungsversuch ist abgelaufen. Bitte versuche es erneut.",
+    "state_already_used": "Dieser Verbindungslink wurde bereits verwendet. Erstelle einen neuen.",
+    "bank_declined": "Deine Bank hat die Anfrage abgelehnt oder die Genehmigung wurde abgebrochen.",
+    "session_failed": "Die Verbindung zu deiner Bank konnte nicht hergestellt werden. Bitte versuche es erneut.",
+    "no_accounts": "Deine Bank hat den Zugriff genehmigt, aber keine Konten zurückgegeben. Sie müssen vermutlich noch in der Enable-Banking-Systemsteuerung verknüpft werden.",
+    "generic": "Die Bankverbindung konnte nicht hergestellt werden."
+  },
+  "transaction": {
+    "pending": "Ausstehend",
+    "pendingHint": "Von deiner Bank noch nicht gebucht. Die Transaktion kann sich ändern oder verschwinden."
+  },
+  "disconnectChoice": {
+    "title": "Was soll mit den Daten von {{name}} geschehen?",
+    "keep": {
+      "title": "Konten und Transaktionen behalten",
+      "description": "Sie werden zu normalen manuellen Einträgen, die du bearbeiten und löschen kannst. Es geht nichts verloren, aber sie werden nicht mehr automatisch aktualisiert.",
+      "titleBank": "Konten und Transaktionen behalten",
+      "titleAccount": "Konto und seine Transaktionen behalten"
+    },
+    "delete": {
+      "title": "{{count}} Konto/Konten und alle darin enthaltenen Daten löschen",
+      "description": "Alle jemals synchronisierten Transaktionen werden dauerhaft entfernt. Dies kann nicht rückgängig gemacht werden.",
+      "titleBank": "{{count}} Konto/Konten und alle darin enthaltenen Daten löschen",
+      "titleAccount": "Konto und alle darin enthaltenen Daten löschen"
+    },
+    "cancel": "Abbrechen",
+    "descriptionBank": "{{count}} Konto/Konten wurden von dieser Bank synchronisiert.",
+    "descriptionAccount": "Dieses Konto wurde von deiner Bank synchronisiert."
+  },
+  "unlinkAccountDialog": {
+    "title": "Synchronisierung von {{account}} beenden?",
+    "description": "Nur dieses Konto ist betroffen – die übrigen Konten von {{bank}} werden weiterhin synchronisiert. Anschließend kannst du auswählen, was mit seinen Transaktionen geschehen soll.",
+    "confirmLabel": "Synchronisierung beenden"
+  }
+}

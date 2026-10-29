@@ -1,0 +1,304 @@
+{
+  "types": {
+    "creditCard": "Kreditkarte",
+    "personalLoan": "Ratenkredit",
+    "studentLoan": "Studienkredit",
+    "mortgage": "Baufinanzierung / Hypothek",
+    "carLoan": "Autokredit",
+    "informal": "Privates Darlehen",
+    "utilities": "Nebenkosten",
+    "subscription": "Abonnement",
+    "medical": "Arztrechnung",
+    "tax": "Steuerschuld",
+    "legal": "Rechtskosten",
+    "other": "Sonstiges",
+    "custom": "Benutzerdefiniert"
+  },
+  "page": {
+    "title": "Schulden & Kredite",
+    "description": "Klicken Sie auf eine Verbindlichkeit für Tilgungspläne und Zinsdetails.",
+    "payoffStrategies": "Tilgungsstrategien",
+    "addDebt": "Schuld hinzufügen",
+    "addFirstDebt": "Erste Schuld hinzufügen",
+    "totalOwed": "Gesamtschulden",
+    "overallPayoff": "Gesamttilgung",
+    "minMonthly": "Mindestrate monatl.",
+    "projInterest": "Prognostizierte Zinsen",
+    "allPaidOff": "Alle Erfassten Kredite sind vollständig abbezahlt.",
+    "paidOffCount": "Abbezahlt · {{count}}",
+    "empty": {
+      "title": "Noch keine Schulden erfasst",
+      "description": "Fügen Sie einen Kredit mit Zinssatz und Mindestrate hinzu."
+    },
+    "deleteDialog": {
+      "title": "{{name}} löschen?",
+      "description": "Die Verbindlichkeit und aufgezeichnete Tilgungen werden entfernt.",
+      "confirmLabel": "Schuld löschen"
+    },
+    "toasts": {
+      "deleted": "Schuld gelöscht",
+      "deleteFailed": "Fehler beim Löschen."
+    }
+  },
+  "payoffBar": {
+    "ariaLabel": "{{paid}} getilgt, {{remaining}} offen, {{interest}} Zinsen verbleibend",
+    "paidOff": "Getilgt",
+    "stillOwed": "Noch offen",
+    "interestAhead": "Künftige Zinsen"
+  },
+  "tile": {
+    "ofOriginal": "von urspr. {{amount}}",
+    "cleared": "Beglichen",
+    "paidOff": "Abbezahlt",
+    "minPayment": "Mindestrate",
+    "aprSuffix": " · {{apr}} % p.a."
+  },
+  "detail": {
+    "addPayment": "Zahlung hinzufügen",
+    "payments": "Zahlungen",
+    "edit": "Bearbeiten",
+    "delete": "Löschen",
+    "amountDueInterestIncluded": "Offener Betrag inkl. Zinsen",
+    "currentBalance": "Aktueller Stand",
+    "ofOriginal": "von urspr. {{amount}}",
+    "cleared": "Beglichen",
+    "percentPaidOff": "{{percent}} % getilgt",
+    "priority": "Priorität P{{priority}}",
+    "interestAndPayoff": {
+      "title": "Zinsen & Tilgung",
+      "description": "Prognose basierend auf Effektivzins und Mindestrate.",
+      "apr": "Zinssatz p.a.",
+      "aprHint": "Monatliche Verzinsung",
+      "minPayment": "Mindestrate",
+      "everyUnit": "Alle {{unit}}",
+      "everyIntervalUnit": "Alle {{interval}} {{unit}}",
+      "setOneToUnlock": "Geben Sie Zins und Mindestrate ein",
+      "monthsToPayoff": "Monate bis Schuldenfreiheit",
+      "estDate": "Vorauss. {{date}}",
+      "needsAprAndMinPayment": "Erfordert Zinssatz und Mindestrate",
+      "totalInterest": "Gesamtzinsen",
+      "totalInterestHint": "Kosten bei reiner Mindesttilgung",
+      "recurrenceUnits": {
+        "days": "Tage",
+        "weeks": "Wochen",
+        "months": "Monate",
+        "day": "Tag",
+        "week": "Woche",
+        "month": "Monat"
+      }
+    },
+    "opened": "Aufgenommen",
+    "maturity": "Laufzeitende",
+    "nextPayment": "Nächste Rate",
+    "scheduleDay": "Fälligkeitstag",
+    "day": "Tag {{day}}",
+    "clearedOn": "Beglichen am",
+    "notes": "Notizen"
+  },
+  "paymentsSheet": {
+    "title": "Zahlungen & Transaktionen",
+    "descriptionWithDebt": "Zahlungshistorie für {{name}}.",
+    "descriptionNoDebt": "Wählen Sie eine Schuld aus.",
+    "empty": {
+      "title": "Noch keine Zahlungen",
+      "description": "Erfassen Sie eine Zahlung."
+    },
+    "payment": "Zahlung",
+    "transactionHash": "Transaktion #{{id}}",
+    "principal": "Tilgung {{amount}}",
+    "interest": "Zinsen {{amount}}",
+    "edit": "Bearbeiten",
+    "delete": "Löschen",
+    "deleteConfirm": {
+      "title": "Diese Zahlung löschen?",
+      "description": "Die Restschuld erhöht sich wieder um diesen Betrag.",
+      "confirmLabel": "Zahlung löschen"
+    },
+    "toasts": {
+      "deleted": "Zahlung gelöscht",
+      "deleteFailed": "Fehler beim Löschen der Zahlung"
+    }
+  },
+  "strategies": {
+    "title": "Vergleich von Tilgungsstrategien",
+    "loadError": "Strategien konnten nicht geladen werden.",
+    "recommended": "Empfohlen: {{strategy}}",
+    "debtAvalanche": "Lawinen-Methode (Avalanche)",
+    "debtSnowball": "Schneeball-Methode (Snowball)",
+    "recommendAvalanche": "Sparen Sie {{amount}} an Zinsen und werden Sie {{months}} Monate schneller schuldenfrei.",
+    "recommendSnowball": "Tilgen Sie kleine Beträge zuerst für schnelle Motivationserfolge.",
+    "snowballSubtitle": "Kleinste Restschuld zuerst",
+    "avalancheSubtitle": "Höchster Zinssatz zuerst",
+    "recommendedBadge": "Empfohlen",
+    "totalMonths": "Monate gesamt",
+    "totalInterest": "Gesamtzinsen",
+    "totalPayments": "Gesamtzahlung",
+    "scheduleTitle": "Tilgungsplan-Vorschau",
+    "scheduleSubtitle": "Erste Monate des {{strategy}}-Plans",
+    "table": {
+      "month": "Monat",
+      "debt": "Kredit",
+      "payment": "Rate",
+      "remaining": "Restschuld"
+    }
+  },
+  "form": {
+    "titleEdit": "Schuld bearbeiten",
+    "titleCreate": "Schuld hinzufügen",
+    "description": "Tragen Sie Effektivzins und Mindestrate ein.",
+    "newDebt": "Neue Schuld",
+    "cancel": "Abbrechen",
+    "saving": "Speichern…",
+    "saveChanges": "Änderungen speichern",
+    "addDebt": "Schuld hinzufügen",
+    "name": {
+      "label": "Name der Schuld",
+      "placeholder": "z. B. Autokredit"
+    },
+    "creditor": {
+      "label": "Gläubiger / Bank",
+      "placeholder": "z. B. Hausbank"
+    },
+    "type": {
+      "label": "Typ",
+      "placeholder": "Typ wählen",
+      "options": {
+        "creditCard": "Kreditkarte",
+        "personalLoan": "Ratenkredit",
+        "studentLoan": "Studienkredit",
+        "mortgage": "Baufinanzierung",
+        "carLoan": "Autokredit",
+        "informal": "Privates Darlehen",
+        "utilities": "Nebenkosten",
+        "subscription": "Abonnement",
+        "medical": "Arztrechnung",
+        "tax": "Steuerschuld",
+        "legal": "Rechtskosten",
+        "other": "Sonstiges",
+        "custom": "Benutzerdefiniert…"
+      }
+    },
+    "priority": {
+      "label": "Priorität"
+    },
+    "customType": {
+      "label": "Bezeichnung des benutzerdefinierten Typs",
+      "placeholder": "z. B. Miete"
+    },
+    "originalBalance": {
+      "label": "Ursprünglicher Betrag"
+    },
+    "currentBalance": {
+      "label": "Aktueller Saldo"
+    },
+    "interestRate": {
+      "label": "Sollzinssatz (p.a. %)",
+      "placeholder": "z. B. 5.99",
+      "hint": "Jährlicher Zins."
+    },
+    "minimumPayment": {
+      "label": "Mindestrate",
+      "placeholder": "Erforderlich für Zinsrechnung"
+    },
+    "openedDate": {
+      "label": "Aufnahmedatum"
+    },
+    "maturityDate": {
+      "label": "Enddatum"
+    },
+    "status": {
+      "title": "Status",
+      "markPaidOff": "Als abbezahlt markieren",
+      "paidOffDate": "Abbezahlt am"
+    },
+    "schedule": {
+      "title": "Zahlungszyklus",
+      "paymentEvery": "Zahlung alle",
+      "frequencyPlaceholder": "Frequenz",
+      "recurrence": {
+        "notRecurring": "Nicht wiederkehrend",
+        "days": "Tage",
+        "weeks": "Wochen",
+        "months": "Monate"
+      },
+      "dayOfMonth": "Tag des Monats",
+      "dayOfMonthPlaceholder": "Für monatlich"
+    },
+    "linkedAccount": {
+      "label": "Verknüpftes Konto",
+      "placeholder": "Konto wählen…",
+      "none": "Kein Konto verknüpft"
+    },
+    "nextPaymentDate": {
+      "label": "Nächstes Zahlungsdatum"
+    },
+    "notify": {
+      "label": "Vor Fälligkeit benachrichtigen",
+      "daysBefore": "Tage vorher",
+      "daysBeforePlaceholder": "Standard"
+    },
+    "notes": {
+      "label": "Notizen",
+      "placeholder": "Ergänzende Anmerkungen"
+    },
+    "toasts": {
+      "updated": "Schuld aktualisiert",
+      "created": "Schuld erstellt",
+      "updateFailed": "Fehler beim Aktualisieren",
+      "createFailed": "Fehler beim Erstellen"
+    },
+    "validation": {
+      "nameRequired": "Name ist erforderlich",
+      "originalBalancePositive": "Ursprünglicher Betrag muss > 0 sein",
+      "currentBalanceNonNegative": "Saldo darf nicht negativ sein",
+      "customTypeRequired": "Typbezeichnung erforderlich"
+    }
+  },
+  "paymentDialog": {
+    "title": "Zahlung erfassen",
+    "titleEdit": "Zahlung bearbeiten",
+    "descriptionWithDebt": "Reduziert die Restschuld auf {{name}}.",
+    "descriptionNoDebt": "Reduziert die Restschuld.",
+    "descriptionEdit": "Aktualisiert die Auswirkung auf den Kredit.",
+    "editLeavesTransaction": "Gekoppelte Buchungen bleiben unberührt.",
+    "cancel": "Abbrechen",
+    "saving": "Speichern…",
+    "recordPayment": "Zahlung buchen",
+    "saveChanges": "Änderungen speichern",
+    "amount": {
+      "label": "Zahlungsbetrag"
+    },
+    "principal": {
+      "label": "Tilgungsanteil",
+      "placeholder": "Optional"
+    },
+    "interest": {
+      "label": "Zinsanteil",
+      "placeholder": "Optional"
+    },
+    "date": {
+      "label": "Zahlungsdatum"
+    },
+    "account": {
+      "label": "Zahlungskonto",
+      "placeholder": "Konto wählen…",
+      "none": "Kein Konto",
+      "hint": "Erstellt auf Wunsch eine Buchung."
+    },
+    "createTransaction": "Transaktion erstellen",
+    "notes": {
+      "label": "Notizen",
+      "placeholder": "z. B. Monatsrate November"
+    },
+    "toasts": {
+      "recorded": "Zahlung verbucht",
+      "updated": "Zahlung aktualisiert",
+      "failed": "Fehler beim Buchen",
+      "updateFailed": "Fehler beim Aktualisieren"
+    },
+    "validation": {
+      "amountRequired": "Betrag ist erforderlich",
+      "paymentDateRequired": "Datum ist erforderlich"
+    }
+  }
+}
