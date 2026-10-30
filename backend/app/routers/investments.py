@@ -59,6 +59,7 @@ from app.services.position_history_service import (
     DEFAULT_RANGE,
     build_position_history,
     clear_symbol_override,
+    renamed_symbol_map,
     set_symbol_override,
 )
 from app.services.investment_sync_service import (
@@ -189,9 +190,9 @@ def _fees_by_symbol(
     dropped, since a missing fee reads as "free" and an approximate one does
     not.
 
-    Attribution is by ticker, so a fee booked under an instrument's former
-    ticker (Freedom24 renames them — INLOT.GR became BYLOT.GR) stays with the
-    old symbol and is not counted against the position that succeeded it.
+    Attribution is by ticker — but through `renamed_symbol_map`, which links a
+    fee booked under an instrument's former ticker (Freedom24 renames them —
+    INLOT.GR became BYLOT.GR) to the position that succeeded it.
     """
     rate_by_currency = {
         p.currency: (p.fx_rate if p.fx_rate else 1.0) for p in positions if p.currency
@@ -215,6 +216,12 @@ def _fees_by_symbol(
             amount *= rate_by_currency.get(currency, 1.0)
         paid, count = totals.get(row.symbol, (0.0, 0))
         totals[row.symbol] = (paid + amount, count + 1)
+    # ... and the predecessor's charges land on the successor's card.
+    for old, current in renamed_symbol_map(db, positions).items():
+        if old in totals:
+            paid, count = totals.pop(old)
+            cur_paid, cur_count = totals.get(current, (0.0, 0))
+            totals[current] = (cur_paid + paid, cur_count + count)
     return totals
 
 

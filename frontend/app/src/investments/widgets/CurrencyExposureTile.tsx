@@ -7,11 +7,40 @@ import { positionValue } from '../portfolioInsights'
 import { Tile, TileEmpty } from './Tile'
 import type { PortfolioPosition } from '../investmentsApi'
 
-interface CurrencyRow {
+export interface CurrencyRow {
   currency: string
   value: number
   pct: number
   positionCount: number
+}
+
+/**
+ * Positions grouped by the currency they trade in, largest first.
+ * Shared with the allocation tile, which answers the same question
+ * in donut form rather than as a ranked list.
+ */
+export function groupPositionsByCurrency(positions: PortfolioPosition[]): CurrencyRow[] {
+  const byCurrency = new Map<string, { value: number; count: number }>()
+  for (const position of positions) {
+    const value = positionValue(position)
+    if (value <= 0) continue
+    const entry = byCurrency.get(position.currency) ?? { value: 0, count: 0 }
+    entry.value += value
+    entry.count += 1
+    byCurrency.set(position.currency, entry)
+  }
+
+  const total = Array.from(byCurrency.values()).reduce((sum, e) => sum + e.value, 0)
+  if (total <= 0) return [] as CurrencyRow[]
+
+  return Array.from(byCurrency.entries())
+    .map(([code, entry]) => ({
+      currency: code,
+      value: entry.value,
+      pct: (entry.value / total) * 100,
+      positionCount: entry.count,
+    }))
+    .sort((a, b) => b.value - a.value)
 }
 
 /**
@@ -38,29 +67,7 @@ export function CurrencyExposureTile({
   const { t } = useTranslation('investments')
   const { hidden } = useBalanceVisibility()
 
-  const rows = useMemo(() => {
-    const byCurrency = new Map<string, { value: number; count: number }>()
-    for (const position of positions) {
-      const value = positionValue(position)
-      if (value <= 0) continue
-      const entry = byCurrency.get(position.currency) ?? { value: 0, count: 0 }
-      entry.value += value
-      entry.count += 1
-      byCurrency.set(position.currency, entry)
-    }
-
-    const total = Array.from(byCurrency.values()).reduce((sum, e) => sum + e.value, 0)
-    if (total <= 0) return [] as CurrencyRow[]
-
-    return Array.from(byCurrency.entries())
-      .map(([code, entry]) => ({
-        currency: code,
-        value: entry.value,
-        pct: (entry.value / total) * 100,
-        positionCount: entry.count,
-      }))
-      .sort((a, b) => b.value - a.value)
-  }, [positions])
+  const rows = useMemo(() => groupPositionsByCurrency(positions), [positions])
 
   return (
     <Tile title={t('tiles.currencyExposure')} className={className}>

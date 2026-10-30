@@ -30,6 +30,15 @@ describe('TradingCostsTile', () => {
     expect(screen.getByText(/4,00/)).toBeInTheDocument()
   })
 
+  it('footnotes fees the P&L breakdown estimated, and only then', () => {
+    const { rerender } = render(
+      <TradingCostsTile transactions={[txn()]} currency="USD" loading={false} feesEstimated={5.13} />,
+    )
+    expect(screen.getByText(/estimated from your fee schedule/)).toHaveTextContent('5,13')
+    rerender(<TradingCostsTile transactions={[txn()]} currency="USD" loading={false} />)
+    expect(screen.queryByText(/estimated from your fee schedule/)).not.toBeInTheDocument()
+  })
+
   it('shows a quiet empty state when no fees were charged', () => {
     render(
       <TradingCostsTile

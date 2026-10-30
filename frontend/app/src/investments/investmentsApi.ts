@@ -629,3 +629,78 @@ export function updateWatch(id: number, input: { name?: string; notes?: string }
     body: JSON.stringify(input),
   })
 }
+
+/** Every return in the performance payload is a decimal: 0.05 means 5%. */
+export interface PerformancePoint {
+  date: string
+  value: number
+  cash: number
+  flow: number
+  net_invested: number
+  daily_return: number | null
+  /** Cumulative time-weighted return. */
+  twr: number
+  /** Cumulative benchmark return, when the benchmark has a price for the day. */
+  benchmark: number | null
+  /** Distance below the running peak, zero or negative. */
+  drawdown: number
+}
+
+export interface PerformanceDayReturn {
+  date: string
+  return: number
+}
+
+export interface PerformanceSummary {
+  start_value: number
+  end_value: number
+  net_flows: number
+  gain: number
+  twr: number | null
+  twr_annualized: number | null
+  /** Money-weighted return (XIRR). */
+  mwr: number | null
+  volatility: number | null
+  max_drawdown: number | null
+  sharpe: number | null
+  best_day: PerformanceDayReturn | null
+  worst_day: PerformanceDayReturn | null
+}
+
+/** All-time, independent of the selected range; the components sum to `total_gain`. */
+export interface PerformanceBreakdown {
+  unrealized: number
+  realized: number
+  dividends: number
+  taxes: number
+  fees: number
+  fees_estimated: number
+  fx_and_other: number
+  total_gain: number
+  net_invested: number
+  partial_history?: boolean
+}
+
+export interface PortfolioPerformance {
+  currency: string | null
+  start_date: string | null
+  end_date: string | null
+  flows_source: 'reported' | 'inferred' | 'mixed'
+  series: PerformancePoint[]
+  summary: PerformanceSummary
+  breakdown: PerformanceBreakdown
+  benchmark: { symbol: string; twr: number | null } | null
+}
+
+export function getPortfolioPerformance(params: {
+  account_ids: number[]
+  start_date?: string
+  end_date?: string
+  benchmark?: string
+}): Promise<PortfolioPerformance> {
+  const query = new URLSearchParams({ account_ids: params.account_ids.join(',') })
+  if (params.start_date) query.set('start_date', params.start_date)
+  if (params.end_date) query.set('end_date', params.end_date)
+  if (params.benchmark) query.set('benchmark', params.benchmark)
+  return apiFetch<PortfolioPerformance>(`/investments/performance?${query.toString()}`)
+}

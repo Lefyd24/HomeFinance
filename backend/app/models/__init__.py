@@ -11,6 +11,7 @@ from app.models.import_batch import ImportBatch
 from app.models.invite_code import InviteCode
 from app.models.investment import (
     InvestmentCredential,
+    InvestmentProviderSettings,
     PortfolioPosition,
     PortfolioSnapshot,
     PositionSymbolMap,
@@ -55,6 +56,7 @@ __all__ = [
     "ImportBatch",
     "InviteCode",
     "InvestmentCredential",
+    "InvestmentProviderSettings",
     "PortfolioPosition",
     "PortfolioSnapshot",
     "PositionSymbolMap",

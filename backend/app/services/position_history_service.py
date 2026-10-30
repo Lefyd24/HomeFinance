@@ -19,11 +19,18 @@ symbol that cannot be resolved and confirmed falls back to the broker's own
 The last point is overwritten with the live synced valuation, so the chart ends
 on the same number the rest of the page shows.
 
-Everything is expressed in the account's own currency. Instrument prices are
-converted with the position's current `fx_rate`, which means historical points
-are marked at today's exchange rate — the app has no rate history to do better,
-and inventing one would be worse than a documented simplification.
+Everything is expressed in the account's own currency. When the instrument's
+currency differs from the account's, prices are converted with the *day's*
+rate — Yahoo's daily closes for the forex pair ("<INSTR><ACCT>=X", e.g.
+"USDEUR=X"), cached in the shared `market_data` tables like any other price
+series — so an older day is marked at the rate that was real then, not
+today's. A trade's cost likewise keeps the rate of its own trade date, which
+is what puts currency moves into the P&L where they happen. Days with no
+printed close (an FX fetch failure, or before the series begins) fall back to
+the position's current `fx_rate`: the same best-effort rule as everywhere
+else here.
 """
+import bisect
 import logging
 from dataclasses import dataclass, field
 from datetime import date, datetime, timedelta
@@ -360,6 +367,72 @@ def _to_base(amount: float, currency: str, account_currency: str, fx_rate: float
     return amount * (fx_rate or 1.0)
 
 
+def _historical_fx_rates(
+    db: Session,
+    instrument_currency: Optional[str],
+    account_currency: str,
+    start: date,
+    end: date,
+) -> dict[date, float]:
+    """date -> rate converting one unit of the instrument's currency into the account's.
+
+    From Yahoo's daily closes for the forex pair "<INSTR><ACCT>=X" (e.g.
+    "USDEUR=X"), served from the shared `market_data` cache the instrument
+    prices already use. The rate is a plain multiplier on amounts and prices —
+    the same sense as `PortfolioPosition.fx_rate` — because Yahoo quotes
+    "<BASE><QUOTE>=X" as how many QUOTE one BASE buys. An empty result (no
+    data, an unreachable network) means "no rate history exists": the caller
+    marks every day with the position's current `fx_rate`, as before.
+    """
+    currency = (instrument_currency or "").upper()
+    if not currency or currency == account_currency:
+        return {}
+    pair = f"{currency}{account_currency}=X"
+    try:
+        frames = get_price_history([pair], start, end, db=db)
+    except (SymbolNotFound, MarketDataUnavailable):
+        return {}
+    except Exception:  # noqa: BLE001 - a chart is never worth failing a request over
+        logger.warning("FX history fetch failed for %s", pair, exc_info=True)
+        return {}
+    frame = frames.get(pair)
+    if frame is None or frame.empty or "close" not in frame:
+        return {}
+    rates: dict[date, float] = {}
+    for index, row in frame.iterrows():
+        close = row.get("close")
+        if close is None or close != close or close <= 0:  # NaN/junk guard
+            continue
+        day = index.date() if hasattr(index, "date") else index
+        rates[day] = float(close)
+    return rates
+
+
+class _FxSeries:
+    """Forward-filled daily FX rates; the position's current rate elsewhere.
+
+    Forex prints only on trading days while the chart's calendar has none —
+    carrying the previous session's rate forward is the honest fill, one the
+    instrument's own series (which only prints on the same days) makes look
+    like no gap at all. Before the first printed close there is nothing to
+    carry, so the current `fx_rate` stands in: an approximation, but the one
+    the chart was making before this series existed.
+    """
+
+    def __init__(self, rates: dict[date, float], fallback: float):
+        self._days = sorted(rates)
+        self._rates = rates
+        self._fallback = fallback
+
+    def on(self, day: date) -> float:
+        if not self._days:
+            return self._fallback
+        index = bisect.bisect_right(self._days, day)
+        if index == 0:
+            return self._fallback
+        return self._rates[self._days[index - 1]]
+
+
 def _window_start(range_key: str, opened_on: Optional[date], today: date) -> date:
     """The first day to chart.
 
@@ -376,6 +449,63 @@ def _window_start(range_key: str, opened_on: Optional[date], today: date) -> dat
         earliest = today - timedelta(days=365 * 5)
         return min(earliest, opened_on - ENTRY_LEAD_IN) if opened_on else earliest
     return today - timedelta(days=days)
+
+
+def renamed_symbol_map(db: Session, positions: list[PortfolioPosition]) -> dict[str, str]:
+    """old broker ticker -> current ticker, for instruments a broker has renamed.
+
+    Freedom24 renames tickers wholesale (INLOT.GR became BYLOT.GR) and keeps
+    booking the successor's fees under the old name. Method used: the
+    quantity heuristic below. There is no instrument id to map through — the
+    trade rows' raw_payload (verified live, 2026-07-30) carries no ISIN or
+    instr_id, and `PortfolioPosition` stores no instrument id an isin in the
+    payload could be matched against.
+
+    The heuristic: a symbol with trade rows, no current position, whose tape
+    nets out to exactly one current position's quantity — where the current
+    symbol was never bought — is that position's predecessor. The no-buys
+    clause is what keeps this honest: a renamed holding has no buys under its
+    new name, so a genuinely different instrument can be bought under "BYLOT"
+    while an older unrelated tape coincidentally nets to the same quantity.
+    Two candidates matching equally is ambiguity, and an ambiguous guess maps
+    to neither.
+    """
+    if not positions:
+        return {}
+    current: dict[str, float] = {}
+    for p in positions:
+        if p.symbol and p.quantity:
+            current[p.symbol] = p.quantity
+
+    tape: dict[str, float] = {}
+    bought: set[str] = set()
+    rows = (
+        db.query(InvestmentTransaction)
+        .filter(InvestmentTransaction.account_id == positions[0].account_id)
+        .all()
+    )
+    for row in rows:
+        if row.type not in ("buy", "sell") or not row.symbol:
+            continue
+        signed = row.quantity or 0.0
+        tape[row.symbol] = tape.get(row.symbol, 0.0) + (
+            signed if row.type == "buy" else -signed
+        )
+        if row.type == "buy":
+            bought.add(row.symbol)
+
+    mapping: dict[str, str] = {}
+    for old, quantity in tape.items():
+        if old in current or abs(quantity) < 1e-9:
+            continue
+        matches = [
+            symbol
+            for symbol, quantity_now in current.items()
+            if symbol not in bought and abs(quantity_now - quantity) < 1e-6
+        ]
+        if len(matches) == 1:
+            mapping[old] = matches[0]
+    return mapping
 
 
 def build_position_history(
@@ -400,11 +530,18 @@ def build_position_history(
         )
     fx_rate = (position.fx_rate if position and position.fx_rate else 1.0) or 1.0
 
+    # A renamed instrument's fees and trades were booked under its old ticker,
+    # so the tape of the current symbol alone is not the whole story.
+    mapping = renamed_symbol_map(
+        db,
+        db.query(PortfolioPosition).filter(PortfolioPosition.account_id == account.id).all(),
+    )
+    symbols = [symbol] + [old for old, current in mapping.items() if current == symbol]
     txns = (
         db.query(InvestmentTransaction)
         .filter(
             InvestmentTransaction.account_id == account.id,
-            InvestmentTransaction.symbol == symbol,
+            InvestmentTransaction.symbol.in_(symbols),
         )
         .order_by(InvestmentTransaction.date.asc())
         .all()
@@ -470,6 +607,21 @@ def build_position_history(
     if not closes:
         closes = _broker_closes(db, account, symbol, start, today, native_currency)
 
+    # The day-by-day FX rates, so past days convert at the rate that was real
+    # then. The series reaches back past the window start when trades from
+    # before it (whose cost is priced at their own day's rate) exist.
+    earliest_trade = min((t.date.date() for t in trades), default=start)
+    fx_rates = _historical_fx_rates(
+        db, native_currency, account_currency, min(start, earliest_trade), today
+    )
+    fx = _FxSeries(fx_rates, fx_rate)
+    # Rows booked in the instrument's currency take the day's rate; anything
+    # else keeps the position's own (see _to_base).
+    def _day_rate(day: date, currency: Optional[str]) -> float:
+        if fx_rates and (currency or "").upper() == (native_currency or "").upper():
+            return fx.on(day)
+        return fx_rate
+
     # Every day something happened, plus every day the market printed a close.
     # Trades from *before* the window are included deliberately: a one-month
     # view of a holding bought a year ago has to start from the quantity that
@@ -500,7 +652,9 @@ def build_position_history(
     for day in sorted(days):
         for txn in trades_by_day.get(day, []):
             qty = abs(txn.quantity or 0.0)
-            cash = abs(_to_base(txn.amount or 0.0, txn.currency, account_currency, fx_rate))
+            cash = abs(
+                _to_base(txn.amount or 0.0, txn.currency, account_currency, _day_rate(day, txn.currency))
+            )
             if txn.type == "buy":
                 quantity += qty
                 invested += cash
@@ -517,7 +671,7 @@ def build_position_history(
 
         bar = closes.get(day)
         if bar is not None:
-            last_price = bar.close * fx_rate
+            last_price = bar.close * _day_rate(day, native_currency)
         price = last_price
         # Held or not decides whether this day has a position at all. Before
         # the first buy the window is showing the instrument's price only, and
@@ -534,9 +688,9 @@ def build_position_history(
                 ),
                 invested=round(invested, 2) if held else None,
                 fees=round(fees_running, 2),
-                open=round(bar.open * fx_rate, 4) if bar and bar.open else None,
-                high=round(bar.high * fx_rate, 4) if bar and bar.high else None,
-                low=round(bar.low * fx_rate, 4) if bar and bar.low else None,
+                open=round(bar.open * _day_rate(day, native_currency), 4) if bar and bar.open else None,
+                high=round(bar.high * _day_rate(day, native_currency), 4) if bar and bar.high else None,
+                low=round(bar.low * _day_rate(day, native_currency), 4) if bar and bar.low else None,
             )
         )
 

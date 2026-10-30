@@ -1,4 +1,5 @@
 import logging
+import math
 from contextlib import asynccontextmanager
 from pathlib import Path
 from uuid import uuid4
@@ -21,6 +22,7 @@ from app.routers import (
     documents,
     goals,
     import_wizard,
+    investment_performance,
     investments,
     investor_profile,
     legal,
@@ -134,6 +136,9 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
         ctx = item.get("ctx")
         if isinstance(ctx, dict) and "error" in ctx:
             item["ctx"] = {**ctx, "error": str(ctx["error"])}
+        # An echoed inf/nan input is not JSON-serializable either.
+        if isinstance(item.get("input"), float) and not math.isfinite(item["input"]):
+            item["input"] = str(item["input"])
         errors.append(item)
     logging.getLogger("app").warning(
         "Validation error",
@@ -204,6 +209,7 @@ app.include_router(goals.router, prefix="/api")
 app.include_router(debts.router, prefix="/api")
 app.include_router(advisor.router, prefix="/api")
 app.include_router(recurring_expenses.router, prefix="/api")
+app.include_router(investment_performance.router, prefix="/api")
 app.include_router(investments.router, prefix="/api")
 app.include_router(investor_profile.router, prefix="/api")
 app.include_router(scenarios.router, prefix="/api")

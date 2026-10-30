@@ -1,9 +1,12 @@
 from datetime import datetime
 
+import pytest
+
 from app.models import (
     Account,
     InvestmentCredential,
     InvestmentTransaction,
+    MarketPriceBar,
     NotificationRule,
     PortfolioPosition,
     PortfolioSnapshot,
@@ -1014,3 +1017,251 @@ def test_sync_isolates_a_failing_candle_fetch(client, db, monkeypatch):
     credential = db.query(InvestmentCredential).filter_by(account_id=account_id).one()
     assert credential.sync_status == "ok"
     assert db.query(PortfolioPosition).filter_by(account_id=account_id).count() == 1
+
+
+class FakeUsdOnEurProvider(FakeProvider):
+    """A USD instrument on a EUR account: the position carries its own fx_rate."""
+
+    def get_balance(self):
+        return ProviderBalance(
+            total_value=1000.0,
+            cash_balance=160.0,
+            currency="EUR",
+            positions_value=840.0,
+            cash_by_currency={"EUR": 160.0, "USD": 0.0},
+        )
+
+    def get_positions(self):
+        return [
+            ProviderPosition(
+                symbol="AAPL.US",
+                name="Apple Inc",
+                quantity=5,
+                avg_price=150.0,
+                current_price=200.0,
+                market_value=1000.0,
+                currency="USD",
+                cost_basis=750.0,
+                fx_rate=0.84,
+                market_value_base=840.0,
+                cost_basis_base=630.0,
+            )
+        ]
+
+    def get_transactions(self, since=None):
+        return [
+            ProviderTransaction(
+                external_id="trade-1",
+                type="buy",
+                symbol="AAPL.US",
+                quantity=5,
+                price=150.0,
+                amount=-500.0,
+                currency="USD",
+                date=datetime(2026, 1, 5),
+                raw_payload={},
+            )
+        ]
+
+
+def _patch_fx_history(monkeypatch, fx_frame=None, fx_error=False):
+    """Price Yahoo from canned frames: `AAPL` for the instrument, `USDEUR=X` for the rate."""
+    from app.services.market_data import CandidateCheck, SymbolNotFound as _SymbolNotFound, YahooListing
+    import pandas as pd
+
+    monkeypatch.setattr(
+        position_history_service,
+        "resolve_yahoo_listing",
+        lambda *a, **k: YahooListing(
+            symbol="AAPL", currency="USD", checked=[CandidateCheck("AAPL", "matched", "USD")]
+        ),
+    )
+
+    instrument_frame = pd.DataFrame(
+        {"close": [100.0, 110.0]},
+        index=pd.to_datetime(["2026-01-05", "2026-01-06"]),
+    )
+
+    def fetch(symbols, start, end, db=None, refresh=False):
+        symbol = symbols[0]
+        if symbol == "USDEUR=X":
+            if fx_error:
+                raise _SymbolNotFound(symbol)
+            return {symbol: fx_frame}
+        return {symbol: instrument_frame}
+
+    monkeypatch.setattr(position_history_service, "get_price_history", fetch)
+
+
+def _fx_frame():
+    import pandas as pd
+
+    return pd.DataFrame(
+        {"close": [0.90, 0.80]},
+        index=pd.to_datetime(["2026-01-05", "2026-01-06"]),
+    )
+
+
+def test_position_history_marks_each_day_at_that_days_fx_rate(client, db, monkeypatch):
+    """A USD holding on a EUR account: both the price and the cost use the rate of the day."""
+    _patch_provider(monkeypatch, FakeUsdOnEurProvider)
+    _patch_fx_history(monkeypatch, fx_frame=_fx_frame())
+    account_id = _connect(client, currency="EUR")
+
+    body = client.get(
+        f"/api/investments/accounts/{account_id}/positions/AAPL.US/history"
+    ).json()
+
+    # Day 1: 100 USD printed at 0.90 = 90 EUR, and the 500 USD buy cost 450 EUR.
+    day_one = next(p for p in body["series"] if p["date"] == "2026-01-05")
+    assert day_one["price"] == 90.0
+    assert day_one["invested"] == 450.0
+    assert day_one["value"] == 450.0
+
+    # Day 2: the instrument rose but the dollar fell — the holding gains in USD
+    # terms while its cost line stays at the rate it was actually bought at.
+    day_two = next(p for p in body["series"] if p["date"] == "2026-01-06")
+    assert day_two["price"] == 88.0  # 110 * 0.80
+    assert day_two["invested"] == 450.0
+    assert day_two["value"] == 440.0
+
+    # The chart still ends on the live synced valuation, priced at today's rate.
+    assert body["series"][-1]["value"] == 840.0
+
+
+def test_position_history_marks_every_day_at_the_current_rate_when_fx_history_fails(client, db, monkeypatch):
+    """No rate history (broker/Yahoo outage): fall back to the current fx_rate, never raise."""
+    _patch_provider(monkeypatch, FakeUsdOnEurProvider)
+    _patch_fx_history(monkeypatch, fx_error=True)
+    account_id = _connect(client, currency="EUR")
+
+    body = client.get(
+        f"/api/investments/accounts/{account_id}/positions/AAPL.US/history"
+    ).json()
+
+    # 100 USD * 0.84 = 84; the whole series is converted at the one rate.
+    day_one = next(p for p in body["series"] if p["date"] == "2026-01-05")
+    assert day_one["price"] == 84.0
+    assert day_one["invested"] == 420.0
+    assert day_one["value"] == 420.0
+
+    day_two = next(p for p in body["series"] if p["date"] == "2026-01-06")
+    assert day_two["price"] == pytest.approx(92.4)
+    assert day_two["value"] == pytest.approx(462.0)
+
+
+class FakeRenamedFeeProvider(FakeProvider):
+    """Bought under INLOT.US, which the broker renamed to BYLOT.US; fees kept the old name."""
+
+    def get_positions(self):
+        return [
+            ProviderPosition(
+                symbol="BYLOT.US",
+                name="Bally's Intralot",
+                quantity=3,
+                avg_price=100.0,
+                current_price=110.0,
+                market_value=330.0,
+                currency="USD",
+                cost_basis=300.0,
+                fx_rate=1.0,
+                market_value_base=330.0,
+                cost_basis_base=300.0,
+            )
+        ]
+
+    def get_transactions(self, since=None):
+        return [
+            ProviderTransaction(
+                external_id="trade-1",
+                type="buy",
+                symbol="INLOT.US",
+                quantity=3,
+                price=100.0,
+                amount=-300.0,
+                currency="USD",
+                date=datetime(2026, 1, 5),
+                raw_payload={},
+            ),
+            ProviderTransaction(
+                external_id="trade-1-fee",
+                type="fee",
+                symbol="INLOT.US",
+                quantity=None,
+                price=None,
+                amount=-2.0,
+                currency="USD",
+                date=datetime(2026, 1, 5),
+                raw_payload={},
+            ),
+        ]
+
+
+def test_fees_booked_under_a_renamed_ticker_are_attributed_to_the_successor(client, db, monkeypatch):
+    """Freedom24 renames tickers (INLOT.US -> BYLOT.US) and keeps billing under the old one."""
+    _patch_provider(monkeypatch, FakeRenamedFeeProvider)
+    account_id = _connect(client)
+
+    position = client.get(f"/api/investments/accounts/{account_id}/positions").json()[0]
+    assert position["symbol"] == "BYLOT.US"
+    # The fee the successor never paid under its own name still shows on it.
+    assert position["fees_paid_base"] == 2.0
+    assert position["fee_count"] == 1
+
+    # The position's history tells the whole story: tape and fees under both tickers.
+    body = client.get(
+        f"/api/investments/accounts/{account_id}/positions/BYLOT.US/history"
+    ).json()
+    assert body["opened_on"] == "2026-01-05"
+    assert body["fees_paid"] == 2.0
+    assert body["series"][-1]["quantity"] == 3
+
+
+def test_missing_day_change_falls_back_to_cached_yahoo_closes(client, db, monkeypatch):
+    """A venue whose quote feed carries no move gets one from the price cache."""
+    _patch_provider(monkeypatch, FakeMultiCurrencyProvider)
+    from datetime import date as date_cls
+
+    db.add_all(
+        [
+            MarketPriceBar(
+                symbol="BYLOT.AT",
+                date=date_cls(2026, 1, 19),
+                open=9.0,
+                high=9.5,
+                low=8.5,
+                close=9.0,
+                currency="EUR",
+            ),
+            MarketPriceBar(
+                symbol="BYLOT.AT",
+                date=date_cls(2026, 1, 20),
+                open=10.0,
+                high=10.5,
+                low=9.5,
+                close=10.0,
+                currency="EUR",
+            ),
+        ]
+    )
+    db.commit()
+    account_id = _connect(client)
+
+    position = next(
+        p
+        for p in client.get(f"/api/investments/accounts/{account_id}/positions").json()
+        if p["symbol"] == "BYLOT.GR"
+    )
+    assert position["day_change_pct"] == 11.11  # (10 - 9) / 9
+    # 1000 EUR moved by 11.11% is 99.99 EUR of money.
+    assert position["day_change"] == pytest.approx(99.99, abs=0.05)
+
+
+def test_no_price_cache_leaves_the_day_change_null_not_zero(client, db, monkeypatch):
+    """Nothing derivable anywhere: unknown, never a fabricated flat day."""
+    _patch_provider(monkeypatch, FakeMultiCurrencyProvider)
+    account_id = _connect(client)
+
+    position = client.get(f"/api/investments/accounts/{account_id}/positions").json()[0]
+    assert position["day_change_pct"] is None
+    assert position["day_change"] is None

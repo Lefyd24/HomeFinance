@@ -1,21 +1,20 @@
-import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { Refresh01Icon } from '@hugeicons/core-free-icons'
 import { Button } from '@/components/ui/button'
-import { formatBalance, formatDate } from '../../lib/format'
-import { useBalanceVisibility } from '../../ui/BalanceVisibilityContext'
+import { formatDate } from '../../lib/format'
 import { cn } from '@/lib/utils'
-import { DeltaPct, SyncStatusBadge } from '../InvestmentPrimitives'
+import { SyncStatusBadge } from '../InvestmentPrimitives'
+import { PerformanceKpis } from './PerformanceKpis'
 import type { PortfolioTotals } from '../portfolioInsights'
-import type { InvestmentAccount } from '../investmentsApi'
+import type { InvestmentAccount, PortfolioPerformance } from '../investmentsApi'
 
 /**
  * The one line that answers "how am I doing" before anything else loads.
  *
- * Four figures, each its own labeled cell — a row of distinct stat cards
- * rather than a dense wrap of labels, so the eye can land on "today" or
- * "cash" without having to first read every label to its left. The
+ * The KPI strip (see `PerformanceKpis`) carries the figures, each its own
+ * labeled cell so the eye can land on "today" or "cash" without reading every
+ * label to its left. The
  * allocation split stays underneath as a thin bar, and sync stays folded
  * into the corner: it's maintenance, not the point of the page.
  */
@@ -26,6 +25,9 @@ export function PortfolioTicker({
   onSync,
   syncing,
   syncDisabled,
+  performance,
+  performanceLoading,
+  rangeLabel,
 }: {
   totals: PortfolioTotals
   /** Which accounts these figures cover — "All accounts", or one account's name. */
@@ -36,12 +38,13 @@ export function PortfolioTicker({
   syncing: boolean
   /** True while every account in scope is still inside its sync cooldown. */
   syncDisabled: boolean
+  performance: PortfolioPerformance | undefined
+  performanceLoading: boolean
+  /** Human name of the selected range, e.g. "3 months". */
+  rangeLabel: string
 }) {
   const { t } = useTranslation('investments')
-  const { hidden } = useBalanceVisibility()
   const single = accounts.length === 1 ? accounts[0] : null
-  const money = (value: number) => formatBalance(value, totals.currency, hidden)
-
   const investedPct =
     totals.value > 0 ? Math.min(100, Math.max(0, (totals.invested / totals.value) * 100)) : 0
   const cashPct = Math.max(0, 100 - investedPct)
@@ -54,53 +57,13 @@ export function PortfolioTicker({
           until its label and value both wrapped. Full-width rows for each
           fix that without touching anything above `sm`. */}
       <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-2">
-        <div className="grid grid-cols-2 gap-x-3 gap-y-3 sm:flex-1 sm:grid-cols-4 sm:gap-0 sm:divide-x sm:divide-border/60">
-          <StatCell label={t('ticker.totalValue')} hint={scopeLabel}>
-            <span className="font-heading text-lg font-semibold tabular-nums tracking-tight sm:text-2xl">
-              {money(totals.value)}
-            </span>
-          </StatCell>
-
-          <StatCell label={t('ticker.today')}>
-            {totals.dayChange != null ? (
-              <span className="inline-flex flex-wrap items-baseline gap-1.5">
-                <span
-                  className={cn(
-                    'font-heading text-lg font-semibold tabular-nums',
-                    totals.dayChange > 0 && 'text-flow-in',
-                    totals.dayChange < 0 && 'text-flow-out',
-                  )}
-                >
-                  {totals.dayChange > 0 ? '+' : ''}
-                  {money(totals.dayChange)}
-                </span>
-                <DeltaPct pct={totals.dayChangePct} className="text-xs" />
-              </span>
-            ) : (
-              <span className="text-sm text-muted-foreground">{t('ticker.noQuote')}</span>
-            )}
-          </StatCell>
-
-          <StatCell label={t('ticker.allTime')}>
-            <span className="inline-flex flex-wrap items-baseline gap-1.5">
-              <span
-                className={cn(
-                  'font-heading text-lg font-semibold tabular-nums',
-                  totals.pnl > 0 && 'text-flow-in',
-                  totals.pnl < 0 && 'text-flow-out',
-                )}
-              >
-                {totals.pnl > 0 ? '+' : ''}
-                {money(totals.pnl)}
-              </span>
-              <DeltaPct pct={totals.returnPct} className="text-xs" />
-            </span>
-          </StatCell>
-
-          <StatCell label={t('ticker.cash')} hint={t('ticker.cashShare', { pct: cashPct.toFixed(0) })}>
-            <span className="font-heading text-lg font-semibold tabular-nums">{money(totals.cash)}</span>
-          </StatCell>
-        </div>
+        <PerformanceKpis
+          totals={totals}
+          scopeLabel={scopeLabel}
+          performance={performance}
+          loading={performanceLoading}
+          rangeLabel={rangeLabel}
+        />
 
         {/* Sync is maintenance, not the point of the page, so it stays pale and
             tucked in the corner on desktop — but a corner-sized tap target is
@@ -144,7 +107,12 @@ export function PortfolioTicker({
 
       {/* Invested against cash. Two segments, no legend — the figures above
           already name both halves, so a legend would only repeat them. */}
-      <div className="flex h-1.5 w-full overflow-hidden rounded-full bg-muted/70">
+      <div
+        role="img"
+        aria-label={t('ticker.holdingsVsCash')}
+        title={t('ticker.holdingsVsCash')}
+        className="flex h-1.5 w-full overflow-hidden rounded-full bg-muted/70"
+      >
         <div
           className="bg-chart-4 transition-[width] duration-500 motion-reduce:transition-none"
           style={{ width: `${investedPct}%` }}
@@ -155,25 +123,5 @@ export function PortfolioTicker({
         />
       </div>
     </section>
-  )
-}
-
-function StatCell({
-  label,
-  hint,
-  children,
-}: {
-  label: string
-  hint?: string
-  children: ReactNode
-}) {
-  return (
-    <div className="flex min-w-0 flex-col gap-1 px-0 sm:px-3.5 sm:first:pl-0">
-      <span className="truncate text-[0.625rem] font-semibold uppercase tracking-[0.1em] text-muted-foreground sm:tracking-[0.14em]">
-        {label}
-      </span>
-      {children}
-      {hint && <span className="truncate text-[0.65rem] text-muted-foreground">{hint}</span>}
-    </div>
   )
 }
