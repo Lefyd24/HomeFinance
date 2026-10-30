@@ -236,7 +236,7 @@ The only things that leave your server are the integrations you switch on yourse
 
 ## Contributing
 
-Issues and pull requests are welcome. Start with [Development](docs/development.md) for the architecture, local setup and test commands. CI runs the backend and frontend tests and a Docker build on every pull request. Please run `DEBUG=true uv run pytest backend/tests` and `npm run test && npm run build` in `frontend/app` first.
+Issues and pull requests are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for how to open a PR, add a changelog entry and add translations, and [Development](docs/development.md) for the architecture, local setup and test commands. CI runs the backend and frontend tests and a Docker build on every pull request. Please run `DEBUG=true uv run pytest backend/tests` and `npm run test && npm run build` in `frontend/app` first.
 
 Found a security problem? Please don't open a public issue. See [Security & privacy](docs/security.md#reporting-a-vulnerability).
 

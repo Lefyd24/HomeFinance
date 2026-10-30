@@ -88,7 +88,7 @@ cd frontend/app && npm run lint && npm run build       # lint, then typecheck + 
 - **Settings** are centralized in `backend/app/config.py` (pydantic-settings). Don't loosen the production startup checks, and read the comments there before touching them.
 - **Error handling**: the global handler returns a generic message and a correlation id. Don't leak exception text into API responses.
 - **Migrations**: any model change needs an Alembic revision. See [Migrations](migrations.md#creating-a-migration-developers).
-- **Translations**: add keys to both `src/locales/en` and `src/locales/el`.
+- **Translations**: add keys to both `src/locales/en` and `src/locales/el`. See [Contributing](../CONTRIBUTING.md#translations) for placeholders and new languages.
 - **Design**: calm, precise and unshowy. Tabular numerals for money, thin rules, restrained colour. Avoid generic chatbot styling.
 
 ## Releases
