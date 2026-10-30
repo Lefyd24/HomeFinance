@@ -6,6 +6,24 @@ Releases that add database migrations or new `.env` settings say so, so you know
 
 ## [Unreleased]
 
+## [1.3.3] - 2026-10-30
+
+Adds migration `027`. No new `.env` settings. Migrations apply automatically on start, so [back up first](docs/operations.md#backups).
+
+### Added
+- **Portfolio performance that ignores deposits.** The Investments overview now shows time-weighted return, money-weighted return (XIRR), volatility, max drawdown and Sharpe ratio, compared against the S&P 500. Deposits and withdrawals no longer count as gains or losses. When a broker doesn't report them, they are inferred from cash moves that trades, dividends and fees don't explain. (#61)
+- **Where your gain came from.** An all-time P&L breakdown splits the total gain into unrealized, realized, dividends, fees, taxes and FX/other, and the parts add up to the total.
+- **Fee schedules per account.** Set commission, deposit and withdrawal fees (fixed and/or %) from an account's menu. They apply wherever the broker's data leaves fees out.
+
+### Changed
+- Redesigned Investments overview: a KPI strip, a performance tile (Value / Performance vs S&P 500 / Drawdown, 1M to All), a P&L waterfall, a risk tile, allocation donuts, and a sortable holdings table in place of the side rail. Mobile keeps the card list.
+- The old balance-based returns chart is gone, since it counted deposits as gains.
+
+### Fixed
+- Position history uses each day's exchange rate, and the trade-date rate for cost, instead of today's rate.
+- Fees charged under a renamed ticker now move to the new ticker's position.
+- Freedom24 day change is worked out from prices when the broker leaves it blank (e.g. ATHEX stocks). If it's still unknown it shows as unknown, not 0.00%.
+
 ## [1.3.2] - 2026-10-25
 
 Adds migration `026`. No new `.env` settings. Migrations apply automatically on start, so [back up first](docs/operations.md#backups).
