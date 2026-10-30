@@ -1,0 +1,163 @@
+{
+  "page": {
+    "title": "Tracker",
+    "description": "Group Transaktionen into buckets like a trip oder a renovation, und watch what they add up bis.",
+    "addTracker": "Neuer Tracker",
+    "createFirst": "Erstellen Sie Ihren ersten Tracker",
+    "yourTrackers": "Ihre Tracker",
+    "empty": {
+      "title": "Noch keine Tracker",
+      "description": "A Tracker collects Transaktionen unter one Name — \"Trip bis Italy\", \"Kitchen renovation\" — so Sie can see der real Gesamt. Add Transaktionen bis it von der Transaktion editor, oder straight von here."
+    },
+    "tabs": {
+      "active": "Aktiv",
+      "inactive": "Inaktiv",
+      "all": "Alle"
+    },
+    "noneInView": {
+      "active": "Keine aktiven Tracker.",
+      "inactive": "Keine inaktiven Tracker.",
+      "all": "Keine Tracker."
+    },
+    "deleteDialog": {
+      "title": "Löschen \"{{name}}\"?",
+      "description": "Der Tracker wird entfernt. Die enthaltenen Transaktionen bleiben unverändert.",
+      "confirmLabel": "Löschen Tracker"
+    },
+    "toasts": {
+      "deleted": "Tracker deleted",
+      "deleteFailed": "Tracker konnte nicht gelöscht werden",
+      "activated": "Tracker activated",
+      "deactivated": "Tracker deactivated",
+      "updateFailed": "Tracker konnte nicht aktualisiert werden"
+    }
+  },
+  "card": {
+    "entries_one": "{{count}} Transaktion",
+    "entries_other": "{{count}} Transaktionen",
+    "inactive": "Inaktiv",
+    "ofTarget": "von {{amount}}",
+    "addTransaction": "Add",
+    "actionsFor": "Actions für {{name}}",
+    "menu": {
+      "edit": "Bearbeiten",
+      "activate": "Aktivieren",
+      "deactivate": "Deaktivieren",
+      "delete": "Löschen"
+    },
+    "lastEntry": "Zuletzt {{date}}",
+    "overTarget": "{{amount}} über"
+  },
+  "details": {
+    "active": "Aktiv",
+    "inactive": "Inaktiv",
+    "createdOn": "Erstellt am {{date}}",
+    "total": "Gesamt tracked",
+    "entries": "Transaktionen",
+    "created": "Created",
+    "lastEntry": "Zuletzt entry",
+    "leftOfTarget": "{{amount}} übrig von {{target}}",
+    "overBy": "{{amount}} über Ziel",
+    "transactions": "Transaktionen in dieser Tracker",
+    "noTransactions": "Nothing here yet. Add a Transaktion below, oder tick dieser Tracker while editing an existing one.",
+    "removeFromTracker": "Entfernen von Tracker",
+    "removeFromTrackerNamed": "Entfernen \"{{description}}\" von dieser Tracker",
+    "addTransaction": "Transaktion hinzufügen",
+    "edit": "Bearbeiten",
+    "close": "Schließen",
+    "toasts": {
+      "removed": "Entfernend von Tracker",
+      "removeFailed": "Could nicht entfernen der Transaktion"
+    }
+  },
+  "form": {
+    "titleCreate": "Neuer Tracker",
+    "titleEdit": "Bearbeiten Tracker",
+    "description": "Name der thing Sie want bis follow. A Ziel ist optional.",
+    "untitled": "Untitled Tracker",
+    "noTarget": "Keine Ziel",
+    "targetPreview": "Ziel {{amount}}",
+    "create": "Erstellen Tracker",
+    "saveChanges": "Speichern changes",
+    "name": {
+      "label": "Name",
+      "placeholder": "Trip bis Italy"
+    },
+    "descriptionField": {
+      "label": "Beschreibung",
+      "placeholder": "What does dieser Tracker cover?"
+    },
+    "target": {
+      "label": "Ziel Betrag",
+      "placeholder": "Optional",
+      "hint": "Leave empty bis just track der Gesamt."
+    },
+    "currency": {
+      "label": "Währung"
+    },
+    "icon": {
+      "label": "Icon"
+    },
+    "color": {
+      "label": "Colour"
+    },
+    "active": {
+      "label": "Aktiv",
+      "hint": "Only aktiv Tracker anzeigen up when Sie bearbeiten a Transaktion."
+    },
+    "validation": {
+      "nameRequired": "Name ist erforderlich",
+      "targetPositive": "Ziel must be greater than 0"
+    },
+    "toasts": {
+      "created": "Tracker created",
+      "updated": "Tracker updated",
+      "createFailed": "Could nicht erstellen der Tracker",
+      "updateFailed": "Tracker konnte nicht aktualisiert werden"
+    }
+  },
+  "transactionForm": {
+    "title": "Transaktion hinzufügen",
+    "description": "Creates a real Transaktion und files it unter \"{{name}}\".",
+    "descriptionNoTracker": "Creates a real Transaktion und files it unter dieser Tracker.",
+    "submit": "Transaktion hinzufügen",
+    "type": {
+      "label": "Direction",
+      "expense": "Ausgabe",
+      "income": "Einnahmen",
+      "hint": "Einnahmen inside a Tracker (a refund, say) ist subtracted von its Gesamt."
+    },
+    "amount": {
+      "label": "Betrag"
+    },
+    "descriptionField": {
+      "label": "Beschreibung",
+      "placeholder": "Hotel in Rome"
+    },
+    "account": {
+      "label": "Konto",
+      "placeholder": "Select an Konto"
+    },
+    "category": {
+      "label": "Kategorie",
+      "none": "Keine Kategorie"
+    },
+    "date": {
+      "label": "Datum"
+    },
+    "notes": {
+      "label": "Notes",
+      "placeholder": "Anything worth remembering"
+    },
+    "validation": {
+      "amountPositive": "Betrag must be greater than 0",
+      "accountRequired": "Konto ist erforderlich",
+      "descriptionRequired": "Beschreibung ist erforderlich",
+      "dateRequired": "Datum ist erforderlich"
+    },
+    "toasts": {
+      "added": "Transaktion added bis der Tracker",
+      "failed": "Could nicht add der Transaktion"
+    }
+  }
+}

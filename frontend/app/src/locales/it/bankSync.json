@@ -1,0 +1,105 @@
+{
+  "page": {
+    "title": "Connessioni bancarie",
+    "description": "Sincronizza le transazioni direttamente dalla tua banca invece di inserirle manualmente.",
+    "connect": "Collega una banca"
+  },
+  "empty": {
+    "title": "Nessuna banca collegata",
+    "description": "Collega una banca per importare automaticamente le transazioni. Puoi continuare a inserire manualmente contanti e altri conti."
+  },
+  "status": {
+    "active": "attiva",
+    "pending": "in sospeso",
+    "expired": "scaduta",
+    "revoked": "revocata",
+    "error": "errore"
+  },
+  "connection": {
+    "lastSynced": "Ultima sincronizzazione: {{when}}",
+    "never": "mai",
+    "syncNow": "Sincronizza ora",
+    "syncing": "Sincronizzazione…",
+    "disconnect": "Scollega",
+    "reconnect": "Ricollega",
+    "reconnectNow": "Ricollega ora",
+    "reconnecting": "Nuova connessione in corso…",
+    "expiredNotice": "Questa connessione è scaduta e non viene più sincronizzata. Ricollegala per riprendere la sincronizzazione: i tuoi conti e la relativa cronologia vengono conservati.",
+    "prematureNotice": "La tua banca ha terminato questa sessione in anticipo, prima della data di scadenza concordata. È normale e può accadere dopo un controllo di sicurezza da parte della banca o se lo stesso conto è stato autorizzato altrove. Ricollega la banca per riprendere la sincronizzazione: i tuoi conti e la relativa cronologia vengono conservati.",
+    "revokedNotice": "L'accesso a questa banca è stato revocato. Ricollegala per riprendere la sincronizzazione: i tuoi conti e la relativa cronologia vengono conservati.",
+    "errorNotice": "Non è stato possibile completare questa connessione e la sincronizzazione non è attiva. Ricollega la banca per riprovare: i tuoi conti e la relativa cronologia vengono conservati.",
+    "expiringNotice": "L'accesso scade tra {{days}} giorno/i. Ricollega la banca per continuare a sincronizzare le transazioni.",
+    "noAccounts": "Nessun conto è associato a questa connessione. Prima di comparire qui, i conti devono essere autorizzati nel pannello di controllo di Enable Banking.",
+    "unlinkAccount": "Interrompi la sincronizzazione di questo conto",
+    "unlinkAccountFor": "Interrompi la sincronizzazione di {{account}}"
+  },
+  "disconnectDialog": {
+    "title": "Scollegare {{bank}}?",
+    "description": "La sincronizzazione si interromperà e il consenso bancario verrà revocato. In seguito potrai scegliere cosa fare dei conti e delle relative transazioni.",
+    "confirmLabel": "Scollega"
+  },
+  "dialog": {
+    "title": "Collega una banca",
+    "description": "Verrai reindirizzato alla tua banca per accedere e autorizzare l'accesso. Non vediamo mai le tue credenziali.",
+    "search": "Cerca banche…",
+    "noMatches": "Nessuna banca corrisponde a “{{query}}”.",
+    "loadFailed": "Impossibile caricare l'elenco delle banche.",
+    "redirecting": "Reindirizzamento…",
+    "cancel": "Annulla",
+    "whitelistNote": "I tuoi conti devono essere collegati nel pannello di controllo di Enable Banking prima di poter essere sincronizzati qui. Se la connessione riesce ma non compare alcun conto, questo passaggio non è stato completato.",
+    "readOnlyNote": "L'accesso è in sola lettura: non è possibile effettuare pagamenti. Consulta la nostra <privacy>Informativa sulla privacy</privacy> e i nostri <terms>Termini di servizio</terms>."
+  },
+  "toasts": {
+    "connected": "Banca collegata",
+    "connectedWithAccounts": "Banca collegata — {{count}} conto/i associato/i",
+    "imported": "Importate {{count}} nuove transazioni",
+    "upToDate": "Già aggiornato",
+    "partialFailure": "Impossibile sincronizzare {{count}} conto/i",
+    "syncFailed": "Sincronizzazione non riuscita",
+    "disconnected": "{{bank}} scollegata",
+    "disconnectFailed": "Impossibile scollegare",
+    "startFailed": "Impossibile avviare la connessione",
+    "disconnectedAndKept": "{{bank}} scollegata — i conti sono conservati e ora possono essere modificati",
+    "disconnectedAndDeleted": "{{bank}} scollegata — eliminate {{count}} transazioni",
+    "accountUnlinked": "La sincronizzazione di {{account}} è stata interrotta — il conto è conservato e ora può essere modificato",
+    "accountDeleted": "{{account}} eliminato — rimosse {{count}} transazioni",
+    "connectionRemoved": "Era l'ultimo conto della banca, quindi è stata rimossa anche la connessione"
+  },
+  "callbackErrors": {
+    "missing_state": "La banca non ha restituito informazioni sufficienti. Riprova.",
+    "invalid_state": "Questo tentativo di connessione non è più valido. Avviane uno nuovo.",
+    "state_expired": "Il tentativo di connessione è scaduto. Riprova.",
+    "state_already_used": "Questo link di connessione è già stato utilizzato. Creane uno nuovo.",
+    "bank_declined": "La tua banca ha rifiutato la richiesta oppure l'autorizzazione è stata annullata.",
+    "session_failed": "Non è stato possibile completare la connessione con la tua banca. Riprova.",
+    "no_accounts": "La tua banca ha autorizzato l'accesso ma non ha restituito alcun conto. Probabilmente devono ancora essere collegati nel pannello di controllo di Enable Banking.",
+    "generic": "Non è stato possibile completare la connessione bancaria."
+  },
+  "transaction": {
+    "pending": "In sospeso",
+    "pendingHint": "Non ancora contabilizzata dalla banca. Potrebbe cambiare o scomparire."
+  },
+  "disconnectChoice": {
+    "title": "Che cosa vuoi fare con i dati di {{name}}?",
+    "keep": {
+      "title": "Conserva i conti e le transazioni",
+      "description": "Diventeranno normali voci manuali che potrai modificare ed eliminare. Non perderai nulla, ma non verranno più aggiornate automaticamente.",
+      "titleBank": "Conserva i conti e le transazioni",
+      "titleAccount": "Conserva il conto e le sue transazioni"
+    },
+    "delete": {
+      "title": "Elimina {{count}} conto/i e tutto ciò che contengono",
+      "description": "Tutte le transazioni sincronizzate finora verranno eliminate definitivamente. L'operazione non può essere annullata.",
+      "titleBank": "Elimina {{count}} conto/i e tutto ciò che contengono",
+      "titleAccount": "Elimina il conto e tutto ciò che contiene"
+    },
+    "cancel": "Annulla",
+    "descriptionBank": "{{count}} conto/i sono stati sincronizzati da questa banca.",
+    "descriptionAccount": "Questo conto è stato sincronizzato dalla tua banca."
+  },
+  "unlinkAccountDialog": {
+    "title": "Interrompere la sincronizzazione di {{account}}?",
+    "description": "La modifica riguarda solo questo conto: gli altri conti di {{bank}} continueranno a essere sincronizzati. In seguito potrai scegliere cosa fare delle sue transazioni.",
+    "confirmLabel": "Interrompi la sincronizzazione"
+  }
+}

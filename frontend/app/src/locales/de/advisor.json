@@ -1,0 +1,567 @@
+{
+  "page": {
+    "title": "Finanzberater",
+    "description": "Berechnen Sie Szenarien für Investitionen, Kredite, Notgroschen und Nettovermögen.",
+    "toolLabel": "Werkzeug"
+  },
+  "tools": {
+    "investment": "Investment",
+    "loan": "Kredit",
+    "emergency": "Notgroschen",
+    "networth": "Nettovermögen"
+  },
+  "toolPanel": {
+    "results": "Ergebnisse"
+  },
+  "charts": {
+    "year": "Jahr {{n}}",
+    "month": "Monat {{n}}",
+    "age": "Alter {{n}}",
+    "now": "Jetzt"
+  },
+  "secondaryNav": {
+    "investment": {
+      "compound": "Zinseszins",
+      "retirement": "Altersvorsorge",
+      "compare": "Vergleichen",
+      "selfSustaining": "Finanzielle Freiheit"
+    },
+    "loan": {
+      "amortization": "Tilgung",
+      "earlyPayoff": "Sondertilgung"
+    }
+  },
+  "investmentTool": {
+    "compound": {
+      "title": "Zinseszins-Wachstum",
+      "description": "Erfahren Sie, wie Ihr Vermögen durch Zinseszins über die Zeit exponentiell wächst.",
+      "infoBanner": "Ihr Geld bringt Zinsen ein, und diese Zinsen erzielen wiederum Zinsen.",
+      "startingAmountLabel": "Startkapital",
+      "startingAmountHint": "Einmalige Einzahlung",
+      "monthlyDepositLabel": "Monatliche Sparrate",
+      "monthlyDepositHint": "Regelmäßiger Beitrag",
+      "annualReturnLabel": "Jährliche Rendite",
+      "annualReturnHint": "Aktien: 7–10 %, Anleihen: 3–5 %",
+      "investmentPeriodLabel": "Anlagehorizont",
+      "investmentPeriodHint": "Jahre des Wachstums",
+      "calculateButton": "Wachstum berechnen",
+      "calculationError": "Berechnungsfehler",
+      "emptyResults": "Geben Sie Ihre Zahlen ein und starten Sie die Berechnung.",
+      "finalBalance": "Endkapital",
+      "finalBalanceHint": "{{years}} Jahre",
+      "contributed": "Einzahlungen",
+      "contributedHint": "Ihre Sparentwicklungen",
+      "interest": "Zinsertrag",
+      "analysis": "Analyse",
+      "returnLabel": "Rendite: ",
+      "multiplierLabel": "Vervielfachung: ",
+      "monthlyLabel": "Monatlich: ",
+      "ruleOf72Label": "72er-Regel: ",
+      "ruleOf72Value": "~{{years}} J.",
+      "tip": "Tipp:",
+      "tipText": "Bei {{rate}} % verdoppelt sich Ihr Kapital nach der 72er-Regel in ca. {{years}} Jahren.",
+      "chartTitle": "Vermögensentwicklung über die Zeit",
+      "legendBalance": "Gesamtkapital",
+      "legendContributions": "Ihre Einzahlungen",
+      "insight": {
+        "excellent": "Hervorragendes Wachstum! Ihr Geld vervielfacht sich um das {{multiplier}}-fache in {{years}} Jahren.",
+        "good": "Gutes Wachstum — Ihre Anlage hat sich mehr als verdoppelt.",
+        "moderate": "Moderates Wachstum. Erwägen Sie eine höhere monatliche Sparrate.",
+        "conservative": "Konservatives Wachstum. Ein längerer Horizont würde den Zinseszins stärken."
+      }
+    },
+    "retirement": {
+      "title": "Prognose Altersvorsorge",
+      "description": "Schätzt Ihr Kapital im Ruhestand und Ihr monatliches Einkommen nach der 4%-Regel.",
+      "currentAgeLabel": "Aktuelles Alter",
+      "retirementAgeLabel": "Rentenalter",
+      "currentSavingsLabel": "Bisheriges Erspartes",
+      "monthlyContributionLabel": "Monatliche Sparrate",
+      "expectedReturnLabel": "Erwartete Rendite %",
+      "expectedInflationLabel": "Erwartete Inflation %",
+      "inflationHint": "Durchschnitt: 2–3 %. Die Entnahmerate basiert auf der 4%-Regel.",
+      "calculateButton": "Altersvorsorge berechnen",
+      "calculationError": "Berechnungsfehler",
+      "emptyResults": "Tragen Sie Ihre Daten ein, um die Rentenprognose zu berechnen.",
+      "balanceAt": "Vermögen mit {{age}}",
+      "todaysMoney": "{{amount}} in heutiger Kaufkraft",
+      "monthlyIncome": "Monatliche Rente",
+      "monthlyIncomeHint": "4%-Regel",
+      "yearsToRetire": "Jahre bis zur Rente",
+      "yearsToRetireHint": "{{from}} → {{to}}",
+      "outlook": "Ausblick",
+      "milestones": "Meilensteine",
+      "milestoneAge": "Alter {{age}}",
+      "fourPercentRule": "4%-Regel:",
+      "fourPercentRuleText": "{{balance}} ermöglicht {{income}}/Monat.",
+      "chartTitle": "Entwicklung der Altersvorsorge",
+      "seriesProjectedBalance": "Prognostiziertes Kapital",
+      "adequacy": {
+        "excellent": "Ihre prognostizierte Rente ist hervorragend und sichert Ihren Lebensstandard.",
+        "good": "Guter Ausblick für den Ruhestand.",
+        "moderate": "Moderate Rentenerwartung. Höhere Sparraten werden empfohlen.",
+        "low": "Das prognostizierte Einkommen liegt unter dem Bedarf. Bitte Sparrate erhöhen."
+      }
+    },
+    "compare": {
+      "title": "Strategien vergleichen",
+      "description": "Vergleichen Sie verschiedene Sparraten und Renditen im direkten Vergleich.",
+      "initialInvestmentLabel": "Anfangskapital",
+      "investmentPeriodLabel": "Anlagehorizont",
+      "monthlyLabel": "Monatlich",
+      "returnLabel": "Rendite %",
+      "compareButton": "Strategien vergleichen",
+      "comparisonError": "Fehler beim Vergleich",
+      "emptyResults": "Legen Sie Szenarien fest, um die besten Erträge zu ermitteln.",
+      "bestYields": "bringt den höchsten Ertrag: {{amount}}",
+      "columnScenario": "Szenario",
+      "columnMonthly": "Monatlich",
+      "columnRate": "Zins",
+      "columnFinalBalance": "Endkapital",
+      "differenceSummary": "Der Unterschied zwischen {{from}} und {{to}} beträgt {{amount}} nach {{years}} Jahren.",
+      "chartTitle": "Szenarienverlauf über die Zeit",
+      "scenarios": {
+        "conservative": "Konservativ (Geringes Risiko)",
+        "moderate": "Moderat (Ausgewogen)",
+        "aggressive": "Chancenorientiert (Hohes Risiko)"
+      }
+    },
+    "selfSustaining": {
+      "title": "Finanzielle Unabhängigkeit",
+      "description": "Ermitteln Sie das erforderliche Zielkapital, damit die Zinserträge Ihre monatlichen Entnahmen decken.",
+      "infoBanner": "Sobald die monatlichen Zinsen Ihre Wunsch-Entnahme decken, bleibt das Grundkapital für immer erhalten.",
+      "initialInvestmentLabel": "Startkapital (€)",
+      "monthlyContributionLabel": "Monatliche Sparrate (€)",
+      "annualRateLabel": "Jährlicher Zins (%)",
+      "monthlyWithdrawalLabel": "Gewünschte Monatsentnahme (€)",
+      "calculateButton": "Zielkapital berechnen",
+      "calculationError": "Zielkapital mit diesen Eingaben nicht erreichbar.",
+      "emptyResults": "Geben Sie Ihre Daten ein, um das Zielkapital zu berechnen.",
+      "targetCapital": "Zielkapital",
+      "targetCapitalDetail": "Generiert {{interest}}/Monat an Zinsen — deckt Ihre {{withdrawal}} Entnahme",
+      "timeToGoal": "Dauer bis zum Ziel",
+      "timeToGoalValue": "{{years}} J. {{months}} M.",
+      "timeToGoalHint": "{{months}} Monate insgesamt",
+      "totalContributed": "Gesamteinzahlungen",
+      "totalContributedHint": "Ihre Sparrate",
+      "interestEarned": "Zinsgewinn",
+      "interestEarnedHint": "Zinseszins",
+      "exportHint": "Jahresübersicht exportieren",
+      "exportCsv": "CSV",
+      "exportExcel": "Excel",
+      "sustainabilityCheck": "Nachhaltigkeits-Check:",
+      "sustainabilityCheckText": "Eine jährliche Entnahme von {{withdrawal}}/Monat aus {{capital}} belässt das Restkapital bei {{remaining}}.",
+      "chartTitleGrowth": "Wachstum bis zum Zielkapital",
+      "chartTitleSustainability": "Kapitalverlauf während der Entnahmephase",
+      "legendBalance": "Kapital",
+      "legendContributions": "Einzahlungen",
+      "legendTargetCapital": "Zielkapital",
+      "legendBalanceAfterWithdrawal": "Kapital nach Entnahme",
+      "export": {
+        "headerYear": "Jahr",
+        "headerBalance": "Kapitalstand",
+        "headerContributions": "Einzahlungen",
+        "headerInterestEarned": "Zinsertrag",
+        "headerYearGrowth": "Jahreswachstum",
+        "headerTargetReached": "Ziel erreicht",
+        "yes": "Ja",
+        "no": "Nein"
+      }
+    }
+  },
+  "loanTool": {
+    "amortization": {
+      "title": "Kredittilgung",
+      "description": "Ihre monatliche Rate und die Gesamtzinsen über die Laufzeit des Kredits.",
+      "loanAmountLabel": "Kreditbetrag",
+      "interestRateLabel": "Sollzins %",
+      "loanTermLabel": "Laufzeit (Jahre)",
+      "calculateButton": "Rate berechnen",
+      "calculationError": "Berechnungsfehler",
+      "emptyResults": "Geben Sie die Kreditdaten ein, um den Tilgungsplan zu sehen.",
+      "monthly": "Monatlich",
+      "monthlyHint": "{{years}} Jahre",
+      "totalInterest": "Gesamtzinsen",
+      "totalPaid": "Gesamtzahlung",
+      "totalPaidHint": "Tilgung + Zinsen",
+      "summary": "Über {{years}} Jahre bei {{rate}} % zahlen Sie {{amount}} an Zinsen.",
+      "chartTitle": "Restschuld im Zeitverlauf",
+      "seriesRemainingBalance": "Restschuld"
+    },
+    "earlyPayoff": {
+      "title": "Sondertilgung",
+      "description": "Wie zusätzliche monatliche Zahlungen die Restschuld schneller reduzieren und Zinsen sparen.",
+      "remainingBalanceLabel": "Restschuld",
+      "interestRateLabel": "Zinssatz %",
+      "remainingYearsLabel": "Restlaufzeit (Jahre)",
+      "extraPaymentLabel": "Zusätzliche Monatsrate",
+      "extraPaymentHint": "Betrag über die reguläre Rate hinaus",
+      "calculateButton": "Ersparnis berechnen",
+      "calculationError": "Berechnungsfehler",
+      "emptyResults": "Geben Sie eine Sondertilgung ein, um die Ersparnis zu berechnen.",
+      "saveAlert": "Sparen Sie {{amount}}",
+      "saveAlertDetail": "durch monatlich {{extra}} zusätzliche Tilgung.",
+      "timeSaved": "Zeitersparnis",
+      "timeSavedValue": "{{years}} Jahre",
+      "timeSavedHint": "{{months}} Monate",
+      "newTerm": "Neue Laufzeit",
+      "newTermValue": "{{years}} Jahre",
+      "newTermHint": "statt {{years}} Jahren",
+      "original": "Ursprünglich",
+      "new": "Neu",
+      "save": "Ersparnis",
+      "perMonth": "{{amount}}/Monat",
+      "tip": "Sondertilgungen verringern direkt die Restschuld und senken künftige Zinsen."
+    }
+  },
+  "emergencyFund": {
+    "title": "Notgroschen",
+    "description": "Experten empfehlen 3–6 Monatsausgaben als eiserne Reserve für unerwartete Ereignisse.",
+    "whyYouNeedOne": "Warum ein Notgroschen wichtig ist",
+    "reasons": {
+      "threeMonths": "3 Monate:",
+      "threeMonthsText": "Mindestschutz für Angestellte mit sicherem Job",
+      "sixMonths": "6 Monate:",
+      "sixMonthsText": "Empfohlen für die meisten Haushalte",
+      "twelveMonths": "12 Monate:",
+      "twelveMonthsText": "Für Selbstständige oder schwankendes Einkommen"
+    },
+    "analyzeIntro": "Wir analysieren Ihre Ausgaben der letzten 6 Monate für eine maßgeschneiderte Empfehlung.",
+    "analyzeButton": "Meine Ausgaben analysieren",
+    "loadError": "Fehler beim Laden der Empfehlung",
+    "emptyResults": "Starten Sie die Analyse, um Empfehlungen zum Notgroschen zu erhalten.",
+    "notEnoughData": "Nicht genügend Daten.",
+    "notEnoughDataFallback": "Es werden mehr Ausgabentransaktionen für eine Berechnung benötigt.",
+    "notEnoughDataHelp": "Voraussetzungen für die Notgroschen-Analyse:",
+    "notEnoughDataChecklist": {
+      "expenses": "Erfasste Ausgaben auf Ihren Konten",
+      "history": "Mindestens einige Wochen Ausgabenhistorie",
+      "categorized": "Kategorisierte Transaktionen"
+    },
+    "currentCoverage": "Aktuelle Notgroschen-Abdeckung",
+    "months": "{{count}} Monate",
+    "coverageDetail": "{{assets}} liquides Vermögen · monatliche Ausgaben Ø {{expenses}}",
+    "percentOfTarget": "{{percent}} % des empfohlenen 6-Monats-Ziels",
+    "targets": "Ihre Zielbeträge für den Notgroschen",
+    "targetsBasedOn": "Basierend auf Monatsausgaben von {{amount}}",
+    "tiers": {
+      "minimum": "Minimum",
+      "recommended": "Empfohlen",
+      "maximum": "Optimal"
+    },
+    "met": "Erreicht",
+    "savingsPlansTitle": "Sparpläne zum Erreichen des 6-Monats-Ziels",
+    "gapLabel": "Lücke: {{amount}}",
+    "monthsCount": "{{count}} Monate",
+    "recommendedBadge": "Empfohlen",
+    "perMonth": "{{amount}}/Monat",
+    "goalReached": "Glückwunsch! Sie haben das empfohlene Notgroschen-Ziel erreicht.",
+    "status": {
+      "excellent": "Sie besitzen einen hervorragenden Notgroschen. Sehr gute Arbeit!",
+      "good": "Ihr Notgroschen ist solide. Bauen Sie ihn weiter aus.",
+      "fair": "Ihr Notgroschen liegt unter den Empfehlungen. Priorisieren Sie das Sparen.",
+      "critical": "Kritischer Notgroschen. Sparen Sie dringend 1–2 Monatsausgaben an."
+    }
+  },
+  "netWorthTool": {
+    "title": "Nettovermögens-Tracker",
+    "description": "Nettovermögen = Gesamtes Vermögen − Gesamte Verbindlichkeiten.",
+    "infoBanner": "<strong>Vermögen:</strong> Bargeld, Investments, Immobilien, Fahrzeuge. <strong>Verbindlichkeiten:</strong> Kredite, Kreditkarten, Hypotheken.",
+    "currentButton": "Aktuelles Vermögen",
+    "historyButton": "Historischer Verlauf",
+    "projectionButton": "Zukunftsprognose",
+    "loadCurrentError": "Fehler beim Laden des Vermögensstandes",
+    "loadHistoryError": "Fehler beim Laden des Verlaufs",
+    "loadProjectionError": "Fehler beim Laden der Prognose",
+    "emptyResults": "Wählen Sie eine Ansicht aus, um Ihr Nettovermögen zu sehen.",
+    "netWorth": "Nettovermögen",
+    "asOf": "Stand {{date}}",
+    "totalAssets": "Gesamtvermögen",
+    "totalLiabilities": "Gesamtverbindlichkeiten",
+    "debtToAssetRatio": "Verschuldungsgrad:",
+    "history": {
+      "infoBanner": "Geschätztes Vermögen der letzten 12 Monate basierend auf Ihren Transaktionen.",
+      "changeLabel": "12-Monats-Veränderung: ",
+      "chartTitle": "Historie des Nettovermögens (geschätzt)",
+      "seriesNetWorth": "Nettovermögen",
+      "seriesChange": "Veränderung im Monat",
+      "peak": "Höchststand",
+      "trough": "Tiefststand",
+      "average": "Durchschnitt",
+      "chartHint": "Die Linie zeigt das Vermögen; die Balken darunter die monatliche Veränderung."
+    },
+    "projection": {
+      "growthLabel": "Prognostiziertes Wachstum",
+      "growthHint": "Basiert auf Ø {{amount}}/Monat Ersparnis",
+      "projectedIn12Months": "Prognostiziertes Nettovermögen in 12 Monaten:",
+      "infoBanner": "Setzt eine unveränderte Sparrate voraus.",
+      "chartTitle": "Prognose des Nettovermögens",
+      "seriesProjectedNetWorth": "Prognostiziertes Vermögen",
+      "projectedBand": "Prognose",
+      "todayLine": "Heute",
+      "chartHint": "Gestrichelt dargestellt, da es sich um eine rechnerische Extrapolation handelt."
+    },
+    "health": {
+      "excellent": "Exzellent! Ihr Verschuldungsgrad ist sehr gesund.",
+      "good": "Gute finanzielle Lage mit überschaubaren Schulden.",
+      "moderate": "Moderate Verschuldung. Schuldenabbau wird empfohlen.",
+      "high": "Hoher Verschuldungsgrad. Tilgung sollte Priorität haben."
+    }
+  },
+  "aiAdvisor": {
+    "popup": {
+      "title": "Finanz-Assistent",
+      "subtitle": "Liest Ihre echten Konten, Budgets und Rechnungen",
+      "close": "Assistent schließen",
+      "resize": "Größe anpassen (ziehen oder Pfeiltasten)"
+    },
+    "unavailableReason": "KI-Chat ist auf diesem Server nicht konfiguriert.",
+    "models": {
+      "pickerLabel": "Modell",
+      "search": "Modell suchen…",
+      "sortName": "Name",
+      "sortPrice": "Preis",
+      "sortContext": "Kontext",
+      "loading": "Lade Modelle…",
+      "unavailable": "Modellliste konnte nicht geladen werden.",
+      "empty": "Keine passenden Modelle.",
+      "updated": "Aktualisiert {{when}}",
+      "count": "{{count}} Modelle",
+      "refresh": "Liste aktualisieren",
+      "free": "kostenlos",
+      "priceUnknown": "Preis unbekannt",
+      "perMillion": "pro 1M Tokens",
+      "contextLength": "{{size}} Kontext"
+    },
+    "usage": {
+      "title": "Diese Antwort",
+      "model": "Modell",
+      "steps": "Schritte",
+      "toolCalls": "Abfragen",
+      "input": "Input-Tokens",
+      "cached": "Cached-Tokens",
+      "output": "Output-Tokens",
+      "peakContext": "Spitzen-Kontext",
+      "cost": "Kosten",
+      "duration": "Dauer",
+      "estimated": "Geschätzte Kosten.",
+      "tokens": "Tok",
+      "sessionTotal": "Dieser Chat: {{cost}}"
+    },
+    "chat": {
+      "newChat": "Neuer Chat",
+      "thinking": "Denkt nach",
+      "copy": "Kopieren",
+      "copied": "Kopiert",
+      "askAgain": "Erneut fragen",
+      "heading": "Fragen Sie alles über Ihre Finanzen.",
+      "subheading": "Der Berater kennt Ihre Transaktionen, Salden, Budgets und Kredite.",
+      "composerPlaceholderDisabled": "Berater nicht verfügbar",
+      "composerPlaceholder": "Stellen Sie eine Frage zu Ihren Finanzen…",
+      "composerAriaLabel": "Frage zu Finanzen stellen",
+      "stopAriaLabel": "Stopp",
+      "sendAriaLabel": "Senden",
+      "composerHint": "Eingabe zum Senden, Umschalt + Eingabe für neue Zeile.",
+      "genericError": "Der Berater hat vorzeitig abgebrochen.",
+      "unreachableError": "Berater nicht erreichbar ({{status}}).",
+      "emptyResponseError": "Der Berater lieferte eine leere Antwort.",
+      "streamError": "Fehler bei der Verbindung zum Berater.",
+      "suggestionGroups": {
+        "findLeak": {
+          "title": "Einsparpotenzial finden",
+          "prompts": [
+            "Was sind meine Top-3-Ausgabenkategorien diesen Monat?",
+            "Welche Abos zahle ich, die ich kaum nutze?"
+          ]
+        },
+        "checkPlan": {
+          "title": "Budgets prüfen",
+          "prompts": [
+            "Liege ich im Rahmen meiner Budgets?",
+            "Welche wiederkehrenden Ausgaben stehen in den nächsten 7 Tagen an?"
+          ]
+        },
+        "getOutOfDebt": {
+          "title": "Schulden abbauen",
+          "prompts": [
+            "Wie hoch sind meine Gesamtschulden und was sollte ich zuerst tilgen?",
+            "Wann bin ich schuldenfrei, wenn ich 200 mehr im Monat tilge?"
+          ]
+        },
+        "portfolioHealth": {
+          "title": "Depot-Check",
+          "prompts": [
+            "Habe ich Klumpenrisiken im Depot?",
+            "Wie risikoreich ist mein Depot im Vergleich zum Markt?"
+          ]
+        },
+        "investDecision": {
+          "title": "Anlageentscheidungen",
+          "prompts": [
+            "Wie viel kann ich realistisch jeden Monat investieren?",
+            "Sollte ich meine größte Position aufstocken oder einen Welt-ETF kaufen?",
+            "Ist Schulden tilgen derzeit besser als Investieren?"
+          ]
+        }
+      },
+      "export": "Exportieren"
+    },
+    "toolTrail": {
+      "labels": {
+        "getTransactions": "Lese Transaktionen",
+        "getTotals": "Berechne Summen",
+        "getAccountBalances": "Prüfe Kontostände",
+        "getBudgetsStatus": "Prüfe Budgets",
+        "getRecurringExpenses": "Prüfe wiederkehrende Ausgaben",
+        "getDebts": "Prüfe Schulden",
+        "sendAnalysisEmail": "Sende E-Mail",
+        "getInvestorProfile": "Lese Anlegerprofil",
+        "updateInvestorProfile": "Aktualisiere Anlegerprofil",
+        "getPortfolioOverview": "Lese Portfolio",
+        "getPositions": "Liste Positionen auf",
+        "getPortfolioAllocation": "Prüfe Asset-Allocation",
+        "getPortfolioRisk": "Messe Portfoliorisiko",
+        "getInvestmentTransactions": "Lese Broker-Aktivitäten",
+        "getPositionHistory": "Verfolge Positionshistorie",
+        "getWatchlist": "Prüfe Watchlist",
+        "searchSymbols": "Suche Tickersymbol",
+        "getCompanyResearch": "Recherchiere Unternehmen",
+        "compareSymbols": "Vergleiche Symbole",
+        "getTechnical": "Lese Charttechnik für",
+        "simulateSymbol": "Simuliere Szenarien für",
+        "getNetWorth": "Berechne Nettovermögen",
+        "getEmergencyFund": "Prüfe Notgroschen",
+        "getGoals": "Prüfe Sparziele",
+        "getInvestableSurplus": "Berechne freies Anlagekapital",
+        "getRecurringCommitments": "Summiere Verpflichtungen",
+        "projectInvestment": "Prognostiziere Wachstum",
+        "compareInvestVsPayoff": "Vergleiche Investition vs. Tilgung",
+        "loadSkill": "Lade Skill",
+        "getCategoryTrends": "Analysiere Kategorietrends",
+        "getCashflowTrend": "Erstelle Cashflow-Chart",
+        "detectSpendingAnomalies": "Suche nach ungewöhnlichen Ausgaben",
+        "getSubscriptionAudit": "Überprüfe Abonnements",
+        "sendReportEmail": "Sende Bericht per E-Mail",
+        "getFinancialStatements": "Lese Finanzberichte von",
+        "getAnalystEstimates": "Lese Analystenschätzungen für",
+        "findPeers": "Suche Vergleichsunternehmen für",
+        "dcfValuation": "Führe DCF-Bewertung durch für",
+        "getNewsDigest": "Lese Nachrichten zu",
+        "screenStocks": "Filtere Aktien",
+        "screenEtfs": "Filtere ETFs",
+        "getSectorOverview": "Analysiere Sektor",
+        "portfolioFit": "Prüfe Eignung fürs Portfolio",
+        "rebalancePlan": "Entwerfe Rebalancing-Plan",
+        "getFundCosts": "Vergleiche Fondskosten",
+        "webSearch": "Suche im Web"
+      },
+      "usingFallback": "Verwende {{name}}",
+      "phrases": {
+        "statement": "Lese {{symbol}} {{statement}}",
+        "webSearch": "Suche im Web nach {{query}}"
+      },
+      "statements": {
+        "income": "Gewinn- und Verlustrechnung",
+        "balance": "Bilanz",
+        "cashflow": "Kapitalflussrechnung"
+      },
+      "usingSkill": "Nutze Skill: {{title}}"
+    },
+    "profileUpdate": {
+      "title": "Der Berater hat Ihr Profil aktualisiert",
+      "undo": "Rückgängig",
+      "undone": "(rückgängig gemacht)",
+      "notSet": "nicht festgelegt",
+      "fields": {
+        "risk_tolerance": "Risikotoleranz",
+        "primary_objective": "Hauptziel",
+        "horizon_years": "Anlagehorizont (Jahre)",
+        "liquidity_needs_months": "Liquiditätsbedarf (Monate)",
+        "target_allocation": "Ziel-Allokation",
+        "max_single_position_pct": "Max. Einzelposition",
+        "excluded_sectors": "Auszuschließende Sektoren",
+        "excluded_symbols": "Auszuschließende Symbole",
+        "income_stability": "Einkommensstabilität",
+        "experience_level": "Erfahrung",
+        "base_currency": "Basiswährung",
+        "tax_residency": "Steuerwohnsitz",
+        "notes": "Notizen"
+      }
+    },
+    "export": {
+      "modelLine": "Modell: {{model}} · {{cost}}",
+      "title": "KI-Berater Konversation",
+      "exportedAt": "Exportiert {{when}}",
+      "you": "Sie",
+      "advisor": "Berater"
+    },
+    "skills": {
+      "menuLabel": "Skills",
+      "activeLabel": "Aktive Skills",
+      "dismiss": "{{title}} stoppen",
+      "modelHint": "{{skill}} funktioniert am besten mit {{model}}.",
+      "switchModel": "Zu {{model}} wechseln",
+      "dismissHint": "Schließen"
+    }
+  },
+  "investorProfile": {
+    "title": "Anlegerprofil",
+    "description": "Informationen für den KI-Berater zur Personalisierung von Empfehlungen.",
+    "loading": "Lade…",
+    "notSetYet": "Noch nichts festgelegt.",
+    "choose": "Auswählen…",
+    "save": "Profil speichern",
+    "saving": "Speichern…",
+    "saved": "Gespeichert",
+    "saveFailed": "Profil konnte nicht gespeichert werden.",
+    "allocationTotal": "Gesamt: {{total}} % (sollte ca. 100 % ergeben)",
+    "fields": {
+      "riskTolerance": "Risikotoleranz",
+      "primaryObjective": "Hauptziel",
+      "horizonYears": "Anlagehorizont (Jahre)",
+      "liquidityNeedsMonths": "Liquiditätsreserve (Monate)",
+      "maxSinglePosition": "Maximaler Anteil einer Einzelposition (%)",
+      "incomeStability": "Einkommensstabilität",
+      "experienceLevel": "Anlageerfahrung",
+      "baseCurrency": "Basiswährung",
+      "taxResidency": "Steuerlicher Wohnsitz",
+      "targetAllocation": "Ziel-Allokation",
+      "excludedSectors": "Auszuschließende Branchen",
+      "excludedSymbols": "Auszuschließende Wertpapiere",
+      "notes": "Weitere Anmerkungen"
+    },
+    "hints": {
+      "horizonYears": "Wann benötigen Sie das Geld.",
+      "maxSinglePosition": "Warnung bei Überschreitung dieser Positionsgröße.",
+      "targetAllocation": "Prozentuale Aufteilung (Summe ~100 %).",
+      "commaSeparated": "Kommagetrennt",
+      "notes": "z. B. «Betriebliche Altersvorsorge vorhanden»"
+    },
+    "assetClasses": {
+      "equity": "Aktien",
+      "bond": "Anleihen",
+      "cash": "Bargeld / Festgeld",
+      "crypto": "Krypto",
+      "other": "Sonstiges"
+    },
+    "values": {
+      "conservative": "Konservativ",
+      "moderate": "Moderat",
+      "balanced": "Ausgewogen",
+      "growth": "Wachstum",
+      "aggressive": "Chancenorientiert",
+      "preservation": "Kapitalerhalt",
+      "income": "Einkommensgenerierung",
+      "stable": "Stabil",
+      "variable": "Variabel",
+      "uncertain": "Unsicher",
+      "beginner": "Einsteiger",
+      "intermediate": "Fortgeschritten",
+      "experienced": "Erfahren"
+    },
+    "history": {
+      "title": "Änderungshistorie",
+      "description": "Historie aller Änderungen."
+    }
+  }
+}

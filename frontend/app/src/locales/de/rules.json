@@ -1,0 +1,111 @@
+{
+  "title": "Kategorisierungsregeln",
+  "description": "Automatically assign categories bis matching Transaktionen.",
+  "actions": {
+    "add": "Regel hinzufügen",
+    "applyAll": "Alle jetzt anwenden",
+    "apply": "Auf vergangene anwenden",
+    "edit": "Bearbeiten",
+    "delete": "Löschen",
+    "preview": "Treffer anzeigen"
+  },
+  "empty": {
+    "title": "Keine categorisation Regeln yet",
+    "description": "Erstellen a Regel once — matching Transaktionen get kategorisiert am synchronisieren und import.",
+    "cta": "Erstellen Sie Ihre erste Regel"
+  },
+  "list": {
+    "active": "Aktiv",
+    "inactive": "Paused",
+    "applied": "{{count}}-mal angewendet",
+    "neverApplied": "Noch nicht angewendet",
+    "arrow": "→"
+  },
+  "table": {
+    "name": "Regel",
+    "category": "Kategorie",
+    "applied": "Verwendung",
+    "active": "Aktiv",
+    "actions": "Aktionen",
+    "searchPlaceholder": "Suche Regeln…",
+    "noMatches": "Keine Regel entspricht dieser Suche."
+  },
+  "summary": {
+    "contains": "Beschreibung contains “{{value}}”",
+    "not_contains": "Beschreibung does nicht contain “{{value}}”",
+    "equals": "{{field}} ist gleich „{{value}}“",
+    "starts_with": "Beschreibung starts mit “{{value}}”",
+    "ends_with": "Beschreibung ends mit “{{value}}”",
+    "regex": "Beschreibung Treffer /{{value}}/",
+    "eq": "{{field}} = {{value}}",
+    "lt": "{{field}} < {{value}}",
+    "lte": "{{field}} ≤ {{value}}",
+    "gt": "{{field}} > {{value}}",
+    "gte": "{{field}} ≥ {{value}}",
+    "between": "{{field}} zwischen {{value}} und {{valueTo}}",
+    "not_eq": "{{field}} ≠ {{value}}",
+    "and": " und ",
+    "or": " oder ",
+    "fields": {
+      "description": "Beschreibung",
+      "amount": "Betrag",
+      "account_id": "Konto",
+      "type": "Typ",
+      "counterparty": "Counterparty"
+    }
+  },
+  "form": {
+    "titleCreate": "Neu categorisation Regel",
+    "titleEdit": "Bearbeiten categorisation Regel",
+    "name": "Name",
+    "namePlaceholder": "e.g. Supermarkets",
+    "category": "Assign Kategorie",
+    "matchType": "Treffer",
+    "matchAll": "Alle Bedingungen (UND)",
+    "matchAny": "Any condition (Oder)",
+    "active": "Regel ist aktiv",
+    "conditions": "Conditions",
+    "addCondition": "Add condition",
+    "removeCondition": "Entfernen",
+    "field": "Field",
+    "operator": "Operator",
+    "value": "Wert",
+    "valueTo": "Bis",
+    "applyToExisting": "Auch auf frühere nicht kategorisierte Transaktionen anwenden",
+    "includeCategorised": "Bereits kategorisierte Transaktionen ebenfalls neu kategorisieren",
+    "previewCount": "Trifft auf {{count}} vorhandene Transaktionen zu",
+    "previewSample": "Sample Treffer",
+    "save": "Speichern Regel",
+    "validation": {
+      "nameRequired": "Name ist erforderlich",
+      "categoryRequired": "Kategorie ist erforderlich",
+      "conditionRequired": "At least one condition ist erforderlich",
+      "valueRequired": "Wert ist erforderlich"
+    }
+  },
+  "apply": {
+    "title": "Apply Regel bis past Transaktionen",
+    "description": "“{{name}}” will categorise matching Transaktionen das currently have keine Kategorie.",
+    "includeCategorised": "Also overwrite Transaktionen das already have a Kategorie",
+    "confirm": "Apply now",
+    "success": "Updated {{count}} Transaktionen",
+    "none": "Keine matching Transaktionen bis aktualisieren",
+    "applyAllTitle": "Apply alle aktiv Regeln",
+    "applyAllDescription": "Every aktiv Regel will run against nicht kategorisiert Transaktionen, in priority order."
+  },
+  "toast": {
+    "created": "Regel created",
+    "updated": "Regel updated",
+    "deleted": "Regel deleted",
+    "createError": "Regel konnte nicht erstellt werden",
+    "updateError": "Regel konnte nicht aktualisiert werden",
+    "deleteError": "Regel konnte nicht gelöscht werden",
+    "applyError": "Regel konnte nicht angewendet werden",
+    "ruleFromTxFailed": "Transaktion gespart, but der Regel could nicht be created"
+  },
+  "fromTransaction": {
+    "checkbox": "Also erstellen a Regel von dieser Transaktion",
+    "hint": "Future matching Transaktionen will get dieser Kategorie automatically.",
+    "containsLabel": "Beschreibung contains"
+  }
+}

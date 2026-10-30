@@ -1,0 +1,111 @@
+{
+  "title": "Règles de catégorisation",
+  "description": "Attribuez automatiquement une catégorie aux transactions correspondantes.",
+  "actions": {
+    "add": "Ajouter une règle",
+    "applyAll": "Tout appliquer maintenant",
+    "apply": "Appliquer à l’historique",
+    "edit": "Modifier",
+    "delete": "Supprimer",
+    "preview": "Prévisualiser les correspondances"
+  },
+  "empty": {
+    "title": "Aucun categorisation règles yet",
+    "description": "Créez une règle une seule fois : les transactions correspondantes seront catégorisées lors de la synchronisation et de l’importation.",
+    "cta": "Créez votre première règle"
+  },
+  "list": {
+    "active": "Actif",
+    "inactive": "Paused",
+    "applied": "Appliquée {{count}} fois",
+    "neverApplied": "Pas encore appliquée",
+    "arrow": "→"
+  },
+  "table": {
+    "name": "Règle",
+    "category": "Catégorie",
+    "applied": "Utilisation",
+    "active": "Actif",
+    "actions": "Actions",
+    "searchPlaceholder": "Recherche règles…",
+    "noMatches": "Aucune règle ne correspond à cette recherche."
+  },
+  "summary": {
+    "contains": "La description contient « {{value}} »",
+    "not_contains": "La description ne contient pas « {{value}} »",
+    "equals": "{{field}} est égal à « {{value}} »",
+    "starts_with": "La description commence par « {{value}} »",
+    "ends_with": "La description se termine par « {{value}} »",
+    "regex": "La description correspond à /{{value}}/",
+    "eq": "{{field}} = {{value}}",
+    "lt": "{{field}} < {{value}}",
+    "lte": "{{field}} ≤ {{value}}",
+    "gt": "{{field}} > {{value}}",
+    "gte": "{{field}} ≥ {{value}}",
+    "between": "{{field}} entre {{value}} et {{valueTo}}",
+    "not_eq": "{{field}} ≠ {{value}}",
+    "and": " et ",
+    "or": " ou ",
+    "fields": {
+      "description": "Description",
+      "amount": "Montant",
+      "account_id": "Compte",
+      "type": "Type",
+      "counterparty": "Counterparty"
+    }
+  },
+  "form": {
+    "titleCreate": "Nouveau categorisation règle",
+    "titleEdit": "Modifier categorisation règle",
+    "name": "Nom",
+    "namePlaceholder": "e.g. Supermarkets",
+    "category": "Assign catégorie",
+    "matchType": "Correspondance",
+    "matchAll": "Toutes les conditions (ET)",
+    "matchAny": "Any condition (Ou)",
+    "active": "Règle est actif",
+    "conditions": "Conditions",
+    "addCondition": "Add condition",
+    "removeCondition": "Retirer",
+    "field": "Field",
+    "operator": "Operator",
+    "value": "Valeur",
+    "valueTo": "À",
+    "applyToExisting": "Appliquer aussi aux transactions historiques non catégorisées",
+    "includeCategorised": "Recatégoriser aussi les transactions déjà catégorisées",
+    "previewCount": "Correspond à {{count}} transactions existantes",
+    "previewSample": "Sample correspondances",
+    "save": "Enregistrer règle",
+    "validation": {
+      "nameRequired": "Nom est obligatoire",
+      "categoryRequired": "Catégorie est obligatoire",
+      "conditionRequired": "At least one condition est obligatoire",
+      "valueRequired": "Valeur est obligatoire"
+    }
+  },
+  "apply": {
+    "title": "Apply règle à past transactions",
+    "description": "“{{name}}” will categorise matching transactions cela currently have aucun catégorie.",
+    "includeCategorised": "Also overwrite transactions cela already have a catégorie",
+    "confirm": "Apply now",
+    "success": "Updated {{count}} transactions",
+    "none": "Aucun matching transactions à mettre à jour",
+    "applyAllTitle": "Apply tout actif règles",
+    "applyAllDescription": "Every actif règle will run against non catégorisé transactions, dans priority order."
+  },
+  "toast": {
+    "created": "Règle created",
+    "updated": "Règle updated",
+    "deleted": "Règle deleted",
+    "createError": "Impossible de créer la règle",
+    "updateError": "Impossible de modifier la règle",
+    "deleteError": "Impossible de supprimer la règle",
+    "applyError": "Impossible d’appliquer la règle",
+    "ruleFromTxFailed": "Transaction épargné, but le règle pourrait pas be created"
+  },
+  "fromTransaction": {
+    "checkbox": "Also créer a règle de ce transaction",
+    "hint": "Future matching transactions will get ce catégorie automatically.",
+    "containsLabel": "Description contains"
+  }
+}

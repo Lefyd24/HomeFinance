@@ -1,0 +1,28 @@
+{
+  "actions": {
+    "save": "Speichern",
+    "cancel": "Abbrechen",
+    "delete": "Löschen",
+    "edit": "Bearbeiten",
+    "add": "Hinzufügen",
+    "close": "Schließen",
+    "confirm": "Bestätigen",
+    "back": "Zurück"
+  },
+  "logout": "Abmelden",
+  "settings": "Einstellungen",
+  "language": "Sprache",
+  "languages": {
+    "en": "English",
+    "el": "Ελληνικά",
+    "ru": "Русский",
+    "fr": "Français",
+    "de": "Deutsch",
+    "it": "Italiano"
+  },
+  "theme": {
+    "light": "Hell",
+    "dark": "Dunkel",
+    "system": "System"
+  }
+}

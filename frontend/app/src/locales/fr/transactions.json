@@ -1,0 +1,291 @@
+{
+  "page": {
+    "title": "Transactions",
+    "description": "Every euro dans, out, et moved between votre comptes.",
+    "actions": {
+      "import": "Import",
+      "add": "Ajouter une transaction"
+    },
+    "count_one": "{{count}} transaction",
+    "count_other": "{{count}} transactions",
+    "empty": {
+      "title": "Nothing recorded yet",
+      "description": "Add a transaction par hand, ou bring dans a bank export de le Importer page.",
+      "addAction": "Ajouter une transaction",
+      "importAction": "Import a bank export",
+      "filteredMessage": "Aucune transaction ne correspond à ces filtres. Élargissez la période ou supprimez un filtre ci-dessus.",
+      "noneMessage": "Aucune transaction pour le moment"
+    },
+    "footer": {
+      "onThisPage": "Sur ce page",
+      "in": "Dans",
+      "out": "Out",
+      "net": "Net"
+    },
+    "deleteConfirm": {
+      "title": "Supprimer ce transaction?",
+      "description": "“{{description}}” will be removed de votre ledger. Balances recalculate immediately et ce ne peut pas be undone.",
+      "confirmLabel": "Supprimer transaction"
+    },
+    "deleteLinkedConfirm": {
+      "title": "Ce transaction est linked",
+      "descriptionDebt": "It’s recorded as a paiement sur “{{name}}”.",
+      "descriptionRecurring": "It’s recorded as a paiement pour “{{name}}”.",
+      "descriptionBoth": "It’s linked à dette “{{debt}}” et recurring dépense “{{recurring}}”.",
+      "question": "Should deleting it also undo cela paiement progress?",
+      "keepProgress": "Supprimer transaction only",
+      "keepProgressHint": "Keeps le dette/recurring paiement; only removes le ledger row.",
+      "undoProgress": "Also undo paiement progress",
+      "undoProgressHint": "Reverses le dette solde ou rewinds le recurring due date et removes le paiement record.",
+      "cancel": "Cancel"
+    },
+    "toast": {
+      "deleted": "Transaction deleted",
+      "deleteError": "Pourrait pas supprimer le transaction. Essayez à nouveau."
+    }
+  },
+  "datePresets": {
+    "thisMonth": "Ce mois",
+    "lastMonth": "Dernier mois",
+    "last90Days": "Dernier 90 days",
+    "thisYear": "Ce année"
+  },
+  "filterBar": {
+    "search": {
+      "placeholder": "Recherche descriptions…",
+      "ariaLabel": "Rechercher transactions",
+      "clear": "Effacer recherche"
+    },
+    "typeTabs": {
+      "all": "Tout",
+      "income": "Dans",
+      "expense": "Out",
+      "transfer": "Moved"
+    },
+    "period": {
+      "label": "Période",
+      "from": "De",
+      "to": "À",
+      "clear": "Effacer période",
+      "rangeSeparator": "–",
+      "fromPrefix": "De {{date}}",
+      "untilPrefix": "Until {{date}}"
+    },
+    "account": {
+      "label": "Compte",
+      "allLabel": "Tout comptes",
+      "searchPlaceholder": "Find an compte…"
+    },
+    "category": {
+      "label": "Catégorie",
+      "allLabel": "Tout categories",
+      "searchPlaceholder": "Find a catégorie…"
+    },
+    "nothingMatches": "Nothing correspondances cela.",
+    "removeFilter": "Retirer filtre",
+    "chips": {
+      "matching": "Matching",
+      "type": "Type",
+      "account": "Compte",
+      "category": "Catégorie"
+    },
+    "resultCount_one": "{{count}} correspondance",
+    "resultCount_other": "{{count}} correspondances",
+    "filtering": "Filtering…",
+    "inPeriod": "dans {{period}}",
+    "clearAll": "Effacer tout"
+  },
+  "form": {
+    "title": {
+      "add": "Ajouter une transaction",
+      "edit": "Modifier transaction"
+    },
+    "description": {
+      "transfer": "Move money between two de votre own comptes. It affects both balances et neither budget.",
+      "income": "Record money arriving dans an compte.",
+      "expense": "Record money leaving an compte, against a spending catégorie."
+    },
+    "fields": {
+      "direction": "Direction",
+      "expense": "Dépense",
+      "income": "Revenu",
+      "transfer": "Transfer",
+      "amount": "Montant",
+      "currency": "EUR",
+      "amountPlaceholder": "0,00",
+      "description": "Description",
+      "descriptionPlaceholder": "What était it pour?",
+      "account": "Compte",
+      "fromAccount": "De compte",
+      "toAccount": "À compte",
+      "accountPlaceholder": "Choose an compte",
+      "destinationPlaceholder": "Choose a destination",
+      "category": "Catégorie",
+      "categoryPlaceholder": "Choose a catégorie",
+      "date": "Date",
+      "notes": "Notes",
+      "notesPlaceholder": "Anything worth remembering later"
+    },
+    "actions": {
+      "save": "Enregistrer changes",
+      "add": "Ajouter une transaction"
+    },
+    "toast": {
+      "updated": "Transaction updated",
+      "created": "Transaction created",
+      "updateError": "Échoué à mettre à jour transaction",
+      "createError": "Échoué à créer transaction",
+      "debtLinked": "Dette paiement recorded",
+      "debtLinkFailed": "Transaction épargné, but le dette paiement pourrait pas be linked",
+      "recurringLinked": "Récurrences dépense paiement recorded",
+      "recurringLinkFailed": "Transaction épargné, but le recurring dépense link échoué",
+      "trackersFailed": "Transaction épargné, but le suivis pourrait pas be updated"
+    },
+    "links": {
+      "debt": "Ce est a dette paiement",
+      "debtHint": "Records a paiement against le selected dette sans creating a second transaction.",
+      "debtSelect": "Select dette",
+      "debtPlaceholder": "Choose a dette…",
+      "debtAlreadyLinked": "Already linked à {{name}}",
+      "recurring": "Link à recurring dépense",
+      "recurringHint": "Marks ce as a paiement pour le selected bill ou subscription.",
+      "recurringSelect": "Select recurring dépense",
+      "recurringPlaceholder": "Choose a recurring dépense…",
+      "recurringAlreadyLinked": "Already linked à {{name}}"
+    },
+    "trackers": {
+      "label": "Suivis",
+      "hint": "File ce transaction en dessous one ou plus suivis."
+    },
+    "split": {
+      "start": "Break ce transaction",
+      "lockedHint": "Montant est set par votre bank et can't be edited.",
+      "help": "Split le {{total}} {{currency}} across categories. Le parts must add up à le original.",
+      "amount": "Montant",
+      "category": "Catégorie",
+      "uncategorised": "Non catégorisé",
+      "addPart": "Add part",
+      "remove": "Retirer part",
+      "balanced": "Adds up",
+      "remaining": "{{amount}} {{currency}} restant à allocate",
+      "cancel": "Cancel split",
+      "confirm": "Split transaction",
+      "done": "Split into {{count}} transactions"
+    }
+  },
+  "markTransfer": {
+    "action": "Mark as transfer",
+    "undo": "Undo transfer",
+    "title": "Mark as transfer",
+    "description": "Tag ce synchronisé transaction as a transfer à another compte instead de revenu ou an dépense.",
+    "counterpartLabel": "Autre compte",
+    "counterpartPlaceholder": "Choose le other compte",
+    "candidateLabel": "Matching transaction",
+    "candidateHint": "Ce compte est also synchronisé de votre bank — pick its matching row pour le same transfer. Neither solde will change.",
+    "candidatesLoading": "Looking pour matching transactions…",
+    "noCandidates": "Aucun matching transaction found sur cela compte pour ce montant.",
+    "manualHint": "{{account}} isn't bank-synchronisé, so its solde will be updated à reflect ce transfer.",
+    "confirm": "Mark as transfer",
+    "toast": {
+      "success": "Marked as a transfer",
+      "unmarked": "Transfer tag removed",
+      "error": "Couldn't mettre à jour ce transaction. Essayez à nouveau."
+    }
+  },
+  "detail": {
+    "flowTitle": {
+      "in": "Money dans",
+      "out": "Money out",
+      "move": "Moved between comptes"
+    },
+    "rows": {
+      "route": "Route",
+      "account": "Compte",
+      "category": "Catégorie",
+      "paysDown": "Pays down",
+      "recurringPayment": "Récurrences paiement",
+      "source": "Source",
+      "imported": "Imported",
+      "importedFrom": "Importered de {{file}}",
+      "notes": "Notes"
+    }
+  },
+  "columns": {
+    "date": "Date",
+    "description": "Description",
+    "category": "Catégorie",
+    "account": "Compte",
+    "amount": "Montant",
+    "betweenAccounts": "Between comptes",
+    "actions": "Actions",
+    "actionsFor": "Actions pour {{description}}",
+    "flowLabel": {
+      "in": "Revenu",
+      "out": "Dépense",
+      "move": "Transfer"
+    },
+    "debtPrefix": "Dette · {{name}}",
+    "recurringPrefix": "Recurring · {{name}}",
+    "imported": "Imported",
+    "menu": {
+      "view": "Voir détails"
+    },
+    "pending": "En attente",
+    "pendingHint": "Pas yet booked par votre bank. It may change ou disappear."
+  },
+  "reimbursement": {
+    "menu": {
+      "expense": "Link repayment…",
+      "income": "Mark as repayment…"
+    },
+    "action": {
+      "expense": "Link a repayment",
+      "income": "Link à a shared dépense"
+    },
+    "title": {
+      "expense": "Link repayments",
+      "income": "Mark as repayment"
+    },
+    "description": {
+      "expense": "Pick le paiements dans which friends paid vous back pour ce dépense. Only le part vous really paid counts dans votre totals.",
+      "income": "Pick le shared dépense ce paiement paid back. Le linked part stops counting as revenu."
+    },
+    "header": {
+      "total": "Montant",
+      "linked": "Paid back",
+      "remaining": "Restant à link"
+    },
+    "searchPlaceholder": "Recherche par description",
+    "candidatesLoading": "Looking pour transactions…",
+    "noCandidates": "Aucun transactions disponible à link.",
+    "fullyLinked": "Ce transaction est fully linked.",
+    "candidateRemaining": "{{amount}} restant",
+    "amountLabel": "Montant à link",
+    "amountHint": "At most {{max}}.",
+    "amountInvalid": "Enter an montant between 0 et {{max}}.",
+    "confirm": "Link",
+    "done": "Done",
+    "summary": {
+      "expense": "{{total}} paid · {{linked}} paid back · {{counted}} counted",
+      "income": "{{total}} received · {{linked}} used à pay back · {{counted}} counted as revenu"
+    },
+    "emptyHint": {
+      "expense": "Paid pour others too? Link le repayments they sent vous, so only votre share counts.",
+      "income": "A friend paying vous back? Link it à le shared dépense, so it doesn't nombre as revenu."
+    },
+    "listTitle": "Repayments",
+    "unlink": "Unlink {{description}}",
+    "toast": {
+      "linked": "Linked",
+      "unlinked": "Link removed",
+      "error": "Couldn't mettre à jour le link. Essayez à nouveau."
+    },
+    "columns": {
+      "badge": "Reimbursement",
+      "expenseHint_one": "{{amount}} paid back par {{count}} transaction",
+      "expenseHint_other": "{{amount}} paid back par {{count}} transactions",
+      "incomeHint_one": "{{amount}} used à pay back {{count}} dépense",
+      "incomeHint_other": "{{amount}} used à pay back {{count}} dépenses"
+    }
+  }
+}

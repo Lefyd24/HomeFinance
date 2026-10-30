@@ -1,0 +1,198 @@
+{
+  "categories": {
+    "emergencyFund": "Резервный фонд",
+    "vacation": "Отпуск",
+    "car": "Покупка автомобиля",
+    "home": "Покупка жилья",
+    "education": "Образование",
+    "retirement": "Пенсия",
+    "other": "Другое",
+    "general": "Общее"
+  },
+  "icons": {
+    "target": "Мишень",
+    "money": "Деньги",
+    "home": "Дом",
+    "car": "Автомобиль",
+    "travel": "Путешествие",
+    "education": "Образование",
+    "health": "Здоровье",
+    "gift": "Подарок"
+  },
+  "page": {
+    "title": "Цели",
+    "description": "Двигайтесь к целям с понятным финишем — пополняйте, отслеживайте и отмечайте успехи.",
+    "addGoal": "Добавить цель",
+    "createFirstGoal": "Создать первую цель",
+    "yourGoals": "Ваши цели",
+    "tabs": {
+      "active": "Активные",
+      "completed": "Завершённые",
+      "all": "Все"
+    },
+    "empty": {
+      "title": "Целей пока нет",
+      "description": "Создайте первую финансовую цель, чтобы отслеживать прогресс."
+    },
+    "noGoalsInView": {
+      "all": "В этом разделе нет целей.",
+      "active": "В этом разделе нет активных целей.",
+      "completed": "В этом разделе нет завершённых целей."
+    },
+    "onlyGoalInView": {
+      "all": "Цель в центре внимания выше — ваша единственная цель.",
+      "active": "Цель в центре внимания выше — ваша единственная активная цель.",
+      "completed": "Цель в центре внимания выше — ваша единственная завершённая цель."
+    },
+    "toasts": {
+      "deleted": "Цель удалена",
+      "deleteFailed": "Не удалось удалить цель",
+      "markedComplete": "Цель отмечена как завершённая",
+      "updateFailed": "Не удалось обновить цель"
+    },
+    "deleteDialog": {
+      "title": "Удалить {{name}}?",
+      "description": "Цель и история её прогресса будут удалены. Это действие нельзя отменить.",
+      "confirmLabel": "Удалить цель"
+    }
+  },
+  "journey": {
+    "ariaLabel": "Путь к накоплениям",
+    "title": "Путь к накоплениям",
+    "ofTargeted": "из {{amount}} запланированных",
+    "summary_one": "Накоплено {{saved}} по {{count}} цели · активных: {{active}} · завершено: {{completed}}",
+    "summary_few": "Накоплено {{saved}} по {{count}} целям · активных: {{active}} · завершено: {{completed}}",
+    "summary_many": "Накоплено {{saved}} по {{count}} целям · активных: {{active}} · завершено: {{completed}}",
+    "summary_other": "Накоплено {{saved}} по {{count}} целям · активных: {{active}} · завершено: {{completed}}"
+  },
+  "hero": {
+    "primaryGoalAria": "Основная цель: {{name}}",
+    "spotlight": "В центре внимания",
+    "primary": "Основная",
+    "completed": "Завершена",
+    "ofTarget": "из {{amount}}",
+    "toGo": "Осталось {{amount}}",
+    "saveToArrive": "Откладывайте {{amount}}/мес., чтобы достичь цели к {{date}}",
+    "targetDate": "Срок: {{date}}",
+    "daysLeft": "Осталось дн.: {{count}}",
+    "contribute": "Пополнить",
+    "details": "Подробнее",
+    "edit": "Изменить"
+  },
+  "list": {
+    "primary": "Основная",
+    "done": "Готово",
+    "left": "Осталось {{amount}}",
+    "contribute": "Пополнить",
+    "actionsFor": "Действия: {{name}}",
+    "menu": {
+      "contribute": "Пополнить",
+      "details": "Подробнее",
+      "edit": "Изменить",
+      "markComplete": "Отметить завершённой",
+      "delete": "Удалить"
+    }
+  },
+  "form": {
+    "titleEdit": "Изменить цель",
+    "titleCreate": "Создать цель",
+    "updating": "Обновление",
+    "newTarget": "Новая цель накоплений",
+    "untitledGoal": "Цель без названия",
+    "name": {
+      "label": "Название цели",
+      "placeholder": "напр., Резервный фонд"
+    },
+    "description": {
+      "label": "Описание",
+      "placeholder": "Необязательные заметки"
+    },
+    "targetAmount": {
+      "label": "Целевая сумма"
+    },
+    "currency": {
+      "label": "Валюта"
+    },
+    "category": {
+      "label": "Категория",
+      "placeholder": "Выберите категорию",
+      "selectPlaceholder": "Выберите категорию"
+    },
+    "targetDate": {
+      "label": "Целевая дата"
+    },
+    "icon": {
+      "label": "Значок",
+      "placeholder": "Значок"
+    },
+    "color": {
+      "label": "Цвет"
+    },
+    "setAsPrimary": "Сделать основной целью",
+    "cancel": "Отмена",
+    "saveChanges": "Сохранить изменения",
+    "saveGoal": "Сохранить цель",
+    "toasts": {
+      "updated": "Цель обновлена",
+      "created": "Цель создана",
+      "updateFailed": "Не удалось обновить цель",
+      "createFailed": "Не удалось создать цель"
+    },
+    "validation": {
+      "nameRequired": "Укажите название цели",
+      "targetAmountPositive": "Целевая сумма должна быть больше 0"
+    }
+  },
+  "contribute": {
+    "title": "Добавить взнос",
+    "descriptionWithGoal": "{{name}} · осталось {{amount}}",
+    "descriptionNoGoal": "Пополнить цель",
+    "amount": {
+      "label": "Сумма"
+    },
+    "type": {
+      "label": "Тип",
+      "contribution": "Взнос (добавить к цели)",
+      "withdrawal": "Снятие (убрать из цели)"
+    },
+    "description": {
+      "label": "Описание",
+      "placeholder": "напр., Ежемесячные накопления"
+    },
+    "date": {
+      "label": "Дата"
+    },
+    "submitWithdrawal": "Записать снятие",
+    "submitContribution": "Добавить взнос",
+    "toasts": {
+      "contributionAdded": "Взнос добавлен",
+      "withdrawalRecorded": "Снятие записано",
+      "failed": "Не удалось добавить транзакцию"
+    },
+    "validation": {
+      "amountPositive": "Сумма должна быть больше 0",
+      "dateRequired": "Укажите дату"
+    }
+  },
+  "details": {
+    "primary": "Основная",
+    "completed": "Завершена",
+    "complete": "выполнено",
+    "saved": "Накоплено",
+    "target": "Цель",
+    "remaining": "Осталось",
+    "targetDate": "Целевая дата",
+    "daysLeft": "Осталось дней",
+    "saveToReach": "Откладывайте {{amount}}/мес., чтобы достичь цели к {{date}}",
+    "onTrack": "По плану",
+    "behindPace": "С отставанием",
+    "avgPerMonth": "в среднем {{amount}}/мес.",
+    "recentActivity": "Последние операции",
+    "noContributions": "Взносов пока нет",
+    "contribution": "Взнос",
+    "withdrawal": "Снятие",
+    "contribute": "Пополнить",
+    "edit": "Изменить",
+    "close": "Закрыть"
+  }
+}

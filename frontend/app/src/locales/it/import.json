@@ -1,0 +1,112 @@
+{
+  "title": "Import transazioni",
+  "description": "Bring in a CSV o Excel export da tuo bank, check il rows, then add them a an conto.",
+  "guide": {
+    "title": "What file can I import?",
+    "intro": "Un’esportazione CSV, XLSX o XLS con una riga di intestazione. I nomi delle colonne vengono riconosciuti in inglese, greco o olandese, ignorando maiuscole e accenti.",
+    "template": "Download template",
+    "columns": {
+      "date": {
+        "label": "Data",
+        "help": "Dati, Transazione data, Booking data, Ημερομηνία, Ημ/νία κίνησης…"
+      },
+      "description": {
+        "label": "Descrizione",
+        "help": "Descrizione, Dettagli, Narrative, Περιγραφή, Αιτιολογία…"
+      },
+      "amount": {
+        "label": "Importo",
+        "help": "Importo, Valore, Ποσό. Negativo è money out, positivo è money in."
+      },
+      "debitCredit": {
+        "label": "…o Debit e Credit",
+        "help": "Two columns instead di Importo: Debit / Χρέωση è money out, Credit / Πίστωση è money in."
+      }
+    },
+    "notes": {
+      "header": "Le righe sopra l’intestazione, come il nome della banca o il numero di conto, vengono ignorate automaticamente.",
+      "dates": "Datas sono read exactly in il format tu pick below, never guessed. Il template uses anno primo (2026-01-05).",
+      "amounts": "Both 1.234,56 e 1,234.56 work. Valuta symbols sono ignored.",
+      "linked": "Conti connected through bank sincronizza can't receive imports, because il bank already provides their transazioni."
+    }
+  },
+  "dateFormat": {
+    "legend": "How sono dates written in tuo file?",
+    "help": "Pick questo prima choosing il file. Datas quello don't corrispondenza sono listed as skipped, never guessed.",
+    "dmy": "Prima il giorno",
+    "mdy": "Prima il mese",
+    "ymd": "Prima l’anno",
+    "chosen": "Data format: {{format}}"
+  },
+  "upload": {
+    "choose": "Choose file",
+    "pickFormatFirst": "Scegli prima il formato della data",
+    "uploading": "Lettura del file…",
+    "types": "CSV, XLSX o XLS, fino a 10 MB",
+    "failed": "Il file could non be read."
+  },
+  "review": {
+    "title_one": "{{count}} row found in {{file}}",
+    "title_other": "{{count}} rows found in {{file}}",
+    "account": "Import into conto",
+    "accountPlaceholder": "Choose an conto",
+    "noAccounts": "Tu need an conto quello isn't connected a bank sincronizza. Crea one su il Conti page primo.",
+    "invert": "Flip signs",
+    "invertHelp": "Use questo per credit-card exports quello mostra purchases as positivo amounts.",
+    "duplicateBadge": "Possible duplicate",
+    "duplicatesNote_one": "{{count}} row looks like a transazione already in questo conto, so it era unticked.",
+    "duplicatesNote_other": "{{count}} rows look like transazioni already in questo conto, so they erano unticked.",
+    "include": "Include {{description}}",
+    "category": "Categoria",
+    "noCategory": "Nessun categoria",
+    "skipped_one": "{{count}} line era skipped",
+    "skipped_other": "{{count}} lines erano skipped",
+    "skipReason": {
+      "missing_date": "Line {{line}}: nessun data",
+      "invalid_date": "Line {{line}}: unreadable dati \"{{value}}\"",
+      "invalid_amount": "Line {{line}}: unreadable importo \"{{value}}\"",
+      "zero_amount": "Line {{line}}: importo è zero"
+    },
+    "loading": "Caricamento rows…",
+    "confirm_one": "Import {{count}} transazione",
+    "confirm_other": "Importa {{count}} transazioni",
+    "importing": "Importing…",
+    "startOver": "Choose another file",
+    "confirmFailed": "Il import non riuscito. Nothing era risparmiato."
+  },
+  "done": {
+    "title_one": "Imported {{count}} transazione",
+    "title_other": "Importaed {{count}} transazioni",
+    "description": "They're now in {{account}}.",
+    "viewTransactions": "Visualizza transazioni",
+    "another": "Import another file"
+  },
+  "columns": {
+    "title": "Column names (facoltativo)",
+    "help": "Leave these empty e il columns sono found automatically. If tuo file has several dates o descriptions (per example a booking data e a valore data), type il exact header di il one a use. Capitals e accents don't matter.",
+    "auto": "Automatic",
+    "date": "Data column",
+    "description": "Descrizione column",
+    "amount": "Importo column",
+    "debit": "Debit column (money out)",
+    "credit": "Credit column (money in)"
+  },
+  "table": {
+    "search": "Cerca rows",
+    "searchPlaceholder": "Cerca descrizione, data o importo…",
+    "noMatches": "Nessun rows corrispondenza tuo cerca.",
+    "selectAll": "Select tutto rows",
+    "selectAllMatching": "Select tutto matching rows",
+    "date": "Data",
+    "description": "Descrizione",
+    "amount": "Importo",
+    "category": "Categoria",
+    "pagination": "Pages",
+    "showing": "{{from}}–{{to}} di {{total}}",
+    "page": "Page {{page}} di {{pages}}",
+    "previous": "Precedente",
+    "next": "Prossimo",
+    "rowsPerPage": "Rows per page",
+    "perPage": "{{count}} / page"
+  }
+}
