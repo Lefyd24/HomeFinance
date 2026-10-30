@@ -61,6 +61,9 @@ describe('PortfolioTicker', () => {
           onSync={vi.fn()}
           syncing={false}
           syncDisabled={false}
+          performance={undefined}
+          performanceLoading={false}
+          rangeLabel="3 months"
         />
       </BalanceVisibilityProvider>,
     )
@@ -80,6 +83,9 @@ describe('PortfolioTicker', () => {
           onSync={vi.fn()}
           syncing={false}
           syncDisabled={false}
+          performance={undefined}
+          performanceLoading={false}
+          rangeLabel="3 months"
         />
       </BalanceVisibilityProvider>,
     )

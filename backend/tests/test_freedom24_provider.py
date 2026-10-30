@@ -450,6 +450,56 @@ def test_quote_failure_does_not_fail_the_sync(provider, monkeypatch):
     assert position.day_change_pct is None
 
 
+def test_day_change_is_derived_from_prices_when_the_feed_omits_the_pct(provider, monkeypatch):
+    """`pcp` alone is trusted today; some venues pin it at 0 while prices moved."""
+    monkeypatch.setattr(
+        provider,
+        "_quotes",
+        lambda symbols: {
+            # pcp pinned at 0 while the instrument is down: derive, don't fabricate a flat day.
+            "BYLOT.GR": {  # (1.109 - 1.11) / 1.11 = -0.09%
+                "c": "BYLOT.GR",
+                "ltp": 1.109,
+                "pcp": 0.0,
+                "chg": -0.001,
+                "ClosePrice": 1.11,
+            },
+        },
+    )
+
+    positions = {p.symbol: p for p in provider.get_positions()}
+    assert positions["BYLOT.GR"].day_change_pct == pytest.approx(-0.09)
+
+    # The same derivation, directly: a row with no pcp whatsoever (0.05/1.20).
+    from app.services.investment_providers.freedom24 import _day_change_pct_from_quote
+
+    assert _day_change_pct_from_quote(
+        {"ltp": 1.25, "chg": 0.05, "ClosePrice": 1.20}
+    ) == pytest.approx(4.17)
+
+
+def test_day_change_is_zero_when_the_prices_say_flat(provider, monkeypatch):
+    """A genuinely flat day derives to a real 0.0 — not to None."""
+    monkeypatch.setattr(
+        provider,
+        "_quotes",
+        lambda symbols: {"BYLOT.GR": {"c": "BYLOT.GR", "ltp": 1.11, "ClosePrice": 1.11}},
+    )
+
+    assert provider.get_positions()[0].day_change_pct == 0.0
+
+
+def test_day_change_stays_null_when_nothing_can_derive_it(provider, monkeypatch):
+    """No pcp, no previous close, no delta: None beats a fabricated 0.00."""
+    monkeypatch.setattr(
+        provider,
+        "_quotes",
+        lambda symbols: {"BYLOT.GR": {"c": "BYLOT.GR", "ltp": 1.109}},
+    )
+
+    assert provider.get_positions()[0].day_change_pct is None
+
+
 def test_candles_parse_gethloc_hloc_and_xseries(provider):
     from datetime import date
 

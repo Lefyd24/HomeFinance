@@ -1,5 +1,6 @@
 {
   "page": {
+    "mixedCurrencies": "These accounts are held in different currencies, so there is no combined view. Select a single account.",
     "title": "Investments",
     "description": "Brokerage accounts synced automatically from your provider.",
     "connectAccount": "Connect account"
@@ -16,6 +17,7 @@
     "totalAssets": "Total assets"
   },
   "ticker": {
+    "holdingsVsCash": "Holdings vs cash",
     "totalValue": "Total value",
     "today": "Today",
     "allTime": "All time",
@@ -27,6 +29,7 @@
     "syncAllHint": "Refreshes all {{count}} accounts"
   },
   "tiles": {
+    "tradingCostsEstimated": "Reported by the broker. The P&L breakdown also includes {{amount}} estimated from your fee schedule.",
     "portfolioReturn": "Portfolio return",
     "allocation": "Allocation",
     "movers": "Today's movers",
@@ -55,6 +58,117 @@
     "noEarnPositions": "No Simple Earn positions right now.",
     "activityMore": "{{count}} more not shown",
     "activityMore_other": "{{count}} more not shown"
+  },
+  "performance": {
+    "title": "Performance",
+    "tabs": {
+      "value": "Value",
+      "performance": "Performance",
+      "drawdown": "Drawdown"
+    },
+    "ranges": {
+      "1m": "1M",
+      "3m": "3M",
+      "6m": "6M",
+      "ytd": "YTD",
+      "1y": "1Y",
+      "all": "All"
+    },
+    "rangeLong": {
+      "1m": "1 month",
+      "3m": "3 months",
+      "6m": "6 months",
+      "ytd": "year to date",
+      "1y": "1 year",
+      "all": "all time"
+    },
+    "kpi": {
+      "gainOverRange": "Gain · {{range}}",
+      "totalValue": {
+        "label": "Total value",
+        "short": "What the selected accounts are worth right now.",
+        "body": "Cash plus the current market value of every holding in the selected accounts."
+      },
+      "today": {
+        "label": "Today",
+        "short": "The change in value since the previous close.",
+        "body": "Based on the live quotes of your holdings. Deposits and withdrawals are not part of it."
+      },
+      "rangeGain": {
+        "label": "Gain over range",
+        "short": "Money made in the selected range, with the time-weighted return (TWR).",
+        "body": "The amount is the change in value minus the money you added or took out. TWR is the percentage return of the investment itself: it ignores when you deposited or withdrew, so it is the fair way to compare with an index or a fund."
+      },
+      "mwr": {
+        "label": "Money-weighted return",
+        "short": "Your personal return (XIRR), including the timing of your deposits.",
+        "body": "XIRR is the annual rate that explains your gain given when each deposit and withdrawal happened. Unlike TWR it rewards good timing and punishes bad timing, so the two differ whenever you add or remove money."
+      },
+      "allTimeGain": {
+        "label": "All-time gain",
+        "short": "Everything made since the first deposit, as a share of the money put in.",
+        "body": "Value now minus net invested (deposits minus withdrawals): unrealized and realized gains, dividends, fees, taxes and currency effects. The percentage is relative to net invested."
+      },
+      "cash": {
+        "label": "Cash",
+        "short": "Uninvested cash in the selected accounts.",
+        "body": "Money sitting in the account that is not in any holding."
+      },
+      "twrAnnualized": {
+        "label": "Annualized TWR",
+        "short": "The time-weighted return scaled to a yearly rate.",
+        "body": "Lets ranges of different length be compared. It needs at least a few months of history to mean anything."
+      },
+      "bestDay": {
+        "label": "Best day",
+        "short": "The strongest single-day return in the range.",
+        "body": "Flow-adjusted: a deposit does not count as a good day."
+      },
+      "worstDay": {
+        "label": "Worst day",
+        "short": "The weakest single-day return in the range.",
+        "body": "Flow-adjusted: a withdrawal does not count as a bad day."
+      }
+    },
+    "chart": {
+      "value": "Value",
+      "netInvested": "Net invested",
+      "deposit": "Deposit",
+      "withdrawal": "Withdrawal",
+      "twr": "Your return",
+      "benchmark": "S&P 500",
+      "drawdown": "Drawdown",
+      "maxDrawdown": "Max drawdown {{pct}}",
+      "benchmarkNote": "S&P 500 price index in USD, not converted to the account currency.",
+      "noData": "Not enough data for this range yet.",
+      "flowsInferred": "Deposits and withdrawals were inferred from cash movements, so figures may be slightly off.",
+      "loadFailed": "Performance could not be loaded."
+    },
+    "risk": {
+      "title": "Risk",
+      "volatility": "Volatility (annualized)",
+      "maxDrawdown": "Max drawdown",
+      "sharpe": "Sharpe ratio",
+      "bestDay": "Best day",
+      "worstDay": "Worst day",
+      "twrAnnualized": "Annualized TWR",
+      "notEnoughHistory": "Not enough history"
+    },
+    "pnl": {
+      "title": "Where the gain came from",
+      "caption": "All time, independent of the selected range.",
+      "feesEstimated": "incl. {{amount}} estimated",
+      "steps": {
+        "netInvested": "Net invested",
+        "unrealized": "Unrealized",
+        "realized": "Realized",
+        "dividends": "Dividends",
+        "fees": "Fees",
+        "taxes": "Taxes",
+        "fxAndOther": "FX & other",
+        "currentValue": "Current value"
+      }
+    }
   },
   "holding": {
     "sortBy": "Sort by",
@@ -202,6 +316,10 @@
     "pending": "Pending"
   },
   "card": {
+    "returnOnCost": "on cost",
+    "returnOnCostHint": "Unrealised return on cost: what the holdings are worth now against what was paid for them. Excludes cash and realised gains.",
+    "allAccounts": "All accounts",
+    "mixedCurrencies": "Mixed currencies",
     "actionsLabel": "Account actions",
     "selectAccount": "Show {{name}}",
     "edit": "Edit account",
@@ -1385,6 +1503,48 @@
     "research": {
       "fundamentals": "Fundamentals",
       "eyebrow": "Company research"
+    }
+  },
+  "holdingsTable": {
+    "symbol": "Symbol",
+    "qty": "Qty",
+    "avgCost": "Avg cost",
+    "last": "Last",
+    "marketValue": "Market value",
+    "weight": "Weight",
+    "today": "Today",
+    "unrealizedPnl": "Unrealised P/L",
+    "fees": "Fees",
+    "total": "Total"
+  },
+  "allocation": {
+    "holdings": "Holdings",
+    "cash": "Cash",
+    "title": "Allocation",
+    "byHolding": "By holding",
+    "byCurrency": "By currency",
+    "byAccount": "By account",
+    "other": "Other"
+  },
+  "feeSettings": {
+    "menuItem": "Fee schedule",
+    "title": "Fee schedule",
+    "description": "Your own fee schedule for {{provider}}. These are used to estimate trading costs.",
+    "helper": "Leave a field empty to leave it unset — the fee is then inferred from your broker's data.",
+    "tradeCommission": "Trade commission",
+    "depositFee": "Deposit fee",
+    "withdrawalFee": "Withdrawal fee",
+    "fixedLabel": "Fixed amount (account currency)",
+    "pctLabel": "Percentage %",
+    "save": "Save changes",
+    "saving": "Saving…",
+    "validation": {
+      "number": "Enter a number of 0 or more.",
+      "pctRange": "Use a percentage between 0 and 100."
+    },
+    "toasts": {
+      "saved": "Fee schedule saved",
+      "saveFailed": "Could not save the fee schedule. Try again."
     }
   }
 }

@@ -175,7 +175,7 @@ function HoldingRow({
             spent a quarter of a narrow sidebar's width restating a figure that
             is already right beside it, and in a list sorted by size the
             ranking it drew was the row order. */}
-        <span className="shrink-0 text-[0.65rem] tabular-nums text-muted-foreground">
+        <span className="w-12 shrink-0 text-end text-[0.65rem] tabular-nums text-muted-foreground">
           {share.toFixed(1)}%
         </span>
 

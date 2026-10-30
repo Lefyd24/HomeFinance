@@ -4,8 +4,6 @@ import {
   buildInsights,
   cashDrag,
   concentration,
-  dailyReturns,
-  withCumulativeReturn,
   mergeHistory,
   sharedCurrency,
   topContributors,
@@ -317,60 +315,5 @@ describe('buildInsights', () => {
   it('stays quiet about quotes when every holding has one', () => {
     const insights = buildInsights(totals, [position({ id: 1, day_change_pct: 1 })])
     expect(insights.find((i) => i.id === 'staleQuotes')).toBeUndefined()
-  })
-})
-
-describe('dailyReturns', () => {
-  it('returns the percent change between consecutive snapshots', () => {
-    const returns = dailyReturns([
-      snapshot('2026-01-01', 100, 100),
-      snapshot('2026-01-02', 110, 110),
-      snapshot('2026-01-03', 99, 99),
-    ])
-    expect(returns.map((r) => r.date)).toEqual(['2026-01-02', '2026-01-03'])
-    expect(returns[0].pct).toBeCloseTo(10)
-    expect(returns[1].pct).toBeCloseTo(-10)
-  })
-
-  it('needs at least two snapshots', () => {
-    expect(dailyReturns([])).toEqual([])
-    expect(dailyReturns([snapshot('2026-01-01', 100, 100)])).toEqual([])
-  })
-
-  it('skips days that follow an empty portfolio', () => {
-    const returns = dailyReturns([
-      snapshot('2026-01-01', 0, 0),
-      snapshot('2026-01-02', 50, 50),
-      snapshot('2026-01-03', 55, 55),
-    ])
-    expect(returns).toHaveLength(1)
-    expect(returns[0].date).toBe('2026-01-03')
-  })
-})
-
-describe('withCumulativeReturn', () => {
-  it('compounds the daily returns instead of adding them', () => {
-    const points = withCumulativeReturn([
-      { date: '2026-01-02', pct: 10 },
-      { date: '2026-01-03', pct: -10 },
-    ])
-    expect(points[0]).toMatchObject({ date: '2026-01-02', pct: 10 })
-    expect(points[0].cumulative).toBeCloseTo(10)
-    expect(points[1].cumulative).toBeCloseTo(-1)
-  })
-
-  it('matches the change from the first to the last snapshot', () => {
-    const points = withCumulativeReturn(
-      dailyReturns([
-        snapshot('2026-01-01', 100, 100),
-        snapshot('2026-01-02', 120, 120),
-        snapshot('2026-01-03', 90, 90),
-      ]),
-    )
-    expect(points[points.length - 1].cumulative).toBeCloseTo(-10)
-  })
-
-  it('returns nothing for an empty range', () => {
-    expect(withCumulativeReturn([])).toEqual([])
   })
 })

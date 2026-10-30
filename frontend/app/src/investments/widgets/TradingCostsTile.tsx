@@ -18,11 +18,14 @@ export function TradingCostsTile({
   transactions,
   currency,
   loading,
+  feesEstimated = 0,
   className,
 }: {
   transactions: InvestmentTransaction[]
   currency: string
   loading: boolean
+  /** Fees the P&L breakdown estimated from the fee schedule; they are not in the total below. */
+  feesEstimated?: number
   className?: string
 }) {
   const { t } = useTranslation('investments')
@@ -39,6 +42,13 @@ export function TradingCostsTile({
     <Tile
       title={t('tiles.tradingCosts')}
       className={className}
+      footer={
+        feesEstimated !== 0
+          ? t('tiles.tradingCostsEstimated', {
+              amount: formatCurrency(Math.abs(feesEstimated), currency),
+            })
+          : undefined
+      }
       action={
         !loading && fees.length > 0 ? (
           <span className="text-[0.65rem] text-muted-foreground">

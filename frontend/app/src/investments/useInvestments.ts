@@ -3,6 +3,7 @@ import { queryKeys } from '../lib/queryKeys'
 import { ApiError } from '../lib/apiClient'
 import { deleteAccount } from '../accounts/accountsApi'
 import * as investmentsApi from './investmentsApi'
+import { rangeStartDate, type PerformanceRangeKey } from './performanceView'
 import type { ConnectInvestmentAccountInput, UpdateInvestmentAccountInput } from './investmentsApi'
 
 export function useInvestmentAccounts() {
@@ -142,6 +143,27 @@ export function useInvestmentHistory(
 }
 
 /**
+ * Flow-adjusted performance for one or several accounts. A 422 means the
+ * accounts span currencies, which is permanent until the scope changes, so it
+ * is not retried.
+ */
+export function usePortfolioPerformance(accountIds: number[], range: PerformanceRangeKey) {
+  return useQuery({
+    queryKey: queryKeys.investmentPerformance(accountIds, range),
+    queryFn: () =>
+      investmentsApi.getPortfolioPerformance({
+        account_ids: accountIds,
+        start_date: rangeStartDate(range),
+      }),
+    enabled: accountIds.length > 0,
+    retry: (count, error) => {
+      if (error instanceof ApiError && error.status === 422) return false
+      return count < 2
+    },
+  })
+}
+
+/**
  * Positions across several accounts at once, for the "all accounts" view.
  *
  * Deliberately built on the same per-account query keys as
@@ -207,6 +229,7 @@ export function useSyncInvestmentAccount() {
       queryClient.invalidateQueries({ queryKey: queryKeys.investmentPositions(accountId) })
       queryClient.invalidateQueries({ queryKey: queryKeys.investmentTransactions(accountId) })
       queryClient.invalidateQueries({ queryKey: ['investmentHistory', accountId] })
+      queryClient.invalidateQueries({ queryKey: ['investmentPerformance'] })
     },
   })
 }

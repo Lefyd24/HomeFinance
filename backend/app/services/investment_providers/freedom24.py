@@ -129,6 +129,35 @@ def _parse_datetime(value: Any) -> Optional[datetime]:
     return None
 
 
+def _day_change_pct_from_quote(quote: dict[str, Any]) -> Optional[float]:
+    """The instrument's percent move for the day, from one quote row.
+
+    `pcp` is the feed's own percentage and wins when it says the instrument
+    moved. But for some venues (Greek stocks — every ATHEX holding reported
+    0.00 in the field while its price moved) `pcp` comes back pinned at 0 or
+    empty even though the first-hand price fields carry the real move: on the
+    recorded live rows, `chg` is the absolute price delta and `ltp` -
+    `ClosePrice` reproduces it exactly (AAPL.US: 339.05 - 338.19 = 0.87, and
+    0.87 / 338.19 = 0.26% = `pcp`). So a bare zero is taken at face value only
+    when the prices agree; otherwise the percentage is derived from them. If
+    nothing can confirm or contradict it — no `ClosePrice` and no `chg` — the
+    honest answer is None, not a fabricated flat day.
+    """
+    pcp = _opt_float(quote.get("pcp"))
+    if pcp:
+        return pcp
+    previous_close = _opt_float(quote.get("ClosePrice"))
+    if not previous_close or previous_close <= 0:
+        return None
+    last_price = _opt_float(quote.get("ltp"))
+    if last_price is not None:
+        return round((last_price - previous_close) / previous_close * 100, 2)
+    change = _opt_float(quote.get("chg"))
+    if change is not None:
+        return round(change / previous_close * 100, 2)
+    return None
+
+
 class Freedom24Provider(InvestmentProvider):
     def __init__(self, public_key: str, private_key: str, base_currency: str = "USD"):
         super().__init__(public_key, private_key, base_currency)
@@ -354,7 +383,7 @@ class Freedom24Provider(InvestmentProvider):
             if not quote:
                 continue
             position.previous_close = _opt_float(quote.get("ClosePrice"))
-            position.day_change_pct = _opt_float(quote.get("pcp"))
+            position.day_change_pct = _day_change_pct_from_quote(quote)
             position.day_change = _day_change_amount(
                 position.market_value, position.day_change_pct
             )
@@ -586,7 +615,7 @@ class Freedom24Provider(InvestmentProvider):
             if not quote:
                 continue
             result.last_price = _opt_float(quote.get("ltp"))
-            result.day_change_pct = _opt_float(quote.get("pcp"))
+            result.day_change_pct = _day_change_pct_from_quote(quote)
 
     # ---------------------------------------------------------------------- news
 

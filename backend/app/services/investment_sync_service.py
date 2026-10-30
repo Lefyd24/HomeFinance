@@ -10,16 +10,19 @@ from app.models import (
     Account,
     InvestmentCredential,
     InvestmentTransaction,
+    MarketPriceBar,
     PortfolioPosition,
     PortfolioSnapshot,
 )
 from app.services.investment_providers import get_provider
 from app.services.investment_providers.base import (
+    day_change_amount,
     ProviderBalance,
     ProviderCandle,
     ProviderPosition,
     ProviderTransaction,
 )
+from app.services.market_data.broker_symbols import yahoo_candidates
 from app.utils.crypto import decrypt, encrypt, DecryptionError
 
 logger = logging.getLogger("app.investments")
@@ -75,6 +78,7 @@ def sync_account(db: Session, account: Account) -> InvestmentCredential:
         # first write, so no SQLite write transaction is open across network I/O
         # (every other writer would otherwise sit on its busy timeout meanwhile).
         backfill = _fetch_backfill_candles(db, account, provider, positions, transactions)
+        _attach_cached_day_changes(db, account, positions)
 
         account.balance = round(balance.total_value, 2)
         account.currency = balance.currency
@@ -136,6 +140,42 @@ def sync_account(db: Session, account: Account) -> InvestmentCredential:
         db.commit()
 
     return credential
+
+
+def _attach_cached_day_changes(
+    db: Session, account: Account, positions: list[ProviderPosition]
+) -> None:
+    """Fill an unknown day change from the last two cached Yahoo closes.
+
+    Some venues (Greek stocks on Freedom24) come back from the quote feed
+    without any usable move — no `pcp` and no `ClosePrice` — and the provider
+    correctly reports None rather than a fabricated 0.0. The ticker mapping
+    (`market_data.broker_symbols`) names the Yahoo listings to try; the price
+    cache `market_data.prices` maintains (`MarketPriceBar`) supplies the
+    closes. Read cache-only, best-effort: a position the cache has never seen
+    was simply priced nowhere that day and keeps its None.
+    """
+    for position in positions:
+        if position.day_change_pct is not None:
+            continue
+        for candidate in yahoo_candidates(position.symbol, account.provider):
+            bars = (
+                db.query(MarketPriceBar.close)
+                .filter(MarketPriceBar.symbol == candidate)
+                .order_by(MarketPriceBar.date.desc())
+                .limit(2)
+                .all()
+            )
+            if len(bars) < 2:
+                continue
+            previous, last = bars[1][0], bars[0][0]
+            if not previous or previous <= 0 or last is None:
+                continue
+            position.day_change_pct = round((last - previous) / previous * 100, 2)
+            position.day_change = day_change_amount(
+                position.market_value, position.day_change_pct
+            )
+            break
 
 
 def _upsert_transactions(

@@ -147,3 +147,25 @@ class InvestmentTransaction(Base):
     raw_payload = Column(Text, nullable=True)
 
     account = relationship("Account", back_populates="investment_transactions")
+
+
+class InvestmentProviderSettings(Base):
+    """Per-user fee schedule for one broker, applied when the broker data lacks fees.
+
+    Null means "not configured": the fee is inferred from the data or ignored.
+    Fixed amounts are in each account's own currency; pct values are 0..100.
+    """
+    __tablename__ = "investment_provider_settings"
+    __table_args__ = (UniqueConstraint("user_id", "provider", name="uq_investment_provider_settings_user_provider"),)
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    provider = Column(String(50), nullable=False)
+    commission_fixed = Column(Float, nullable=True)
+    commission_pct = Column(Float, nullable=True)
+    deposit_fee_fixed = Column(Float, nullable=True)
+    deposit_fee_pct = Column(Float, nullable=True)
+    withdrawal_fee_fixed = Column(Float, nullable=True)
+    withdrawal_fee_pct = Column(Float, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

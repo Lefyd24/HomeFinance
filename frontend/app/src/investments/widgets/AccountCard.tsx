@@ -1,6 +1,8 @@
 import { useTranslation } from 'react-i18next'
+import { useState } from 'react'
 import { HugeiconsIcon } from '@hugeicons/react'
 import {
+  BankIcon,
   Delete02Icon,
   Key01Icon,
   MoreVerticalIcon,
@@ -20,13 +22,14 @@ import { formatBalance } from '../../lib/format'
 import { useBalanceVisibility } from '../../ui/BalanceVisibilityContext'
 import { AccountIcon } from '../../accounts/bankIcons'
 import { DeltaPill, SyncStatusBadge } from '../InvestmentPrimitives'
+import { ProviderFeeSettingsDialog } from '../ProviderFeeSettingsDialog'
 import type { InvestmentAccount } from '../investmentsApi'
 
 /**
  * A connected account, and the control that points the workspace at it.
  *
  * Sized for the scope rail: narrow on phones so a second card peeks in,
- * wider on desktop. A 3 px left accent strip shows the account's trend
+ * wider on desktop. A 3 px left accent strip shows the account's trend
  * direction at a glance — the same flow-in / flow-out tokens used everywhere
  * else in the app. Selecting a card promotes the accent to primary and lifts
  * the card with a directional shadow.
@@ -54,6 +57,7 @@ export function AccountCard({
   const { hidden } = useBalanceVisibility()
   const money = (value: number) => formatBalance(value, account.currency, hidden)
   const trendPositive = (account.total_return_pct ?? 0) >= 0
+  const [feeSettingsOpen, setFeeSettingsOpen] = useState(false)
 
   return (
     <article
@@ -63,7 +67,7 @@ export function AccountCard({
         'relative flex shrink-0 snap-start flex-col overflow-hidden rounded-xl border-2 bg-card',
         // Narrower on phones so a second card peeks in and the row reads as
         // scrollable, rather than one card filling the viewport edge to edge.
-        'w-[13.5rem] sm:w-[18rem]',
+        'w-[13.5rem] sm:w-auto xl:w-[18rem]',
         'transition-[box-shadow,border-color,opacity] duration-200 ease-out motion-reduce:transition-none',
         // 3px left accent: the card's trend in one glance before you read numbers.
         trendPositive ? 'border-l-flow-in/70' : 'border-l-flow-out/60',
@@ -138,6 +142,10 @@ export function AccountCard({
                     <HugeiconsIcon icon={Key01Icon} strokeWidth={2} />
                     {t('edit.rotateKeys')}
                   </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setFeeSettingsOpen(true)}>
+                    <HugeiconsIcon icon={BankIcon} strokeWidth={2} />
+                    {t('feeSettings.menuItem')}
+                  </DropdownMenuItem>
                   <DropdownMenuItem variant="destructive" onClick={onDelete}>
                     <HugeiconsIcon icon={Delete02Icon} strokeWidth={2} />
                     {t('card.delete')}
@@ -152,7 +160,15 @@ export function AccountCard({
           <span className="font-heading text-lg font-semibold leading-none tabular-nums tracking-tight">
             {money(account.balance)}
           </span>
-          <DeltaPill pct={account.total_return_pct} />
+          {account.total_return_pct != null && (
+            <span
+              title={t('card.returnOnCostHint')}
+              className="pointer-events-auto flex shrink-0 flex-col items-end gap-0.5"
+            >
+              <DeltaPill pct={account.total_return_pct} />
+              <span className="text-[0.6rem] leading-none text-muted-foreground">{t('card.returnOnCost')}</span>
+            </span>
+          )}
         </div>
 
         <dl className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5 text-[0.7rem]">
@@ -166,6 +182,12 @@ export function AccountCard({
           </div>
         </dl>
       </div>
+
+      <ProviderFeeSettingsDialog
+        open={feeSettingsOpen}
+        onOpenChange={setFeeSettingsOpen}
+        provider={account.provider}
+      />
     </article>
   )
 }

@@ -372,7 +372,7 @@ export function MetricWithHelp({
     <button
       type="button"
       aria-label={t('compare.help', { metric: t(entry.labelKey) })}
-      className="inline-flex size-3.5 shrink-0 items-center justify-center rounded-full text-muted-foreground/70 transition-colors hover:text-foreground focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring"
+      className="ms-1 inline-flex size-3.5 shrink-0 items-center justify-center rounded-full align-middle text-muted-foreground/70 transition-colors hover:text-foreground focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring"
     >
       <HugeiconsIcon icon={HelpCircleIcon} strokeWidth={2} className="size-3.5" />
     </button>
@@ -380,7 +380,7 @@ export function MetricWithHelp({
 
   return (
     <div className={cn('flex min-w-0 flex-col gap-1', align === 'end' && 'items-end text-right')}>
-      <span className="inline-flex items-center gap-1 text-[0.625rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+      <span className="text-[0.625rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
         {label}
         {/* A tap-or-click Popover reaches every input method — hover-only tooltips are
             unreachable on touch, and half the value of the glossary is on a phone. */}

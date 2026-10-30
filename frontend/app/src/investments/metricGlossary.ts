@@ -150,3 +150,28 @@ export const GLOSSARY: Record<MetricId, GlossaryEntry> = {
   monteCarlo: technicalEntry('monteCarlo'),
   supportResistance: technicalEntry('supportResistance'),
 }
+
+const PERFORMANCE_KPI_IDS = [
+  'totalValue',
+  'today',
+  'rangeGain',
+  'mwr',
+  'allTimeGain',
+  'cash',
+  'twrAnnualized',
+  'bestDay',
+  'worstDay',
+] as const
+export type PerformanceKpiId = (typeof PERFORMANCE_KPI_IDS)[number]
+
+/** Same registry mechanism for the overview's KPI strip and risk tile — `performance.kpi.<id>` copy. */
+export const PERFORMANCE_GLOSSARY = Object.fromEntries(
+  PERFORMANCE_KPI_IDS.map((id) => [
+    id,
+    {
+      labelKey: `performance.kpi.${id}.label`,
+      shortKey: `performance.kpi.${id}.short`,
+      bodyKey: `performance.kpi.${id}.body`,
+    },
+  ]),
+) as Record<PerformanceKpiId, GlossaryEntry>
