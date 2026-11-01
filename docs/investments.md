@@ -19,7 +19,7 @@ Steps:
 
 Keys are encrypted at rest, never returned by the API, and can be rotated from the account's menu.
 
-> Keys are encrypted with a key derived from your server settings. Don't rotate `SECRET_KEY` casually. See [rotating secrets](operations.md#rotating-secrets).
+> Keys are encrypted with a key derived from `NOTIFICATION_ENCRYPTION_KEY` (or `SECRET_KEY` if it is unset). Don't change either one without following [rotating secrets](operations.md#rotating-secrets).
 
 ### Sync
 

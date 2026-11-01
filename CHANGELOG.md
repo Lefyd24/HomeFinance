@@ -6,6 +6,41 @@ Releases that add database migrations or new `.env` settings say so, so you know
 
 ## [Unreleased]
 
+A security hardening release. No new migrations. One new optional `.env` setting, `NOTIFICATION_ENCRYPTION_KEY_PREVIOUS`, used only while rotating keys. Everyone has to sign in once after updating.
+
+### Security
+- **Data isolation.** Every account, category, transaction and budget id that a request references must now belong to the signed-in user, or the request gets a 404. Before this fix, a signed-in user could:
+  - point a transaction, bulk edit, debt payment, recurring expense, goal or category at another user's account or category, which could change that account's balance and reveal its name;
+  - read another user's budget through a budget alert rule.
+- **Tokens and sessions.**
+  - The refresh token moved to an `HttpOnly; Secure; SameSite=Strict` cookie, and the access token is kept in memory only. Neither token is stored in `localStorage` or put in a URL any more.
+  - Documents are previewed and downloaded with the `Authorization` header instead of a `?token=` link.
+  - Logging out ends every session for that account, including refresh tokens on other devices.
+- **Rate limits.**
+  - Refresh, logout, reset-password, verify-email and change-password are now rate-limited.
+  - A successful login no longer resets the per-IP limit. Before, an attacker could reset it by logging in to their own account between guesses.
+- **Security headers.** Every response now carries a Content-Security-Policy, `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: same-origin` and HSTS. The interactive API docs (`/docs`, `/redoc`, `/openapi.json`) are served only with `DEBUG=true`.
+- **Outbound requests.**
+  - A personal SMTP server must be on a public host, and it never inherits the server's global SMTP username or password.
+  - Web Push endpoints must be `https` on a public host, and they time out after 10 seconds.
+  - One failing user no longer stops notification checks for everyone else.
+- **AI chat** no longer renders images, so a prompt-injected reply can't send your data to an outside server through an image URL.
+- **Uploads** are size-checked as they are read, not after the whole file is in memory.
+- **Key rotation.** Stored bank, broker and SMTP secrets can now be re-encrypted under a new key: set `NOTIFICATION_ENCRYPTION_KEY_PREVIOUS`, then run `backend/scripts/rotate_encryption_key.py`. Startup warns in production when `NOTIFICATION_ENCRYPTION_KEY` is unset or the same as `SECRET_KEY`. See [rotating secrets](docs/operations.md#rotating-secrets).
+- **Backups.** `scripts/backup-finance-db.sh` creates its files readable by the owner only. It can encrypt backups with [age](https://age-encryption.org) (`BACKUP_AGE_RECIPIENT`) and delete old ones (`BACKUP_RETENTION_DAYS`, default 30).
+- **Dependencies.** `python-jose` was replaced by `PyJWT`, which removes `ecdsa`, `rsa` and `pyasn1` from the dependencies.
+
+### Changed
+- **Breaking for scripts that use login tokens:**
+  - `POST /api/auth/refresh?refresh_token=…` no longer works. Refresh reads the cookie.
+  - The login response's `refresh_token` is always `null`.
+  - Document links with `?token=` no longer work.
+  - API keys (`X-API-Key`) are unaffected.
+- On LAN mode over plain HTTP (`http://<host-ip>`), browsers don't keep the `Secure` refresh cookie. Signing in still works, but a page reload signs you out. Put HTTPS in front to keep sessions across reloads. `http://localhost` is not affected.
+
+### Added
+- A cross-user test suite (`backend/tests/test_cross_user_routes.py`) tries every `/api` route that takes an id with another user's data, and fails when a new route is added without a case.
+
 ## [1.3.3] - 2026-10-30
 
 Adds migration `027`. No new `.env` settings. Migrations apply automatically on start, so [back up first](docs/operations.md#backups).

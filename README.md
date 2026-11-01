@@ -202,7 +202,7 @@ The app listens on `127.0.0.1:8223` by default and has no TLS of its own, so you
 | 👩‍💻 **[Development](docs/development.md)** | Architecture, local setup, tests, contributing |
 | 🏷 **[Releasing](docs/releasing.md)** · **[Changelog](CHANGELOG.md)** | How versions are published, and what changed in each |
 
-Interactive API docs are served at `/docs` on your running instance.
+Interactive API docs are served at `/docs` when `DEBUG=true` (they are switched off in production).
 
 <br>
 
@@ -219,6 +219,13 @@ Everything lives in plain folders next to `docker-compose.yml`:
 Backing up is copying those folders plus your `.env`. See [Operations → Backups](docs/operations.md#backups).
 
 The only things that leave your server are the integrations you switch on yourself: the AI advisor (to OpenRouter and the model provider you pick), bank sync (to Enable Banking and your bank), broker sync, market data (Yahoo Finance) and your own SMTP server. [The full list is here.](docs/security.md#what-leaves-the-server-and-only-if-you-enable-it)
+
+### Encryption at rest
+
+- **Disk:** put the volume holding `./data` (and `./data-backups`) on full-disk encryption such as LUKS. The SQLite file and uploaded documents are stored in plaintext.
+- **Backups:** `scripts/backup-finance-db.sh` writes to `data-backups/` (mode 700). Set `BACKUP_AGE_RECIPIENT` to an [age](https://age-encryption.org) public key to get `finance_*.db.age` files (the script refuses to run if `age` is missing); decrypt with `age -d -i key.txt file.db.age > finance.db`. Backups older than `BACKUP_RETENTION_DAYS` (default 30) are deleted.
+- **Permissions:** `chmod 700 data secrets` and `chmod 600 .env`.
+- **Key rotation:** stored bank, broker and SMTP secrets are encrypted with `NOTIFICATION_ENCRYPTION_KEY` (falls back to `SECRET_KEY`, and startup warns when it does). To separate or rotate: set a new `NOTIFICATION_ENCRYPTION_KEY` (`openssl rand -hex 32`), put the old key (the old `SECRET_KEY` if none was set) in `NOTIFICATION_ENCRYPTION_KEY_PREVIOUS`, restart, back up the database, then run `cd backend && python scripts/rotate_encryption_key.py --dry-run` followed by the same command without `--dry-run` (in Docker: `docker compose exec app python backend/scripts/rotate_encryption_key.py`). Afterwards remove `NOTIFICATION_ENCRYPTION_KEY_PREVIOUS`.
 
 <br>
 

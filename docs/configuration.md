@@ -50,7 +50,7 @@ Until the name and email are set, both pages show a "not configured" notice. A r
 
 ## Rate limiting
 
-In-process sliding windows, reset on restart. Applied to login, register, forgot-password and resend-verification. Exceeding a limit returns `429` with `Retry-After`.
+In-process sliding windows, reset on restart. Applied to login, register, forgot-password, resend-verification, token refresh, logout, reset-password, verify-email and change-password. Exceeding a limit returns `429` with `Retry-After`. A successful login clears only that email's counter, not the IP's.
 
 | Variable | Default |
 |---|---|
@@ -74,7 +74,8 @@ See [Notifications](notifications.md) for setup.
 | Variable | Default | Notes |
 |---|---|---|
 | `NOTIFICATIONS_ENABLED` | `true` | Master switch. |
-| `NOTIFICATION_ENCRYPTION_KEY` | unset | **Required when notifications are enabled.** Encrypts per-user SMTP passwords. |
+| `NOTIFICATION_ENCRYPTION_KEY` | unset | **Required when notifications are enabled.** Encrypts per-user SMTP passwords, broker API keys and bank session ids. If unset, `SECRET_KEY` is used instead, and in production startup warns about it. Use a value different from `SECRET_KEY`. |
+| `NOTIFICATION_ENCRYPTION_KEY_PREVIOUS` | unset | Only while rotating. Comma-separated former keys that are used for decryption only. See [Rotating secrets](operations.md#rotating-secrets). |
 | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, `SMTP_FROM`, `SMTP_USE_TLS` | unset, `587`, unset, unset, unset, `true` | Global mail settings. Also used for verification and reset emails. Users can override them in the UI. |
 | `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT` | unset, unset, `mailto:admin@example.com` | Web Push. Generate with `scripts/generate_vapid_keys.py`. |
 

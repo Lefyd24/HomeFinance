@@ -41,9 +41,9 @@ SMTP_USE_TLS=true
 
 These settings are also used for **verification** and **password reset** emails, so set them before inviting anyone.
 
-Each user can override them from the Notifications page with their own SMTP server. Those passwords are stored encrypted with `NOTIFICATION_ENCRYPTION_KEY`.
+Each user can override them from the Notifications page with their own SMTP server. Those passwords are stored encrypted with `NOTIFICATION_ENCRYPTION_KEY`. A personal server must be on a public host; private, loopback and reserved addresses are rejected. Once a user sets their own host, the server's global SMTP username and password are never sent to it, so the user has to enter their own.
 
-> **Set `NOTIFICATION_ENCRYPTION_KEY` once and never change it** without asking users to re-save their SMTP passwords, or they become unreadable. If you rotate `SECRET_KEY`, pin this key to the old `SECRET_KEY` value first. See [rotating secrets](operations.md#rotating-secrets).
+> **Don't simply change `NOTIFICATION_ENCRYPTION_KEY`**, or saved SMTP passwords (and broker keys and bank sessions) become unreadable. Follow [rotating secrets](operations.md#rotating-secrets), which re-encrypts them under the new key.
 
 For Gmail and similar services, use an app password rather than your account password.
 
@@ -51,7 +51,7 @@ If SMTP isn't configured, links for verification and reset are written to the se
 
 ## Desktop push (Web Push)
 
-Push needs a **secure origin (HTTPS)**, so use [Tailscale](deployment.md#option-a-tailscale-funnel-recommended) or a TLS proxy.
+Push needs a **secure origin (HTTPS)**, so use [Tailscale](deployment.md#option-a-tailscale-funnel-recommended) or a TLS proxy. The server only accepts push subscription endpoints that are `https` URLs on a public host, which is what every browser's push service provides. It gives up on a push after 10 seconds.
 
 1. Generate a VAPID key pair once. This appends the keys to your `.env`:
 

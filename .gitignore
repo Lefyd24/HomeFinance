@@ -34,3 +34,5 @@ secrets/
 data/documents/
 logs/
 superpowers/
+# Local security audit notes (not published)
+SECURITY_AUDIT.md

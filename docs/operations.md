@@ -57,7 +57,15 @@ sqlite3 data/finance.db ".backup 'data-backups/finance_$(date +%Y%m%d_%H%M%S).db
 0 3 * * * /opt/personalfinance/scripts/backup-finance-db.sh
 ```
 
-It backs up **the database only**. Copy documents and secrets separately:
+What the script does:
+
+- **Permissions.** It runs with `umask 077` and keeps `data-backups/` at mode 700, so only the owner can read the backups.
+- **Encryption.** Set `BACKUP_AGE_RECIPIENT` to an [age](https://age-encryption.org) public key, and backups are written as `finance_*.db.age` with no plaintext copy kept. The script refuses to run if the variable is set and `age` isn't installed. Keep the matching identity file off the server. To restore, decrypt with `age -d -i key.txt finance_….db.age > finance.db`.
+- **Retention.** Backups older than `BACKUP_RETENTION_DAYS` (default `30`) are deleted.
+
+These are environment variables for the script, for example set in the crontab line. They are not app settings.
+
+The script backs up **the database only**. Copy documents and secrets separately:
 
 ```bash
 rsync -a data/documents/ /mnt/backup/finance/documents/
@@ -65,7 +73,7 @@ cp .env /mnt/backup/finance/env.backup
 cp -r secrets /mnt/backup/finance/
 ```
 
-Keep backups off the machine as well, for example an encrypted external drive or object storage.
+Keep backups off the machine as well, for example an encrypted external drive or object storage. The live database and documents are stored unencrypted, so put `data/` on full-disk encryption (for example LUKS).
 
 ## Restoring
 
@@ -91,17 +99,29 @@ Set `LOG_LEVEL=DEBUG` temporarily for more detail. Clients only ever see a gener
 
 ## Rotating secrets
 
-Several features encrypt data with a key derived from your settings:
+Per-user SMTP passwords, broker API keys and bank session ids are encrypted with a key derived from `NOTIFICATION_ENCRYPTION_KEY`. When that is unset, the key comes from `SECRET_KEY`. `SECRET_KEY` itself only signs login tokens.
 
-- **Per-user SMTP passwords** use `NOTIFICATION_ENCRYPTION_KEY` (or `SECRET_KEY` if it is unset).
-- **Bank session ids** and **broker API keys** are encrypted by the app's crypto helper, keyed from the same settings.
+### Rotating `NOTIFICATION_ENCRYPTION_KEY` (or separating it from `SECRET_KEY`)
 
-Rules of thumb:
+In production, startup warns when `NOTIFICATION_ENCRYPTION_KEY` is unset or equal to `SECRET_KEY`. To fix that, or to rotate the key:
 
-1. **Pin `NOTIFICATION_ENCRYPTION_KEY` early**, before anyone saves a personal SMTP password.
-2. **Never change `NOTIFICATION_ENCRYPTION_KEY`** without asking users to re-enter their SMTP passwords. Otherwise they become unreadable and the UI shows "SMTP password needs re-entering".
-3. If you must rotate `SECRET_KEY` on an existing install, first set `NOTIFICATION_ENCRYPTION_KEY` to the *old* `SECRET_KEY` value, then rotate. Rotating `SECRET_KEY` logs everyone out.
-4. After a rotation, bank connections may fail with a decryption error and show as `error`. Reconnect them, and re-enter broker keys if sync reports a credential error.
+1. Back up the database.
+2. In `.env`, set:
+   - `NOTIFICATION_ENCRYPTION_KEY` to a new value (`openssl rand -hex 32`);
+   - `NOTIFICATION_ENCRYPTION_KEY_PREVIOUS` to the old key. If you never set one, that is the old `SECRET_KEY`. Several old keys can be listed, comma-separated.
+3. Restart. Stored secrets can still be read with the old key, and new ones are written with the new key.
+4. Re-encrypt everything under the new key: `cd backend && uv run python scripts/rotate_encryption_key.py --dry-run`, then the same command without `--dry-run`. In Docker, run `docker compose exec app python backend/scripts/rotate_encryption_key.py --dry-run` and then without `--dry-run`. The script works in a single transaction and rolls everything back if any value can't be decrypted. It never prints secret values.
+5. Remove `NOTIFICATION_ENCRYPTION_KEY_PREVIOUS` and restart.
+
+### Rotating `SECRET_KEY`
+
+Pin `NOTIFICATION_ENCRYPTION_KEY` first, as above, so stored secrets don't depend on `SECRET_KEY`. Then change `SECRET_KEY` and restart. Every login token becomes invalid, so everyone signs in again. API keys keep working.
+
+If a key was changed without these steps, stored secrets can't be decrypted:
+
+- Bank connections show `error`. Reconnect them.
+- Broker sync reports a credential error. Re-enter the keys.
+- The Notifications page shows "SMTP password needs re-entering".
 
 ## Troubleshooting
 
@@ -126,7 +146,8 @@ Rules of thumb:
 |---|---|
 | `scripts/create_admin.py <email> <password> [name]` | Create a verified admin directly in the database |
 | `scripts/generate_vapid_keys.py` | Generate Web Push keys and append them to `.env` |
-| `scripts/backup-finance-db.sh` | Safe online SQLite backup |
+| `scripts/backup-finance-db.sh` | Safe online SQLite backup, optionally age-encrypted, with retention. See [Backups](#scheduled). |
+| `backend/scripts/rotate_encryption_key.py [--dry-run]` | Re-encrypt stored secrets under the current `NOTIFICATION_ENCRYPTION_KEY`. See [Rotating secrets](#rotating-secrets). |
 | `backend/scripts/delete_transactions_range.py` | Delete an account's transactions over a date range without changing its balance. Use `--dry-run` first. Handy when replacing a manual account with a bank-synced one. |
 
 Run Python scripts from the repo root with `uv run python scripts/<name>.py`, or inside Docker as shown in [Getting started](getting-started.md#3-create-the-first-admin).
