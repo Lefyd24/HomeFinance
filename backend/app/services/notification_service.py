@@ -259,7 +259,7 @@ def budget_breaches(db, user, today):
         NotificationRule.type == "budget_percent",
     ).all()
     for rule in rules:
-        budget = db.query(Budget).filter(Budget.id == rule.target_id).first()
+        budget = db.query(Budget).filter(Budget.id == rule.target_id, Budget.user_id == user.id).first()
         if not budget:
             continue
         limit = float(getattr(budget, "amount", 0) or 0)

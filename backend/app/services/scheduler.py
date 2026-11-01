@@ -81,7 +81,11 @@ def run_tick(session_factory, app_settings):
     try:
         users = db.query(User).filter(User.is_active == True).all()
         for user in users:
-            evaluate_for_user(db, user, app_settings)
+            try:
+                evaluate_for_user(db, user, app_settings)
+            except Exception:
+                db.rollback()
+                logger.exception("Notification evaluation failed for user_id=%s", user.id)
     except Exception:
         logger.exception("Notification tick failed")
     finally:

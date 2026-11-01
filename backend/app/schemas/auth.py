@@ -6,7 +6,7 @@ from pydantic import BaseModel, EmailStr, Field
 
 class Token(BaseModel):
     access_token: str
-    refresh_token: str
+    refresh_token: str | None = None  # delivered as an HttpOnly cookie, never in the body
     token_type: str = "bearer"
 
 

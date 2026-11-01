@@ -1,7 +1,7 @@
 import logging
 from datetime import datetime, timedelta
 
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi import APIRouter, Cookie, Depends, HTTPException, Request, Response, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 
@@ -35,12 +35,31 @@ from app.utils.security import (
     get_current_user_authenticated,
     get_password_hash,
     token_issued_before_session_invalidation,
+    user_from_access_token,
     verify_password,
 )
 from app.utils.urls import public_base_url
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 logger = logging.getLogger("app")
+
+REFRESH_COOKIE = "refresh_token"
+REFRESH_COOKIE_PATH = "/api/auth"
+
+
+def _set_refresh_cookie(response: Response, user_id: int) -> None:
+    # CSRF: SameSite=Strict keeps the cookie off cross-site requests, and the
+    # response is only readable same-origin, so no CSRF token is needed.
+    response.set_cookie(
+        REFRESH_COOKIE,
+        create_refresh_token(data={"sub": str(user_id)}),
+        max_age=settings.REFRESH_TOKEN_EXPIRE_MINUTES * 60,
+        path=REFRESH_COOKIE_PATH,
+        httponly=True,
+        secure=True,
+        samesite="strict",
+    )
+
 
 GENERIC_INVITE_ERROR = "Invite code is invalid, expired, or already used."
 
@@ -131,6 +150,7 @@ def register(user_data: UserCreate, request: Request, db: Session = Depends(get_
 @router.post("/login", response_model=Token)
 def login(
     request: Request,
+    response: Response,
     form_data: OAuth2PasswordRequestForm = Depends(),
     db: Session = Depends(get_db),
 ):
@@ -158,28 +178,30 @@ def login(
             detail="Please verify your email before logging in. Check your inbox for a verification link.",
         )
 
-    # Credentials checked out — don't let a legitimate sign-in eat into the
-    # brute-force budget (see clear_rate_limit).
-    clear_rate_limit(request, email=form_data.username)
+    # Credentials checked out — forgive only the per-email bucket; clearing the
+    # IP bucket would let an attacker with one valid account reset their budget.
+    clear_rate_limit(request, email=form_data.username, clear_ip=False)
 
     user.last_login_at = datetime.utcnow()
     db.commit()
 
     # Create tokens
     access_token = create_access_token(data={"sub": str(user.id)})
-    refresh_token = create_refresh_token(data={"sub": str(user.id)})
+    _set_refresh_cookie(response, user.id)
 
-    return {
-        "access_token": access_token,
-        "refresh_token": refresh_token,
-        "token_type": "bearer",
-    }
+    return {"access_token": access_token, "token_type": "bearer"}
 
 
 @router.post("/refresh", response_model=Token)
-def refresh_token(refresh_token: str, db: Session = Depends(get_db)):
-    """Refresh access token using refresh token."""
-    payload = decode_token(refresh_token)
+def refresh_token(
+    request: Request,
+    response: Response,
+    refresh_cookie: str | None = Cookie(default=None, alias=REFRESH_COOKIE),
+    db: Session = Depends(get_db),
+):
+    """Refresh access token using the HttpOnly refresh cookie."""
+    enforce_rate_limit(request)
+    payload = decode_token(refresh_cookie) if refresh_cookie else None
 
     if not payload or payload.get("type") != "refresh":
         raise HTTPException(
@@ -212,19 +234,34 @@ def refresh_token(refresh_token: str, db: Session = Depends(get_db)):
 
     # Create new tokens
     new_access_token = create_access_token(data={"sub": str(user.id)})
-    new_refresh_token = create_refresh_token(data={"sub": str(user.id)})
+    _set_refresh_cookie(response, user.id)
 
-    return {
-        "access_token": new_access_token,
-        "refresh_token": new_refresh_token,
-        "token_type": "bearer",
-    }
+    return {"access_token": new_access_token, "token_type": "bearer"}
 
 
 @router.post("/logout")
-def logout(current_user: User = Depends(get_current_user_authenticated)):
-    """Logout user (client should discard tokens)."""
-    # In a more advanced implementation, you could blacklist tokens
+def logout(
+    request: Request,
+    response: Response,
+    refresh_cookie: str | None = Cookie(default=None, alias=REFRESH_COOKIE),
+    db: Session = Depends(get_db),
+):
+    """Clear the refresh cookie and revoke every token issued so far.
+
+    Accepts the access token or the refresh cookie, so an expired access token
+    can't leave a live refresh cookie behind that silently logs the user back in.
+    """
+    auth = request.headers.get("Authorization", "")
+    user = user_from_access_token(auth[7:] if auth.lower().startswith("bearer ") else None, db)
+    payload = decode_token(refresh_cookie) if user is None and refresh_cookie else None
+    if payload and payload.get("type") == "refresh":
+        candidate = db.query(User).filter(User.id == int(payload["sub"])).first()
+        if candidate and not token_issued_before_session_invalidation(payload, candidate):
+            user = candidate
+    if user is not None:
+        user.sessions_valid_from = datetime.utcnow()
+        db.commit()
+    response.delete_cookie(REFRESH_COOKIE, path=REFRESH_COOKIE_PATH)
     return {"message": "Successfully logged out"}
 
 
@@ -261,11 +298,13 @@ def update_current_user(
 
 @router.post("/change-password")
 def change_password(
+    request: Request,
     password_data: PasswordChange,
     current_user: User = Depends(get_current_user_authenticated),
     db: Session = Depends(get_db),
 ):
     """Change user password."""
+    enforce_rate_limit(request)
     # Verify current password
     if not verify_password(
         password_data.current_password, current_user.hashed_password
@@ -325,8 +364,11 @@ def forgot_password(
 
 
 @router.post("/reset-password")
-def reset_password(payload: ResetPasswordRequest, db: Session = Depends(get_db)):
+def reset_password(
+    payload: ResetPasswordRequest, request: Request, db: Session = Depends(get_db)
+):
     """Validate a password-reset token, set the new password, invalidate outstanding sessions."""
+    enforce_rate_limit(request)
     token_row = auth_tokens.consume_user_token(db, payload.token, "password_reset")
     if token_row is None:
         raise HTTPException(
@@ -349,8 +391,11 @@ def reset_password(payload: ResetPasswordRequest, db: Session = Depends(get_db))
 
 
 @router.post("/verify-email")
-def verify_email(payload: VerifyEmailRequest, db: Session = Depends(get_db)):
+def verify_email(
+    payload: VerifyEmailRequest, request: Request, db: Session = Depends(get_db)
+):
     """Consume an email-verification token and mark the account verified."""
+    enforce_rate_limit(request)
     token_row = auth_tokens.consume_user_token(db, payload.token, "email_verify")
     if token_row is None:
         raise HTTPException(

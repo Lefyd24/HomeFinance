@@ -18,7 +18,7 @@ Browser ──HTTPS──▶ Tailscale Funnel / reverse proxy ──▶ 127.0.0.
 | Volumes | `./data` → `/app/data` (database and documents), `./logs` → `/app/logs`, `./secrets` → `/app/secrets` (read-only, for the bank key). |
 | Migrations | Applied automatically on every start. See [Migrations](migrations.md). |
 | Health | `GET /health` returns `{"status":"healthy","database":"ok"}`, or `503` if the database is unreachable. Compose polls it every 30 s. |
-| API docs | Interactive docs at `/docs`, OpenAPI at `/openapi.json`. |
+| API docs | Interactive docs at `/docs`, OpenAPI at `/openapi.json`. Only served with `DEBUG=true`; in production they return 404. |
 
 ## Production `.env` checklist
 
@@ -131,11 +131,16 @@ BIND_ADDRESS=0.0.0.0
 TRUST_PROXY_HEADERS=false
 ```
 
-You then reach the app at `http://<host-ip>:8223` over plain HTTP. Prefer HTTPS, because browsers only allow Web Push and installable PWAs on secure origins.
+You then reach the app at `http://<host-ip>:8223` over plain HTTP. Prefer HTTPS:
+
+- Browsers only allow Web Push and installable PWAs on secure origins.
+- The login refresh token is a `Secure` cookie, and browsers drop it over plain HTTP on any host other than `localhost`. You can sign in, but a page reload signs you out, and so does the access token expiring after a day.
+- Bearer tokens travel unencrypted on your network.
 
 ## Production hardening summary
 
-- `DEBUG=false` and a real `SECRET_KEY`.
+- `DEBUG=false`, a real `SECRET_KEY` and a separate `NOTIFICATION_ENCRYPTION_KEY`.
+- Security headers (CSP, HSTS, `X-Frame-Options`, `nosniff`, `Referrer-Policy`) on every response, and the API docs switched off.
 - Invite-only registration (always on) and email verification.
 - Loopback bind with a local proxy, or LAN bind without trusting proxy headers.
 - Back up `data/`, `.env` and `secrets/`. See [Operations](operations.md#backups).

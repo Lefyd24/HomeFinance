@@ -2,7 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useRef, useState, ty
 import { toast } from 'sonner'
 import * as authApi from './authApi'
 import type { User } from './authApi'
-import { setUnauthorizedHandler } from '../lib/apiClient'
+import { getAccessToken, setAccessToken, setUnauthorizedHandler } from '../lib/apiClient'
 import i18n from '../i18n/config'
 
 interface AuthContextValue {
@@ -27,17 +27,14 @@ function decodeTokenExpiry(token: string): number | null {
 
 /** Wipe every trace of the session. Safe to call when there is nothing to wipe. */
 function clearStoredSession() {
-  window.localStorage.removeItem('token')
-  window.localStorage.removeItem('refresh_token')
+  setAccessToken(null)
   window.localStorage.removeItem('user')
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(() => {
-    // The token, not the cached user, is what the server actually honours.
-    // Reading `user` on its own let a tokenless browser boot straight into the
-    // app and then fail every request with no way back to the login page.
-    if (!window.localStorage.getItem('token')) return null
+    // Only a hint for first paint: the access token is memory-only, so the
+    // bootstrap effect below must refresh it (and drop this user on failure).
     const stored = window.localStorage.getItem('user')
     if (!stored) return null
     try {
@@ -46,13 +43,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return null
     }
   })
+  const [booting, setBooting] = useState(() => user !== null)
   const refreshTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
   const scheduleRefreshRef = useRef<() => void>(() => {})
   const userRef = useRef(user)
 
   const scheduleRefresh = useCallback(() => {
     clearTimeout(refreshTimer.current)
-    const token = window.localStorage.getItem('token')
+    const token = getAccessToken()
     if (!token) return
     const exp = decodeTokenExpiry(token)
     if (!exp) return
@@ -60,12 +58,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const refreshInMs = Math.max(0, secondsRemaining - 5 * 60) * 1000
     refreshTimer.current = setTimeout(() => {
       void (async () => {
-        const refreshToken = window.localStorage.getItem('refresh_token')
-        if (!refreshToken) return
         try {
-          const tokenResponse = await authApi.refresh(refreshToken)
-          window.localStorage.setItem('token', tokenResponse.access_token)
-          window.localStorage.setItem('refresh_token', tokenResponse.refresh_token)
+          const tokenResponse = await authApi.refresh()
+          setAccessToken(tokenResponse.access_token)
           scheduleRefreshRef.current()
         } catch {
           // Next API call surfaces the 401 if the refresh token is also dead.
@@ -83,8 +78,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [user])
 
   useEffect(() => {
-    if (window.localStorage.getItem('token')) scheduleRefresh()
-    return () => clearTimeout(refreshTimer.current)
+    // Legacy builds kept tokens in localStorage; they must not linger.
+    window.localStorage.removeItem('token')
+    window.localStorage.removeItem('refresh_token')
+    if (!userRef.current) return
+    let cancelled = false
+    authApi
+      .refresh()
+      .then((tokenResponse) => {
+        if (cancelled) return
+        setAccessToken(tokenResponse.access_token)
+        scheduleRefresh()
+      })
+      .catch(() => {
+        if (cancelled) return
+        clearStoredSession()
+        setUser(null)
+      })
+      .finally(() => {
+        if (!cancelled) setBooting(false)
+      })
+    return () => {
+      cancelled = true
+      clearTimeout(refreshTimer.current)
+    }
   }, [scheduleRefresh])
 
   /**
@@ -107,8 +124,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = useCallback(async (email: string, password: string) => {
     const tokenResponse = await authApi.login(email, password)
-    window.localStorage.setItem('token', tokenResponse.access_token)
-    window.localStorage.setItem('refresh_token', tokenResponse.refresh_token)
+    setAccessToken(tokenResponse.access_token)
     const me = await authApi.getMe()
     window.localStorage.setItem('user', JSON.stringify(me))
     setUser(me)
@@ -133,7 +149,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     <AuthContext.Provider
       value={{ user, isAuthenticated: !!user, login, register: registerUser, logout }}
     >
-      {children}
+      {booting ? null : children}
     </AuthContext.Provider>
   )
 }

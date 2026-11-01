@@ -17,7 +17,11 @@ function renderPage() {
 }
 
 describe('LoginPage', () => {
-  afterEach(() => vi.restoreAllMocks())
+  afterEach(() => {
+    vi.restoreAllMocks()
+    // A cached user from the login test would otherwise make the next mount refresh first.
+    window.localStorage.clear()
+  })
 
   it('shows a validation error when submitted empty', async () => {
     renderPage()
@@ -28,7 +32,6 @@ describe('LoginPage', () => {
   it('calls login with the entered credentials', async () => {
     const loginSpy = vi.spyOn(authApi, 'login').mockResolvedValue({
       access_token: 'a',
-      refresh_token: 'r',
       token_type: 'bearer',
     })
     vi.spyOn(authApi, 'getMe').mockResolvedValue({

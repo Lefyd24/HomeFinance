@@ -13,7 +13,7 @@ Every write path that can touch an account balance must call one of these.
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
-from app.models import Account, Transaction
+from app.models import Account, Category, Transaction
 
 # Fields on a synced transaction that mirror the bank's own record. Everything
 # else — category_id, notes, description, date — stays editable. `date` is
@@ -63,6 +63,38 @@ def reject_linked_account_ids(db: Session, user_id: int, *account_ids: int | Non
         .first()
     )
     reject_if_linked(linked, action="used for manual transactions")
+
+
+def assert_owned_refs(
+    db: Session,
+    user_id: int,
+    *,
+    account_ids=(),
+    category_ids=(),
+    transaction_ids=(),
+) -> None:
+    """Raise 404 if any given id is not owned by `user_id` (None ids are ignored).
+
+    404 rather than 403 so another user's row IDs can't be probed for existence.
+    """
+    for model, ids, label in (
+        (Account, account_ids, "Account"),
+        (Category, category_ids, "Category"),
+        (Transaction, transaction_ids, "Transaction"),
+    ):
+        wanted = {i for i in ids if i is not None}
+        if not wanted:
+            continue
+        owned = {
+            row[0]
+            for row in db.query(model.id).filter(
+                model.id.in_(wanted), model.user_id == user_id
+            )
+        }
+        if wanted - owned:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail=f"{label} not found"
+            )
 
 
 def is_synced(transaction: Transaction) -> bool:

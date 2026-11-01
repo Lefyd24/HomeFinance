@@ -125,7 +125,9 @@ def enforce_rate_limit(request: Request, email: str | None = None) -> None:
             )
 
 
-def clear_rate_limit(request: Request, email: str | None = None) -> None:
+def clear_rate_limit(
+    request: Request, email: str | None = None, clear_ip: bool = True
+) -> None:
     """Forgive the budget spent by a request that turned out to be legitimate.
 
     `enforce_rate_limit` has to record its hit *before* credentials are
@@ -134,6 +136,7 @@ def clear_rate_limit(request: Request, email: str | None = None) -> None:
     lock themselves out. Call this once an attempt is known to be genuine so
     only failures accumulate.
     """
-    ip_limiter.reset(f"ip:{get_client_ip(request)}")
+    if clear_ip:
+        ip_limiter.reset(f"ip:{get_client_ip(request)}")
     if email:
         email_limiter.reset(f"email:{email.strip().lower()}")

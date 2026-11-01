@@ -5,6 +5,7 @@
 #   env -i HOME="$HOME" PATH="/usr/bin:/bin" USER="$(id -un)" LOGNAME="$(id -un)" \
 #     SHELL=/bin/bash /path/to/scripts/backup-finance-db.sh
 set -euo pipefail
+umask 077
 
 # Cron jobs often run with PATH=/usr/bin:/bin — extend so sqlite3 is found (e.g. Linuxbrew).
 : "${HOME:=$(getent passwd "$(id -un)" 2>/dev/null | cut -d: -f6)}"
@@ -17,6 +18,8 @@ BACKUP_DIR="${PROJECT_ROOT}/data-backups"
 CRON_LOG="${BACKUP_DIR}/cron.log"
 
 mkdir -p "${BACKUP_DIR}"
+chmod 700 "${BACKUP_DIR}"
+RETENTION_DAYS="${BACKUP_RETENTION_DAYS:-30}"
 
 log() {
 	local line
@@ -40,10 +43,31 @@ if [[ ! -f "${DB_PATH}" ]]; then
 	exit 1
 fi
 
-if sqlite3 "${DB_PATH}" ".backup '${OUT}'"; then
-	log "backup ok: ${OUT}"
-	exit 0
+if [[ -n "${BACKUP_AGE_RECIPIENT:-}" ]] && ! command -v age >/dev/null 2>&1; then
+	log "error: BACKUP_AGE_RECIPIENT is set but age not found; refusing to write a plaintext backup"
+	exit 1
 fi
 
-log "error: backup failed"
-exit 1
+if ! sqlite3 "${DB_PATH}" ".backup '${OUT}'"; then
+	rm -f "${OUT}"
+	log "error: backup failed"
+	exit 1
+fi
+
+if [[ -n "${BACKUP_AGE_RECIPIENT:-}" ]]; then
+	if age -r "${BACKUP_AGE_RECIPIENT}" -o "${OUT}.age" "${OUT}"; then
+		rm -f "${OUT}"
+		OUT="${OUT}.age"
+	else
+		rm -f "${OUT}" "${OUT}.age"
+		log "error: age encryption failed"
+		exit 1
+	fi
+fi
+
+log "backup ok: ${OUT}"
+
+# Retention: prune old backups (only files matching our naming).
+find "${BACKUP_DIR}" -maxdepth 1 -type f \( -name 'finance_*.db' -o -name 'finance_*.db.age' \) \
+	-mtime "+${RETENTION_DAYS}" -delete
+exit 0

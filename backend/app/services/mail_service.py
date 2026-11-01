@@ -27,6 +27,8 @@ def resolve_smtp_config(row, app) -> "SmtpConfig | None":
     host = pick("smtp_host", "SMTP_HOST")
     if not host:
         return None
+    # A user-supplied host must never receive the operator's global credentials.
+    own_host = row is not None and getattr(row, "smtp_host", None) not in (None, "")
     password = None
     password_needs_reentry = False
     enc = getattr(row, "smtp_password_encrypted", None) if row else None
@@ -40,16 +42,15 @@ def resolve_smtp_config(row, app) -> "SmtpConfig | None":
                 getattr(row, "user_id", None),
             )
             password_needs_reentry = True
-    if password is None and not password_needs_reentry:
+    if password is None and not password_needs_reentry and not own_host:
         password = getattr(app, "SMTP_PASSWORD", None)
+    user = (getattr(row, "smtp_user", None) or None) if own_host else getattr(app, "SMTP_USER", None)
     return SmtpConfig(
         host=host,
         port=pick("smtp_port", "SMTP_PORT", 587),
-        user=pick("smtp_user", "SMTP_USER"),
+        user=user,
         password=password,
-        sender=pick("smtp_from", "SMTP_FROM")
-        or pick("smtp_user", "SMTP_USER")
-        or "noreply@localhost",
+        sender=pick("smtp_from", "SMTP_FROM") or user or "noreply@localhost",
         use_tls=pick("smtp_use_tls", "SMTP_USE_TLS", True),
         password_needs_reentry=password_needs_reentry,
     )

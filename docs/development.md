@@ -33,7 +33,7 @@ Key ideas:
 |---|---|
 | Frontend | React 19, TypeScript, Vite, Tailwind CSS 4, Radix and shadcn components, TanStack Query and Table, Apache ECharts and Recharts, i18next |
 | Backend | FastAPI, SQLAlchemy, SQLite, Alembic, APScheduler |
-| Auth | JWT access and refresh tokens, invite-only registration, email verification |
+| Auth | JWT (PyJWT, HS256): access token kept in memory, refresh token in an HttpOnly cookie. Invite-only registration, email verification |
 | AI and data | OpenRouter, yfinance, scikit-learn and statsmodels in the analytics layer |
 | Packaging | Multi-stage Docker image, Docker Compose |
 

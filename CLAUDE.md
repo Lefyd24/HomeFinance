@@ -13,7 +13,9 @@ Personal Finance — a self-hosted personal finance app (accounts, transactions,
 - **Single-origin serving**: in production the backend serves the built React SPA itself (`main.py`'s `_SpaStaticFiles`/`_FrontendMount`) from the same port as the API, so it works behind Tailscale Funnel (one port in, one service). `/api/*` is always matched before the SPA catch-all.
 - **Background jobs**: APScheduler (`app/services/scheduler.py`) drives bank sync, investment sync, recurring-expense processing, and notification checks — started in `main.py`'s lifespan.
 - **Migrations**: Alembic, configured in `backend/alembic/` (`backend/ALEMBIC_GUIDE.md` has the full workflow). Migrations run automatically on container startup via `docker-entrypoint.sh`.
-- **Auth**: JWT access+refresh tokens, invite-only registration, email verification, per-IP/per-email rate limiting (`app/utils/rate_limit.py`).
+- **Auth**: JWT access+refresh tokens via PyJWT. The access token is kept in memory on the frontend (`src/lib/apiClient.ts`), and the refresh token is an `HttpOnly; Secure; SameSite=Strict` cookie scoped to `/api/auth`. Never put tokens in `localStorage` or URLs: documents are fetched with the `Authorization` header into blob URLs. Logout bumps `sessions_valid_from` to revoke every token. Also: invite-only registration, email verification, per-IP/per-email rate limiting (`app/utils/rate_limit.py`).
+- **Ownership checks**: any client-supplied account/category/transaction id must go through `assert_owned_refs()` (`app/utils/linked_accounts.py`). A new `/api` route that takes an id needs a case in `backend/tests/test_cross_user_routes.py`; a guard test fails otherwise.
+- **Security headers**: `security_headers` middleware in `main.py` sets the CSP (`script-src 'self'`, no inline scripts, no `eval`). New external images, frames or connections need a CSP change there.
 - **External integrations** (all optional, feature-flagged in `app/config.py`): Enable Banking (EU bank sync), OpenRouter (AI chat, user-selectable model), Freedom24/TraderNet + yfinance (investments), SMTP + Web Push/VAPID (notifications).
 
 ## Commands

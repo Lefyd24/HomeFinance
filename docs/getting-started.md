@@ -49,7 +49,7 @@ The app **refuses to start** in production mode (`DEBUG=false`) when:
 - `SECRET_KEY` is empty, is the placeholder, or is shorter than 32 characters.
 - `NOTIFICATIONS_ENABLED=true` (the default) and `NOTIFICATION_ENCRYPTION_KEY` is empty. Set `NOTIFICATIONS_ENABLED=false` if you don't want notifications.
 
-Back up both keys somewhere safe. If you lose them, sessions are invalidated and any saved per-user SMTP passwords become unreadable. See [key rotation](operations.md#rotating-secrets).
+Back up both keys somewhere safe. If you lose them, everyone is signed out, and saved SMTP passwords, broker keys and bank sessions become unreadable. See [key rotation](operations.md#rotating-secrets).
 
 ## 3. Create the first admin
 

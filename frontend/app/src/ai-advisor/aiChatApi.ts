@@ -1,4 +1,4 @@
-import { apiFetch, getApiBaseUrl } from '../lib/apiClient'
+import { apiFetch, getAccessToken, getApiBaseUrl } from '../lib/apiClient'
 
 export interface ChatStatus {
   configured: boolean
@@ -172,7 +172,7 @@ export async function streamChat(
   /** Skill names active for this request; null/empty lets the model pick its own. */
   skills?: string[] | null,
 ): Promise<void> {
-  const token = window.localStorage.getItem('token')
+  const token = getAccessToken()
   const response = await fetch(`${getApiBaseUrl()}/ai/chat`, {
     method: 'POST',
     headers: {

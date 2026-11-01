@@ -4,6 +4,7 @@ from typing import List, Optional
 
 from app.database import get_db
 from app.utils.security import get_current_user_authenticated as get_current_user
+from app.utils.linked_accounts import assert_owned_refs
 from app.schemas import CategoryCreate, CategoryUpdate, CategoryResponse, CategorySuggestion
 from app.models import User, Category
 
@@ -82,6 +83,7 @@ def create_category(
     db: Session = Depends(get_db)
 ):
     """Create a new custom category."""
+    assert_owned_refs(db, current_user.id, category_ids=(category_data.parent_id,))
     db_category = Category(
         user_id=current_user.id,
         is_system=False,
@@ -143,6 +145,7 @@ def update_category(
     
     # Update fields
     update_data = category_data.model_dump(exclude_unset=True)
+    assert_owned_refs(db, current_user.id, category_ids=(update_data.get("parent_id"),))
     for field, value in update_data.items():
         setattr(category, field, value)
     

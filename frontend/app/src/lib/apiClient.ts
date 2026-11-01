@@ -4,6 +4,17 @@ declare global {
   }
 }
 
+// Access token lives in memory only; the refresh token is an HttpOnly cookie.
+let accessToken: string | null = null
+
+export function setAccessToken(token: string | null): void {
+  accessToken = token
+}
+
+export function getAccessToken(): string | null {
+  return accessToken
+}
+
 export function getApiBaseUrl(): string {
   if (window.API_BASE_URL) {
     return window.API_BASE_URL
@@ -86,9 +97,10 @@ function isSessionEndingUnauthorized(path: string, hadToken: boolean): boolean {
 }
 
 export async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
-  const token = window.localStorage.getItem('token')
+  const token = getAccessToken()
   const response = await fetch(`${getApiBaseUrl()}${path}`, {
     ...init,
+    credentials: 'same-origin',
     headers: {
       // FormData needs the browser-generated multipart boundary header.
       ...(init?.body instanceof FormData ? {} : { 'Content-Type': 'application/json' }),

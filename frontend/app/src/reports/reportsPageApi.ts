@@ -1,4 +1,4 @@
-import { apiFetch, getApiBaseUrl } from '../lib/apiClient'
+import { apiFetch, getAccessToken, getApiBaseUrl } from '../lib/apiClient'
 
 /** Query params every filterable report endpoint accepts. */
 export interface ReportParams {
@@ -126,7 +126,7 @@ export function getDebtInsights() {
 
 /** Streams a CSV straight to the browser's downloads. */
 export async function downloadReportCsv(report: string, params: ReportParams): Promise<void> {
-  const token = window.localStorage.getItem('token')
+  const token = getAccessToken()
   const response = await fetch(`${getApiBaseUrl()}/reports/export${qs({ report, ...params })}`, {
     headers: token ? { Authorization: `Bearer ${token}` } : {},
   })

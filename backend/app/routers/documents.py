@@ -21,7 +21,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, Request, UploadFile, status
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile, status
 from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 
@@ -71,15 +71,13 @@ ALLOWED_EXTENSIONS = {
 
 def get_user_for_file(
     request: Request,
-    token: str | None = Query(default=None),
     db: Session = Depends(get_db),
 ) -> User:
-    """Auth for preview/download: accepts Bearer header OR ?token= query param."""
-    raw = token
-    if not raw:
-        auth = request.headers.get("Authorization", "")
-        if auth.lower().startswith("bearer "):
-            raw = auth[7:]
+    """Auth for preview/download: Bearer header only (tokens in URLs leak via logs/history)."""
+    raw = None
+    auth = request.headers.get("Authorization", "")
+    if auth.lower().startswith("bearer "):
+        raw = auth[7:]
     if not raw:
         raise HTTPException(status_code=401, detail="Not authenticated")
     user = user_from_access_token(raw, db)
@@ -215,7 +213,7 @@ def upload_document(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    content = file.file.read()
+    content = file.file.read(settings.DOCUMENTS_MAX_FILE_SIZE + 1)
     if len(content) > settings.DOCUMENTS_MAX_FILE_SIZE:
         raise HTTPException(
             status_code=413,

@@ -156,6 +156,8 @@ class Settings(BaseSettings):
     # Notifications
     NOTIFICATIONS_ENABLED: bool = True
     NOTIFICATION_ENCRYPTION_KEY: str | None = None
+    # Comma-separated former keys, accepted for decryption only (see scripts/rotate_encryption_key.py)
+    NOTIFICATION_ENCRYPTION_KEY_PREVIOUS: str | None = None
     # SMTP (defaults; per-user UI settings override these)
     SMTP_HOST: str | None = None
     SMTP_PORT: int = 587
@@ -365,6 +367,16 @@ class Settings(BaseSettings):
                 )
             else:
                 raise ValueError(message)
+        if not self.DEBUG and (
+            not self.NOTIFICATION_ENCRYPTION_KEY
+            or self.NOTIFICATION_ENCRYPTION_KEY == self.SECRET_KEY
+        ):
+            logger.warning(
+                "NOTIFICATION_ENCRYPTION_KEY is unset or equal to SECRET_KEY, so stored credentials "
+                "are encrypted with a key tied to JWT signing. To separate them: set a new "
+                "NOTIFICATION_ENCRYPTION_KEY, put the old SECRET_KEY value into "
+                "NOTIFICATION_ENCRYPTION_KEY_PREVIOUS, then run backend/scripts/rotate_encryption_key.py."
+            )
         return self
 
 

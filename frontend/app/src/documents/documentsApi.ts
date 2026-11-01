@@ -1,4 +1,4 @@
-import { apiFetch, getApiBaseUrl } from '../lib/apiClient'
+import { apiFetch, getAccessToken, getApiBaseUrl } from '../lib/apiClient'
 
 export interface DocumentItem {
   id: string
@@ -77,7 +77,7 @@ export async function uploadDocument(
   formData.append('title', input.title || file.name)
   formData.append('description', input.description ?? '')
   formData.append('folder', input.folder ?? '')
-  const token = window.localStorage.getItem('token')
+  const token = getAccessToken()
   const response = await fetch(`${getApiBaseUrl()}/documents/upload`, {
     method: 'POST',
     body: formData,
@@ -98,14 +98,26 @@ export function deleteDocument(docId: string): Promise<{ detail: string }> {
   return apiFetch<{ detail: string }>(`/documents/${docId}`, { method: 'DELETE' })
 }
 
-export function getDownloadUrl(docId: string): string {
-  const token = window.localStorage.getItem('token')
-  const base = `${getApiBaseUrl()}/documents/${docId}/download`
-  return token ? `${base}?token=${encodeURIComponent(token)}` : base
+/** Fetches a file with the Authorization header (never a token in the URL); caller revokes the blob URL. */
+export async function fetchDocumentBlobUrl(
+  docId: string,
+  kind: 'preview' | 'download',
+): Promise<string> {
+  const token = getAccessToken()
+  const response = await fetch(`${getApiBaseUrl()}/documents/${docId}/${kind}`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  })
+  if (!response.ok) throw new Error(`Failed to load document: ${response.status}`)
+  return URL.createObjectURL(await response.blob())
 }
 
-export function getPreviewUrl(docId: string): string {
-  const token = window.localStorage.getItem('token')
-  const base = `${getApiBaseUrl()}/documents/${docId}/preview`
-  return token ? `${base}?token=${encodeURIComponent(token)}` : base
+export async function downloadDocument(docId: string, filename: string): Promise<void> {
+  const url = await fetchDocumentBlobUrl(docId, 'download')
+  const link = document.createElement('a')
+  link.href = url
+  link.download = filename
+  document.body.appendChild(link)
+  link.click()
+  link.remove()
+  URL.revokeObjectURL(url)
 }
