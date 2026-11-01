@@ -92,6 +92,13 @@ async def lifespan(app: FastAPI):
     logger.info("Shutting down...")
 
 
+def _docs_urls(debug: bool) -> dict:
+    """Interactive API docs expose the full schema; only wanted in development."""
+    if debug:
+        return {"docs_url": "/docs", "redoc_url": "/redoc", "openapi_url": "/openapi.json"}
+    return {"docs_url": None, "redoc_url": None, "openapi_url": None}
+
+
 # Create FastAPI app
 app = FastAPI(
     title=settings.APP_NAME,
@@ -99,10 +106,7 @@ app = FastAPI(
     description="Personal Finance Management API",
     lifespan=lifespan,
     redirect_slashes=True,
-    # Interactive API docs expose the full schema; only wanted in development.
-    docs_url="/docs" if settings.DEBUG else None,
-    redoc_url="/redoc" if settings.DEBUG else None,
-    openapi_url="/openapi.json" if settings.DEBUG else None,
+    **_docs_urls(settings.DEBUG),
 )
 
 # Built from what the SPA needs: bundled scripts/fonts only, no inline scripts.

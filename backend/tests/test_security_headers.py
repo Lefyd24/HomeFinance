@@ -37,10 +37,16 @@ def test_existing_route_csp_is_kept():
     assert r.headers["x-frame-options"] == "DENY"
 
 
-def test_docs_disabled_outside_debug():
-    assert not settings.DEBUG
+def test_docs_urls_only_in_debug():
+    assert main._docs_urls(False) == {"docs_url": None, "redoc_url": None, "openapi_url": None}
+    assert main._docs_urls(True)["openapi_url"] == "/openapi.json"
+
+
+def test_app_docs_follow_debug_setting():
+    # CI runs with DEBUG=true and production with DEBUG=false; check the live app either way.
     with TestClient(main.app) as c:
-        assert c.get("/openapi.json").status_code == 404
-        # With a built SPA, /docs falls through to index.html, never Swagger UI.
-        r = c.get("/docs")
-        assert r.status_code == 404 or "swagger-ui" not in r.text
+        assert c.get("/openapi.json").status_code == (200 if settings.DEBUG else 404)
+        if not settings.DEBUG:
+            # With a built SPA, /docs falls through to index.html, never Swagger UI.
+            r = c.get("/docs")
+            assert r.status_code == 404 or "swagger-ui" not in r.text
