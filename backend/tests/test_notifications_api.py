@@ -14,6 +14,7 @@ def test_get_settings_creates_defaults(client, db, seed_user):
 
 
 def test_put_settings_encrypts_password(client, db, seed_user, monkeypatch):
+    monkeypatch.setattr("app.routers.notifications.is_public_host", lambda h: True)
     monkeypatch.setenv("NOTIFICATION_ENCRYPTION_KEY", "test-key-please-change-1234567890")
     from importlib import reload
     from app.utils import crypto as crypto_mod

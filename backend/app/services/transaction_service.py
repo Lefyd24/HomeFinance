@@ -199,7 +199,7 @@ class TransactionService:
         db.add(db_transaction)
         
         # Update account balance(s) with proper rounding
-        account = db.query(Account).filter(Account.id == transaction_data.account_id).first()
+        account = db.query(Account).filter(Account.id == transaction_data.account_id, Account.user_id == user_id).first()
         if account:
             if transaction_data.type == "income":
                 account.balance = round(account.balance + transaction_data.amount, 2)
@@ -210,7 +210,8 @@ class TransactionService:
                 account.balance = round(account.balance - transaction_data.amount, 2)
                 # Add to destination account
                 destination_account = db.query(Account).filter(
-                    Account.id == transaction_data.destination_account_id
+                    Account.id == transaction_data.destination_account_id,
+                    Account.user_id == user_id,
                 ).first()
                 if destination_account:
                     destination_account.balance = round(destination_account.balance + transaction_data.amount, 2)
@@ -238,7 +239,7 @@ class TransactionService:
         old_destination_id = transaction.destination_account_id
         
         # Revert old balance with proper rounding
-        old_account = db.query(Account).filter(Account.id == old_account_id).first()
+        old_account = db.query(Account).filter(Account.id == old_account_id, Account.user_id == transaction.user_id).first()
         if old_account:
             if old_type == "income":
                 old_account.balance = round(old_account.balance - old_amount, 2)
@@ -248,7 +249,7 @@ class TransactionService:
                 # Revert transfer: add back to source, deduct from destination
                 old_account.balance = round(old_account.balance + old_amount, 2)
                 if old_destination_id:
-                    old_destination = db.query(Account).filter(Account.id == old_destination_id).first()
+                    old_destination = db.query(Account).filter(Account.id == old_destination_id, Account.user_id == transaction.user_id).first()
                     if old_destination:
                         old_destination.balance = round(old_destination.balance - old_amount, 2)
         
@@ -269,7 +270,7 @@ class TransactionService:
             setattr(transaction, field, value)
         
         # Apply new balance
-        new_account = db.query(Account).filter(Account.id == new_account_id).first()
+        new_account = db.query(Account).filter(Account.id == new_account_id, Account.user_id == transaction.user_id).first()
         new_amount = transaction_data.amount or old_amount
         
         if new_account:
@@ -281,7 +282,7 @@ class TransactionService:
                 # Deduct from source
                 new_account.balance = round(new_account.balance - new_amount, 2)
                 # Add to destination
-                new_destination = db.query(Account).filter(Account.id == new_destination_id).first()
+                new_destination = db.query(Account).filter(Account.id == new_destination_id, Account.user_id == transaction.user_id).first()
                 if new_destination:
                     new_destination.balance = round(new_destination.balance + new_amount, 2)
         
@@ -304,7 +305,7 @@ class TransactionService:
         up / recurring due date rewound, and the payment rows deleted).
         """
         # Adjust account balance with proper rounding
-        account = db.query(Account).filter(Account.id == transaction.account_id).first()
+        account = db.query(Account).filter(Account.id == transaction.account_id, Account.user_id == transaction.user_id).first()
         if account:
             if transaction.type == "income":
                 account.balance = round(account.balance - transaction.amount, 2)
@@ -315,7 +316,8 @@ class TransactionService:
                 account.balance = round(account.balance + transaction.amount, 2)
                 if transaction.destination_account_id:
                     destination_account = db.query(Account).filter(
-                        Account.id == transaction.destination_account_id
+                        Account.id == transaction.destination_account_id,
+                        Account.user_id == transaction.user_id,
                     ).first()
                     if destination_account:
                         destination_account.balance = round(
@@ -415,7 +417,7 @@ class TransactionService:
         """
         ReimbursementService.assert_unlinked(transaction)
 
-        destination = db.query(Account).filter(Account.id == destination_account_id).first()
+        destination = db.query(Account).filter(Account.id == destination_account_id, Account.user_id == transaction.user_id).first()
         if not destination:
             raise ValueError("Destination account not found")
         if destination.is_linked:
@@ -452,7 +454,7 @@ class TransactionService:
         if transaction.paired_transaction_id is None and transaction.destination_account_id:
             destination = (
                 db.query(Account)
-                .filter(Account.id == transaction.destination_account_id)
+                .filter(Account.id == transaction.destination_account_id, Account.user_id == transaction.user_id)
                 .first()
             )
             if destination:

@@ -7,6 +7,7 @@ import math
 
 from app.database import get_db
 from app.utils.security import get_current_user_authenticated as get_current_user
+from app.utils.linked_accounts import assert_owned_refs
 from app.schemas.debt import (
     DebtCreate,
     DebtUpdate,
@@ -290,6 +291,9 @@ def add_payment(
     # Determine transaction_id - use provided one or create new if requested
     transaction_id = payment_data.transaction_id
     account_id = payment_data.account_id
+    assert_owned_refs(
+        db, current_user.id, account_ids=(account_id,), transaction_ids=(transaction_id,)
+    )
     
     # Create transaction if requested and account_id is provided
     if payment_data.create_transaction and account_id and not transaction_id:

@@ -412,6 +412,12 @@ def update_transaction(
         )
 
     update_data = transaction_data.model_dump(exclude_unset=True)
+    linked_accounts.assert_owned_refs(
+        db,
+        current_user.id,
+        account_ids=(update_data.get("account_id"), update_data.get("destination_account_id")),
+        category_ids=(update_data.get("category_id"),),
+    )
     # Synced rows stay categorisable and annotatable; only the bank's own
     # figures are frozen.
     linked_accounts.reject_synced_field_edits(transaction, update_data)

@@ -1,3 +1,6 @@
+import ipaddress
+import socket
+
 from fastapi import Request
 
 from app.config import settings
@@ -14,3 +17,14 @@ def public_base_url(request: Request) -> str:
     if settings.PUBLIC_BASE_URL:
         return settings.PUBLIC_BASE_URL.rstrip("/")
     return str(request.base_url).rstrip("/")
+
+
+def is_public_host(host: str) -> bool:
+    """True only if every address the host resolves to is globally routable."""
+    try:
+        infos = socket.getaddrinfo(host, None)
+    except (socket.gaierror, UnicodeError):
+        return False
+    if not infos:
+        return False
+    return all(ipaddress.ip_address(i[4][0].split("%")[0]).is_global for i in infos)

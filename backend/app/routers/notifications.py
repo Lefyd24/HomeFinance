@@ -26,6 +26,7 @@ from app.schemas.notification import (
 from app.services import notification_service as ns
 from app.services.scheduler import evaluate_for_user
 from app.utils import crypto
+from app.utils.urls import is_public_host
 from app.utils.security import get_current_user_authenticated as get_current_user
 
 router = APIRouter(prefix="/notifications", tags=["Notifications"])
@@ -63,6 +64,11 @@ def update_settings(
     """Update notification settings for the current user."""
     row = _get_or_create_settings(db, current_user.id)
     data = payload.model_dump(exclude_unset=True)
+    if data.get("smtp_host") and not is_public_host(data["smtp_host"]):
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="smtp_host must resolve to a public address",
+        )
     password = data.pop("smtp_password", None)
     for key, value in data.items():
         setattr(row, key, value)
