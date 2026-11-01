@@ -47,25 +47,25 @@ def test_refresh_token_is_rejected_as_access_token(raw_client, seed_user):
 
 def test_refresh_token_rejected_on_document_download(raw_client, seed_user):
     token = create_refresh_token({"sub": str(seed_user.id)})
-    resp = raw_client.get(f"/api/documents/whatever/download?token={token}")
+    resp = raw_client.get("/api/documents/whatever/download", headers=_bearer(token))
     assert resp.status_code == 401
 
 
 def test_document_token_rejected_after_password_reset(raw_client, db, seed_user):
     token = create_access_token({"sub": str(seed_user.id)})
     _invalidate_sessions(db, seed_user)
-    resp = raw_client.get(f"/api/documents/whatever/download?token={token}")
+    resp = raw_client.get("/api/documents/whatever/download", headers=_bearer(token))
     assert resp.status_code == 401
 
 
 def test_refresh_rejected_after_password_reset(raw_client, db, seed_user):
     refresh = create_refresh_token({"sub": str(seed_user.id)})
-    assert raw_client.post(f"/api/auth/refresh?refresh_token={refresh}").status_code == 200
+    assert raw_client.post("/api/auth/refresh", headers={"Cookie": f"refresh_token={refresh}"}).status_code == 200
 
     _invalidate_sessions(db, seed_user)
-    assert raw_client.post(f"/api/auth/refresh?refresh_token={refresh}").status_code == 401
+    assert raw_client.post("/api/auth/refresh", headers={"Cookie": f"refresh_token={refresh}"}).status_code == 401
 
 
 def test_access_token_cannot_be_used_to_refresh(raw_client, seed_user):
     token = create_access_token({"sub": str(seed_user.id)})
-    assert raw_client.post(f"/api/auth/refresh?refresh_token={token}").status_code == 401
+    assert raw_client.post("/api/auth/refresh", headers={"Cookie": f"refresh_token={token}"}).status_code == 401

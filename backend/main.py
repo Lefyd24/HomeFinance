@@ -99,7 +99,40 @@ app = FastAPI(
     description="Personal Finance Management API",
     lifespan=lifespan,
     redirect_slashes=True,
+    # Interactive API docs expose the full schema; only wanted in development.
+    docs_url="/docs" if settings.DEBUG else None,
+    redoc_url="/redoc" if settings.DEBUG else None,
+    openapi_url="/openapi.json" if settings.DEBUG else None,
 )
+
+# Built from what the SPA needs: bundled scripts/fonts only, no inline scripts.
+# style-src 'unsafe-inline': React inline style props / motion. img-src data: blob:
+# plus assets.aceternity.com: NoiseBackground loads noise.webp from there.
+# frame-src 'self' blob:: PDF preview iframe loads /api/documents/*/preview.
+_CSP = (
+    "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; "
+    "img-src 'self' data: blob: https://assets.aceternity.com; "
+    "font-src 'self' data:; connect-src 'self'; frame-src 'self' blob:; "
+    "worker-src 'self' blob:; object-src 'none'; base-uri 'self'; "
+    "form-action 'self'; frame-ancestors 'none'"
+)
+_SECURITY_HEADERS = {
+    "Content-Security-Policy": _CSP,
+    "X-Frame-Options": "DENY",
+    "X-Content-Type-Options": "nosniff",
+    "Referrer-Policy": "same-origin",
+    # Browsers ignore HSTS over plain http, so it is safe to always send.
+    "Strict-Transport-Security": "max-age=31536000; includeSubDomains",
+}
+
+
+@app.middleware("http")
+async def security_headers(request: Request, call_next):
+    response = await call_next(request)
+    # setdefault keeps the stricter per-route headers (document previews).
+    for name, value in _SECURITY_HEADERS.items():
+        response.headers.setdefault(name, value)
+    return response
 
 # CORS — see settings.CORS_ORIGINS and FRONTEND_PORT in app/config.py
 # Same-origin deployments (frontend served by this app, e.g. behind Tailscale

@@ -22,7 +22,7 @@ from pathlib import Path
 from typing import Any
 
 import httpx
-from jose import jwt
+import jwt
 
 from app.config import settings
 

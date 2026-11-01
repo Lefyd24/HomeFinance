@@ -184,6 +184,12 @@ def create_debt(
     db: Session = Depends(get_db)
 ):
     """Create a new debt."""
+    assert_owned_refs(
+        db,
+        current_user.id,
+        account_ids=(debt_data.linked_account_id,),
+        category_ids=(debt_data.linked_category_id,),
+    )
     db_debt = Debt(
         user_id=current_user.id,
         **debt_data.model_dump()
@@ -236,6 +242,12 @@ def update_debt(
         )
     
     update_data = debt_data.model_dump(exclude_unset=True)
+    assert_owned_refs(
+        db,
+        current_user.id,
+        account_ids=(update_data.get("linked_account_id"),),
+        category_ids=(update_data.get("linked_category_id"),),
+    )
     for field, value in update_data.items():
         setattr(debt, field, value)
     

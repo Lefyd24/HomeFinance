@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import { Download, PencilLine, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -34,6 +35,30 @@ export function DocumentPreviewSheet({
   onDelete,
 }: DocumentPreviewSheetProps) {
   const meta = document ? fileTypeMeta(document.mime_type, document.filename) : null
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null)
+  const documentId = document?.id
+  const previewable = meta?.kind === 'image' || meta?.kind === 'pdf'
+
+  useEffect(() => {
+    if (!documentId || !previewable) return
+    let objectUrl: string | null = null
+    let cancelled = false
+    documentsApi
+      .fetchDocumentBlobUrl(documentId, 'preview')
+      .then((url) => {
+        if (cancelled) URL.revokeObjectURL(url)
+        else {
+          objectUrl = url
+          setPreviewUrl(url)
+        }
+      })
+      .catch(() => {})
+    return () => {
+      cancelled = true
+      setPreviewUrl(null)
+      if (objectUrl) URL.revokeObjectURL(objectUrl)
+    }
+  }, [documentId, previewable])
 
   return (
     <Sheet open={!!document} onOpenChange={onOpenChange}>
@@ -55,15 +80,15 @@ export function DocumentPreviewSheet({
 
             <div className="min-h-0 flex-1 overflow-y-auto">
               <div className="flex min-h-64 items-center justify-center bg-muted/40">
-                {meta.kind === 'image' ? (
+                {previewable && !previewUrl ? null : meta.kind === 'image' ? (
                   <img
-                    src={documentsApi.getPreviewUrl(document.id)}
+                    src={previewUrl ?? undefined}
                     alt={document.title}
                     className="max-h-[60vh] w-full object-contain"
                   />
                 ) : meta.kind === 'pdf' ? (
                   <iframe
-                    src={documentsApi.getPreviewUrl(document.id)}
+                    src={previewUrl ?? undefined}
                     title={document.title}
                     className="h-[60vh] w-full border-0"
                   />
@@ -93,11 +118,12 @@ export function DocumentPreviewSheet({
             </div>
 
             <SheetFooter className="flex-row border-t pt-4">
-              <Button asChild className="flex-1">
-                <a href={documentsApi.getDownloadUrl(document.id)}>
-                  <Download data-icon="inline-start" />
-                  Download
-                </a>
+              <Button
+                className="flex-1"
+                onClick={() => void documentsApi.downloadDocument(document.id, document.filename)}
+              >
+                <Download data-icon="inline-start" />
+                Download
               </Button>
               <Button variant="outline" size="icon" onClick={() => onEdit(document)} aria-label="Edit">
                 <PencilLine />

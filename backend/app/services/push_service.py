@@ -32,6 +32,7 @@ def send_push(sub, payload: dict, app) -> bool:
             vapid_private_key=app.VAPID_PRIVATE_KEY,
             vapid_claims=_vapid_claims_for_endpoint(sub.endpoint, app.VAPID_SUBJECT),
             ttl=PUSH_TTL_SECONDS,
+            timeout=10,
         )
         return True
     except WebPushException as exc:
@@ -54,4 +55,7 @@ def send_push(sub, payload: dict, app) -> bool:
             )
             raise PushGone() from exc
         logger.warning("Push failed (status=%s): %s %s", status, exc, body)
+        return False
+    except Exception:
+        logger.exception("Push failed unexpectedly (endpoint=%s)", sub.endpoint[:80])
         return False

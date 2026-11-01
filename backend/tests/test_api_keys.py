@@ -233,13 +233,13 @@ def test_refresh_throttles_last_login(raw_client, db):
     db.commit()
     token = create_refresh_token({"sub": str(user.id)})
 
-    assert raw_client.post(f"/api/auth/refresh?refresh_token={token}").status_code == 200
+    assert raw_client.post("/api/auth/refresh", headers={"Cookie": f"refresh_token={token}"}).status_code == 200
     db.refresh(user)
     assert user.last_login_at == recent  # within 15 min: untouched
 
     user.last_login_at = datetime.utcnow() - timedelta(hours=2)
     db.commit()
-    assert raw_client.post(f"/api/auth/refresh?refresh_token={token}").status_code == 200
+    assert raw_client.post("/api/auth/refresh", headers={"Cookie": f"refresh_token={token}"}).status_code == 200
     db.refresh(user)
     assert user.last_login_at > datetime.utcnow() - timedelta(minutes=1)
 

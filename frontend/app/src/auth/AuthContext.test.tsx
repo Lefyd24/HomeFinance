@@ -3,7 +3,7 @@ import { act, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { AuthProvider, useAuth } from './AuthContext'
 import * as authApi from './authApi'
-import { apiFetch } from '../lib/apiClient'
+import { apiFetch, getAccessToken, setAccessToken } from '../lib/apiClient'
 
 function TestConsumer() {
   const { user, isAuthenticated, login, logout } = useAuth()
@@ -20,6 +20,7 @@ function TestConsumer() {
 describe('AuthContext', () => {
   afterEach(() => {
     vi.restoreAllMocks()
+    setAccessToken(null)
     window.localStorage.clear()
   })
 
@@ -32,14 +33,12 @@ describe('AuthContext', () => {
     expect(screen.getByText('anon')).toBeInTheDocument()
   })
 
-  it('ignores a stored user when the token is gone', () => {
-    // The user object outlives the token (cleared tokens, a half-finished
-    // logout, a wiped cookie jar). Trusting it alone kept RequireAuth happy and
-    // left the app "logged in" against a server that rejected every request.
+  it('boots logged out when the refresh cookie is rejected', async () => {
     window.localStorage.setItem(
       'user',
       JSON.stringify({ id: 1, email: 'jane@example.com', full_name: null }),
     )
+    vi.spyOn(authApi, 'refresh').mockRejectedValue(new Error('401'))
 
     render(
       <AuthProvider>
@@ -47,11 +46,33 @@ describe('AuthContext', () => {
       </AuthProvider>,
     )
 
-    expect(screen.getByText('anon')).toBeInTheDocument()
+    await waitFor(() => expect(screen.getByText('anon')).toBeInTheDocument())
+    expect(window.localStorage.getItem('user')).toBeNull()
+  })
+
+  it('restores the session on reload by refreshing into memory', async () => {
+    window.localStorage.setItem('token', 'legacy')
+    window.localStorage.setItem('refresh_token', 'legacy')
+    window.localStorage.setItem(
+      'user',
+      JSON.stringify({ id: 1, email: 'jane@example.com', full_name: null }),
+    )
+    vi.spyOn(authApi, 'refresh').mockResolvedValue({ access_token: 'fresh', token_type: 'bearer' })
+
+    render(
+      <AuthProvider>
+        <TestConsumer />
+      </AuthProvider>,
+    )
+
+    await waitFor(() => expect(screen.getByText('authed')).toBeInTheDocument())
+    expect(getAccessToken()).toBe('fresh')
+    expect(window.localStorage.getItem('token')).toBeNull()
+    expect(window.localStorage.getItem('refresh_token')).toBeNull()
   })
 
   it('a 401 from any authenticated request ends the session', async () => {
-    window.localStorage.setItem('token', 'expired')
+    vi.spyOn(authApi, 'refresh').mockResolvedValue({ access_token: 'expired', token_type: 'bearer' })
     window.localStorage.setItem(
       'user',
       JSON.stringify({ id: 1, email: 'jane@example.com', full_name: null }),
@@ -71,22 +92,21 @@ describe('AuthContext', () => {
         <TestConsumer />
       </AuthProvider>,
     )
-    expect(screen.getByText('authed')).toBeInTheDocument()
+    expect(await screen.findByText('authed')).toBeInTheDocument()
 
     await act(async () => {
       await apiFetch('/accounts/').catch(() => {})
     })
 
     await waitFor(() => expect(screen.getByText('anon')).toBeInTheDocument())
-    expect(window.localStorage.getItem('token')).toBeNull()
+    expect(getAccessToken()).toBeNull()
     expect(window.localStorage.getItem('user')).toBeNull()
     vi.unstubAllGlobals()
   })
 
-  it('login stores tokens/user and flips to authenticated', async () => {
+  it('login keeps the token in memory and flips to authenticated', async () => {
     vi.spyOn(authApi, 'login').mockResolvedValue({
       access_token: 'a',
-      refresh_token: 'r',
       token_type: 'bearer',
     })
     vi.spyOn(authApi, 'getMe').mockResolvedValue({
@@ -109,14 +129,15 @@ describe('AuthContext', () => {
 
     await waitFor(() => expect(screen.getByText('authed')).toBeInTheDocument())
     expect(screen.getByText('jane@example.com')).toBeInTheDocument()
-    expect(window.localStorage.getItem('token')).toBe('a')
-    expect(window.localStorage.getItem('refresh_token')).toBe('r')
+    expect(getAccessToken()).toBe('a')
+    expect(window.localStorage.getItem('token')).toBeNull()
+    expect(window.localStorage.getItem('refresh_token')).toBeNull()
   })
 
   it('logout clears storage and flips to unauthenticated', async () => {
-    window.localStorage.setItem('token', 'a')
-    window.localStorage.setItem('refresh_token', 'r')
+    setAccessToken('a')
     window.localStorage.setItem('user', JSON.stringify({ email: 'jane@example.com' }))
+    vi.spyOn(authApi, 'refresh').mockResolvedValue({ access_token: 'a', token_type: 'bearer' })
     vi.spyOn(authApi, 'logout').mockResolvedValue(undefined)
 
     render(
@@ -125,11 +146,10 @@ describe('AuthContext', () => {
       </AuthProvider>,
     )
 
-    await act(async () => {
-      await userEvent.click(screen.getByText('logout'))
-    })
+    await userEvent.click(await screen.findByText('logout'))
 
-    expect(window.localStorage.getItem('token')).toBeNull()
+    await waitFor(() => expect(screen.getByText('anon')).toBeInTheDocument())
+    expect(getAccessToken()).toBeNull()
     expect(screen.getByText('anon')).toBeInTheDocument()
   })
 })

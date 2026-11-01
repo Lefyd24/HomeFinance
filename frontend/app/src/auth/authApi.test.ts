@@ -11,7 +11,7 @@ describe('authApi', () => {
     const mockFetch = vi.fn().mockResolvedValue({
       ok: true,
       status: 200,
-      json: () => Promise.resolve({ access_token: 'a', refresh_token: 'r', token_type: 'bearer' }),
+      json: () => Promise.resolve({ access_token: 'a', token_type: 'bearer' }),
     })
     vi.stubGlobal('fetch', mockFetch)
 
@@ -22,7 +22,7 @@ describe('authApi', () => {
     expect(init.method).toBe('POST')
     expect(init.headers['Content-Type']).toBe('application/x-www-form-urlencoded')
     expect(init.body).toBe('username=jane%40example.com&password=hunter2')
-    expect(result).toEqual({ access_token: 'a', refresh_token: 'r', token_type: 'bearer' })
+    expect(result).toEqual({ access_token: 'a', token_type: 'bearer' })
   })
 
   it('register posts JSON to /api/auth/register', async () => {
@@ -54,19 +54,19 @@ describe('authApi', () => {
     expect(user.email).toBe('jane@example.com')
   })
 
-  it('refresh posts the refresh token as a query param', async () => {
+  it('refresh posts with no params and relies on the cookie', async () => {
     const mockFetch = vi.fn().mockResolvedValue({
       ok: true,
       status: 200,
-      json: () => Promise.resolve({ access_token: 'a2', refresh_token: 'r2', token_type: 'bearer' }),
+      json: () => Promise.resolve({ access_token: 'a2', token_type: 'bearer' }),
     })
     vi.stubGlobal('fetch', mockFetch)
 
-    await refresh('r')
+    await refresh()
 
     expect(mockFetch).toHaveBeenCalledWith(
-      '/api/auth/refresh?refresh_token=r',
-      expect.objectContaining({ method: 'POST' }),
+      '/api/auth/refresh',
+      expect.objectContaining({ method: 'POST', credentials: 'same-origin' }),
     )
   })
 })

@@ -129,7 +129,7 @@ class NotificationRuleRead(BaseModel):
 
 
 class PushSubscriptionCreate(BaseModel):
-    endpoint: str
+    endpoint: str = Field(..., max_length=2048)
     p256dh: str
     auth: str
     user_agent: Optional[str] = Field(None, max_length=255)

@@ -20,6 +20,7 @@ from app.schemas.recurring_expense import (
 )
 from app.services.transaction_service import _rewind_due_date
 from app.utils.security import get_current_user_authenticated as get_current_user
+from app.utils.linked_accounts import assert_owned_refs
 
 router = APIRouter(prefix="/recurring-expenses", tags=["Recurring Expenses"])
 
@@ -101,6 +102,9 @@ def create_recurring_expense(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
+    assert_owned_refs(
+        db, current_user.id, account_ids=(data.account_id,), category_ids=(data.category_id,)
+    )
     expense = RecurringExpense(user_id=current_user.id, **data.model_dump())
     db.add(expense)
     db.commit()
@@ -121,7 +125,14 @@ def update_recurring_expense(
     ).first()
     if not expense:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Recurring expense not found")
-    for field, value in data.model_dump(exclude_unset=True).items():
+    update_data = data.model_dump(exclude_unset=True)
+    assert_owned_refs(
+        db,
+        current_user.id,
+        account_ids=(update_data.get("account_id"),),
+        category_ids=(update_data.get("category_id"),),
+    )
+    for field, value in update_data.items():
         setattr(expense, field, value)
     db.commit()
     db.refresh(expense)
@@ -166,6 +177,7 @@ def record_payment(
     if not expense:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Recurring expense not found")
 
+    assert_owned_refs(db, current_user.id, transaction_ids=(data.transaction_id,))
     payment = RecurringExpensePayment(
         recurring_expense_id=expense_id,
         user_id=current_user.id,

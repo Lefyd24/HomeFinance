@@ -1,10 +1,11 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { ApiError, getApiBaseUrl, apiFetch, setUnauthorizedHandler } from './apiClient'
+import { ApiError, getApiBaseUrl, apiFetch, setAccessToken, setUnauthorizedHandler } from './apiClient'
 
 describe('getApiBaseUrl', () => {
   afterEach(() => {
     delete (window as unknown as { API_BASE_URL?: string }).API_BASE_URL
     window.localStorage.clear()
+    setAccessToken(null)
   })
 
   it('defaults to the relative /api path', () => {
@@ -26,6 +27,7 @@ describe('apiFetch', () => {
   afterEach(() => {
     vi.unstubAllGlobals()
     window.localStorage.clear()
+    setAccessToken(null)
   })
 
   it('joins the base URL with the given path and parses JSON', async () => {
@@ -175,7 +177,7 @@ describe('apiFetch', () => {
       })
 
     it('notifies the handler when an authenticated request is rejected', async () => {
-      window.localStorage.setItem('token', 'expired-token')
+      setAccessToken('expired-token')
       vi.stubGlobal('fetch', unauthorized())
       const onUnauthorized = vi.fn()
       setUnauthorizedHandler(onUnauthorized)
@@ -206,7 +208,7 @@ describe('apiFetch', () => {
     })
 
     it('still throws so callers can render their own error state', async () => {
-      window.localStorage.setItem('token', 'expired-token')
+      setAccessToken('expired-token')
       vi.stubGlobal('fetch', unauthorized())
       setUnauthorizedHandler(vi.fn())
 
@@ -214,7 +216,7 @@ describe('apiFetch', () => {
     })
 
     it('does not fire for other error statuses', async () => {
-      window.localStorage.setItem('token', 'good-token')
+      setAccessToken('good-token')
       vi.stubGlobal(
         'fetch',
         vi.fn().mockResolvedValue({
@@ -234,7 +236,7 @@ describe('apiFetch', () => {
   })
 
   it('attaches Authorization Bearer when a token is present', async () => {
-    window.localStorage.setItem('token', 'test-token')
+    setAccessToken('test-token')
     const mockFetch = vi.fn().mockResolvedValue({
       ok: true,
       status: 200,

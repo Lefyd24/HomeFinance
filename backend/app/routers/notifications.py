@@ -1,13 +1,15 @@
 from typing import List, Literal, Optional
 from datetime import datetime
 
+from urllib.parse import urlparse
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from app.config import settings
 from app.database import get_db
-from app.models import User
+from app.models import Budget, User
 from app.models.notification import (
     NotificationLog,
     NotificationRule,
@@ -79,6 +81,15 @@ def update_settings(
     return row
 
 
+def _require_owned_budget(db: Session, user_id: int, target_id: Optional[int]) -> None:
+    owned = (
+        target_id is not None
+        and db.query(Budget.id).filter(Budget.id == target_id, Budget.user_id == user_id).first()
+    )
+    if not owned:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Budget not found")
+
+
 @router.get("/rules", response_model=List[NotificationRuleRead])
 def list_rules(
     current_user: User = Depends(get_current_user),
@@ -100,6 +111,8 @@ def create_rule(
     db: Session = Depends(get_db),
 ):
     """Create a notification rule."""
+    if payload.type == "budget_percent":
+        _require_owned_budget(db, current_user.id, payload.target_id)
     rule = NotificationRule(user_id=current_user.id, **payload.model_dump())
     db.add(rule)
     db.commit()
@@ -125,7 +138,10 @@ def update_rule(
     )
     if not rule:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Rule not found")
-    for key, value in payload.model_dump(exclude_unset=True).items():
+    changes = payload.model_dump(exclude_unset=True)
+    if changes.get("type", rule.type) == "budget_percent":
+        _require_owned_budget(db, current_user.id, changes.get("target_id", rule.target_id))
+    for key, value in changes.items():
         setattr(rule, key, value)
     db.commit()
     db.refresh(rule)
@@ -187,6 +203,12 @@ def push_subscribe(
     db: Session = Depends(get_db),
 ):
     """Register or update a Web Push subscription."""
+    parsed = urlparse(payload.endpoint)
+    if parsed.scheme != "https" or not parsed.hostname or not is_public_host(parsed.hostname):
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Push endpoint must be an https URL on a public host",
+        )
     sub = (
         db.query(PushSubscription)
         .filter(PushSubscription.endpoint == payload.endpoint)

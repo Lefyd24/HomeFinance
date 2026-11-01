@@ -2,7 +2,7 @@ import { apiFetch } from '../lib/apiClient'
 
 export interface Token {
   access_token: string
-  refresh_token: string
+  refresh_token?: string | null
   token_type: string
 }
 
@@ -42,10 +42,9 @@ export async function getMe(): Promise<User> {
   return apiFetch<User>('/auth/me')
 }
 
-export async function refresh(refreshToken: string): Promise<Token> {
-  return apiFetch<Token>(`/auth/refresh?refresh_token=${encodeURIComponent(refreshToken)}`, {
-    method: 'POST',
-  })
+export async function refresh(): Promise<Token> {
+  // The HttpOnly refresh cookie rides along on this same-origin request.
+  return apiFetch<Token>('/auth/refresh', { method: 'POST', credentials: 'same-origin' })
 }
 
 export async function logout(): Promise<void> {

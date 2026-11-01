@@ -6,6 +6,7 @@ from datetime import date, timedelta
 
 from app.database import get_db
 from app.utils.security import get_current_user_authenticated as get_current_user
+from app.utils.linked_accounts import assert_owned_refs
 from app.schemas.goal import (
     GoalCreate,
     GoalUpdate,
@@ -77,6 +78,7 @@ def create_goal(
     db: Session = Depends(get_db),
 ):
     """Create a new financial goal."""
+    assert_owned_refs(db, current_user.id, account_ids=(goal_data.linked_account_id,))
     # If setting as primary, unset other primary goals
     if goal_data.is_primary:
         db.query(FinancialGoal).filter(
@@ -140,6 +142,7 @@ def update_goal(
         ).update({"is_primary": False})
 
     update_data = goal_data.model_dump(exclude_unset=True)
+    assert_owned_refs(db, current_user.id, account_ids=(update_data.get("linked_account_id"),))
     for field, value in update_data.items():
         setattr(goal, field, value)
 

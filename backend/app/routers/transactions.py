@@ -856,6 +856,12 @@ def bulk_update_transactions(
     )
 
     update_data = bulk_data.data.model_dump(exclude_unset=True)
+    linked_accounts.assert_owned_refs(
+        db,
+        current_user.id,
+        account_ids=(update_data.get("account_id"), update_data.get("destination_account_id")),
+        category_ids=(update_data.get("category_id"),),
+    )
 
     # Same rules as the single-transaction path — bulk must not be a way around
     # them. Bulk-categorising synced rows is the main use of this endpoint, so

@@ -5,7 +5,7 @@ from datetime import UTC, datetime, timedelta
 import bcrypt
 from fastapi import Depends, HTTPException, Request, Security, status
 from fastapi.security import APIKeyHeader, OAuth2PasswordBearer
-from jose import JWTError, jwt
+import jwt
 from sqlalchemy.orm import Session
 
 from app.config import settings
@@ -58,7 +58,7 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None) -> s
     to_encode.update(
         {
             "exp": expire,
-            "iat": datetime.now(UTC),
+            "iat": datetime.now(UTC).timestamp(),
             "jti": str(uuid.uuid4()),
             "type": "access",
         }
@@ -78,7 +78,7 @@ def create_refresh_token(data: dict) -> str:
     to_encode.update(
         {
             "exp": expire,
-            "iat": datetime.now(UTC),
+            "iat": datetime.now(UTC).timestamp(),
             "jti": str(uuid.uuid4()),
             "type": "refresh",
         }
@@ -96,7 +96,7 @@ def decode_token(token: str) -> dict | None:
             token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
         )
         return payload
-    except JWTError:
+    except jwt.PyJWTError:
         return None
 
 
@@ -115,9 +115,9 @@ def token_issued_before_session_invalidation(payload: dict, user: User) -> bool:
     issued_at = datetime.fromtimestamp(iat, tz=UTC)
     if valid_from.tzinfo is None:
         valid_from = valid_from.replace(tzinfo=UTC)
-    # JWT iat is whole seconds; without truncating, a token issued in the same
-    # second as the reset (e.g. the login right after it) would be rejected.
-    return issued_at < valid_from.replace(microsecond=0)
+    # iat is a fractional timestamp, so a login right after a logout/reset
+    # (same second) gets a newer iat than valid_from while older tokens don't.
+    return issued_at < valid_from
 
 
 def user_from_access_token(token: str | None, db: Session) -> User | None:
