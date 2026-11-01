@@ -1,0 +1,85 @@
+{
+  "title": "Dashboard",
+  "subtitle": "Panoramica di questo mese.",
+  "panel": {
+    "viewAll": "Vedi tutti"
+  },
+  "bankAlert": {
+    "title_one": "{{banks}} ha interrotto la sincronizzazione.",
+    "title_other": "{{banks}} hanno interrotto la sincronizzazione.",
+    "action": "Riconnettiti per riprendere."
+  },
+  "summary": {
+    "ariaLabel": "Questo mese",
+    "totalBalance": "Saldo totale",
+    "accountsCount_one": "su {{count}} conto",
+    "accountsCount_other": "su {{count}} conti",
+    "incomeThisMonth": "Entrate del mese",
+    "expensesThisMonth": "Uscite del mese",
+    "netSaved": "Risparmio netto"
+  },
+  "accounts": {
+    "title": "Conti",
+    "hint": "",
+    "empty": "Nessun conto. Aggiungine uno nella pagina Conti.",
+    "linked": "Collegato",
+    "groups": {
+      "daily": "Uso quotidiano",
+      "savings": "Risparmi",
+      "investments": "Investimenti"
+    }
+  },
+  "due": {
+    "title": "In scadenza entro 30 giorni",
+    "hintEmpty": "Niente in programma",
+    "hintSummary": "{{amount}} su {{count}} scadenze",
+    "empty": "Nessuna scadenza nei prossimi 30 giorni.",
+    "overdue": "In ritardo",
+    "dueToday": "In scadenza oggi",
+    "inDays_one": "Tra {{count}} giorno",
+    "inDays_other": "Tra {{count}} giorni",
+    "types": {
+      "debt": "debito",
+      "recurring": "ricorrente"
+    }
+  },
+  "spending": {
+    "title": "Spese per categoria",
+    "reportsLink": "Report",
+    "hintSummary_one": "{{amount}} in {{count}} categoria",
+    "hintSummary_other": "{{amount}} in {{count}} categorie",
+    "mostOn": " · maggiormente per {{category}}"
+  },
+  "spendingChart": {
+    "noData": "Nessun dato di spesa per questo periodo."
+  },
+  "budgets": {
+    "title": "Budget",
+    "hint": "",
+    "empty": "Ancora nessun budget."
+  },
+  "recent": {
+    "title": "Attività recente",
+    "hint": "Le tue ultime sei registrazioni",
+    "empty": "Nessuna attività registrata."
+  },
+  "goals": {
+    "title": "Obiettivi",
+    "hint": "Progresso verso i tuoi traguardi",
+    "empty": "Nessun obiettivo attivo.",
+    "progressAmount": "{{current}} di {{target}}",
+    "targetDate": " · entro il {{date}}"
+  },
+  "cashflowChart": {
+    "legend": {
+      "income": "Entrate",
+      "expenses": "Uscite",
+      "netWorth": "Patrimonio netto"
+    },
+    "yAxis": {
+      "cashflow": "Flusso di cassa",
+      "netWorth": "Patrimonio netto"
+    },
+    "noData": "Nessun dato sul flusso di cassa per questo periodo."
+  }
+}

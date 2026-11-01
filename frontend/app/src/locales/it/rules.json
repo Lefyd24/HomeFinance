@@ -1,0 +1,111 @@
+{
+  "title": "Regole di categorizzazione",
+  "description": "Automatically assign categories a matching transazioni.",
+  "actions": {
+    "add": "Aggiungi regola",
+    "applyAll": "Applica tutto ora",
+    "apply": "Applica al passato",
+    "edit": "Modifica",
+    "delete": "Elimina",
+    "preview": "Anteprima corrispondenze"
+  },
+  "empty": {
+    "title": "Nessun categorisation regole yet",
+    "description": "Crea a regola once — matching transazioni get categorizzato su sincronizza e import.",
+    "cta": "Crea la tua prima regola"
+  },
+  "list": {
+    "active": "Attivo",
+    "inactive": "Paused",
+    "applied": "Applicata {{count}} volte",
+    "neverApplied": "Non ancora applicata",
+    "arrow": "→"
+  },
+  "table": {
+    "name": "Regola",
+    "category": "Categoria",
+    "applied": "Utilizzo",
+    "active": "Attivo",
+    "actions": "Azioni",
+    "searchPlaceholder": "Cerca regole…",
+    "noMatches": "Nessuna regola corrisponde alla ricerca."
+  },
+  "summary": {
+    "contains": "Descrizione contains “{{value}}”",
+    "not_contains": "Descrizione does non contain “{{value}}”",
+    "equals": "{{field}} è uguale a “{{value}}”",
+    "starts_with": "Descrizione starts con “{{value}}”",
+    "ends_with": "Descrizione ends con “{{value}}”",
+    "regex": "Descrizione corrispondenze /{{value}}/",
+    "eq": "{{field}} = {{value}}",
+    "lt": "{{field}} < {{value}}",
+    "lte": "{{field}} ≤ {{value}}",
+    "gt": "{{field}} > {{value}}",
+    "gte": "{{field}} ≥ {{value}}",
+    "between": "{{field}} tra {{value}} e {{valueTo}}",
+    "not_eq": "{{field}} ≠ {{value}}",
+    "and": " e ",
+    "or": " o ",
+    "fields": {
+      "description": "Descrizione",
+      "amount": "Importo",
+      "account_id": "Conto",
+      "type": "Tipo",
+      "counterparty": "Counterparty"
+    }
+  },
+  "form": {
+    "titleCreate": "Nuovo categorisation regola",
+    "titleEdit": "Modifica categorisation regola",
+    "name": "Nome",
+    "namePlaceholder": "e.g. Supermarkets",
+    "category": "Assign categoria",
+    "matchType": "Corrispondenza",
+    "matchAll": "Tutte le condizioni (E)",
+    "matchAny": "Any condition (O)",
+    "active": "Regola è attivo",
+    "conditions": "Conditions",
+    "addCondition": "Add condition",
+    "removeCondition": "Rimuovi",
+    "field": "Field",
+    "operator": "Operator",
+    "value": "Valore",
+    "valueTo": "A",
+    "applyToExisting": "Applica anche alle transazioni passate non categorizzate",
+    "includeCategorised": "Ricategorizza anche le transazioni già categorizzate",
+    "previewCount": "Corrisponde a {{count}} transazioni esistenti",
+    "previewSample": "Sample corrispondenze",
+    "save": "Salva regola",
+    "validation": {
+      "nameRequired": "Nome è obbligatorio",
+      "categoryRequired": "Categoria è obbligatorio",
+      "conditionRequired": "At least one condition è obbligatorio",
+      "valueRequired": "Valore è obbligatorio"
+    }
+  },
+  "apply": {
+    "title": "Apply regola a past transazioni",
+    "description": "“{{name}}” will categorise matching transazioni quello currently have nessun categoria.",
+    "includeCategorised": "Also overwrite transazioni quello already have a categoria",
+    "confirm": "Apply now",
+    "success": "Updated {{count}} transazioni",
+    "none": "Nessun matching transazioni a aggiorna",
+    "applyAllTitle": "Apply tutto attivo regole",
+    "applyAllDescription": "Every attivo regola will run against non categorizzato transazioni, in priority order."
+  },
+  "toast": {
+    "created": "Regola created",
+    "updated": "Regola updated",
+    "deleted": "Regola deleted",
+    "createError": "Impossibile creare la regola",
+    "updateError": "Impossibile aggiornare la regola",
+    "deleteError": "Impossibile eliminare la regola",
+    "applyError": "Impossibile applicare la regola",
+    "ruleFromTxFailed": "Transazione risparmiato, but il regola could non be created"
+  },
+  "fromTransaction": {
+    "checkbox": "Also crea a regola da questo transazione",
+    "hint": "Future matching transazioni will get questo categoria automatically.",
+    "containsLabel": "Descrizione contains"
+  }
+}

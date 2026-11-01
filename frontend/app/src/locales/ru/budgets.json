@@ -1,0 +1,111 @@
+{
+  "page": {
+    "title": "Бюджеты",
+    "description": "Задавайте лимиты расходов для категорий и периодов. Оценивайте все конверты с одного взгляда и открывайте любой, когда нужна история.",
+    "createButton": "Создать бюджет"
+  },
+  "summary": {
+    "of": "из {{amount}}",
+    "envelopes_one": "{{count}} конверт",
+    "envelopes_few": "{{count}} конверта",
+    "envelopes_many": "{{count}} конвертов",
+    "envelopes_other": "{{count}} конвертов",
+    "overLimit": "Превышен лимит: {{count}}",
+    "over": "перерасход",
+    "left": "осталось"
+  },
+  "empty": {
+    "title": "Бюджетов пока нет",
+    "description": "Создайте бюджет, чтобы следить, сколько вы тратите в каждой категории до конца периода.",
+    "cta": "Создать первый бюджет"
+  },
+  "period": {
+    "monthly": "Ежемесячно",
+    "yearly": "Ежегодно",
+    "custom": "Свой период"
+  },
+  "status": {
+    "over": "Превышен",
+    "watch": "Почти",
+    "unused": "Не тратился",
+    "good": "В норме"
+  },
+  "card": {
+    "actionsAria": "Действия: {{name}}",
+    "edit": "Изменить",
+    "periodDetails": "Детали по периодам",
+    "delete": "Удалить",
+    "ofLimit": "из лимита {{amount}}",
+    "over": "перерасход",
+    "remaining": "осталось",
+    "allCategories": "Все категории",
+    "more": "+{{count}}"
+  },
+  "deleteDialog": {
+    "title": "Удалить «{{name}}»?",
+    "description": "Ваши расходы сохранятся; будет удалён только бюджет и его лимит.",
+    "confirmLabel": "Удалить бюджет"
+  },
+  "toasts": {
+    "deleted": "Бюджет удалён",
+    "deleteError": "Не удалось удалить бюджет",
+    "created": "Бюджет создан",
+    "updated": "Бюджет обновлён",
+    "createError": "Не удалось создать бюджет",
+    "updateError": "Не удалось обновить бюджет"
+  },
+  "form": {
+    "createTitle": "Создать бюджет",
+    "editTitle": "Изменить бюджет",
+    "name": "Название бюджета",
+    "amount": "Сумма",
+    "period": "Период",
+    "selectPeriod": "Выберите период",
+    "startDate": "Дата начала",
+    "endDate": "Дата окончания",
+    "categories": "Категории",
+    "noExpenseCategories": "Нет доступных категорий расходов.",
+    "submitCreate": "Создать бюджет",
+    "submitUpdate": "Обновить бюджет",
+    "validation": {
+      "nameRequired": "Укажите название бюджета",
+      "amountPositive": "Сумма должна быть больше нуля"
+    }
+  },
+  "details": {
+    "titleFallback": "Детали бюджета",
+    "description": "Использование по периодам за {{year}} год, включая связанные транзакции расходов.",
+    "prevYearAria": "Предыдущий год: {{year}}",
+    "nextYearAria": "Следующий год: {{year}}",
+    "unableToLoad": "Не удалось загрузить детали бюджета.",
+    "budgetPeriod": "Бюджет {{suffix}}",
+    "perMonth": "/месяц",
+    "perYear": "/год",
+    "yearBudget": "Бюджет на год",
+    "yearSpent": "Потрачено за год",
+    "yearRemaining": "Остаток на год",
+    "yearUsage": "Использование за год",
+    "noDataForYear": "Нет данных за этот год",
+    "current": "Текущий",
+    "statusOver": "Превышен",
+    "statusAlmost": "Почти",
+    "statusNoSpending": "Нет расходов",
+    "noTransactions": "В этом периоде нет транзакций",
+    "table": {
+      "date": "Дата",
+      "description": "Описание",
+      "category": "Категория",
+      "account": "Счёт",
+      "amount": "Сумма",
+      "uncategorized": "Без категории"
+    },
+    "totalMobile": "Итого ({{count}})",
+    "totalDesktop_one": "Итого ({{count}} транзакция)",
+    "totalDesktop_few": "Итого ({{count}} транзакции)",
+    "totalDesktop_many": "Итого ({{count}} транзакций)",
+    "totalDesktop_other": "Итого ({{count}} транзакций)",
+    "percentUsed": "Использовано {{percent}}% бюджета",
+    "over": "перерасход",
+    "left": "осталось"
+  }
+}

@@ -1,0 +1,194 @@
+{
+  "page": {
+    "title": "Recurring",
+    "description": "What leaves votre comptes sur a schedule, et when it est suivant due.",
+    "addAction": "Add"
+  },
+  "totals": {
+    "due30": {
+      "label": "Due dans 30 days",
+      "hint": "{{count}} actif"
+    },
+    "monthly": {
+      "label": "Mensuel commitment",
+      "hint": "Tout cadences normalised"
+    },
+    "overdue": {
+      "label": "Overdue",
+      "hintAttention": "Needs attention",
+      "hintClear": "Tout effacer"
+    }
+  },
+  "tabs": {
+    "all": "Tout",
+    "expenses": "Dépenses",
+    "income": "Revenu",
+    "paused": "Paused ({{count}})"
+  },
+  "sections": {
+    "paused": "Paused",
+    "overdue": "Overdue",
+    "next7": "Suivant 7 days",
+    "later": "Later",
+    "empty": "Nothing here dans ce voir."
+  },
+  "empty": {
+    "title": "Nothing sur a schedule yet",
+    "description": "Add le bills et subscriptions cela repeat, et they will afficher up here avant they sont due.",
+    "addFirst": "Add le premier one"
+  },
+  "cadence": {
+    "daily": "Quotidien",
+    "weekly": "Hebdomadaire",
+    "monthly": "Mensuel",
+    "every": "Every {{interval}} {{unit}}"
+  },
+  "units": {
+    "days": "days",
+    "weeks": "weeks",
+    "months": "months"
+  },
+  "due": {
+    "paused": "Paused",
+    "overdue": "{{count}}d overdue",
+    "today": "Aujourd’hui",
+    "tomorrow": "Tomorrow",
+    "inDays": "Dans {{count}} days"
+  },
+  "detail": {
+    "fallbackTitle": "Récurrences paiement",
+    "fallbackDescription": "Connected paiements",
+    "loadError": "Pourrait pas charger le paiement historique.",
+    "stats": {
+      "totalPaid": "Total payé",
+      "payments": "Paiements",
+      "lastPayment": "Dernier paiement"
+    },
+    "empty": {
+      "title": "Aucun paiements recorded yet.",
+      "description": "Mark it paid once et le historique starts here."
+    },
+    "table": {
+      "date": "Date",
+      "description": "Description",
+      "amount": "Montant",
+      "actions": "Paiement actions"
+    },
+    "paymentOnly": "Paiement record only"
+  },
+  "paymentEdit": {
+    "title": "Modifier paiement",
+    "description": "Mettre à jour ce paiement record. Le linked ledger transaction est restant unchanged.",
+    "amount": "Montant (€)",
+    "date": "Date du paiement",
+    "notes": "Notes",
+    "save": "Enregistrer changes",
+    "leavesTransaction": "Any linked transaction sur le Transactions page est pas modified.",
+    "validation": {
+      "amountRequired": "Montant must be greater than 0",
+      "dateRequired": "Date du paiement est obligatoire"
+    },
+    "toasts": {
+      "updated": "Paiement updated",
+      "failed": "Pourrait pas mettre à jour paiement",
+      "deleted": "Paiement removed",
+      "deleteFailed": "Pourrait pas retirer paiement"
+    },
+    "deleteConfirm": {
+      "title": "Retirer ce paiement?",
+      "description": "Retirers le paiement de ce recurring item et rewinds its due date. Any linked transaction stays dans votre ledger.",
+      "confirmLabel": "Retirer paiement"
+    }
+  },
+  "actions": {
+    "resume": "Resume",
+    "markPaid": "Mark paid",
+    "viewTransactions": "Transactions",
+    "moreActionsAria": "Plus actions",
+    "disable": "Disable"
+  },
+  "toast": {
+    "resumed": "{{name}} resumed",
+    "paused": "{{name}} paused",
+    "resumeError": "Pourrait pas resume it. Essayez à nouveau.",
+    "pauseError": "Pourrait pas pause it. Essayez à nouveau.",
+    "deleted": "Deleted",
+    "deleteError": "Pourrait pas supprimer it. Essayez à nouveau.",
+    "updated": "Recurring dépense updated",
+    "created": "Recurring dépense created",
+    "updateError": "Échoué à mettre à jour recurring dépense",
+    "createError": "Échoué à add recurring dépense"
+  },
+  "deleteConfirm": {
+    "title": "Supprimer {{name}}?",
+    "description": "Its paiement historique goes avec it. Pause it instead if vous only want it off le agenda.",
+    "confirmLabel": "Supprimer permanently"
+  },
+  "aria": {
+    "totals": "Recurring totals",
+    "schedule": "Recurring schedule"
+  },
+  "form": {
+    "titleCreate": "Add a recurring paiement",
+    "titleEdit": "Modifier recurring paiement",
+    "description": "Set le montant et how often it repeats. Le agenda will surface it avant each due date.",
+    "saving": "Enregistrement…",
+    "saveChanges": "Enregistrer changes",
+    "addIt": "Add it",
+    "none": "Aucun",
+    "categoryPrefix": {
+      "expense": "Dépense",
+      "income": "Revenu"
+    },
+    "units": {
+      "days": "Days",
+      "weeks": "Weeks",
+      "months": "Months"
+    },
+    "fields": {
+      "name": "Nom",
+      "namePlaceholder": "e.g. Netflix, Rent",
+      "amount": "Montant (€)",
+      "account": "Compte",
+      "accountPlaceholder": "Compte",
+      "category": "Catégorie",
+      "categoryPlaceholder": "Catégorie",
+      "startDate": "Date de début",
+      "nextDueDate": "Suivant due date",
+      "repeatsEvery": "Repeats every",
+      "unitPlaceholder": "Unit",
+      "notifyBeforeDue": "Notify me avant due",
+      "daysBefore": "Days avant",
+      "notifyDaysPlaceholder": "Uses default if empty",
+      "notes": "Notes"
+    },
+    "validation": {
+      "nameRequired": "Nom est obligatoire",
+      "amountPositive": "Montant must be greater than 0",
+      "startDateRequired": "La date de début est obligatoire",
+      "nextDueDateRequired": "Suivant due date est obligatoire"
+    }
+  },
+  "markPaid": {
+    "validation": {
+      "amountPositive": "Montant must be greater than 0",
+      "paymentDateRequired": "Date du paiement est obligatoire"
+    },
+    "title": "Mark as paid",
+    "submit": "Mark as paid",
+    "saving": "Enregistrement…",
+    "descriptionFor": "Records a paiement pour {{name}} et rolls its suivant due date forward.",
+    "descriptionGeneric": "Records a paiement et rolls le suivant due date forward.",
+    "noTransactionLink": "Aucun transaction link",
+    "transactionOption": "{{date}} — {{description}} ({{amount}})",
+    "toastSuccess": "Paiement enregistré — la prochaine échéance a été avancée",
+    "toastError": "Impossible d’enregistrer le paiement",
+    "fields": {
+      "amountPaid": "Montant paid (€)",
+      "paymentDate": "Date du paiement",
+      "linkTransaction": "Associer à une transaction existante (facultatif)",
+      "notes": "Notes",
+      "notesPlaceholder": "Facultatif"
+    }
+  }
+}

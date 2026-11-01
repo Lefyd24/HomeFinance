@@ -1,0 +1,105 @@
+{
+  "brand": {
+    "name": "Home Finance",
+    "tagline": "Личный",
+    "madeBy": "Автор"
+  },
+  "workspace": "Рабочая область",
+  "items": {
+    "dashboard": "Дашборд",
+    "transactions": "Транзакции",
+    "accounts": "Счета",
+    "investments": "Инвестиции",
+    "budgets": "Бюджеты",
+    "notifications": "Уведомления",
+    "categories": "Категории",
+    "debts": "Долги",
+    "goals": "Цели",
+    "recurring": "Регулярные платежи",
+    "trackers": "Трекер",
+    "reports": "Отчёты",
+    "advice": "Советы",
+    "documents": "Документы",
+    "import": "Импорт",
+    "marketNews": "Новости рынка",
+    "companyResearch": "Аналитика",
+    "tickerCompare": "Сравнение",
+    "investmentsOverview": "Обзор",
+    "backtest": "Бэктест",
+    "scenarioLibrary": "Сценарии",
+    "technicalAnalysis": "Технический анализ"
+  },
+  "groups": {
+    "overview": "Обзор",
+    "planning": "Планирование",
+    "insights": "Аналитика",
+    "portfolio": "Портфель",
+    "market": "Рынок",
+    "sandbox": "Песочница"
+  },
+  "dock": {
+    "home": "Главная",
+    "transactions": "Операции",
+    "portfolio": "Портфель",
+    "news": "Новости",
+    "research": "Аналитика",
+    "compare": "Сравнение",
+    "backtest": "Бэктест",
+    "scenarios": "Сценарии",
+    "technical": "Тех. анализ"
+  },
+  "investmentsSection": "Инвестиции",
+  "backToDashboard": "Назад к дашборду",
+  "more": "Ещё",
+  "moreSheet": {
+    "description": "Планирование, аналитика и инструменты счетов"
+  },
+  "primaryNav": "Основное",
+  "moreNavigationAria": "Дополнительная навигация",
+  "sidebar": {
+    "collapse": "Свернуть боковую панель",
+    "expand": "Развернуть боковую панель",
+    "expandTooltip": "Развернуть"
+  },
+  "userMenu": {
+    "accountMenu": "Меню учётной записи",
+    "bankConnections": "Подключения к банкам",
+    "rules": "Правила категоризации",
+    "investorProfile": "Профиль инвестора",
+    "apiKeys": "API-ключи",
+    "admin": "Администрирование",
+    "defaultAccountName": "Учётная запись"
+  },
+  "speedDial": {
+    "label": "Быстрые действия",
+    "open": "Открыть быстрые действия",
+    "close": "Закрыть быстрые действия",
+    "addTransaction": "Добавить транзакцию",
+    "aiAdvisor": "Финансовый помощник"
+  },
+  "themeToggle": {
+    "changeTheme": "Сменить тему"
+  },
+  "balanceToggle": {
+    "hide": "Скрыть балансы",
+    "show": "Показать балансы"
+  },
+  "languageToggle": {
+    "changeLanguage": "Сменить язык"
+  },
+  "notificationsPanel": {
+    "title": "Уведомления",
+    "ariaLabel": "Уведомления",
+    "ariaLabelWithCount": "Уведомления, за последние сутки: {{count}}",
+    "inLastDay": "За последние сутки: {{count}}",
+    "nothingNew": "Ничего нового",
+    "empty": "Оповещений пока нет.",
+    "emptyHint": "Здесь появляются сообщения при срабатывании правил бюджета и счетов.",
+    "time": {
+      "justNow": "Только что",
+      "minutesAgo": "{{count}} мин назад",
+      "hoursAgo": "{{count}} ч назад",
+      "daysAgo": "{{count}} дн. назад"
+    }
+  }
+}

@@ -1,0 +1,1390 @@
+{
+  "page": {
+    "title": "Investimenti",
+    "description": "I conti di intermediazione vengono sincronizzati automaticamente dal tuo fornitore.",
+    "connectAccount": "Collega conto"
+  },
+  "empty": {
+    "title": "Nessun conto d’investimento",
+    "description": "Collega un conto Freedom24 per monitorare automaticamente saldo, posizioni e operazioni."
+  },
+  "summary": {
+    "accountCount": "{{count}} conto",
+    "accountCount_other": "{{count}} conti"
+  },
+  "headline": {
+    "totalAssets": "Attività totali"
+  },
+  "ticker": {
+    "totalValue": "Valore totale",
+    "today": "Oggi",
+    "allTime": "Da sempre",
+    "cash": "Liquidità",
+    "cashShare": "{{pct}}% del totale",
+    "noQuote": "Nessuna quotazione in tempo reale",
+    "syncAll": "Sincronizza tutto",
+    "syncAccount": "Sincronizza {{name}}",
+    "syncAllHint": "Aggiorna tutti i {{count}} conti"
+  },
+  "tiles": {
+    "portfolioReturn": "Rendimento del portafoglio",
+    "allocation": "Allocazione",
+    "movers": "Variazioni di oggi",
+    "holdings": "Posizioni",
+    "activity": "Attività recente",
+    "dailyReturn": "Giornaliero rendimento",
+    "cumulativeReturn": "Rendimento cumulativo",
+    "otherHoldings": "{{count}} altro",
+    "otherHoldings_other": "{{count}} altri",
+    "quotedCount": "Basato su {{quoted}} posizioni su {{total}} con quotazione in tempo reale",
+    "noQuotes": "Nessuna quotazione in tempo reale al momento.",
+    "noMovers": "Nessuna variazione oggi.",
+    "currencyExposure": "Esposizione valutaria",
+    "singleCurrency": "Tutto è in {{currency}}: non c’è esposizione valutaria da monitorare.",
+    "tradingCosts": "Costi di negoziazione",
+    "tradingCostsCount": "{{count}} recenti",
+    "totalCommissions": "Commissioni totali pagate",
+    "noTradingCosts": "Nessun costo di negoziazione registrato.",
+    "cashFlow": "Flusso di cassa",
+    "noCashFlow": "Nessun deposito o prelievo registrato.",
+    "earnPositions": "Posizioni Earn",
+    "earnFlexible": "Flessibile",
+    "earnLocked": "Bloccato",
+    "earnApr": "{{pct}}% annuo",
+    "earnUnlocks": "Sblocco il {{date}}",
+    "noEarnPositions": "Nessuna posizione Simple Earn al momento.",
+    "activityMore": "Altri {{count}} non visualizzati",
+    "activityMore_other": "Altri {{count}} non visualizzati"
+  },
+  "holding": {
+    "sortBy": "Ordina per",
+    "open": "Apri {{symbol}}",
+    "openHint": "Seleziona una posizione per tutti i dettagli",
+    "close": "Chiudi",
+    "costBasis": "Costo di acquisto",
+    "pricedAt": "Prezzo aggiornato",
+    "hints": {
+      "currentPrice": "Valore attuale di una singola unità.",
+      "costBasis": "Importo totale pagato inizialmente per questa posizione.",
+      "weight": "Quota del capitale investito presente in questa posizione.",
+      "pricedAt": "Data dell’ultimo aggiornamento del prezzo."
+    },
+    "research": {
+      "title": "Dall’analisi aziendale",
+      "sector": "Settore",
+      "beta": "Beta",
+      "dividendYield": "Rendimento da dividendi",
+      "expenseRatio": "Rapporto di spesa",
+      "category": "Categoria",
+      "topHolding": "Posizione principale"
+    },
+    "breakdown": {
+      "paidTitle": "Importo pagato",
+      "costFormula": "{{quantity}} × {{price}} at tuo medio prezzo.",
+      "fees": "Commissione pagata",
+      "feesHint_one": "{{count}} charge su questo holding's trades.",
+      "feesHint_other": "{{count}} charges su questo holding's trades.",
+      "feesNone": "Il broker non ha segnalato commissioni per questa posizione.",
+      "totalPaid": "Esborso totale",
+      "totalPaidHint": "Cost plus commission — what actually restante il conto.",
+      "nowTitle": "Risultato finale",
+      "grossReturn": "Rendimento prima delle commissioni",
+      "netReturn": "Rendimento dopo le commissioni",
+      "netReturnHint": "Lo stesso guadagno al netto della commissione.",
+      "todayTitle": "Oggi",
+      "todayPrice": "Variazione del prezzo",
+      "todayValue": "La tua posizione"
+    },
+    "history": {
+      "chartTitle": "Valore dall’acquisto",
+      "investedLine": "Capitale versato",
+      "investedLabel": "Costo dell’investimento",
+      "openedMarker": "Aperto",
+      "subtitle": "{{name}} · held since {{date}} · {{account}}",
+      "netReturnHint": "Il same rendimento con il commission taken off.",
+      "noSeries": "Non enough prezzo storico yet a draw questo position.",
+      "emptyTitle": "Nessun storico per questo posizione",
+      "emptyDescription": "There sono nessun trades recorded sotto questo ticker su questo conto.",
+      "dailyTable": "Dati giornalieri",
+      "sourceYahoo": "Priced da Yahoo Finance's giornaliero closes per {{ticker}}, matched a tuo broker's ticker e confirmed against il currency it trades in. Quantities come da tuo own trades; il ultimo point è il ultimo sincronizzato valuation, e historical figures use today's exchange rate.",
+      "sourceBroker": "Questo ticker could non be matched a a Yahoo Finance listing, so il line uses il broker's own giornaliero closes — which may non reach back as far. Quantities come da tuo own trades, e il ultimo point è il ultimo sincronizzato valuation.",
+      "sourceNone": "Nessun giornaliero prezzo series could be found per questo ticker, su Yahoo Finance o da il broker, so there è nothing a chart yet.",
+      "legendValue": "La tua posizione",
+      "legendAhead": "Sopra il prezzo pagato",
+      "legendBehind": "Sotto il prezzo pagato",
+      "notHeldYet": "Non detenevi ancora questa posizione.",
+      "rangeLabel": "Intervallo del grafico",
+      "range": {
+        "entry": "Dall’acquisto",
+        "1m": "1M",
+        "3m": "3M",
+        "6m": "6M",
+        "1y": "1Y",
+        "5y": "5Y",
+        "max": "Max"
+      },
+      "matchTitle": "Corrispondenza del ticker",
+      "currencyConfirmed": "{{currency}} confermata",
+      "currencyMismatch": "broker {{broker}} vs {{yahoo}}",
+      "matchFallback": "Non abbinato: vengono usati i prezzi del broker",
+      "matchNone": "Nessuna serie di prezzi trovata",
+      "rejectCurrency": "rejected: priced in {{currency}}, tuo broker report {{broker}}",
+      "rejectNoData": "rejected: Yahoo Finance lists nessun prezzi per it",
+      "rejectError": "rejected: il lookup non riuscito",
+      "bandHeight": "Altezza della banda",
+      "viewLabel": "Base del grafico",
+      "viewPrice": "Per unità",
+      "viewValue": "Totale",
+      "marketPriceLine": "Mercato prezzo",
+      "avgCostLine": "Costo medio",
+      "unitsHeld_one": "{{count}} unit held, worth",
+      "unitsHeld_other": "{{count}} units held, worth",
+      "investedHint": "Quanto hai pagato per il units tu still hold.",
+      "marketValueHint": "Valore attuale di quelle unità.",
+      "grossReturnHint": "Valore attuale rispetto al costo, prima delle commissioni.",
+      "viewCandles": "Candele",
+      "panelLabel": "Pannello inferiore",
+      "panelPnl": "Utile / perdita",
+      "panelDrawdown": "Ribasso dal massimo",
+      "overlayMa": "Media mobile 20/50",
+      "zoomHint": "Pinch o drag il bar sotto il chart a zoom into a window.",
+      "boughtMarker": "Acquistato",
+      "unitsHeldShort": "Detenuto",
+      "candleUp": "Giornata positiva",
+      "candleDown": "Giornata negativa",
+      "stats": {
+        "periodReturn": "Rendimento nel periodo",
+        "maxDrawdown": "Ribasso massimo",
+        "volatility": "Volatilità",
+        "bestDay": "Giornata migliore",
+        "worstDay": "Giornata peggiore",
+        "upDays": "{{up}} di {{total}} days closed up"
+      },
+      "mapping": {
+        "manualBadge": "Scelto da te",
+        "autoBadge": "Abbinato automaticamente",
+        "changeAction": "Modifica",
+        "setAction": "Imposta ticker",
+        "resetAction": "Automatic",
+        "searchPlaceholder": "Cerca ticker su Yahoo Finance",
+        "searchHint": "Tipo at least two characters, o il exact Yahoo ticker.",
+        "noResults": "Nessun risultato: il ticker esatto funziona comunque.",
+        "useExact": "Use “{{ticker}}” exactly",
+        "saved": "Now priced da {{ticker}}.",
+        "reset": "Back a il automatic corrispondenza.",
+        "rejected": "Yahoo Finance has nessun prezzo storico per {{ticker}}.",
+        "failed": "Could non salva quello ticker."
+      }
+    },
+    "list": {
+      "today": "Oggi",
+      "total": "Totale"
+    },
+    "actions": {
+      "history": "Storico completo",
+      "research": "Analisi",
+      "technical": "Analisi tecnica"
+    }
+  },
+  "insights": {
+    "concentrated": "{{pct}}% di tuo money è in {{symbol}} alone — questo portafoglio largely rises e falls con quello one posizione.",
+    "diversified": "Tuo money è spread across {{count}} posizioni, behaving like roughly {{effective}} independent ones — nessun single position dominates.",
+    "cashHeavy": "{{pct}}% è sitting in liquidità rather than invested, so quello part isn't growing o falling con il mercato.",
+    "upOverall": "Overall you're up {{pct}}% su what tu paid.",
+    "downOverall": "Overall you're down {{pct}}% su what tu paid.",
+    "bestHolding": "{{symbol}} has made tu il most money so far.",
+    "worstHolding": "{{symbol}} has lost tu il most so far.",
+    "partialQuotes": "Only {{quoted}} di {{total}} posizioni have a live prezzo right now, so today's figures sono partial."
+  },
+  "status": {
+    "ok": "Sincronizzato",
+    "error": "Errore di sincronizzazione",
+    "pending": "In sospeso"
+  },
+  "card": {
+    "actionsLabel": "Azioni del conto",
+    "selectAccount": "Mostra {{name}}",
+    "edit": "Modifica conto",
+    "delete": "Disconnetti",
+    "totalValue": "Valore totale",
+    "invested": "Investito",
+    "cash": "Liquidità",
+    "today": "Oggi",
+    "holdings": "{{count}} posizione",
+    "holdings_other": "{{count}} posizioni",
+    "holdingsShort": "Posizioni",
+    "lastSynced": "Ultima sincronizzazione: {{date}}",
+    "neverSynced": "Non ancora sincronizzato",
+    "allocation": "Allocazione"
+  },
+  "deleteDialog": {
+    "title": "Disconnetti {{name}}?",
+    "description": "Questo removes il conto e its sincronizzato positions, snapshots e transazioni da il app. Nothing changes su Freedom24 itself.",
+    "confirmLabel": "Scollega conto"
+  },
+  "toasts": {
+    "deleted": "Conto disconnesso",
+    "deleteFailed": "Impossibile disconnettere il conto. Riprova."
+  },
+  "connect": {
+    "title": "Collega un conto d’investimento",
+    "description": "Enter il Chiave APIs generated su tuo broker's site — il app uses them only a read tuo saldo, posizioni e trade storico.",
+    "nameLabel": "Nome del conto",
+    "namePlaceholder": "e.g., Freedom24 Brokerage",
+    "providerLabel": "Fornitore",
+    "providerFreedom24": "Freedom24",
+    "providerBinance": "Binance",
+    "currencyLabel": "Valuta",
+    "currencyOptions": {
+      "usd": "USD — US Dollar",
+      "eur": "EUR — Euro",
+      "gbp": "GBP — British Pound"
+    },
+    "publicKeyLabel": "Chiave pubblica",
+    "publicKeyPlaceholder": "Public API key",
+    "privateKeyLabel": "Chiave privata",
+    "privateKeyPlaceholder": "Private API key",
+    "keysHint": "Generate a key pair at freedom24.com/tradernet-api/auth-api. Keys sono stored encrypted e can't be viewed di nuovo dopo salvataggio.",
+    "apiKeyLabel": "API key",
+    "apiKeyPlaceholder": "Binance API key",
+    "secretKeyLabel": "Secret key",
+    "secretKeyPlaceholder": "Binance secret key",
+    "keysHintBinance": "Crea a read-only Chiave API at binance.com/en/my/impostazioni/api-management — disable trading e withdrawal permissions su it. Keys sono stored encrypted e can't be viewed di nuovo dopo salvataggio.",
+    "connecting": "Connessione…",
+    "connect": "Collega conto",
+    "toasts": {
+      "connected": "Conto collegato",
+      "connectFailed": "Impossibile connettersi: controlla le chiavi e riprova."
+    }
+  },
+  "detail": {
+    "lastSynced": "Ultima sincronizzazione: {{date}}",
+    "neverSynced": "Non ancora sincronizzato",
+    "syncNow": "Sincronizza ora",
+    "syncing": "Sincronizzazione…",
+    "syncCooldown": "Just sincronizzato — tu can sincronizza di nuovo in a minute.",
+    "allocationTitle": "Allocazione",
+    "historyTitle": "Valore nel tempo",
+    "positionsTitle": "Posizioni",
+    "transactionsTitle": "Attività recente",
+    "loadingActivity": "Caricamento attività…",
+    "activityCount": "{{count}} recente transazione",
+    "activityCount_other": "{{count}} recente transazioni",
+    "gainLossLegend": "Bars share one scale across posizioni",
+    "holdingCount": "{{count}} posizione",
+    "holdingCount_other": "{{count}} posizioni",
+    "noPositions": "Nessuna posizione da mostrare.",
+    "noHistory": "Nessuno storico per ora: riprova dopo la prossima sincronizzazione.",
+    "noTransactions": "Nessuna attività da mostrare.",
+    "ranges": {
+      "1m": "1M",
+      "3m": "3M",
+      "6m": "6M",
+      "1y": "1Y",
+      "all": "Tutti"
+    },
+    "summary": {
+      "totalValue": "Valore totale",
+      "marketValue": "Valore di mercato",
+      "costBasis": "Costo di acquisto",
+      "unrealised": "Unrealised P/L",
+      "today": "Oggi",
+      "invested": "Investito",
+      "cash": "Liquidità",
+      "cashHint": "including {{amount}} liquidità",
+      "noQuote": "Nessuna quotazione disponibile"
+    },
+    "chart": {
+      "totalValue": "Valore totale",
+      "invested": "Investito",
+      "cash": "Liquidità"
+    },
+    "table": {
+      "symbol": "Simbolo",
+      "quantity": "Qtà",
+      "avgPrice": "Prezzo medio",
+      "currentPrice": "Prezzo attuale",
+      "dayChange": "Giorno",
+      "marketValue": "Valore di mercato",
+      "gainLoss": "Guadagno / perdita",
+      "unrealizedPnl": "Unrealised P/L",
+      "returnPct": "Rendimento",
+      "weight": "Peso",
+      "total": "Totale"
+    },
+    "txnTypes": {
+      "buy": "Acquista",
+      "sell": "Vendi",
+      "fx": "Valuta",
+      "dividend": "Dividendo",
+      "fee": "Commissione",
+      "deposit": "Deposito",
+      "withdrawal": "Prelievo",
+      "tax": "Imposta"
+    },
+    "toasts": {
+      "synced": "Conto sincronizzato",
+      "syncFailed": "Sincronizzazione non riuscita: riprova tra poco."
+    }
+  },
+  "news": {
+    "title": "Notizie di mercato",
+    "description": "Headlines da tuo selected mercato-dati provider, filtered da posizione o cerca term.",
+    "searchPlaceholder": "Cerca headlines e tickers…",
+    "searchAction": "Cerca",
+    "filterByHolding": "Filtra",
+    "filterBySymbol": "Mostra only {{symbol}}",
+    "allStories": "Tutte le notizie",
+    "resultCount": "{{count}} articolo",
+    "resultCount_other": "{{count}} articoli",
+    "clearFilters": "Cancella filtri",
+    "loading": "Caricamento…",
+    "loadMore": "Carica altro",
+    "emptyTitle": "Nessun risultato",
+    "emptyDescription": "Prova a different term, o cancella il filters a see il whole feed.",
+    "failedTitle": "Couldn't carica il newsfeed",
+    "failedDescription": "Il provider didn't answer. Prova di nuovo shortly.",
+    "needsAccount": "Collega un conto d’investimento primo — notizie comes da tuo broker's feed.",
+    "storyFailed": "Couldn't carica questo articolo. Prova di nuovo shortly.",
+    "noBody": "Questo articolo has nessun article text. Apri il original a read it.",
+    "openOriginal": "Apri originale",
+    "textArticle": "Articolo testuale",
+    "sentiment": {
+      "positive": "Positivo",
+      "negative": "Negativo",
+      "neutral": "Neutrale"
+    }
+  },
+  "search": {
+    "title": "Ricerca ticker",
+    "description": "Look up any instrument via tuo selected mercato-dati provider, con its ultimo quote.",
+    "placeholder": "Cerca da symbol, azienda nome o ISIN…",
+    "action": "Cerca",
+    "resultCount": "{{count}} corrispondenza",
+    "resultCount_other": "{{count}} corrispondenze",
+    "viewNews": "Notizie",
+    "viewResearch": "Analisi",
+    "idleTitle": "Cerca uno strumento",
+    "idleDescription": "Tipo at least two characters — prova a ticker like AAPL, o a azienda nome.",
+    "emptyTitle": "Nessuna corrispondenza",
+    "emptyDescription": "Nothing found per \"{{query}}\". Prova a shorter term o a different spelling.",
+    "failedTitle": "Cerca didn't run",
+    "failedDescription": "Il provider didn't answer. Prova di nuovo shortly.",
+    "needsAccountTitle": "Nessun broker collegato",
+    "needsAccount": "Collega un conto d’investimento primo — cerca runs against tuo broker's instrument list.",
+    "table": {
+      "symbol": "Simbolo",
+      "name": "Nome",
+      "exchange": "Borsa",
+      "type": "Tipo",
+      "lastPrice": "Ultimo prezzo",
+      "dayChange": "Giorno",
+      "actions": ""
+    },
+    "viewTechnical": "Technicals"
+  },
+  "providers": {
+    "label": "Fonte dei dati",
+    "freedom24": "Freedom24",
+    "binance": "Binance",
+    "yahoo": "Yahoo Finance",
+    "comingSoonTitle": "{{provider}} è coming soon",
+    "comingSoonDescription": "Questo dati fonte isn't wired up yet. Stick con Yahoo Finance per now."
+  },
+  "research": {
+    "title": "Analisi aziendale",
+    "description": "Look up any listed azienda o fondo su Yahoo Finance — profile, quote e key stats.",
+    "placeholder": "Enter a ticker, e.g. AAPL o MSFT…",
+    "action": "Analisi",
+    "idleTitle": "Analizza un’azienda",
+    "idleDescription": "Enter a ticker symbol a see its profile, valuation e business summary.",
+    "failedTitle": "Couldn't carica questo azienda",
+    "failedDescription": "Nessun Yahoo Finance dati per \"{{symbol}}\". Check il ticker e prova di nuovo.",
+    "viewNews": "Notizie correlate",
+    "website": "Sito web",
+    "quoteTitle": "Quotazione",
+    "aboutTitle": "Informazioni",
+    "stats": {
+      "marketCap": "Capitalizzazione di mercato",
+      "pe": "Rapporto prezzo/utili",
+      "forwardPe": "P/E previsto",
+      "dividendYield": "Rendimento da dividendi",
+      "beta": "Beta",
+      "target": "Obiettivo di prezzo",
+      "recommendation": "Consenso",
+      "employees": "Dipendenti",
+      "open": "Apertura",
+      "previousClose": "Chiusura precedente",
+      "dayHigh": "Massimo giornaliero",
+      "dayLow": "Minimo giornaliero",
+      "weekHigh": "Massimo a 52 settimane",
+      "weekLow": "Minimo a 52 settimane",
+      "volume": "Volume",
+      "avgVolume": "Volume medio"
+    },
+    "viewTechnical": "Analisi tecnica",
+    "valuationTitle": "Valutazione",
+    "performanceTitle": "Performance (1 anno)",
+    "chartTitle": "Storico dei prezzi",
+    "saveWatch": "Segui questa azienda",
+    "removeWatch": "Smetti di seguire",
+    "watchedCompanies": "Aziende seguite",
+    "watchedDescription": "Companies you're tracking. Click one a see full research, o inizio a nuovo cerca.",
+    "newResearch": "Nuova analisi",
+    "backToWatchlist": "Torna alla lista di controllo",
+    "backToResults": "Torna ai risultati",
+    "lastUpdated": "Updated {{when}}",
+    "priceToBook": "P/B",
+    "evToEbitda": "EV/EBITDA",
+    "evToSales": "EV/Sales",
+    "fcfYield": "FCF rendimento",
+    "roe": "ROE",
+    "debtToEquity": "D/E",
+    "grossMargin": "Gross margin",
+    "revenueGrowth": "Ricavi crescita",
+    "payoutRatio": "Payout ratio",
+    "bookValue": "Book valore",
+    "earningsGrowth": "EPS crescita",
+    "expenseRatio": "Rapporto di spesa",
+    "aum": "AUM",
+    "category": "Categoria",
+    "yield": "Rendimento",
+    "circulatingSupply": "Circ. supply",
+    "volume24h": "24h volume",
+    "oneYearReturn": "1Y rendimento",
+    "oneYearVolatility": "1Y volatility",
+    "maxDrawdown1y": "Max drawdown (1Y)",
+    "sharpe1y": "Sharpe (1Y)",
+    "noValuationData": "Nessun valuation dati disponibile per questo instrument",
+    "rangeBarLabel": "52-settimana intervallo",
+    "targetHint": "Obiettivo {{value}}",
+    "showMore": "Leggi altro",
+    "showLess": "Mostra meno",
+    "factsTitle": "Dati aziendali",
+    "headquarters": "Sede centrale",
+    "firstTraded": "Prima negoziazione",
+    "currency": "Valuta",
+    "rangeLabel": "Intervallo del grafico",
+    "chartEmpty": "Nessun prezzo storico disponibile per questo intervallo.",
+    "ranges": {
+      "1m": "1M",
+      "3m": "3M",
+      "6m": "6M",
+      "ytd": "Da inizio anno",
+      "1y": "1Y",
+      "5y": "5Y",
+      "max": "Max"
+    },
+    "series": {
+      "close": "Chiudi",
+      "volume": "Volume",
+      "sma50": "SMA 50",
+      "sma200": "SMA 200"
+    },
+    "rollingTitle": "Rischio mobile",
+    "distributionTitle": "Rendimenti giornalieri",
+    "distributionCount": "{{count}} trading days",
+    "distributionBin": "Around {{range}}",
+    "distributionDays": "days",
+    "signalsTitle": "Segnali tecnici",
+    "signalsUnavailable": "Segnali aren't disponibile per questo symbol.",
+    "horizonsTitle": "Rischio e rendimento",
+    "metricColumn": "Metrica",
+    "profitabilityTitle": "Redditività",
+    "balanceSheetTitle": "Stato patrimoniale",
+    "earningsTitle": "Risultati e stime",
+    "surpriseTitle": "EPS actual / estimate",
+    "pegRatio": "PEG",
+    "priceToSales": "P/S",
+    "earningsYield": "Earnings rendimento",
+    "roa": "ROA",
+    "operatingMargin": "Operating margin",
+    "profitMargin": "Net margin",
+    "totalCash": "Totale liquidità",
+    "totalDebt": "Totale debito",
+    "netCash": "Net liquidità",
+    "debtToEbitda": "Debito / EBITDA",
+    "currentRatio": "Attuale ratio",
+    "quickRatio": "Quick ratio",
+    "revenueTtm": "Ricavi (TTM)",
+    "ebitda": "EBITDA",
+    "trailingEps": "EPS (TTM)",
+    "forwardEps": "Forward EPS",
+    "analystCount": "Analysts covering",
+    "newsTitle": "Ultime notizie",
+    "viewAllNews": "Mostra tutto",
+    "newsEmpty": "Nessuna notizia recente per questo simbolo.",
+    "newsUnavailable": "Notizie couldn't be loaded right now.",
+    "compositionTitle": "Composizione del fondo",
+    "holdingsTitle": "Principali posizioni",
+    "sectorWeightings": "Pesi settoriali",
+    "assetMix": "Composizione degli asset",
+    "assetClasses": {
+      "stock": "Azioni",
+      "bond": "Obbligazioni",
+      "cash": "Liquidità",
+      "preferred": "Azioni privilegiate",
+      "other": "Altro"
+    }
+  },
+  "edit": {
+    "title": "Modifica investimento conto",
+    "description": "Nome, icon e descrizione sono yours a modifica. Saldo, positions e transazioni sono always set da il {{provider}} sincronizza.",
+    "nameLabel": "Nome del conto",
+    "descriptionLabel": "Descrizione",
+    "descriptionPlaceholder": "Facoltativo notes about questo conto",
+    "saveChanges": "Salva changes",
+    "saving": "Salvataggio…",
+    "rotateKeys": "Rotate API keys",
+    "toasts": {
+      "updated": "Conto updated",
+      "updateFailed": "Impossibile aggiornare il conto. Riprova."
+    },
+    "rotateDialog": {
+      "title": "Rotate API keys",
+      "description": "Replace il stored public/private key pair per questo conto. Il prossimo sincronizza runs immediately a confirm il nuovo keys work.",
+      "rotate": "Rotate keys",
+      "rotating": "Rotating…",
+      "toasts": {
+        "rotated": "API keys updated",
+        "rotateFailed": "Could non aggiorna il keys — check them e prova di nuovo."
+      }
+    }
+  },
+  "compare": {
+    "title": "Confronta",
+    "description": "See rischio, rendimento, e valore side da side per up a five tickers.",
+    "help": "What does {{metric}} mean?",
+    "confidenceBand": "95% confidence interval: {{low}} a {{high}}. If two investimenti' ranges overlap heavily, il difference between them è probably noise.",
+    "source": {
+      "computed": "Computed da Yahoo Finance adjusted giornaliero closes"
+    },
+    "saved": {
+      "title": "Risparmiato",
+      "empty": "Nessun risparmiato comparisons yet.",
+      "delete": "Elimina \"{{name}}\""
+    },
+    "saveDialog": {
+      "trigger": "Salva",
+      "title": "Salva questo comparison",
+      "description": "Keep these tickers, benchmark e periodo so tu can come back a them later.",
+      "nameLabel": "Nome",
+      "namePlaceholder": "e.g. {{symbols}}",
+      "save": "Salva comparison",
+      "saving": "Salvataggio…",
+      "toasts": {
+        "saved": "Comparison risparmiato",
+        "saveFailed": "Could non salva questo comparison. Prova di nuovo."
+      }
+    },
+    "picker": {
+      "addTicker": "Add ticker",
+      "remove": "Rimuovi {{symbol}}",
+      "benchmark": "Benchmark",
+      "benchmarkNone": "Nessuno",
+      "period": "Periodo",
+      "currency": "Valuta",
+      "save": "Salva…",
+      "maxReached": "Beyond five lines il chart stops being readable.",
+      "quickAdd": "Tuo posizioni"
+    },
+    "periods": {
+      "1m": "1M",
+      "3m": "3M",
+      "6m": "6M",
+      "ytd": "Da inizio anno",
+      "1y": "1Y",
+      "3y": "3Y",
+      "5y": "5Y",
+      "10y": "10Y",
+      "max": "MAX"
+    },
+    "headline": {
+      "riskAdjusted": "Rischio-adjusted rendimento (Sortino)",
+      "totalReturn": "Totale rendimento"
+    },
+    "verdict": {
+      "title": "Verdict",
+      "whatDoesThisMean": "What does questo mean?",
+      "clearly_better_risk_adjusted": "Oltre questo periodo, {{leader}} delivered better rischio-adjusted returns than {{runnerUp}}, e il gap è large enough a be unlikely a be luck (≈{{confidence}}% confidence).",
+      "likely_better": "Oltre questo periodo, {{leader}} likely delivered better rischio-adjusted returns than {{runnerUp}} (≈{{confidence}}% confidence) — but il two sono chiudi enough quello questo could still be noise.",
+      "too_close_to_call": "Oltre questo periodo, {{leader}} e {{runnerUp}} sono too chiudi a call su rischio-adjusted rendimento — il difference è well within il intervallo di ordinary luck.",
+      "likely_worse": "Oltre questo periodo, {{leader}} likely underperformed {{runnerUp}} su rischio-adjusted rendimento (≈{{confidence}}% confidence), though il gap è non decisive.",
+      "clearly_worse_risk_adjusted": "Oltre questo periodo, {{leader}} clearly underperformed {{runnerUp}} su rischio-adjusted rendimento (≈{{confidence}}% confidence)."
+    },
+    "tiles": {
+      "returns": "Totale rendimento",
+      "returnsSubtitle": "How much each investimento actually gained o lost oltre il selected periodo, including dividends.",
+      "growth": "Crescita di 100",
+      "growthSubtitle": "What 100 invested in each di these at il inizio di il periodo would be worth now, su il same scale.",
+      "growthLogToggle": "Log scale",
+      "growthLogHint": "A log scale keeps equal percentage moves il same height everywhere su il chart — il right way a compare long-horizon crescita.",
+      "drawdown": "Ribasso dal massimo",
+      "drawdownSubtitle": "How far each investimento fell da its own prior peak, at any point in il periodo — non da today's prezzo.",
+      "riskVsReturn": "Rischio vs rendimento",
+      "riskVsReturnCaption": "Up e a il restante è better: altro rendimento per less rischio.",
+      "riskVsReturnEmpty": "Non enough dati a plot rischio versus rendimento yet.",
+      "correlation": "Correlation",
+      "correlationLegend": "Higher = less diversification",
+      "correlationEmpty": "Add at least two tickers a see correlation.",
+      "riskAdjustedMetrics": "Rischio-adjusted metrics",
+      "valuation": "Valutazione",
+      "stress": "How they behaved in past shocks",
+      "notApplicableFund": "n/a per fondi",
+      "notApplicableCrypto": "Traditional valuation ratios do non apply a crypto.",
+      "notApplicableIndex": "Prezzo only — index levels usually exclude dividends."
+    },
+    "drawdown": {
+      "worstMoment": "{{symbol}}'s worst moment: {{depth}}, da {{peakData}} a {{troughData}}, {{recovery}}",
+      "recovered": "recovered {{date}}",
+      "notRecovered": "non yet recovered"
+    },
+    "empty": {
+      "title": "Pick two o altro tickers a compare",
+      "description": "See rischio-adjusted rendimento, correlation, drawdown e valuation side da side.",
+      "presetSp500Nasdaq": "S&P 500 vs Nasdaq 100",
+      "presetVooVti": "VOO vs VTI (nearly identical — see why)",
+      "presetBtcGold": "Bitcoin vs Gold"
+    },
+    "loading": "Fetching {{count}} prezzo histories…",
+    "partial": {
+      "shortHistory": "Only {{days}} days di storico — rischio metrics need at least 60."
+    },
+    "error": {
+      "symbolFailed": "Couldn't carica {{symbol}}",
+      "generic": "Couldn't carica questo comparison. Prova di nuovo."
+    },
+    "footer": {
+      "disclaimer": "Past performance does non indicate future risultati. Questo è analysis, non advice.",
+      "period": "Periodo: {{period}}",
+      "dataSource": "Dati: Yahoo Finance, adjusted giornaliero closes",
+      "totalReturnBasis": "Rendimentos sono totale rendimento (split- e dividend-adjusted) unless noted otherwise.",
+      "riskFreeSource": {
+        "irx": "Rischio-free rate: 13-settimana T-bill (^IRX)",
+        "fallback_constant": "Rischio-free rate: fallback constant (13-settimana T-bill non disponibile)",
+        "user_override": "Rischio-free rate: manually set"
+      }
+    },
+    "alignmentNote": "Some instruments trade su different calendars — charts e correlations use only il days every selected instrument has prezzi per.",
+    "totalReturnFootnote": "Questo è a prezzo index; its level usually excludes dividends, so its rendimento understates il true totale rendimento da roughly 1.5–2%/yr.",
+    "metrics": {
+      "sharpe": {
+        "label": "Sharpe ratio",
+        "short": "Rendimento earned per each unit di rischio taken.",
+        "body": "Per every unit di prezzo swing questo investimento put tu through, it returned questo many units di rendimento above liquidità. It treats upside e downside swings as equally bad, which è why we mostra Sortino prossimo a it.",
+        "scale": "Above 1.0 è generally considered good, above 2.0 excellent.",
+        "caveat": "Sharpe ratios estimated oltre a few years carry a lot di uncertainty — il intervallo shown dopo il ± è il 95% confidence interval. If two investimenti' ranges overlap heavily, il difference between them è probably noise."
+      },
+      "sortino": {
+        "label": "Sortino ratio",
+        "short": "Rendimento earned per each unit di downside rischio taken.",
+        "body": "Like Sharpe, but only counts downward swings as rischio. Upside surprises don't count against it. Usually higher than Sharpe; a Sortino much higher than il Sharpe means most di questo investment's volatility era a il upside.",
+        "scale": "Above 1.0 è generally considered good, above 2.0 excellent."
+      },
+      "calmar": {
+        "label": "Calmar ratio",
+        "short": "Annual rendimento per unit di worst drawdown.",
+        "body": "How much annual rendimento tu got per il worst peak-a-trough fall tu would have lived through. Il most intuitive rischio-adjusted ratio: rendimento per unit di worst pain.",
+        "scale": "Above 0.5 è decent, above 1.0 è strong."
+      },
+      "martin": {
+        "label": "Martin ratio (UPI)",
+        "short": "Annual rendimento per unit di il Ulcer Index.",
+        "body": "Like Calmar, but uses il whole drawdown path — how deep e how long — rather than just il single worst point. A altro complete picture di how uncomfortable il ride era.",
+        "scale": "Higher è better; compare it only against other instruments oltre il same periodo."
+      },
+      "volatility": {
+        "label": "Volatilità",
+        "short": "How much il prezzo swings, annualised.",
+        "body": "Il annualised standard deviation di giornaliero returns. Shown per reference, but deliberately non il headline rischio figure here — research shows investors feel drawdowns, non giorno-a-giorno wiggle, so we lead con max drawdown instead."
+      },
+      "maxDrawdown": {
+        "label": "Ribasso massimo",
+        "short": "Il worst peak-a-trough fall oltre questo periodo.",
+        "body": "If tu had bought at il worst possible moment, questo è how far down tu would have been prima it recovered — il single number quello best predicts whether a real investor would have panic-sold."
+      },
+      "timeUnderWater": {
+        "label": "Tempo sotto water",
+        "short": "How long it took a get back a even.",
+        "body": "Il span da il prior peak a full recovery. Questo è il number quello actually determines whether a retail investor capitulates — non il depth di il fall, but how long they'd have had a wait it out."
+      },
+      "ulcerIndex": {
+        "label": "Ulcer Index",
+        "short": "A single number per how deep e how long il drawdowns erano.",
+        "body": "Squares each day's drawdown depth prima averaging, so it penalises deep, prolonged declines far altro than brief dips — closer a how a loss actually feels than plain volatility."
+      },
+      "var95": {
+        "label": "Valore at Rischio (95%)",
+        "short": "Il threshold per a bad-but-non-worst giorno.",
+        "body": "Su il worst 1 giorno in 20 oltre questo periodo, il loss era at least questo large. It says nothing about how much worse il remaining 5% di days could get — see CVaR per quello."
+      },
+      "cvar95": {
+        "label": "Expected shortfall (95%)",
+        "short": "Il medio loss su il worst days.",
+        "body": "Il medio loss across only il worst 5% di days — answers \"e when it è quello bad, how bad su medio?\". Strictly altro informative than VaR alone."
+      },
+      "beta": {
+        "label": "Beta",
+        "short": "How much questo moves per each 1% move in il benchmark.",
+        "body": "A beta di 1.2 means it typically moved 1.2% when il benchmark moved 1%.",
+        "caveat": "Always check il R² prossimo a it: if R² è minimo, il benchmark explains very little di questo instrument's movement e il beta isn't telling tu much."
+      },
+      "alpha": {
+        "label": "Alpha (annualised)",
+        "short": "Rendimento restante oltre dopo accounting per mercato exposure.",
+        "body": "Il annualised rendimento questo instrument produced beyond what its beta a il benchmark would predict.",
+        "caveat": "A single-factor alpha against one benchmark è non strong evidence di skill — check its own confidence interval e R² prima reading much into it."
+      },
+      "rSquared": {
+        "label": "R²",
+        "short": "How much di il movement il benchmark actually explains.",
+        "body": "Il share di questo instrument's variance explained da il benchmark in il beta/alpha regression. Professionals always check questo prossimo a beta — a beta da a regression con minimo R² è mostly noise."
+      },
+      "upCapture": {
+        "label": "Up capture",
+        "short": "How much di il benchmark's up days questo captured.",
+        "body": "Su days il benchmark rose, questo instrument captured questo percentage di quello move su medio."
+      },
+      "downCapture": {
+        "label": "Down capture",
+        "short": "How much di il benchmark's down days questo captured.",
+        "body": "Su days il benchmark fell, questo instrument captured questo percentage di quello fall su medio. Lower è better here — it means smaller losses su il benchmark's bad days."
+      },
+      "informationRatio": {
+        "label": "Information ratio",
+        "short": "Attivo rendimento per unit di tracking errore versus il benchmark.",
+        "body": "Il right way a answer \"era questo better than il index, e how consistently?\" — attivo rendimento divided da how much quello rendimento varied."
+      },
+      "trackingError": {
+        "label": "Tracking errore",
+        "short": "How much questo instrument's rendimento diverges da il benchmark's.",
+        "body": "Il annualised volatility di il rendimento difference between questo instrument e il benchmark. A near-index fondo has a tracking errore chiudi a zero."
+      },
+      "correlation": {
+        "label": "Correlation",
+        "short": "How closely two instruments move together.",
+        "body": "Da −1 a +1. Above about 0.8 means posizione both gives tu much less diversification than it looks like — they will usually move together.",
+        "scale": "Below 0.3 è meaningfully diversifying; above 0.8 è chiudi a redundant."
+      },
+      "downsideCorrelation": {
+        "label": "Downside correlation",
+        "short": "Correlazione measured only su il benchmark's worst days.",
+        "body": "Diversification matters most exactly when things go wrong, e correlations usually rise in a crash.",
+        "caveat": "If questo number è much higher than il headline correlation, these two won't protect tu when it counts."
+      },
+      "diversificationRatio": {
+        "label": "Diversification ratio",
+        "short": "How much combining these actually reduced rischio.",
+        "body": "Il weighted medio di each instrument's own volatility, divided da il volatility di posizione them together in equal peso. A ratio well above 1.0 means real diversification benefit; near 1.0 means posizione them together barely helped."
+      },
+      "cagr": {
+        "label": "CAGR",
+        "short": "Compound annual crescita rate oltre questo periodo.",
+        "body": "Il constant annual crescita rate quello would take il starting prezzo a il ending prezzo oltre questo exact span, su a calendar-giorno basis so periods di different lengths sono comparable."
+      },
+      "cumulativeReturn": {
+        "label": "Rendimento cumulativo",
+        "short": "Totale rendimento oltre il whole periodo, uncompounded a a annuale rate.",
+        "body": "How much a single investimento made o lost da il inizio di il periodo a il fine, including dividends."
+      },
+      "trailingPe": {
+        "label": "Trailing P/E",
+        "short": "Prezzo divided da il ultimo 12 months di earnings.",
+        "body": "How many years di attuale earnings you're paying per at today's prezzo. Always read against a peer o settore reference — a P/E di 28 means nothing su its own.",
+        "caveat": "Undefined o misleading when earnings sono negativo o unusually depressed/inflated."
+      },
+      "forwardPe": {
+        "label": "P/E previsto",
+        "short": "Prezzo divided da prossimo year's expected earnings.",
+        "body": "Like trailing P/E, but based su analyst estimates rather than reported risultati — altro forward-looking, but only as reliable as il estimates behind it.",
+        "caveat": "Depends su analyst consensus estimates, which can be wrong o sparse per smaller names."
+      },
+      "priceToBook": {
+        "label": "Prezzo a book",
+        "short": "Prezzo relative a accounting net attività valore.",
+        "body": "How il mercato values il azienda relative a what its saldo sheet says it's worth.",
+        "caveat": "Chiudi a meaningless per attività-light software businesses; per financials it è often il primary valuation metric."
+      },
+      "evToEbitda": {
+        "label": "EV / EBITDA",
+        "short": "Enterprise valore relative a operating earnings.",
+        "body": "Capital-structure-neutrale, so it compares companies fairly regardless di how much debito they carry — il multiple professionals actually use per cross-azienda comparison."
+      },
+      "evToSales": {
+        "label": "EV / Sales",
+        "short": "Enterprise valore relative a ricavi.",
+        "body": "Il fallback valuation multiple when earnings sono negativo — which è exactly when P/E goes blank."
+      },
+      "dividendYield": {
+        "label": "Rendimento da dividendi",
+        "short": "Annual dividends as a percentage di prezzo.",
+        "body": "How much liquidità entrate il attuale prezzo buys tu per anno, prima any prezzo change.",
+        "caveat": "A massimo rendimento alone can be a warning sign (a \"rendimento trap\") — always check il payout ratio prossimo a it a see whether il dividend è sustainable."
+      },
+      "payoutRatio": {
+        "label": "Payout ratio",
+        "short": "Il share di earnings paid out as dividends.",
+        "body": "What fraction di profit goes a dividends rather than being reinvested o retained. A ratio near o above 100% leaves little cushion if earnings dip."
+      },
+      "fcfYield": {
+        "label": "Free liquidità flow rendimento",
+        "short": "Free liquidità flow as a percentage di mercato valore.",
+        "body": "Free liquidità flow è harder a manipulate con accounting choices than reported earnings, e it's defined even when P/E è non (negativo earnings)."
+      },
+      "roe": {
+        "label": "Rendimento su equity",
+        "short": "Profit generated per unit di shareholder equity.",
+        "body": "A quality measure: how efficiently il azienda turns shareholders' capital into profit.",
+        "caveat": "Leverage inflates ROE mechanically — always check debito/equity alongside it."
+      },
+      "debtToEquity": {
+        "label": "Debito / equity",
+        "short": "Totale debito relative a shareholder equity.",
+        "body": "A core solvency measure — massimo leverage è il single best predictor di permanent capital loss in a downturn."
+      },
+      "expenseRatio": {
+        "label": "Rapporto di spesa",
+        "short": "Il fund's annual fee, taken automatically da its valore.",
+        "body": "Il most reliable predictor di how a fondo performs against its peers — in any mercato, net returns equal gross returns minus costs, so il minimo-cost fondo tends a win da arithmetic.",
+        "caveat": "A 1%/anno difference compounds a roughly a quarter di terminal wealth oltre 30 years."
+      },
+      "psr": {
+        "label": "Probabilistic Sharpe Ratio",
+        "short": "Il probability il true Sharpe ratio è genuinely above zero.",
+        "body": "Converts a point estimate into a confidence statement, accounting per sample size, skew e fat tails — il honest version di \"è questo actually good, o did it just get lucky?\"",
+        "caveat": "A statement about il past, calculated da il sample shown — non a forecast."
+      }
+    }
+  },
+  "backtest": {
+    "title": "Backtest",
+    "description": "See what a hypothetical investimento would have been worth, o track one da oggi forward.",
+    "form": {
+      "mode": "Mode",
+      "modeBacktest": "Backtest — what would have happened",
+      "modeForward": "Forward — track da oggi",
+      "ticker": "Ticker",
+      "tickerPlaceholder": "Choose a ticker",
+      "amount": "Importo",
+      "currency": "Valuta",
+      "from": "Da",
+      "to": "A",
+      "benchmark": "Benchmark",
+      "contribute": "Add regularly",
+      "contributionAmount": "Contribution importo",
+      "contributionFreq": {
+        "none": "Nessuno",
+        "weekly": "Settimanale",
+        "monthly": "Mensile",
+        "quarterly": "Quarterly"
+      },
+      "advancedShow": "Advanced: trading cost, dividends",
+      "advancedHide": "Hide advanced options",
+      "costBps": "Trading cost",
+      "costFlat": "Flat fee per trade",
+      "dividends": "Dividends",
+      "dividendTreatment": {
+        "reinvest": "Reinvested",
+        "cash": "Paid as liquidità",
+        "ignore": "Prezzo only (ignored)"
+      },
+      "withholding": "Withholding tax",
+      "run": "Run",
+      "running": "Running…",
+      "save": "Salva a library",
+      "saving": "Salvataggio…",
+      "saveName": "Nome",
+      "saveNamePlaceholder": "e.g. MSFT since Jan 2022",
+      "saveNote": "Note (facoltativo)"
+    },
+    "headline": {
+      "finalValue": "Valore oggi",
+      "invested": "Tu invested",
+      "profit": "Profit",
+      "vsBenchmark": "vs {{symbol}}"
+    },
+    "sentence": {
+      "base": "{{amount}} invested in {{symbol}} su {{date}} would be worth {{finalValore}} oggi — a gain di {{returnPct}}, o {{cagr}} per anno. Il same money in il benchmark would be worth {{benchmarkValore}}.",
+      "baseNoBenchmark": "{{amount}} invested in {{symbol}} su {{date}} would be worth {{finalValore}} oggi — a gain di {{returnPct}}, o {{cagr}} per anno.",
+      "drawdown": "Along il way tu would have been down {{worst}} at il worst point, in {{worstData}}.",
+      "recovery": "It took {{days}} days a get back a even.",
+      "twrMwrGap": "Tempo-weighted rendimento ({{twr}}/anno) e money-weighted rendimento ({{mwr}}/anno) differ da altro than a percentage point — tuo money's timing mattered, which è normal con regular contributions e mostly luck."
+    },
+    "journey": {
+      "title": "Il journey",
+      "investedLine": "Investito",
+      "viewToggle": "Chart visualizza",
+      "viewValue": "Valore",
+      "viewNormalized": "Crescita di 100",
+      "showInvested": "Mostra invested line"
+    },
+    "tiles": {
+      "worstMoment": "Il worst moment",
+      "riskAdjusted": "Rischio-adjusted",
+      "cost": "What it cost",
+      "peak": "Peak",
+      "trough": "Trough",
+      "recovered": "Recovered",
+      "notRecovered": "Non yet recovered",
+      "noDrawdown": "Nessun drawdown oltre questo periodo.",
+      "exitCost": "If tu sold oggi",
+      "dividendsReceived": "Dividends received"
+    },
+    "sensitivity": {
+      "title": "If tu had entered a few weeks earlier o later",
+      "median": "median {{value}}",
+      "p25": "25th percentile",
+      "p75": "75th percentile",
+      "caption": "Tu picked one data. Entering anywhere in il mese either side would have produced final values between {{min}} e {{max}}. Tuo data landed in il {{percentile}}th percentile di quello intervallo — a measurement, non a repeatable edge."
+    },
+    "honesty": {
+      "title": "Read questo prima tu trust il numbers above",
+      "hindsight": {
+        "title": "Hindsight",
+        "body": "Tu chose these dates knowing what happened. Questo shows what did happen in questo window, non what will happen prossimo."
+      },
+      "survivorship": {
+        "title": "Survivorship bias",
+        "body": "Tu can only backtest instruments quello still exist e sono still listed. Companies quello went a zero sono non in questo dataset. Ricerca su il US mercato (Bessembinder, 2018) found il median listed azione underperformed Treasury bills oltre its lifetime — il winners tu can still see sono il survivors."
+      },
+      "costs": {
+        "title": "Cost realism",
+        "body": "Questo assumes 0.10% per transazione e fractional shares. It excludes taxes, currency conversion spreads, bid–ask spreads, e platform conto fees."
+      },
+      "data": {
+        "title": "Dati basis",
+        "body": "Prezzi sono Yahoo Finance giornaliero adjusted closes, which assume dividends sono reinvested at il closing prezzo su il ex-dividend data."
+      },
+      "deflated": {
+        "title": "Adjusted per how many tries questo took",
+        "body": "Tu have run {{nTrials}} backtests. Even con nessun skill at tutto, il best di quello many tries would be expected a mostra a Sharpe di about {{expected}} da luck alone. Questo one's è {{actual}}."
+      }
+    },
+    "warnings": {
+      "staleData": "Il ultimo disponibile prezzo è da {{date}} — questo instrument may be delisted o suspended.",
+      "dataGaps": "There {{count, plural, one {è a gap} other {sono # gaps}}} in il prezzo storico oltre questo periodo (a halt o delisting) — il simulation runs across it.",
+      "fxApplied": "Part di questo rendimento reflects currency movement — il instrument trades in a different currency than questo scenario.",
+      "periodTooShort": "Questo periodo è sotto 30 days, so annualised figures (CAGR, Sharpe, Sortino) would be meaningless e sono hidden. Valore e rendimento sono still shown above."
+    },
+    "empty": {
+      "title": "Run a backtest a see it here",
+      "description": "Pick a ticker, an importo e a inizio data — il risultato appears below il form.",
+      "noResult": "Nessun risultato yet."
+    },
+    "errors": {
+      "generic": "Something went wrong running questo scenario. Please prova di nuovo."
+    },
+    "toasts": {
+      "saved": "Scenario risparmiato a tuo library.",
+      "saveFailed": "Could non salva questo scenario. Please prova di nuovo."
+    },
+    "footer": {
+      "dataSource": "Prezzi sono Yahoo Finance giornaliero adjusted closes. Figures sono recomputed da il cached prezzo storico each tempo tu visualizza them."
+    },
+    "metrics": {
+      "twr": {
+        "label": "Tempo-weighted rendimento",
+        "short": "How il investimento performed, ignoring when tu added money.",
+        "body": "Tempo-weighted rendimento measures how il investimento performed, ignoring when tu added money. It è what a fondo report."
+      },
+      "mwr": {
+        "label": "Money-weighted rendimento",
+        "short": "How tu performed, including il timing di tuo contributions.",
+        "body": "Money-weighted rendimento (IRR) measures how tu performed, including il timing di tuo contributions. If it è lower than il tempo-weighted rendimento, tuo money arrived at less fortunate moments — which è normal e mostly luck."
+      },
+      "deflatedSharpe": {
+        "label": "Deflated Sharpe ratio",
+        "short": "Sharpe, adjusted per how many scenarios tu have tried.",
+        "body": "When tu prova many strategies, il best-looking one è partly lucky. Questo adjusts il score per how many scenarios tu have run, so a good-looking risultato has a be genuinely good rather than il best di many tries."
+      },
+      "entrySensitivity": {
+        "label": "Entry-data sensitivity",
+        "short": "How much il risultato depends su il exact giorno tu started.",
+        "body": "Il same investimento started a few weeks earlier o later. A wide spread means il risultato depends heavily su il exact giorno tu picked — which tu chose knowing what happened prossimo."
+      },
+      "costDrag": {
+        "label": "Cost drag",
+        "short": "Cumulativo trading fees, compounded.",
+        "body": "Trading fees, compounded. Small percentages become large amounts oltre long periods — questo è il single most reliable way a improve returns, because unlike returns, costs sono certain."
+      }
+    }
+  },
+  "scenarios": {
+    "title": "Scenario library",
+    "detailTitle": "Scenario",
+    "description": "Every hypothetical you've risparmiato, backtest e forward, e how tuo track record holds up.",
+    "newScenario": "Nuovo scenario",
+    "kind": {
+      "backtest": "Backtest",
+      "forward": "Forward"
+    },
+    "status": {
+      "active": "Attivo",
+      "closed": "Closed",
+      "error": "Errore"
+    },
+    "filters": {
+      "kind": {
+        "all": "Tutti",
+        "backtest": "Backtests",
+        "forward": "Forward"
+      },
+      "status": {
+        "all": "Tutti",
+        "active": "Attivo",
+        "closed": "Closed"
+      },
+      "sort": {
+        "newest": "Newest",
+        "best": "Best",
+        "worst": "Worst"
+      }
+    },
+    "trackRecord": {
+      "title": "Tuo track record",
+      "empty": "Chiudi o grow a scenario past 30 days a inizio building a track record.",
+      "matured": "Matured scenarios",
+      "hitRate": "Beat il benchmark",
+      "hitRateValue": "{{beating}} di {{total}} ({{pct}}%)",
+      "meanExcess": "Mean excess rendimento",
+      "medianExcess": "Median excess rendimento",
+      "verdict": {
+        "too_few": "Con only {{count}} matured scenarios, there isn't enough evidence yet a say anything about tuo azione-picking either way.",
+        "no_evidence_of_skill": "Across tuo {{count}} matured scenarios, {{beating}} beat il benchmark e il rest did non — a {{pct}}% hit rate. Medio excess rendimento: {{meanExcess}} percentage points. Con questo few scenarios, a {{pct}}% hit rate è well within what coin-flipping produces (p = {{pValore}}) — questo è non yet enough a say anything about tuo azione-picking either way.",
+        "some_evidence": "Across tuo {{count}} matured scenarios, {{beating}} beat il benchmark e il rest did non — a {{pct}}% hit rate. Medio excess rendimento: {{meanExcess}} percentage points. Quello hit rate would be unusual da coin-flipping alone (p = {{pValore}}) — early evidence, non proof."
+      }
+    },
+    "card": {
+      "since": "since {{date}}",
+      "vsBenchmark": "vs benchmark",
+      "error": "Questo scenario could non be revalued."
+    },
+    "empty": {
+      "title": "Nessun scenarios yet",
+      "description": "It costs nothing a crea a forward scenario, e in six months it will tell tu something true about tuo instincts.",
+      "exampleOne": {
+        "name": "MSFT since Jan 2022",
+        "detail": "Backtest · +68.2%"
+      },
+      "exampleTwo": {
+        "name": "VOO, tracked da oggi",
+        "detail": "Forward · updated giornaliero"
+      }
+    },
+    "detail": {
+      "subtitle": "{{symbol}} · since {{date}}",
+      "lockedNotice": "Entry terms sono locked — that's what makes il track record meaningful. Crea a nuovo scenario a prova different terms.",
+      "note": "Note",
+      "notePlaceholder": "Why did tu set questo scenario up? What erano tu expecting?",
+      "saveNote": "Salva note",
+      "noteSaved": "Note risparmiato.",
+      "noteSaveFailed": "Could non salva il note. Please prova di nuovo.",
+      "rebuild": "Rebuild",
+      "rebuilt": "Scenario rebuilt da il ultimo prezzi.",
+      "close": "Chiudi",
+      "reopen": "Reopen",
+      "closed": "Scenario closed.",
+      "reopened": "Scenario reopened.",
+      "delete": "Elimina",
+      "deleted": "Scenario deleted.",
+      "actionFailed": "Something went wrong. Please prova di nuovo.",
+      "deleteConfirm": {
+        "title": "Elimina \"{{name}}\"?",
+        "description": "Questo removes il scenario e its valuation storico. Questo can't be undone.",
+        "confirm": "Elimina scenario"
+      },
+      "errorTitle": "Questo scenario couldn't be revalued",
+      "noResultTitle": "Nessun risultato disponibile yet.",
+      "dailyTable": "Giornaliero valuation storico",
+      "table": {
+        "date": "Data",
+        "value": "Valore",
+        "invested": "Investito",
+        "benchmark": "Benchmark"
+      }
+    }
+  },
+  "technical": {
+    "title": "Tecnico Analysis",
+    "description": "Indicators e a distributional forward visualizza — never a buy o sell segnale.",
+    "periods": {
+      "3m": "3M",
+      "6m": "6M",
+      "1y": "1Y",
+      "2y": "2Y",
+      "5y": "5Y"
+    },
+    "loading": "Caricamento tecnico dati…",
+    "error": "Could non carica tecnico dati per {{symbol}}.",
+    "regime": {
+      "caption": "Questo è il context every indicator below should be read in.",
+      "trendLabel": "Trend",
+      "trendUp": "Up",
+      "trendDown": "Down",
+      "trendSideways": "Sideways",
+      "strengthLabel": "Strength",
+      "strengthWeak": "ADX {{adx}} — weak / sideways",
+      "strengthModerate": "ADX {{adx}} — moderate",
+      "strengthStrong": "ADX {{adx}} — strong",
+      "volatilityLabel": "Volatilità",
+      "volatilityCalm": "{{vol}} — {{percentile}}th percentile, calm",
+      "volatilityNormal": "{{vol}} — {{percentile}}th percentile, normal",
+      "volatilityElevated": "{{vol}} — {{percentile}}th percentile, elevated",
+      "volatilityUnknown": "{{vol}}",
+      "randomWalkLabel": "Random-walk test",
+      "randomWalkTrending": "Trending (p={{p}})",
+      "randomWalkMeanReverting": "Mean-reverting (p={{p}})",
+      "randomWalkInconclusive": "Indistinguishable da random walk (p={{p}})",
+      "squeezeLabel": "Bollinger",
+      "squeezeYes": "Squeeze ({{percentile}}th percentile bandwidth)",
+      "squeezeNo": "Nessun squeeze",
+      "heroTitle": "Mercato Regime",
+      "heroBadge": {
+        "strongUp": "Strong Uptrend",
+        "up": "Uptrend",
+        "sideways": "Sideways / Choppy",
+        "down": "Downtrend",
+        "strongDown": "Strong Downtrend"
+      },
+      "summary": "{{symbol}} è in {{trendPhrase}} con {{volPhrase}}. {{weightHint}}",
+      "weightTrending": "Trend-following segnali carry altro peso than overbought/oversold segnali in questo environment.",
+      "weightRanging": "Overbought/oversold segnali have historically been altro meaningful than trend segnali in questo sideways environment.",
+      "kpiAdxLabel": "Trend strength (ADX)",
+      "kpiVolatilityLabel": "Annualized volatility",
+      "kpiVarianceLabel": "Random-walk test",
+      "kpiSqueezeLabel": "Bollinger squeeze"
+    },
+    "price": {
+      "title": "Prezzo",
+      "candles": "Candele",
+      "line": "Line",
+      "legendHint": "Click a series in il legend a mostra o hide it."
+    },
+    "levels": {
+      "title": "Key prezzo levels",
+      "support": "Support",
+      "resistance": "Resistance",
+      "touches": "{{count}} touches",
+      "distanceAbove": "{{pct}} above",
+      "distanceBelow": "{{pct}} below",
+      "empty": "Non enough confirmed pivots yet a identify a level.",
+      "caption": "Prezzo areas where questo instrument has repeatedly reversed. They sono non floors o ceilings — they break regularly.",
+      "ladderTitle": "Prezzo ladder",
+      "currentPriceLabel": "Prezzo attuale"
+    },
+    "crossovers": {
+      "golden": "Golden cross",
+      "death": "Death cross"
+    },
+    "panes": {
+      "rsi": "Momentum — RSI",
+      "macd": "Momentum — MACD",
+      "obv": "Volume — OBV",
+      "rsiOverboughtMuted": "Overbought/oversold lines sono muted — less meaningful in a strong trend.",
+      "obvDivergenceHint": "Shaded intervallo: prezzo e volume flow have been moving in different directions.",
+      "currentLabel": "Attuale"
+    },
+    "signals": {
+      "title": "What il indicators sono saying together",
+      "confluence": "{{positive}} lean positivo · {{negative}} lean negativo · {{neutral}} neutrale",
+      "footer": "Professional analysts look per agreement across several indicators. Disagreement è information too — it usually means nessun cancella segnale.",
+      "ids": {
+        "priceVsSma200": "Prezzo vs SMA200",
+        "smaCross": "SMA50 vs SMA200",
+        "rsi": "RSI (14)",
+        "macd": "MACD histogram",
+        "bollinger": "%B (Bollinger)",
+        "obv": "OBV slope",
+        "adx": "Trend strength (ADX)"
+      },
+      "states": {
+        "bullish": "Bullish-leaning",
+        "bearish": "Bearish-leaning",
+        "neutral": "Neutrale",
+        "context": "Context"
+      },
+      "detail": {
+        "priceVsSma200": {
+          "above": "Prezzo è above its 200-giorno moving medio, a conventional (if crude) long-term uptrend marker.",
+          "below": "Prezzo è below its 200-giorno moving medio, a conventional (if crude) long-term downtrend marker.",
+          "neutral": "Prezzo è within 1% di its 200-giorno moving medio — too chiudi a call a cancella trend da questo alone."
+        },
+        "smaCross": {
+          "golden": "Il 50-giorno medio è above il 200-giorno medio (a “golden cross” regime) — a conventional bullish trend marker.",
+          "death": "Il 50-giorno medio è below il 200-giorno medio (a “death cross” regime) — a conventional bearish trend marker.",
+          "neutral": "Il 50- e 200-giorno averages sono too chiudi a call a cancella regime."
+        },
+        "rsi": {
+          "trending_overbought": "RSI è {{rsi}}, above il conventional 70 “overbought” line. But ADX è {{adx}}, which says questo instrument è in a strong trend — e in strong trends RSI routinely stays above 70 per weeks o months. In questo context an elevated RSI è much weaker evidence than it would be in a sideways mercato.",
+          "ranging_overbought": "RSI è {{rsi}} e ADX è {{adx}}, meaning prezzo has been moving sideways rather than trending. Overbought readings have historically been altro meaningful in intervallo-bound conditions than in trending ones — but ‘altro meaningful’ è non il same as reliable.",
+          "trending_oversold": "RSI è {{rsi}}, below il conventional 30 “oversold” line, while ADX ({{adx}}) shows a strong trend in place — in a strong downtrend RSI can stay depressed per a long tempo.",
+          "ranging_oversold": "RSI è {{rsi}} e ADX è {{adx}} (intervallo-bound). Oversold readings have historically carried a little altro peso in sideways conditions.",
+          "random_walk": "Statistically, questo instrument's recente prezzo movements sono indistinguishable da a random walk (variance-ratio test, p={{p}}). Trend-following indicators assume il opposite. Treat what follows as descrizione, non prediction.",
+          "neutral": "RSI è {{rsi}}, within il conventional 30–70 neutrale band."
+        },
+        "macd": {
+          "bullish": "Il MACD histogram è positivo e rising — short-term momentum has turned upward relative a il longer term. Questo è a lagging measure da construction.",
+          "bearish": "Il MACD histogram è negativo e falling — short-term momentum has turned downward relative a il longer term. Questo è a lagging measure da construction.",
+          "neutral": "Il MACD histogram è chiudi a zero — nessun cancella momentum shift either way right now."
+        },
+        "bollinger": {
+          "above": "Prezzo è above il upper Bollinger Band (%B > 1). Prezzo spends about 95% di its tempo inside il bands, so questo è uncommon but non exceptional su its own.",
+          "below": "Prezzo è below il lower Bollinger Band (%B < 0).",
+          "inside": "Prezzo è within il Bollinger Bands (0 ≤ %B ≤ 1), where it spends most di its tempo."
+        },
+        "obv": {
+          "divergence_bearish": "Prezzo has been making nuovo highs while su-saldo volume has non — il move looks like it è happening su thinner participation than il ultimo one.",
+          "divergence_bullish": "Prezzo has been making nuovo lows while su-saldo volume has non fallen con it — selling pressure looks like it may be thinning.",
+          "confirming": "Su-saldo volume è moving in il same direction as prezzo, con nessun divergence detected oltre il trailing window.",
+          "unavailable": "Volume dati isn't disponibile per questo instrument, so OBV can't be computed."
+        },
+        "adx": {
+          "context": "ADX measures trend strength, non direction. At {{adx}} questo instrument è {{state}} — use it a weigh how much a trust il trend-following indicators above."
+        }
+      },
+      "confluenceHeading": "{{positive}} bullish · {{negative}} bearish · {{neutral}} neutrale",
+      "groups": {
+        "trend": "Trend segnali",
+        "momentum": "Momentum segnali",
+        "volume": "Volume segnali"
+      },
+      "lowConfidenceNote": "Lower confidence: short storico, an insignificant random-walk test, o thin volume weakens questo reading."
+    },
+    "monteCarlo": {
+      "title": "Possible paths da here",
+      "horizon": {
+        "30d": "30d",
+        "90d": "90d",
+        "180d": "180d",
+        "1y": "1y"
+      },
+      "modelLabel": "Model",
+      "models": {
+        "bootstrap": "Historical patterns (recommended)",
+        "gbm": "Simple bell curve (textbook)",
+        "student_t": "Fat-tailed bell curve"
+      },
+      "modelHints": {
+        "bootstrap": "Resamples blocks di questo instrument's own historical giornaliero moves, which preserves real patterns di calm e turbulent stretches.",
+        "gbm": "Il textbook random-walk model: returns drawn da a normal distribution. Its tails sono visibly thinner than what markets actually produce.",
+        "student_t": "A normal-shaped model con fatter tails than il plain bell curve, closer a how markets actually behave but still non a resampling di real storico."
+      },
+      "driftLabel": "Drift",
+      "drifts": {
+        "zero": "Nessun drift",
+        "historical": "Historical medio",
+        "risk_free": "Rischio-free rate"
+      },
+      "sentenceIntro": "Based su how {{symbol}} has actually behaved oltre il past {{years}} years, in {{horizon}} trading days:",
+      "bulletMiddleHalf": "il middle half di simulated outcomes land between {{low}} e {{high}}",
+      "bulletOneIn20Below": "about 1 in 20 simulations fine below {{value}}",
+      "bulletAboveToday": "{{pct}} di paths finish above today's prezzo",
+      "bulletDrawdown20": "in {{pct}} di paths, il prezzo fell altro than 20% at some point along il way",
+      "calibrationNote": "Questo è non a forecast. It resamples {{symbol}}'s actual giornaliero moves da {{start}} a {{end}} in blocks, which preserves its real pattern di calm e turbulent stretches. It assumes {{driftNote}}. It cannot know about anything quello has non happened prima — an earnings surprise, a takeover, a mercato crash di a nuovo kind.",
+      "calibrationVolNote": " Attuale volatility è in il {{percentile}}th percentile di il ultimo three years, so if conditions rendimento a normal, il real intervallo would be wider than shown.",
+      "driftNoteZero": "nessun expected drift, so it says nothing about direction",
+      "driftNoteHistorical": "a historical drift di {{drift}}/yr (±{{se}} standard errore — treat il direction con real skepticism)",
+      "driftNoteRiskFree": "drift at il rischio-free rate, il rischio-neutrale convention",
+      "targetLabel": "Obiettivo prezzo",
+      "probAboveTarget": "{{pct}} di paths finish above {{target}}",
+      "settingsLabel": "Simulation Impostazioni",
+      "todayLabel": "Oggi",
+      "kpiMiddleHalfLabel": "50% di outcomes",
+      "kpiWorstCaseLabel": "5% worst case",
+      "kpiAboveTodayLabel": "Probability above oggi",
+      "kpiDrawdownLabel": "Probability di 20%+ drawdown"
+    },
+    "outcomeHistogram": {
+      "title": "Where it could fine up",
+      "xAxisLabel": "Simulated prezzo at horizon",
+      "meanLabel": "Mean"
+    },
+    "glossary": {
+      "rsi": {
+        "label": "RSI",
+        "body": "A 0–100 momentum gauge comparing recente gains a recente losses. Above 70 è conventionally called 'overbought', below 30 'oversold'. These sono conventions, non laws — in a strong trend RSI can sit above 70 per months while il prezzo keeps rising. Read it alongside il trend strength shown above."
+      },
+      "macd": {
+        "label": "MACD",
+        "body": "Il gap between a fast e a slow moving medio. When il bars flip da below a above zero, short-term momentum has turned upward relative a il longer term. It è a lagging measure da construction — it describes what has already changed."
+      },
+      "bollinger": {
+        "label": "Bollinger Bands",
+        "body": "A moving medio con bands two standard deviations above e below. Prezzo spends about 95% di its tempo inside il bands, so touching a band è common, non exceptional. When il bands squeeze tight, il instrument has been unusually calm — e calm periods have historically been altro often followed da large moves, in either direction."
+      },
+      "atr": {
+        "label": "ATR",
+        "body": "Il typical size di a day's prezzo intervallo, in currency. An ATR di 4.20 means a 4 move su a given giorno è ordinary, non notizie. Traders use it a size stop-losses; long-term investors can use it a calibrate what 'normal' looks like."
+      },
+      "obv": {
+        "label": "OBV",
+        "body": "Adds il day's volume when prezzo closes up e subtracts it when prezzo closes down. If prezzo è making nuovo highs while questo line è non, il move è happening su thinner trading than il precedente one."
+      },
+      "adx": {
+        "label": "ADX",
+        "body": "Measures how strongly prezzo è trending, senza saying in which direction. Below 20 means sideways; above 25 means a real trend è in place. It è il context quello decides how much peso a give il other indicators."
+      },
+      "varianceRatio": {
+        "label": "Variance ratio test",
+        "body": "A statistical test di whether prezzo movements have any memory. If il risultato è non significant, questo instrument's recente movements sono indistinguishable da coin flips — which è what most academic finance predicts, e it means trend indicators have little a work con here."
+      },
+      "monteCarlo": {
+        "label": "Monte Carlo simulation",
+        "body": "Thousands di simulated futures built da reshuffling questo instrument's own historical giornaliero moves. It shows il intervallo di what its past behaviour makes plausible — non a prediction. Il width di il fan è il message."
+      },
+      "supportResistance": {
+        "label": "Support & resistance",
+        "body": "Prezzo areas where questo instrument has repeatedly stopped e turned around. They matter because other mercato participants watch them e place orders around them, which can make them partly self-fulfilling. They sono non floors o ceilings — they break regularly."
+      }
+    },
+    "states": {
+      "insufficientHistory": "Needs at least 200 days di storico — questo instrument has {{bars}}.",
+      "noVolume": "Volume dati isn't disponibile per questo instrument, so su-saldo volume isn't shown.",
+      "crypto": "Crypto trades 24/7, so giornaliero-bar indicators here behave a little differently than per azioni."
+    },
+    "footer": {
+      "priceBasis": "Il prezzo chart, moving averages e levels use unadjusted prezzi — il prezzi quello actually traded — while volatility e il simulation use dividend-adjusted totale-rendimento prezzi.",
+      "disclaimer": "Nothing su questo page è investimento advice, a recommendation, o a buy/sell segnale."
+    },
+    "sections": {
+      "indicators": "Tecnico Indicators",
+      "levels": "Support & Resistance",
+      "signals": "What il Indicators Sono Saying Together",
+      "forward": "Forward Simulation",
+      "summary": "Executive Summary"
+    },
+    "summary": {
+      "title": "Executive Summary",
+      "leansBullish": "Overall, technicals lean bullish per {{symbol}}.",
+      "leansBearish": "Overall, technicals lean bearish per {{symbol}}.",
+      "mixed": "Overall, technicals sono mixed per {{symbol}}.",
+      "regimeClause": "Il regime è {{regimeBadge}}.",
+      "signalClause": "{{positive}} di {{total}} indicators lean positivo.",
+      "monteCarloClause": "Il {{horizon}}-giorno simulation puts il middle half di outcomes between {{low}} e {{high}}."
+    },
+    "warnings": {
+      "shortHistoryTitle": "Limited storico",
+      "cryptoTitle": "24/7 mercato"
+    }
+  },
+  "pdf": {
+    "exportAction": "Export PDF",
+    "exporting": "Preparing…",
+    "page": "Page {{page}} di {{total}}",
+    "generatedOn": "Generated {{date}}",
+    "toasts": {
+      "preparing": "Building tuo PDF…",
+      "ready": "Risparmiato {{filename}}",
+      "failed": "Couldn't build il PDF. Prova di nuovo."
+    },
+    "compare": {
+      "eyebrow": "Ticker comparison",
+      "headlineSection": "In sintesi",
+      "bestValueNote": "Il best valore in each row è highlighted. {{benchmark}} è il benchmark — shown per reference, never scored."
+    },
+    "research": {
+      "fundamentals": "Dati fondamentali",
+      "eyebrow": "Analisi aziendale"
+    }
+  }
+}

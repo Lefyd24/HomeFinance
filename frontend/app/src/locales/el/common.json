@@ -14,7 +14,11 @@
   "language": "Γλώσσα",
   "languages": {
     "en": "English",
-    "el": "Ελληνικά"
+    "el": "Ελληνικά",
+    "ru": "Русский",
+    "fr": "Français",
+    "de": "Deutsch",
+    "it": "Italiano"
   },
   "theme": {
     "light": "Φωτεινό",

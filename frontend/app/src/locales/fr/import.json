@@ -1,0 +1,112 @@
+{
+  "title": "Importer des transactions",
+  "description": "Bring dans a CSV ou Excel export de votre bank, check le rows, then add them à an compte.",
+  "guide": {
+    "title": "What file can I import?",
+    "intro": "Un export CSV, XLSX ou XLS avec une ligne d’en-tête. Les noms de colonnes sont reconnus en anglais, grec ou néerlandais, sans tenir compte de la casse ni des accents.",
+    "template": "Download template",
+    "columns": {
+      "date": {
+        "label": "Date",
+        "help": "Date, Transaction date, Booking date, Ημερομηνία, Ημ/νία κίνησης…"
+      },
+      "description": {
+        "label": "Description",
+        "help": "Description, Détails, Narrative, Περιγραφή, Αιτιολογία…"
+      },
+      "amount": {
+        "label": "Montant",
+        "help": "Montant, Valeur, Ποσό. Négatif est money out, positif est money dans."
+      },
+      "debitCredit": {
+        "label": "…ou Debit et Credit",
+        "help": "Two columns instead de Montant: Debit / Χρέωση est money out, Credit / Πίστωση est money dans."
+      }
+    },
+    "notes": {
+      "header": "Les lignes situées au-dessus de l’en-tête, comme le nom de la banque ou le numéro de compte, sont ignorées automatiquement.",
+      "dates": "Dates sont read exactly dans le format vous pick below, never guessed. Le template uses année premier (2026-01-05).",
+      "amounts": "Both 1.234,56 et 1,234.56 work. Devise symbols sont ignored.",
+      "linked": "Comptes connected through bank synchroniser can't receive imports, because le bank already provides their transactions."
+    }
+  },
+  "dateFormat": {
+    "legend": "How sont dates written dans votre file?",
+    "help": "Pick ce avant choosing le file. Dates cela don't correspondance sont listed as skipped, never guessed.",
+    "dmy": "Jour en premier",
+    "mdy": "Mois en premier",
+    "ymd": "Année en premier",
+    "chosen": "Date format: {{format}}"
+  },
+  "upload": {
+    "choose": "Choose file",
+    "pickFormatFirst": "Choisissez d’abord le format de date",
+    "uploading": "Lecture du fichier…",
+    "types": "CSV, XLSX ou XLS, jusqu’à 10 Mo",
+    "failed": "Le file pourrait pas be read."
+  },
+  "review": {
+    "title_one": "{{count}} row found dans {{file}}",
+    "title_other": "{{count}} rows found dans {{file}}",
+    "account": "Import into compte",
+    "accountPlaceholder": "Choose an compte",
+    "noAccounts": "Vous need an compte cela isn't connected à bank synchroniser. Créer one sur le Comptes page premier.",
+    "invert": "Flip signs",
+    "invertHelp": "Use ce pour credit-card exports cela afficher purchases as positif amounts.",
+    "duplicateBadge": "Possible duplicate",
+    "duplicatesNote_one": "{{count}} row looks like a transaction already dans ce compte, so it était unticked.",
+    "duplicatesNote_other": "{{count}} rows look like transactions already dans ce compte, so they étaient unticked.",
+    "include": "Include {{description}}",
+    "category": "Catégorie",
+    "noCategory": "Aucun catégorie",
+    "skipped_one": "{{count}} line était skipped",
+    "skipped_other": "{{count}} lines étaient skipped",
+    "skipReason": {
+      "missing_date": "Line {{line}}: aucun date",
+      "invalid_date": "Line {{line}}: unreadable date \"{{value}}\"",
+      "invalid_amount": "Line {{line}}: unreadable montant \"{{value}}\"",
+      "zero_amount": "Line {{line}}: montant est zero"
+    },
+    "loading": "Chargement rows…",
+    "confirm_one": "Import {{count}} transaction",
+    "confirm_other": "Importer {{count}} transactions",
+    "importing": "Importing…",
+    "startOver": "Choose another file",
+    "confirmFailed": "Le import échoué. Nothing était épargné."
+  },
+  "done": {
+    "title_one": "Imported {{count}} transaction",
+    "title_other": "Importered {{count}} transactions",
+    "description": "They're now dans {{account}}.",
+    "viewTransactions": "Afficher les transactions",
+    "another": "Import another file"
+  },
+  "columns": {
+    "title": "Column names (facultatif)",
+    "help": "Leave these empty et le columns sont found automatically. If votre file has several dates ou descriptions (pour example a booking date et a valeur date), type le exact header de le one à use. Capitals et accents don't matter.",
+    "auto": "Automatic",
+    "date": "Date column",
+    "description": "Description column",
+    "amount": "Montant column",
+    "debit": "Debit column (money out)",
+    "credit": "Credit column (money dans)"
+  },
+  "table": {
+    "search": "Recherche rows",
+    "searchPlaceholder": "Rechercher description, date ou montant…",
+    "noMatches": "Aucun rows correspondance votre recherche.",
+    "selectAll": "Select tout rows",
+    "selectAllMatching": "Select tout matching rows",
+    "date": "Date",
+    "description": "Description",
+    "amount": "Montant",
+    "category": "Catégorie",
+    "pagination": "Pages",
+    "showing": "{{from}}–{{to}} de {{total}}",
+    "page": "Page {{page}} de {{pages}}",
+    "previous": "Précédent",
+    "next": "Suivant",
+    "rowsPerPage": "Rows per page",
+    "perPage": "{{count}} / page"
+  }
+}

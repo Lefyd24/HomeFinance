@@ -1,0 +1,112 @@
+{
+  "title": "Import Transaktionen",
+  "description": "Bring in a CSV oder Excel export von Ihr bank, check der rows, then add them bis an Konto.",
+  "guide": {
+    "title": "What file can I import?",
+    "intro": "Ein CSV-, XLSX- oder XLS-Export mit Kopfzeile. Spaltennamen werden auf Englisch, Griechisch oder Niederländisch erkannt; Groß-/Kleinschreibung und Akzente werden ignoriert.",
+    "template": "Download template",
+    "columns": {
+      "date": {
+        "label": "Datum",
+        "help": "Datum, Transaktion Datum, Booking Datum, Ημερομηνία, Ημ/νία κίνησης…"
+      },
+      "description": {
+        "label": "Beschreibung",
+        "help": "Beschreibung, Details, Narrative, Περιγραφή, Αιτιολογία…"
+      },
+      "amount": {
+        "label": "Betrag",
+        "help": "Betrag, Wert, Ποσό. Negativ ist money out, positiv ist money in."
+      },
+      "debitCredit": {
+        "label": "…oder Debit und Credit",
+        "help": "Two columns instead von Betrag: Debit / Χρέωση ist money out, Credit / Πίστωση ist money in."
+      }
+    },
+    "notes": {
+      "header": "Zeilen oberhalb der Kopfzeile, etwa Bankname oder Kontonummer, werden automatisch übersprungen.",
+      "dates": "Datums sind read exactly in der format Sie pick below, never guessed. Der template uses Jahr erst (2026-01-05).",
+      "amounts": "Both 1.234,56 und 1,234.56 work. Währung symbols sind ignored.",
+      "linked": "Konten connected through bank synchronisieren can't receive imports, because der bank already provides their Transaktionen."
+    }
+  },
+  "dateFormat": {
+    "legend": "How sind dates written in Ihr file?",
+    "help": "Pick dieser vor choosing der file. Datums das don't Treffer sind listed as skipped, never guessed.",
+    "dmy": "Tag zuerst",
+    "mdy": "Monat zuerst",
+    "ymd": "Jahr zuerst",
+    "chosen": "Datum format: {{format}}"
+  },
+  "upload": {
+    "choose": "Choose file",
+    "pickFormatFirst": "Wählen Sie zuerst das Datumsformat",
+    "uploading": "Datei wird gelesen …",
+    "types": "CSV, XLSX oder XLS, bis zu 10 MB",
+    "failed": "Der file could nicht be read."
+  },
+  "review": {
+    "title_one": "{{count}} row found in {{file}}",
+    "title_other": "{{count}} rows found in {{file}}",
+    "account": "Import into Konto",
+    "accountPlaceholder": "Choose an Konto",
+    "noAccounts": "Sie need an Konto das isn't connected bis bank synchronisieren. Erstellen one am der Konten page erst.",
+    "invert": "Flip signs",
+    "invertHelp": "Use dieser für credit-card exports das anzeigen purchases as positiv amounts.",
+    "duplicateBadge": "Possible duplicate",
+    "duplicatesNote_one": "{{count}} row looks like a Transaktion already in dieser Konto, so it war unticked.",
+    "duplicatesNote_other": "{{count}} rows look like Transaktionen already in dieser Konto, so they waren unticked.",
+    "include": "Include {{description}}",
+    "category": "Kategorie",
+    "noCategory": "Keine Kategorie",
+    "skipped_one": "{{count}} line war skipped",
+    "skipped_other": "{{count}} lines waren skipped",
+    "skipReason": {
+      "missing_date": "Line {{line}}: keine Datum",
+      "invalid_date": "Line {{line}}: unreadable Datum \"{{value}}\"",
+      "invalid_amount": "Line {{line}}: unreadable Betrag \"{{value}}\"",
+      "zero_amount": "Line {{line}}: Betrag ist zero"
+    },
+    "loading": "Laden rows…",
+    "confirm_one": "Import {{count}} Transaktion",
+    "confirm_other": "Importieren {{count}} Transaktionen",
+    "importing": "Importing…",
+    "startOver": "Choose another file",
+    "confirmFailed": "Der import fehlgeschlagen. Nothing war gespart."
+  },
+  "done": {
+    "title_one": "Imported {{count}} Transaktion",
+    "title_other": "Importierened {{count}} Transaktionen",
+    "description": "They're now in {{account}}.",
+    "viewTransactions": "Anzeigen Transaktionen",
+    "another": "Import another file"
+  },
+  "columns": {
+    "title": "Column names (optional)",
+    "help": "Leave these empty und der columns sind found automatically. If Ihr file has several dates oder descriptions (für example a booking Datum und a Wert Datum), type der exact header von der one bis use. Capitals und accents don't matter.",
+    "auto": "Automatic",
+    "date": "Datum column",
+    "description": "Beschreibung column",
+    "amount": "Betrag column",
+    "debit": "Debit column (money out)",
+    "credit": "Credit column (money in)"
+  },
+  "table": {
+    "search": "Suche rows",
+    "searchPlaceholder": "Suchen Beschreibung, Datum oder Betrag…",
+    "noMatches": "Keine rows Treffer Ihr Suche.",
+    "selectAll": "Select alle rows",
+    "selectAllMatching": "Select alle matching rows",
+    "date": "Datum",
+    "description": "Beschreibung",
+    "amount": "Betrag",
+    "category": "Kategorie",
+    "pagination": "Pages",
+    "showing": "{{from}}–{{to}} von {{total}}",
+    "page": "Page {{page}} von {{pages}}",
+    "previous": "Vorherige",
+    "next": "Nächste",
+    "rowsPerPage": "Rows per page",
+    "perPage": "{{count}} / page"
+  }
+}

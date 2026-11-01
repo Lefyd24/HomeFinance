@@ -12,7 +12,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 
-const LANGUAGES = ['en', 'el'] as const
+const LANGUAGES = ['en', 'el', 'ru', 'fr', 'de', 'it'] as const
 
 export function LanguageToggle() {
   const { t, i18n } = useTranslation('nav')

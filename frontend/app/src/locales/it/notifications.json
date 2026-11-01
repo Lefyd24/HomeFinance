@@ -1,0 +1,180 @@
+{
+  "page": {
+    "title": "Notifiche",
+    "description": "Scegli come ricevere avvisi su saldi, budget e report programmati."
+  },
+  "hourNone": "Nessuno",
+  "channels": {
+    "title": "Notification channels",
+    "email": {
+      "title": "Email notifications",
+      "description": "Send alerts a tuo conto email address"
+    },
+    "push": {
+      "title": "Push notifications",
+      "description": "Desktop browser notifications when enabled"
+    },
+    "enableDesktop": "Enable desktop notifications",
+    "disableDesktop": "Disable desktop notifications",
+    "notSupported": "Desktop notifications non supported",
+    "checkRulesNow": "Check regole now",
+    "sendTestPush": "Send test desktop notification",
+    "status": {
+      "vapidNotConfigured": "Server push non configured — set VAPID keys su il backend",
+      "enabled": "Desktop notifications sono enabled per questo browser",
+      "subscribedNotRegistered": "Browser subscribed but non registered su server — click Enable di nuovo",
+      "clickEnable": "Click Enable a allow browser notifications"
+    }
+  },
+  "general": {
+    "title": "General impostazioni",
+    "defaultDaysBefore": "Default days prima",
+    "defaultDaysBeforeHint": "Per recurring spese e debito reminders",
+    "quietHoursStart": "Quiet hours inizio",
+    "quietHoursStartHint": "Hour (0–23), nessun notifications sent",
+    "quietHoursEnd": "Quiet hours fine",
+    "quietHoursEndHint": "Hour (0–23)",
+    "save": "Salva impostazioni"
+  },
+  "smtp": {
+    "title": "SMTP override",
+    "description": "Facoltativo per-user SMTP impostazioni. Unset fields fall back a server configuration.",
+    "host": "SMTP host",
+    "hostPlaceholder": "smtp.example.com",
+    "port": "SMTP port",
+    "portPlaceholder": "587",
+    "user": "SMTP user",
+    "password": "SMTP password",
+    "passwordPlaceholder": "Leave blank a keep attuale",
+    "passwordSaved": "A password è already risparmiato",
+    "from": "Da address",
+    "fromPlaceholder": "noreply@example.com",
+    "useTls": "Use TLS",
+    "enableTls": "Enable TLS",
+    "sendTestEmail": "Send test email",
+    "save": "Salva SMTP impostazioni"
+  },
+  "rules": {
+    "title": "Notification regole",
+    "description": "Personalizzato alerts per minimo balances, budget usage, e scheduled report.",
+    "add": "Aggiungi regola",
+    "empty": {
+      "title": "Nessun notification regole yet",
+      "description": "Add one a get alerted about balances, budget, o report.",
+      "addFirst": "Add tuo primo regola"
+    },
+    "table": {
+      "name": "Nome",
+      "type": "Tipo",
+      "details": "Dettagli",
+      "channels": "Channels",
+      "status": "Status",
+      "actions": "Azioni"
+    },
+    "typeLabels": {
+      "balance_below": "Saldo",
+      "budget_percent": "Budget",
+      "scheduled_report": "Report",
+      "investment_return_below": "Rendimento del portafoglio",
+      "investment_scheduled": "Portafoglio summary"
+    },
+    "statusActive": "Attivo",
+    "statusInactive": "Inattivo",
+    "actionsFor": "{{name}} actions",
+    "describe": {
+      "accountFallback": "Conto #{{id}}",
+      "budgetFallback": "Budget #{{id}}",
+      "balanceBelow": "{{target}} below {{amount}}",
+      "budgetPercent": "{{target}} at {{percent}}%",
+      "scheduleEveryNDays": "every {{count}} days",
+      "scheduleFallback": "scheduled",
+      "scheduledReport": "{{report}}, {{schedule}}",
+      "investmentReturnBelow": "{{target}} rendimento below {{percent}}%",
+      "investmentScheduled": "{{target}}, {{schedule}}"
+    }
+  },
+  "deleteConfirm": {
+    "title": "Elimina {{name}}?",
+    "description": "Questo notification regola will stop running immediately.",
+    "confirmLabel": "Elimina regola"
+  },
+  "toasts": {
+    "desktopEnableFailed": "Non riuscito a enable desktop notifications",
+    "desktopDisableFailed": "Non riuscito a disable desktop notifications",
+    "channelsUpdated": "Channel preferences updated",
+    "channelsFailed": "Non riuscito a aggiorna channels",
+    "generalSaved": "Notification impostazioni risparmiato",
+    "generalFailed": "Non riuscito a salva impostazioni",
+    "smtpSaved": "SMTP impostazioni risparmiato",
+    "smtpFailed": "Non riuscito a salva SMTP impostazioni",
+    "desktopEnabled": "Desktop notifications enabled",
+    "desktopDisabled": "Desktop notifications disabled",
+    "rulesCheckFailed": "Non riuscito a check regole",
+    "testEmailSent": "Test email sent — check tuo inbox",
+    "testEmailFailed": "Test email non riuscito: {{detail}}",
+    "testEmailFailedGeneric": "check SMTP impostazioni",
+    "testPushSent": "Test desktop notification sent",
+    "testPushFailed": "Test push non riuscito: {{detail}}",
+    "testPushFailedGeneric": "check configuration",
+    "testFailed": "Test non riuscito",
+    "ruleDeleted": "Regola deleted",
+    "ruleDeleteFailed": "Non riuscito a elimina regola",
+    "ruleUpdated": "Regola updated",
+    "ruleCreated": "Regola created",
+    "ruleUpdateFailed": "Non riuscito a aggiorna regola",
+    "ruleCreateFailed": "Non riuscito a crea regola"
+  },
+  "ruleForm": {
+    "titleEdit": "Modifica notification regola",
+    "titleCreate": "Add notification regola",
+    "ruleType": "Regola type",
+    "selectType": "Select type",
+    "name": "Nome",
+    "namePlaceholder": "e.g. Checking conto minimo saldo",
+    "account": "Conto",
+    "budget": "Budget",
+    "investmentAccount": "Investimento conto",
+    "selectTarget": "Select…",
+    "balanceThreshold": "Saldo threshold",
+    "usageThreshold": "Usage threshold (%)",
+    "returnThreshold": "Rendimento threshold (%)",
+    "returnThresholdHint": "Alerts when il portfolio's overall rendimento falls below questo percentage — use a negativo number a only alert su a loss.",
+    "reportType": "Report type",
+    "selectReport": "Seleziona report",
+    "schedule": "Schedule",
+    "selectSchedule": "Select schedule",
+    "everyDays": "Every (days)",
+    "channels": "Channels",
+    "channelEmail": "Email",
+    "channelPush": "Push",
+    "ruleActive": "Regola attivo",
+    "updateRule": "Aggiorna regola",
+    "saveRule": "Salva regola",
+    "typeOptions": {
+      "balance_below": "Saldo below threshold",
+      "budget_percent": "Budget usage percent",
+      "scheduled_report": "Pianificazioned report",
+      "investment_return_below": "Portafoglio rendimento below threshold",
+      "investment_scheduled": "Pianificazioned portafoglio summary"
+    },
+    "reportTypes": {
+      "spending": "Spending",
+      "cashflow": "Flusso di cassa",
+      "income": "Entrate"
+    },
+    "scheduleKinds": {
+      "every_n_days": "Every N days",
+      "weekly": "Settimanale",
+      "monthly": "Mensile"
+    },
+    "validation": {
+      "nameRequired": "Nome è obbligatorio",
+      "selectTarget": "Please select a obiettivo",
+      "validThreshold": "Please enter a valid threshold"
+    }
+  },
+  "actions": {
+    "edit": "Modifica",
+    "delete": "Elimina"
+  }
+}

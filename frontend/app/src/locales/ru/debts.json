@@ -1,0 +1,304 @@
+{
+  "types": {
+    "creditCard": "Кредитная карта",
+    "personalLoan": "Потребительский кредит",
+    "studentLoan": "Студенческий кредит",
+    "mortgage": "Ипотека",
+    "carLoan": "Автокредит",
+    "informal": "Неформальный",
+    "utilities": "Коммунальные услуги",
+    "subscription": "Подписка",
+    "medical": "Медицинский",
+    "tax": "Налог",
+    "legal": "Юридический",
+    "other": "Другое",
+    "custom": "Свой тип"
+  },
+  "page": {
+    "title": "Долги",
+    "description": "Нажмите на долг, чтобы увидеть расчёт процентов, график платежей и связанные транзакции.",
+    "payoffStrategies": "Стратегии погашения",
+    "addDebt": "Добавить долг",
+    "addFirstDebt": "Добавить первый долг",
+    "totalOwed": "Общий долг",
+    "overallPayoff": "общее погашение",
+    "minMonthly": "Мин. в месяц",
+    "projInterest": "Проценты (прогноз)",
+    "allPaidOff": "Все отслеживаемые долги погашены.",
+    "paidOffCount": "Погашено · {{count}}",
+    "empty": {
+      "title": "Долгов пока нет",
+      "description": "Добавьте кредит или карту с APR и минимальным платежом, чтобы рассчитать проценты и погашение."
+    },
+    "deleteDialog": {
+      "title": "Удалить {{name}}?",
+      "description": "Долг и все платежи по нему будут удалены. Связанные транзакции останутся в вашем журнале.",
+      "confirmLabel": "Удалить долг"
+    },
+    "toasts": {
+      "deleted": "Долг удалён",
+      "deleteFailed": "Не удалось удалить долг. Попробуйте ещё раз."
+    }
+  },
+  "payoffBar": {
+    "ariaLabel": "Выплачено {{paid}}, осталось выплатить {{remaining}}, предстоящие проценты {{interest}}",
+    "paidOff": "Погашено",
+    "stillOwed": "Осталось выплатить",
+    "interestAhead": "Предстоящие проценты"
+  },
+  "tile": {
+    "ofOriginal": "из {{amount}} исходной суммы",
+    "cleared": "Закрыт",
+    "paidOff": "Погашено",
+    "minPayment": "Мин. платёж",
+    "aprSuffix": " · {{apr}}% APR"
+  },
+  "detail": {
+    "addPayment": "Добавить платёж",
+    "payments": "Платежи",
+    "edit": "Изменить",
+    "delete": "Удалить",
+    "amountDueInterestIncluded": "К оплате, включая проценты",
+    "currentBalance": "Текущий баланс",
+    "ofOriginal": "из {{amount}} исходной суммы",
+    "cleared": "Закрыт",
+    "percentPaidOff": "Погашено {{percent}}%",
+    "priority": "Приоритет P{{priority}}",
+    "interestAndPayoff": {
+      "title": "Проценты и погашение",
+      "description": "Прогноз на основе APR и минимального платежа при условии, что вы платите только минимум.",
+      "apr": "APR",
+      "aprHint": "Капитализация ежемесячно",
+      "minPayment": "Мин. платёж",
+      "everyUnit": "Каждый {{unit}}",
+      "everyIntervalUnit": "Каждые {{interval}} {{unit}}",
+      "setOneToUnlock": "Укажите значение, чтобы открыть прогноз",
+      "monthsToPayoff": "Месяцев до погашения",
+      "estDate": "Ожидается {{date}}",
+      "needsAprAndMinPayment": "Нужны APR и минимальный платёж",
+      "totalInterest": "Всего процентов",
+      "totalInterestHint": "Во сколько обойдётся оплата только минимума",
+      "recurrenceUnits": {
+        "days": "дн.",
+        "weeks": "нед.",
+        "months": "мес.",
+        "day": "день",
+        "week": "неделю",
+        "month": "месяц"
+      }
+    },
+    "opened": "Открыт",
+    "maturity": "Срок погашения",
+    "nextPayment": "Следующий платёж",
+    "scheduleDay": "День платежа",
+    "day": "День {{day}}",
+    "clearedOn": "Закрыт",
+    "notes": "Заметки"
+  },
+  "paymentsSheet": {
+    "title": "Платежи и транзакции",
+    "descriptionWithDebt": "История платежей по долгу «{{name}}». Изменение или удаление платежа затрагивает только долг — связанные транзакции в журнале остаются без изменений.",
+    "descriptionNoDebt": "Выберите долг, чтобы посмотреть платежи.",
+    "empty": {
+      "title": "Платежей пока нет",
+      "description": "Запишите платёж, чтобы уменьшить баланс и при желании создать транзакцию."
+    },
+    "payment": "Платёж",
+    "transactionHash": "Транзакция №{{id}}",
+    "principal": "Основной долг {{amount}}",
+    "interest": "Проценты {{amount}}",
+    "edit": "Изменить",
+    "delete": "Удалить",
+    "deleteConfirm": {
+      "title": "Удалить этот платёж?",
+      "description": "Баланс долга увеличится на эту сумму. Связанная транзакция в журнале не изменится.",
+      "confirmLabel": "Удалить платёж"
+    },
+    "toasts": {
+      "deleted": "Платёж удалён",
+      "deleteFailed": "Не удалось удалить платёж"
+    }
+  },
+  "strategies": {
+    "title": "Сравнение стратегий погашения",
+    "loadError": "Не удалось загрузить стратегии погашения.",
+    "recommended": "Рекомендуем: {{strategy}}",
+    "debtAvalanche": "Долговая «лавина»",
+    "debtSnowball": "Долговой «снежный ком»",
+    "recommendAvalanche": "Сэкономьте {{amount}} на процентах и погасите долги на несколько мес. раньше (мес.: {{months}}).",
+    "recommendSnowball": "Сначала гасите самые маленькие балансы: быстрые победы поддерживают мотивацию.",
+    "snowballSubtitle": "Сначала наименьший баланс",
+    "avalancheSubtitle": "Сначала наибольший APR",
+    "recommendedBadge": "Рекомендуем",
+    "totalMonths": "Всего месяцев",
+    "totalInterest": "Всего процентов",
+    "totalPayments": "Всего платежей",
+    "scheduleTitle": "Предпросмотр графика погашения",
+    "scheduleSubtitle": "Первые месяцы плана «{{strategy}}»",
+    "table": {
+      "month": "Месяц",
+      "debt": "Долг",
+      "payment": "Платёж",
+      "remaining": "Остаток"
+    }
+  },
+  "form": {
+    "titleEdit": "Изменить долг",
+    "titleCreate": "Добавить долг",
+    "description": "Укажите APR и минимальный платёж, и приложение рассчитает проценты и дату погашения.",
+    "newDebt": "Новый долг",
+    "cancel": "Отмена",
+    "saving": "Сохранение…",
+    "saveChanges": "Сохранить изменения",
+    "addDebt": "Добавить долг",
+    "name": {
+      "label": "Название долга",
+      "placeholder": "напр., Кредитная карта, Автокредит"
+    },
+    "creditor": {
+      "label": "Кредитор",
+      "placeholder": "напр., Сбербанк"
+    },
+    "type": {
+      "label": "Тип долга",
+      "placeholder": "Выберите тип",
+      "options": {
+        "creditCard": "Кредитная карта",
+        "personalLoan": "Потребительский кредит",
+        "studentLoan": "Студенческий кредит",
+        "mortgage": "Ипотека",
+        "carLoan": "Автокредит",
+        "informal": "Личный / неформальный",
+        "utilities": "Коммунальные услуги",
+        "subscription": "Подписка",
+        "medical": "Медицинский",
+        "tax": "Налог",
+        "legal": "Юридический",
+        "other": "Другое",
+        "custom": "Свой тип…"
+      }
+    },
+    "priority": {
+      "label": "Приоритет"
+    },
+    "customType": {
+      "label": "Название своего типа",
+      "placeholder": "напр., Страховка, Аренда, Взносы в ТСЖ"
+    },
+    "originalBalance": {
+      "label": "Исходная сумма"
+    },
+    "currentBalance": {
+      "label": "Текущий баланс"
+    },
+    "interestRate": {
+      "label": "Процентная ставка (APR, %)",
+      "placeholder": "напр., 15.99",
+      "hint": "Годовая ставка; расчёт погашения использует ежемесячную капитализацию."
+    },
+    "minimumPayment": {
+      "label": "Минимальный платёж",
+      "placeholder": "Нужен для расчёта процентов"
+    },
+    "openedDate": {
+      "label": "Дата открытия"
+    },
+    "maturityDate": {
+      "label": "Срок погашения"
+    },
+    "status": {
+      "title": "Статус",
+      "markPaidOff": "Отметить как погашенный",
+      "paidOffDate": "Дата погашения"
+    },
+    "schedule": {
+      "title": "График платежей",
+      "paymentEvery": "Платёж каждые",
+      "frequencyPlaceholder": "Периодичность",
+      "recurrence": {
+        "notRecurring": "Без повторения",
+        "days": "Дни",
+        "weeks": "Недели",
+        "months": "Месяцы"
+      },
+      "dayOfMonth": "День месяца",
+      "dayOfMonthPlaceholder": "Для ежемесячных"
+    },
+    "linkedAccount": {
+      "label": "Связанный счёт",
+      "placeholder": "Выберите счёт…",
+      "none": "Нет связанного счёта"
+    },
+    "nextPaymentDate": {
+      "label": "Дата следующего платежа"
+    },
+    "notify": {
+      "label": "Напомнить до срока оплаты",
+      "daysBefore": "За сколько дней",
+      "daysBeforePlaceholder": "Если пусто, используется значение по умолчанию"
+    },
+    "notes": {
+      "label": "Заметки",
+      "placeholder": "Дополнительные заметки об этом долге"
+    },
+    "toasts": {
+      "updated": "Долг обновлён",
+      "created": "Долг создан",
+      "updateFailed": "Не удалось обновить долг",
+      "createFailed": "Не удалось создать долг"
+    },
+    "validation": {
+      "nameRequired": "Укажите название долга",
+      "originalBalancePositive": "Исходная сумма должна быть больше 0",
+      "currentBalanceNonNegative": "Текущий баланс не может быть отрицательным",
+      "customTypeRequired": "Укажите название своего типа"
+    }
+  },
+  "paymentDialog": {
+    "title": "Записать платёж",
+    "titleEdit": "Изменить платёж",
+    "descriptionWithDebt": "Уменьшает баланс по долгу «{{name}}». Разделите основной долг и проценты, если в выписке они указаны отдельно.",
+    "descriptionNoDebt": "Уменьшает баланс по этому долгу.",
+    "descriptionEdit": "Обновляет влияние этого платежа на долг. Связанная транзакция в журнале здесь не изменяется.",
+    "editLeavesTransaction": "Связанная транзакция в журнале останется без изменений.",
+    "cancel": "Отмена",
+    "saving": "Сохранение…",
+    "recordPayment": "Записать платёж",
+    "saveChanges": "Сохранить изменения",
+    "amount": {
+      "label": "Сумма платежа"
+    },
+    "principal": {
+      "label": "Основной долг",
+      "placeholder": "Необязательно"
+    },
+    "interest": {
+      "label": "Проценты",
+      "placeholder": "Необязательно"
+    },
+    "date": {
+      "label": "Дата платежа"
+    },
+    "account": {
+      "label": "Счёт оплаты",
+      "placeholder": "Выберите счёт…",
+      "none": "Без счёта (только платёж)",
+      "hint": "Если выбрать счёт, можно создать связанную транзакцию."
+    },
+    "createTransaction": "Создать запись транзакции",
+    "notes": {
+      "label": "Заметки",
+      "placeholder": "напр., Ежемесячный платёж"
+    },
+    "toasts": {
+      "recorded": "Платёж записан",
+      "updated": "Платёж обновлён",
+      "failed": "Не удалось добавить платёж",
+      "updateFailed": "Не удалось обновить платёж"
+    },
+    "validation": {
+      "amountRequired": "Укажите сумму платежа",
+      "paymentDateRequired": "Укажите дату платежа"
+    }
+  }
+}

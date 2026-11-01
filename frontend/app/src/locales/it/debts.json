@@ -1,0 +1,304 @@
+{
+  "types": {
+    "creditCard": "Carta di credito",
+    "personalLoan": "Prestito personale",
+    "studentLoan": "Prestito universitario",
+    "mortgage": "Mutuo immobiliare",
+    "carLoan": "Prestito auto",
+    "informal": "Debito privato / informale",
+    "utilities": "Utenze / Bollette",
+    "subscription": "Abbonamento",
+    "medical": "Spese mediche",
+    "tax": "Debito fiscale",
+    "legal": "Spese legali",
+    "other": "Altro",
+    "custom": "Personalizzato"
+  },
+  "page": {
+    "title": "Debiti e Prestiti",
+    "description": "Seleziona un debito per visualizzare interessi, piano di ammortamento e transazioni collegate.",
+    "payoffStrategies": "Strategie di estinzione",
+    "addDebt": "Aggiungi debito",
+    "addFirstDebt": "Aggiungi il primo debito",
+    "totalOwed": "Totale dovuto",
+    "overallPayoff": "estinzione complessiva",
+    "minMonthly": "Rata min. mensile",
+    "projInterest": "Interessi proiettati",
+    "allPaidOff": "Tutti i debiti tracciati sono stati completamente saldati.",
+    "paidOffCount": "Saldati · {{count}}",
+    "empty": {
+      "title": "Nessun debito tracciato",
+      "description": "Aggiungi un finanziamento o una carta con TAN/TAEG e rata minima."
+    },
+    "deleteDialog": {
+      "title": "Eliminare {{name}}?",
+      "description": "Il debito e i pagamenti associati verranno rimosse.",
+      "confirmLabel": "Elimina debito"
+    },
+    "toasts": {
+      "deleted": "Debito eliminato",
+      "deleteFailed": "Impossibile eliminare il debito. Riprova."
+    }
+  },
+  "payoffBar": {
+    "ariaLabel": "{{paid}} pagati, {{remaining}} ancora dovuti, {{interest}} interessi previsti",
+    "paidOff": "Rimborsato",
+    "stillOwed": "Ancora dovuto",
+    "interestAhead": "Interessi futuri"
+  },
+  "tile": {
+    "ofOriginal": "di {{amount}} originale",
+    "cleared": "Saldato",
+    "paidOff": "Estinto",
+    "minPayment": "Rata min.",
+    "aprSuffix": " · {{apr}}% TAN"
+  },
+  "detail": {
+    "addPayment": "Aggiungi pagamento",
+    "payments": "Pagamenti",
+    "edit": "Modifica",
+    "delete": "Elimina",
+    "amountDueInterestIncluded": "Importo dovuto, interessi inclusi",
+    "currentBalance": "Debito residuo",
+    "ofOriginal": "di {{amount}} originale",
+    "cleared": "Saldato",
+    "percentPaidOff": "{{percent}}% rimborsato",
+    "priority": "Priorità P{{priority}}",
+    "interestAndPayoff": {
+      "title": "Interessi ed estinzione",
+      "description": "Proiezione basata sul tasso e la rata minima.",
+      "apr": "TAN / TAEG",
+      "aprHint": "Capitalizzazione mensile",
+      "minPayment": "Rata minima",
+      "everyUnit": "Ogni {{unit}}",
+      "everyIntervalUnit": "Ogni {{interval}} {{unit}}",
+      "setOneToUnlock": "Imposta tasso e rata per sbloccare la proiezione",
+      "monthsToPayoff": "Mesi all'estinzione",
+      "estDate": "Stima {{date}}",
+      "needsAprAndMinPayment": "Richiede tasso e rata minima",
+      "totalInterest": "Interessi totali",
+      "totalInterestHint": "Costo con solo pagamento minimo",
+      "recurrenceUnits": {
+        "days": "giorni",
+        "weeks": "settimane",
+        "months": "mesi",
+        "day": "giorno",
+        "week": "settimana",
+        "month": "mese"
+      }
+    },
+    "opened": "Stipulato il",
+    "maturity": "Scadenza",
+    "nextPayment": "Prossima rata",
+    "scheduleDay": "Giorno di addebito",
+    "day": "Giorno {{day}}",
+    "clearedOn": "Saldato il",
+    "notes": "Note"
+  },
+  "paymentsSheet": {
+    "title": "Pagamenti & transazioni",
+    "descriptionWithDebt": "Storico pagamenti per {{name}}.",
+    "descriptionNoDebt": "Seleziona un debito.",
+    "empty": {
+      "title": "Nessun pagamento",
+      "description": "Registra un pagamento."
+    },
+    "payment": "Pagamento",
+    "transactionHash": "Txn #{{id}}",
+    "principal": "Quota capitale {{amount}}",
+    "interest": "Quota interessi {{amount}}",
+    "edit": "Modifica",
+    "delete": "Elimina",
+    "deleteConfirm": {
+      "title": "Eliminare questo pagamento?",
+      "description": "Il debito residuo aumenterà di questo importo.",
+      "confirmLabel": "Elimina pagamento"
+    },
+    "toasts": {
+      "deleted": "Pagamento eliminato",
+      "deleteFailed": "Impossibile eliminare il pagamento"
+    }
+  },
+  "strategies": {
+    "title": "Confronto strategie di estinzione",
+    "loadError": "Impossibile caricare le strategie.",
+    "recommended": "Raccomandata: {{strategy}}",
+    "debtAvalanche": "Valanga (Avalanche)",
+    "debtSnowball": "Palla di neve (Snowball)",
+    "recommendAvalanche": "Risparmia {{amount}} di interessi e finisci {{months}} mesi prima.",
+    "recommendSnowball": "Estingui prima i saldi più piccoli per vittorie veloci e motivanti.",
+    "snowballSubtitle": "Debito minore prima",
+    "avalancheSubtitle": "Tasso più alto prima",
+    "recommendedBadge": "Raccomandata",
+    "totalMonths": "Mesi totali",
+    "totalInterest": "Interessi totali",
+    "totalPayments": "Totale pagato",
+    "scheduleTitle": "Anteprima piano di ammortamento",
+    "scheduleSubtitle": "Primi mesi del piano {{strategy}}",
+    "table": {
+      "month": "Mese",
+      "debt": "Debito",
+      "payment": "Rata",
+      "remaining": "Residuo"
+    }
+  },
+  "form": {
+    "titleEdit": "Modifica debito",
+    "titleCreate": "Aggiungi debito",
+    "description": "Imposta tasso e rata minima.",
+    "newDebt": "Nuovo debito",
+    "cancel": "Annulla",
+    "saving": "Salvataggio…",
+    "saveChanges": "Salva modifiche",
+    "addDebt": "Aggiungi debito",
+    "name": {
+      "label": "Nome del debito",
+      "placeholder": "es. Finanziamento Auto"
+    },
+    "creditor": {
+      "label": "Creditore / Banca",
+      "placeholder": "es. Intesa Sanpaolo"
+    },
+    "type": {
+      "label": "Tipo",
+      "placeholder": "Scegli tipo",
+      "options": {
+        "creditCard": "Carta di credito",
+        "personalLoan": "Prestito personale",
+        "studentLoan": "Prestito universitario",
+        "mortgage": "Mutuo",
+        "carLoan": "Prestito auto",
+        "informal": "Privato / Informale",
+        "utilities": "Utenze",
+        "subscription": "Abbonamento",
+        "medical": "Spese mediche",
+        "tax": "Fiscale",
+        "legal": "Legale",
+        "other": "Altro",
+        "custom": "Personalizzato…"
+      }
+    },
+    "priority": {
+      "label": "Priorità"
+    },
+    "customType": {
+      "label": "Nome tipo personalizzato",
+      "placeholder": "es. Assicurazione"
+    },
+    "originalBalance": {
+      "label": "Capitale iniziale"
+    },
+    "currentBalance": {
+      "label": "Debito residuo attuale"
+    },
+    "interestRate": {
+      "label": "Tasso di interesse (TAN %)",
+      "placeholder": "es. 6.50",
+      "hint": "Tasso annuo."
+    },
+    "minimumPayment": {
+      "label": "Rata minima",
+      "placeholder": "Richiesta per il calcolo interessi"
+    },
+    "openedDate": {
+      "label": "Data stipula"
+    },
+    "maturityDate": {
+      "label": "Data scadenza"
+    },
+    "status": {
+      "title": "Stato",
+      "markPaidOff": "Contrassegna come estinto",
+      "paidOffDate": "Data estinzione"
+    },
+    "schedule": {
+      "title": "Frequenza rate",
+      "paymentEvery": "Pagamento ogni",
+      "frequencyPlaceholder": "Frequenza",
+      "recurrence": {
+        "notRecurring": "Non ricorrente",
+        "days": "Giorni",
+        "weeks": "Settimane",
+        "months": "Mesi"
+      },
+      "dayOfMonth": "Giorno del mese",
+      "dayOfMonthPlaceholder": "Per rata mensile"
+    },
+    "linkedAccount": {
+      "label": "Conto associato",
+      "placeholder": "Seleziona conto…",
+      "none": "Nessun conto"
+    },
+    "nextPaymentDate": {
+      "label": "Data prossima rata"
+    },
+    "notify": {
+      "label": "Notificami prima della scadenza",
+      "daysBefore": "Giorni prima",
+      "daysBeforePlaceholder": "Predefinito"
+    },
+    "notes": {
+      "label": "Note",
+      "placeholder": "Note aggiuntive su questo debito"
+    },
+    "toasts": {
+      "updated": "Debito aggiornato",
+      "created": "Debito creato",
+      "updateFailed": "Errore nell'aggiornamento",
+      "createFailed": "Errore nella creazione"
+    },
+    "validation": {
+      "nameRequired": "Il nome è obbligatorio",
+      "originalBalancePositive": "Il capitale deve essere > 0",
+      "currentBalanceNonNegative": "Il saldo non può essere negativo",
+      "customTypeRequired": "Nome tipo obbligatorio"
+    }
+  },
+  "paymentDialog": {
+    "title": "Registra un pagamento",
+    "titleEdit": "Modifica pagamento",
+    "descriptionWithDebt": "Riduce il debito residuo di {{name}}.",
+    "descriptionNoDebt": "Riduce il debito residuo.",
+    "descriptionEdit": "Aggiorna l'effetto sul debito.",
+    "editLeavesTransaction": "La transazione collegata rimarrà invariata.",
+    "cancel": "Annulla",
+    "saving": "Salvataggio…",
+    "recordPayment": "Registra pagamento",
+    "saveChanges": "Salva modifiche",
+    "amount": {
+      "label": "Importo pagamento"
+    },
+    "principal": {
+      "label": "Quota capitale",
+      "placeholder": "Opzionale"
+    },
+    "interest": {
+      "label": "Quota interessi",
+      "placeholder": "Opzionale"
+    },
+    "date": {
+      "label": "Data pagamento"
+    },
+    "account": {
+      "label": "Conto di addebito",
+      "placeholder": "Seleziona conto…",
+      "none": "Nessun conto",
+      "hint": "Crea opzionalmente una transazione."
+    },
+    "createTransaction": "Crea transazione",
+    "notes": {
+      "label": "Note",
+      "placeholder": "es. Rata di novembre"
+    },
+    "toasts": {
+      "recorded": "Pagamento registrato",
+      "updated": "Pagamento aggiornato",
+      "failed": "Errore nella registrazione",
+      "updateFailed": "Errore nell'aggiornamento"
+    },
+    "validation": {
+      "amountRequired": "L'importo è obbligatorio",
+      "paymentDateRequired": "La data è obbligatoria"
+    }
+  }
+}

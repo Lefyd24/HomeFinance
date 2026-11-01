@@ -1,0 +1,180 @@
+{
+  "page": {
+    "title": "Notifications",
+    "description": "Choose how vous want à be alerted about balances, budgets, et scheduled rapports."
+  },
+  "hourNone": "Aucun",
+  "channels": {
+    "title": "Notification channels",
+    "email": {
+      "title": "Email notifications",
+      "description": "Send alerts à votre compte email address"
+    },
+    "push": {
+      "title": "Push notifications",
+      "description": "Desktop browser notifications when enabled"
+    },
+    "enableDesktop": "Enable desktop notifications",
+    "disableDesktop": "Disable desktop notifications",
+    "notSupported": "Desktop notifications pas supported",
+    "checkRulesNow": "Check règles now",
+    "sendTestPush": "Send test desktop notification",
+    "status": {
+      "vapidNotConfigured": "Server push pas configured — set VAPID keys sur le backend",
+      "enabled": "Desktop notifications sont enabled pour ce browser",
+      "subscribedNotRegistered": "Browser subscribed but pas registered sur server — click Enable à nouveau",
+      "clickEnable": "Click Enable à allow browser notifications"
+    }
+  },
+  "general": {
+    "title": "General paramètres",
+    "defaultDaysBefore": "Default days avant",
+    "defaultDaysBeforeHint": "Pour recurring dépenses et dette reminders",
+    "quietHoursStart": "Quiet hours début",
+    "quietHoursStartHint": "Hour (0–23), aucun notifications sent",
+    "quietHoursEnd": "Quiet hours fin",
+    "quietHoursEndHint": "Hour (0–23)",
+    "save": "Enregistrer paramètres"
+  },
+  "smtp": {
+    "title": "SMTP override",
+    "description": "Facultatif per-user SMTP paramètres. Unset fields fall back à server configuration.",
+    "host": "SMTP host",
+    "hostPlaceholder": "smtp.example.com",
+    "port": "SMTP port",
+    "portPlaceholder": "587",
+    "user": "SMTP user",
+    "password": "SMTP password",
+    "passwordPlaceholder": "Leave blank à keep actuel",
+    "passwordSaved": "A password est already épargné",
+    "from": "De address",
+    "fromPlaceholder": "noreply@example.com",
+    "useTls": "Use TLS",
+    "enableTls": "Enable TLS",
+    "sendTestEmail": "Send test email",
+    "save": "Enregistrer SMTP paramètres"
+  },
+  "rules": {
+    "title": "Notification règles",
+    "description": "Personnalisé alerts pour bas balances, budget usage, et scheduled rapports.",
+    "add": "Ajouter une règle",
+    "empty": {
+      "title": "Aucun notification règles yet",
+      "description": "Add one à get alerted about balances, budgets, ou rapports.",
+      "addFirst": "Add votre premier règle"
+    },
+    "table": {
+      "name": "Nom",
+      "type": "Type",
+      "details": "Détails",
+      "channels": "Channels",
+      "status": "Status",
+      "actions": "Actions"
+    },
+    "typeLabels": {
+      "balance_below": "Solde",
+      "budget_percent": "Budget",
+      "scheduled_report": "Rapport",
+      "investment_return_below": "Rendement du portefeuille",
+      "investment_scheduled": "Portefeuille summary"
+    },
+    "statusActive": "Actif",
+    "statusInactive": "Inactif",
+    "actionsFor": "{{name}} actions",
+    "describe": {
+      "accountFallback": "Compte #{{id}}",
+      "budgetFallback": "Budget #{{id}}",
+      "balanceBelow": "{{target}} below {{amount}}",
+      "budgetPercent": "{{target}} at {{percent}}%",
+      "scheduleEveryNDays": "every {{count}} days",
+      "scheduleFallback": "scheduled",
+      "scheduledReport": "{{report}}, {{schedule}}",
+      "investmentReturnBelow": "{{target}} rendement below {{percent}}%",
+      "investmentScheduled": "{{target}}, {{schedule}}"
+    }
+  },
+  "deleteConfirm": {
+    "title": "Supprimer {{name}}?",
+    "description": "Ce notification règle will stop running immediately.",
+    "confirmLabel": "Supprimer règle"
+  },
+  "toasts": {
+    "desktopEnableFailed": "Échoué à enable desktop notifications",
+    "desktopDisableFailed": "Échoué à disable desktop notifications",
+    "channelsUpdated": "Channel preferences updated",
+    "channelsFailed": "Échoué à mettre à jour channels",
+    "generalSaved": "Notification paramètres épargné",
+    "generalFailed": "Échoué à enregistrer paramètres",
+    "smtpSaved": "SMTP paramètres épargné",
+    "smtpFailed": "Échoué à enregistrer SMTP paramètres",
+    "desktopEnabled": "Desktop notifications enabled",
+    "desktopDisabled": "Desktop notifications disabled",
+    "rulesCheckFailed": "Échoué à check règles",
+    "testEmailSent": "Test email sent — check votre inbox",
+    "testEmailFailed": "Test email échoué: {{detail}}",
+    "testEmailFailedGeneric": "check SMTP paramètres",
+    "testPushSent": "Test desktop notification sent",
+    "testPushFailed": "Test push échoué: {{detail}}",
+    "testPushFailedGeneric": "check configuration",
+    "testFailed": "Test échoué",
+    "ruleDeleted": "Règle deleted",
+    "ruleDeleteFailed": "Échoué à supprimer règle",
+    "ruleUpdated": "Règle updated",
+    "ruleCreated": "Règle created",
+    "ruleUpdateFailed": "Échoué à mettre à jour règle",
+    "ruleCreateFailed": "Échoué à créer règle"
+  },
+  "ruleForm": {
+    "titleEdit": "Modifier notification règle",
+    "titleCreate": "Add notification règle",
+    "ruleType": "Règle type",
+    "selectType": "Select type",
+    "name": "Nom",
+    "namePlaceholder": "e.g. Checking compte bas solde",
+    "account": "Compte",
+    "budget": "Budget",
+    "investmentAccount": "Investissement compte",
+    "selectTarget": "Select…",
+    "balanceThreshold": "Solde threshold",
+    "usageThreshold": "Usage threshold (%)",
+    "returnThreshold": "Rendement threshold (%)",
+    "returnThresholdHint": "Alerts when le portfolio's overall rendement falls below ce percentage — use a négatif number à only alert sur a loss.",
+    "reportType": "Rapport type",
+    "selectReport": "Select rapport",
+    "schedule": "Schedule",
+    "selectSchedule": "Select schedule",
+    "everyDays": "Every (days)",
+    "channels": "Channels",
+    "channelEmail": "Email",
+    "channelPush": "Push",
+    "ruleActive": "Règle actif",
+    "updateRule": "Mettre à jour règle",
+    "saveRule": "Enregistrer règle",
+    "typeOptions": {
+      "balance_below": "Solde below threshold",
+      "budget_percent": "Budget usage percent",
+      "scheduled_report": "Planificationd rapport",
+      "investment_return_below": "Portefeuille rendement below threshold",
+      "investment_scheduled": "Planificationd portefeuille summary"
+    },
+    "reportTypes": {
+      "spending": "Spending",
+      "cashflow": "Flux de trésorerie",
+      "income": "Revenu"
+    },
+    "scheduleKinds": {
+      "every_n_days": "Every N days",
+      "weekly": "Hebdomadaire",
+      "monthly": "Mensuel"
+    },
+    "validation": {
+      "nameRequired": "Nom est obligatoire",
+      "selectTarget": "Veuillez select a objectif",
+      "validThreshold": "Veuillez enter a valid threshold"
+    }
+  },
+  "actions": {
+    "edit": "Modifier",
+    "delete": "Supprimer"
+  }
+}

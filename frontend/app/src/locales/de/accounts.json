@@ -1,0 +1,119 @@
+{
+  "page": {
+    "title": "Konten",
+    "description": "Wo sich Ihr Geld befindet und wie viel wo liegt.",
+    "addAccount": "Konto hinzufügen"
+  },
+  "empty": {
+    "title": "Noch keine Konten",
+    "description": "Fügen Sie Ihr erstes Konto hinzu, um Salden zu verfolgen und Transaktionen zu verknüpfen."
+  },
+  "allocationLabel": "Guthabenverteilung",
+  "summary": {
+    "totalHeld": "Gesamtguthaben",
+    "liquid": "Liquide",
+    "credit": "Kredit",
+    "net": "Netto"
+  },
+  "card": {
+    "inactive": "Inaktiv",
+    "synced": "Synchronisiert",
+    "outstanding": "Offen",
+    "balance": "Kontostand",
+    "sharePct": "{{percent}} % gehalten",
+    "transactions": "Transaktionen",
+    "actionsLabel": "Kontoaktionen",
+    "edit": "Bearbeiten",
+    "deactivate": "Deaktivieren",
+    "reactivate": "Reaktivieren",
+    "delete": "Löschen",
+    "bankSynced": "Bank-synchronisiert",
+    "manageConnection": "Verbindung verwalten",
+    "deleteLinked": "Löschen (zuerst trennen)",
+    "lastSyncedAt": "Zuletzt synchronisiert {{when}}",
+    "neverSynced": "Noch nicht synchronisiert"
+  },
+  "retired": {
+    "heading": "Inaktiv",
+    "show": "Anzeigen",
+    "hide": "Ausblenden",
+    "description": "Diese Konten werden auf Ihrem Dashboard ausgeblendet und fließen nicht in Ihre Summen ein. Ihre Transaktionen bleiben unberührt und können überall gefiltert werden."
+  },
+  "deactivateDialog": {
+    "title": "{{name}} deaktivieren?",
+    "description": "Das Konto verschwindet vom Dashboard und wird nicht mehr für Salden berücksichtigt. Nichts wird gelöscht — Transaktionen bleiben erhalten und können gefiltert werden.",
+    "confirmLabel": "Deaktivieren"
+  },
+  "deleteDialog": {
+    "title": "{{name}} löschen?",
+    "description": "Alle Transaktionen dieses Kontos werden unwiderruflich gelöscht. Deaktivieren Sie das Konto stattdessen, wenn Sie nichts verlieren möchten.",
+    "confirmLabel": "Konto löschen"
+  },
+  "toasts": {
+    "deleted": "Konto gelöscht",
+    "deleteFailed": "Konto konnte nicht gelöscht werden. Bitte erneut versuchen.",
+    "deactivated": "Konto deaktiviert — unter Inaktiv zu finden",
+    "reactivated": "Konto reaktiviert",
+    "activeChangeFailed": "Konto konnte nicht geändert werden.",
+    "updated": "Konto aktualisiert",
+    "created": "Konto erstellt",
+    "updateFailed": "Aktualisierung des Kontos fehlgeschlagen",
+    "createFailed": "Erstellung des Kontos fehlgeschlagen"
+  },
+  "types": {
+    "checking": {
+      "label": "Girokonto",
+      "plural": "Girokonten"
+    },
+    "savings": {
+      "label": "Sparkonto",
+      "plural": "Sparkonten"
+    },
+    "credit": {
+      "label": "Kreditkarte",
+      "plural": "Kreditkarten"
+    },
+    "cash": {
+      "label": "Bargeld",
+      "plural": "Bargeld"
+    },
+    "investment": {
+      "label": "Depot",
+      "plural": "Depots"
+    }
+  },
+  "form": {
+    "titleEdit": "Konto bearbeiten",
+    "titleAdd": "Konto hinzufügen",
+    "description": "Die Karte unten zeigt exakt, wie das Konto auf der Kontenseite aussieht.",
+    "newAccountPreview": "Neues Konto",
+    "nameLabel": "Kontiname",
+    "namePlaceholder": "z. B. Eurobank Girokonto",
+    "typeLabel": "Kontotyp",
+    "typePlaceholder": "Typ auswählen",
+    "currencyLabel": "Währung",
+    "currencyPlaceholder": "Währung",
+    "balanceLabel": "Aktueller Kontostand",
+    "balanceHint": "Verwenden Sie einen negativen Wert für Kreditkarten mit offenem Saldo.",
+    "iconLabel": "Konto-Icon",
+    "iconDefault": "Standard",
+    "descriptionLabel": "Beschreibung",
+    "descriptionPlaceholder": "Optionale Notizen zu diesem Konto",
+    "providerSyncedNote": "Saldo, Typ und Währung werden automatisch durch die {{provider}}-Synchronisierung verwaltet.",
+    "saving": "Speichern…",
+    "saveChanges": "Änderungen speichern",
+    "createAccount": "Konto erstellen",
+    "typeOptions": {
+      "checking": "Girokonto",
+      "savings": "Sparkonto",
+      "credit": "Kreditkarte",
+      "cash": "Bargeld",
+      "investment": "Depot / Investment"
+    },
+    "currencyOptions": {
+      "eur": "EUR — Euro",
+      "usd": "USD — US-Dollar",
+      "gbp": "GBP — Britisches Pfund"
+    }
+  }
+}

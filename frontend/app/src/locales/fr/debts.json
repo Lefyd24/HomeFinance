@@ -1,0 +1,304 @@
+{
+  "types": {
+    "creditCard": "Carte de crédit",
+    "personalLoan": "Prêt personnel",
+    "studentLoan": "Prêt étudiant",
+    "mortgage": "Crédit immobilier",
+    "carLoan": "Prêt auto",
+    "informal": "Dette privée / informelle",
+    "utilities": "Factures / Charges",
+    "subscription": "Abonnement",
+    "medical": "Frais médicaux",
+    "tax": "Dette fiscale",
+    "legal": "Frais juridiques",
+    "other": "Autre",
+    "custom": "Personnalisé"
+  },
+  "page": {
+    "title": "Dettes",
+    "description": "Sélectionnez une dette pour étudier le coût des intérêts, l'échéancier et les transactions associées.",
+    "payoffStrategies": "Stratégies de remboursement",
+    "addDebt": "Ajouter une dette",
+    "addFirstDebt": "Ajouter votre première dette",
+    "totalOwed": "Total dû",
+    "overallPayoff": "remboursement global",
+    "minMonthly": "Mensualité min.",
+    "projInterest": "Intérêts projetés",
+    "allPaidOff": "Toutes vos dettes suivies sont totalement remboursées.",
+    "paidOffCount": "Remboursées · {{count}}",
+    "empty": {
+      "title": "Aucune dette suivie",
+      "description": "Ajoutez un emprunt ou une carte de crédit avec le TAEG et la mensualité minimale pour projeter le coût total."
+    },
+    "deleteDialog": {
+      "title": "Supprimer {{name}} ?",
+      "description": "La dette et tous les paiements rattachés seront supprimés. Les transactions enregistrées sur le journal resteront inchangées.",
+      "confirmLabel": "Supprimer la dette"
+    },
+    "toasts": {
+      "deleted": "Dette supprimée",
+      "deleteFailed": "Impossible de supprimer la dette. Réessayez."
+    }
+  },
+  "payoffBar": {
+    "ariaLabel": "{{paid}} payés, {{remaining}} encore dus, {{interest}} d'intérêts prévus",
+    "paidOff": "Remboursé",
+    "stillOwed": "Encore dû",
+    "interestAhead": "Intérêts à venir"
+  },
+  "tile": {
+    "ofOriginal": "sur {{amount}} initial",
+    "cleared": "Réglé",
+    "paidOff": "Remboursé",
+    "minPayment": "Mensualité min.",
+    "aprSuffix": " · {{apr}} % TAEG"
+  },
+  "detail": {
+    "addPayment": "Ajouter un paiement",
+    "payments": "Paiements",
+    "edit": "Modifier",
+    "delete": "Supprimer",
+    "amountDueInterestIncluded": "Montant dû, intérêts inclus",
+    "currentBalance": "Solde actuel",
+    "ofOriginal": "sur {{amount}} initial",
+    "cleared": "Réglé",
+    "percentPaidOff": "{{percent}} % remboursé",
+    "priority": "Priorité P{{priority}}",
+    "interestAndPayoff": {
+      "title": "Intérêts & remboursement",
+      "description": "Projeté à partir du TAEG et du paiement minimal.",
+      "apr": "TAEG",
+      "aprHint": "Capitalisation mensuelle",
+      "minPayment": "Paiement min.",
+      "everyUnit": "Chaque {{unit}}",
+      "everyIntervalUnit": "Tous les {{interval}} {{unit}}",
+      "setOneToUnlock": "Renseignez un TAEG et une mensualité pour débloquer la projection",
+      "monthsToPayoff": "Mois avant remboursement",
+      "estDate": "Est. {{date}}",
+      "needsAprAndMinPayment": "Nécessite un TAEG et un paiement minimal",
+      "totalInterest": "Intérêts totaux",
+      "totalInterestHint": "Ce que coûte le remboursement minimal",
+      "recurrenceUnits": {
+        "days": "jours",
+        "weeks": "semaines",
+        "months": "mois",
+        "day": "jour",
+        "week": "semaine",
+        "month": "mois"
+      }
+    },
+    "opened": "Souscrit le",
+    "maturity": "Échéance",
+    "nextPayment": "Prochain paiement",
+    "scheduleDay": "Jour du prélèvement",
+    "day": "Jour {{day}}",
+    "clearedOn": "Réglé le",
+    "notes": "Notes"
+  },
+  "paymentsSheet": {
+    "title": "Paiements & transactions",
+    "descriptionWithDebt": "Historique des paiements pour {{name}}.",
+    "descriptionNoDebt": "Sélectionnez une dette pour consulter les paiements.",
+    "empty": {
+      "title": "Aucun paiement",
+      "description": "Enregistrez un paiement pour réduire le solde dû."
+    },
+    "payment": "Paiement",
+    "transactionHash": "Txn n°{{id}}",
+    "principal": "Capital {{amount}}",
+    "interest": "Intérêts {{amount}}",
+    "edit": "Modifier",
+    "delete": "Supprimer",
+    "deleteConfirm": {
+      "title": "Supprimer ce paiement ?",
+      "description": "Le solde dû réaugmentera de ce montant. Toute transaction associée dans le journal restera intacte.",
+      "confirmLabel": "Supprimer le paiement"
+    },
+    "toasts": {
+      "deleted": "Paiement supprimé",
+      "deleteFailed": "Impossible de supprimer le paiement"
+    }
+  },
+  "strategies": {
+    "title": "Comparaison des stratégies de remboursement",
+    "loadError": "Impossible de charger les stratégies.",
+    "recommended": "Recommandation : {{strategy}}",
+    "debtAvalanche": "Avalanche de dettes",
+    "debtSnowball": "Boule de neige",
+    "recommendAvalanche": "Économisez {{amount}} d'intérêts et terminez {{months}} mois plus tôt.",
+    "recommendSnowball": "Remboursez d'abord les plus petits soldes pour des victoires rapides et motivantes.",
+    "snowballSubtitle": "Plus petit solde d'abord",
+    "avalancheSubtitle": "Plus fort TAEG d'abord",
+    "recommendedBadge": "Recommandé",
+    "totalMonths": "Nombre de mois",
+    "totalInterest": "Intérêts totaux",
+    "totalPayments": "Total versé",
+    "scheduleTitle": "Aperçu de l'échéancier",
+    "scheduleSubtitle": "Premiers mois de la stratégie {{strategy}}",
+    "table": {
+      "month": "Mois",
+      "debt": "Dette",
+      "payment": "Paiement",
+      "remaining": "Solde restant"
+    }
+  },
+  "form": {
+    "titleEdit": "Modifier la dette",
+    "titleCreate": "Ajouter une dette",
+    "description": "Renseignez le TAEG et la mensualité minimale pour calculer la date de remboursement finale.",
+    "newDebt": "Nouvelle dette",
+    "cancel": "Annuler",
+    "saving": "Enregistrement…",
+    "saveChanges": "Enregistrer les modifications",
+    "addDebt": "Ajouter la dette",
+    "name": {
+      "label": "Nom de la dette",
+      "placeholder": "ex. Carte Visa, Crédit Auto"
+    },
+    "creditor": {
+      "label": "Créancier",
+      "placeholder": "ex. Crédit Agricole"
+    },
+    "type": {
+      "label": "Type de dette",
+      "placeholder": "Choisissez un type",
+      "options": {
+        "creditCard": "Carte de crédit",
+        "personalLoan": "Prêt personnel",
+        "studentLoan": "Prêt étudiant",
+        "mortgage": "Crédit immobilier",
+        "carLoan": "Prêt auto",
+        "informal": "Privé / Informel",
+        "utilities": "Factures / Charges",
+        "subscription": "Abonnement",
+        "medical": "Frais médicaux",
+        "tax": "Fiscal",
+        "legal": "Juridique",
+        "other": "Autre",
+        "custom": "Personnalisé…"
+      }
+    },
+    "priority": {
+      "label": "Priorité"
+    },
+    "customType": {
+      "label": "Intitulé du type personnalisé",
+      "placeholder": "ex. Assurance, Loyer"
+    },
+    "originalBalance": {
+      "label": "Capital initial"
+    },
+    "currentBalance": {
+      "label": "Solde actuel"
+    },
+    "interestRate": {
+      "label": "Taux d'intérêt (TAEG %)",
+      "placeholder": "ex. 15.99",
+      "hint": "Taux annuel ; la capitalisation s'effectue mensuellement."
+    },
+    "minimumPayment": {
+      "label": "Paiement minimal",
+      "placeholder": "Requis pour la projection des intérêts"
+    },
+    "openedDate": {
+      "label": "Date d'ouverture"
+    },
+    "maturityDate": {
+      "label": "Date d'échéance"
+    },
+    "status": {
+      "title": "Statut",
+      "markPaidOff": "Marquer comme entièrement remboursée",
+      "paidOffDate": "Date de remboursement final"
+    },
+    "schedule": {
+      "title": "Fréquence des paiements",
+      "paymentEvery": "Paiement tous les",
+      "frequencyPlaceholder": "Fréquence",
+      "recurrence": {
+        "notRecurring": "Non récurrent",
+        "days": "Jours",
+        "weeks": "Semaines",
+        "months": "Mois"
+      },
+      "dayOfMonth": "Jour du mois",
+      "dayOfMonthPlaceholder": "Pour un prélèvement mensuel"
+    },
+    "linkedAccount": {
+      "label": "Compte associé",
+      "placeholder": "Sélectionner un compte…",
+      "none": "Aucun compte associé"
+    },
+    "nextPaymentDate": {
+      "label": "Date du prochain paiement"
+    },
+    "notify": {
+      "label": "M'avertir avant l'échéance",
+      "daysBefore": "Jours avant",
+      "daysBeforePlaceholder": "Valeur par défaut si vide"
+    },
+    "notes": {
+      "label": "Notes",
+      "placeholder": "Remarques additionnelles sur cette dette"
+    },
+    "toasts": {
+      "updated": "Dette mise à jour",
+      "created": "Dette créée",
+      "updateFailed": "Échec de la mise à jour",
+      "createFailed": "Échec de la création"
+    },
+    "validation": {
+      "nameRequired": "Le nom de la dette est requis",
+      "originalBalancePositive": "Le montant initial doit être supérieur à 0",
+      "currentBalanceNonNegative": "Le solde ne peut pas être négatif",
+      "customTypeRequired": "Le type personnalisé est requis"
+    }
+  },
+  "paymentDialog": {
+    "title": "Enregistrer un paiement",
+    "titleEdit": "Modifier le paiement",
+    "descriptionWithDebt": "Réduit le solde dû sur {{name}}.",
+    "descriptionNoDebt": "Réduit le solde dû sur cette dette.",
+    "descriptionEdit": "Met à jour l'impact sur la dette.",
+    "editLeavesTransaction": "Toute transaction liée dans votre livre des comptes reste inchangée.",
+    "cancel": "Annuler",
+    "saving": "Enregistrement…",
+    "recordPayment": "Enregistrer le paiement",
+    "saveChanges": "Enregistrer les modifications",
+    "amount": {
+      "label": "Montant du paiement"
+    },
+    "principal": {
+      "label": "Part de capital",
+      "placeholder": "Optionnel"
+    },
+    "interest": {
+      "label": "Part d'intérêts",
+      "placeholder": "Optionnel"
+    },
+    "date": {
+      "label": "Date du paiement"
+    },
+    "account": {
+      "label": "Compte débiteur",
+      "placeholder": "Sélectionner un compte…",
+      "none": "Aucun (paiement seul)",
+      "hint": "Sélectionner un compte générera une transaction."
+    },
+    "createTransaction": "Créer l'écriture comptable",
+    "notes": {
+      "label": "Notes",
+      "placeholder": "ex. Mensualité de novembre"
+    },
+    "toasts": {
+      "recorded": "Paiement enregistré",
+      "updated": "Paiement mis à jour",
+      "failed": "Échec de l'ajout",
+      "updateFailed": "Échec de la modification"
+    },
+    "validation": {
+      "amountRequired": "Le montant du paiement est obligatoire",
+      "paymentDateRequired": "La date du paiement est obligatoire"
+    }
+  }
+}

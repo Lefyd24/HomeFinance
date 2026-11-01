@@ -1,0 +1,230 @@
+{
+  "page": {
+    "title": "Report",
+    "description": "Pick a window, then read what happened in it."
+  },
+  "tabs": {
+    "overview": "Overview",
+    "cashflow": "Flusso di cassa",
+    "spending": "Spending",
+    "budgets": "Budget",
+    "debt": "Debito"
+  },
+  "viewSelect": {
+    "report": "Report"
+  },
+  "filters": {
+    "range": {
+      "mtd": "Mese a data",
+      "30d": "Ultimo 30 days",
+      "3m": "Ultimo 3 months",
+      "6m": "Ultimo 6 months",
+      "ytd": "Anno a data",
+      "1y": "Ultimo 12 months",
+      "custom": "Custom"
+    },
+    "startDateAria": "Inizio data",
+    "endDateAria": "Fine data",
+    "accounts": "Conti",
+    "categories": "Categories",
+    "noAccounts": "Nessun conti yet",
+    "noCategories": "Nessun categories yet",
+    "clearFilters": "Cancella filtri",
+    "clear": "Cancella"
+  },
+  "periodBand": {
+    "eyebrow": "Il periodo in breve",
+    "askAdvisor": "Chiedi un parere su questo",
+    "metrics": {
+      "moneyIn": "Money in",
+      "moneyOut": "Money out",
+      "net": "Net",
+      "savingsRate": "Savings rate",
+      "noRate": "—"
+    },
+    "delta": {
+      "flatVsPrior": "Flat vs prior",
+      "vsPrior": "{{value}}{{unit}} vs prior"
+    }
+  },
+  "read": {
+    "noActivityHeadline": "Nessuna attività registrata in questo intervallo.",
+    "noActivityDetail": "Estendi l’intervallo di data o rimuovi un filtro per visualizzare i risultati.",
+    "keptHeadline": "Tu kept {{net}} di il {{income}} quello came in.",
+    "overspentHeadline": "Tu speso {{net}} altro than tu brought in.",
+    "savingsRateDetail": "Quello è a {{rate}}% savings rate",
+    "spendingUpJoined": "e spending è up {{pct}}% su il periodo prima",
+    "spendingDownJoined": "e spending è down {{pct}}% su il periodo prima",
+    "yourSpendingUp": "Tuo spending è up {{pct}}% su il periodo prima",
+    "yourSpendingDown": "Tuo spending è down {{pct}}% su il periodo prima"
+  },
+  "advisorPrompt": {
+    "template": "Looking at {{start}} a {{end}}, tell me {{focus}}. Use my actual transazioni.",
+    "focus": {
+      "overview": "what stands out about my finances",
+      "cashflow": "how my liquidità flow moved e whether il trend è healthy",
+      "spending": "where my spending went e what I could cut",
+      "budgets": "which budget I am at rischio di blowing",
+      "debt": "which debito I should attack primo e why"
+    }
+  },
+  "chart": {
+    "defaultEmpty": "Nothing a chart per questo intervallo."
+  },
+  "series": {
+    "moneyIn": "Money in",
+    "moneyOut": "Money out",
+    "net": "Net",
+    "other": "Altro",
+    "otherCount": "Other ({{count}})",
+    "total": "Totale",
+    "changeInBalance": "Variazione del saldo"
+  },
+  "months": {
+    "jan": "Jan",
+    "feb": "Feb",
+    "mar": "Mar",
+    "apr": "Apr",
+    "may": "May",
+    "jun": "Jun",
+    "jul": "Jul",
+    "aug": "Aug",
+    "sep": "Sep",
+    "oct": "Oct",
+    "nov": "Nov",
+    "dec": "Dec"
+  },
+  "periodLabel": {
+    "week": "W{{week}} {{year}}",
+    "monthDay": "{{day}} {{month}}",
+    "monthYear": "{{month}} {{year}}"
+  },
+  "weekdays": {
+    "Mon": "Mon",
+    "Tue": "Tue",
+    "Wed": "Wed",
+    "Thu": "Thu",
+    "Fri": "Fri",
+    "Sat": "Sat",
+    "Sun": "Sun"
+  },
+  "overview": {
+    "cashflow": {
+      "title": "Entrate, money out, e what era restante",
+      "hint": "Bars sono il two flows; il line è what survived each periodo.",
+      "empty": "Nessuna entrata o uscita in questo intervallo."
+    },
+    "ranked": {
+      "title": "Where it went",
+      "hint": "Uscita categories, largest primo.",
+      "empty": "Nessuna spesa categorizzata in questo intervallo."
+    },
+    "savingsRate": {
+      "title": "Tasso di risparmio da mese",
+      "hint": "Share di each month's entrate tu did non spend. Below il line means tu dipped into reserves.",
+      "empty": "Needs at least one mese con recorded entrate."
+    }
+  },
+  "cashflow": {
+    "waterfall": {
+      "title": "What each mese did a tuo saldo",
+      "hint": "Each bar starts where il ultimo one ended, so il steps trace tuo running totale.",
+      "empty": "Nessuna transazione in questo intervallo.",
+      "tooltipAdded": "Added {{amount}}",
+      "tooltipDrewDown": "Drew down {{amount}}",
+      "tooltipRunningTotal": "Running totale {{amount}}"
+    },
+    "balanceHistory": {
+      "title": "Storico del saldo",
+      "hint": "Giornaliero running saldo per conto. Totale è il thick line.",
+      "empty": "Nessun conto attivo corrisponde a questo filtro."
+    },
+    "table": {
+      "title": "Periodo da periodo",
+      "hint": "Il same numbers as a table, per when tu need il exact figure.",
+      "empty": "Nessuna transazione in questo intervallo.",
+      "period": "Periodo",
+      "moneyIn": "Money in",
+      "moneyOut": "Money out",
+      "net": "Net"
+    }
+  },
+  "spending": {
+    "byCategory": {
+      "title": "Spending da categoria",
+      "hint": "Tile area è il share di totale spend.",
+      "empty": "Nessuna spesa categorizzata in questo intervallo.",
+      "tooltipShare": "{{pct}}% di spend · {{count}} transazioni"
+    },
+    "merchants": {
+      "title": "Top 10 payees",
+      "hint": "Grouped da il descrizione su each transazione.",
+      "empty": "Nessuna spesa in questo intervallo."
+    },
+    "weekday": {
+      "title": "Tuo settimana",
+      "hintDefault": "Spend split across il days di il settimana.",
+      "hintPeak": "{{day}} è tuo heaviest giorno — {{pct}}% di everything tu speso in questo intervallo.",
+      "empty": "Nessuna spesa in questo intervallo.",
+      "tooltip": "{{day}}: {{amount}}"
+    },
+    "mom": {
+      "title": "Mese-su-mese change",
+      "hint": "How each month's spend compares con il one prima it.",
+      "empty": "Needs at least two months di spese a compare.",
+      "tooltipSpent": "{{amount}} speso",
+      "tooltipChange": "{{arrow}} {{pct}}% su il mese prima"
+    }
+  },
+  "budgets": {
+    "empty": {
+      "title": "Nessun budget da valutare",
+      "description": "Crea un budget per vedere in questa scheda quanto ciascun budget è vicino al limite."
+    },
+    "summary": {
+      "allComfortable": "Tutti i budget sono ampiamente entro i limiti.",
+      "over_one": "{{count}} budget è oltre il limit.",
+      "over_other": "{{count}} budget sono oltre il limit.",
+      "tight_one": "{{count}} budget è chiudi a il limit.",
+      "tight_other": "{{count}} budget sono chiudi a il limit.",
+      "description": "{{spent}} speso against {{limit}} budgeted, across {{count}} budget. Sorted da how much di each è used.",
+      "description_other": "{{spent}} speso against {{limit}} budgeted, across {{count}} budget. Sorted da how much di each è used."
+    },
+    "status": {
+      "over": "Oltre",
+      "tight": "Chiudi",
+      "ok": "Su track"
+    },
+    "row": {
+      "spentOf": "{{spent}} di {{limit}} · {{pct}}%",
+      "overLimit": "{{amount}} oltre il limit."
+    }
+  },
+  "debt": {
+    "empty": {
+      "title": "Nessun debiti tracked",
+      "description": "Add a debito e questo tab will mostra payoff progress, interest cost, e which one a cancella primo."
+    },
+    "stats": {
+      "stillOwed": "Still owed",
+      "across_one": "Across {{count}} debito",
+      "across_other": "Across {{count}} debiti",
+      "paidDown": "Paid down",
+      "paidDownHint": "{{pct}}% di il original {{amount}}",
+      "interestPaid": "Interest paid so far",
+      "interestHint": "Il part di tuo pagamenti quello bought nothing"
+    },
+    "recommendation": {
+      "title": "Cancella {{name}} primo.",
+      "description": "At {{rate}}% it è tuo most expensive debito, so every euro sent there saves altro than il same euro sent anywhere else. Keep il minimum pagamento su il rest while tu do it."
+    },
+    "progress": {
+      "title": "Payoff progress",
+      "description": "Ordered da interest rate — most expensive primo.",
+      "leftOf": "{{current}} restante di {{original}}",
+      "paidOff": "{{pct}}% paid off",
+      "clearBy": " · cancella da {{date}} at il attuale minimum pagamento",
+      "setMinimum": " · set a minimum pagamento a project a payoff data"
+    }
+  }
+}

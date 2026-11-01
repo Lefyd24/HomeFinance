@@ -1,0 +1,85 @@
+{
+  "title": "Tableau de bord",
+  "subtitle": "Aperçu de ce mois-ci.",
+  "panel": {
+    "viewAll": "Tout afficher"
+  },
+  "bankAlert": {
+    "title_one": "{{banks}} a cessé la synchronisation.",
+    "title_other": "{{banks}} ont cessé la synchronisation.",
+    "action": "Reconnectez-vous pour reprendre — vos comptes et l'historique sont préservés."
+  },
+  "summary": {
+    "ariaLabel": "Ce mois-ci",
+    "totalBalance": "Solde total",
+    "accountsCount_one": "sur {{count}} compte",
+    "accountsCount_other": "sur {{count}} comptes",
+    "incomeThisMonth": "Entrées du mois",
+    "expensesThisMonth": "Sorties du mois",
+    "netSaved": "Épargne nette"
+  },
+  "accounts": {
+    "title": "Comptes",
+    "hint": "",
+    "empty": "Aucun compte. Ajoutez-en un depuis la page Comptes.",
+    "linked": "Lié",
+    "groups": {
+      "daily": "Au quotidien",
+      "savings": "Épargne",
+      "investments": "Investissements"
+    }
+  },
+  "due": {
+    "title": "Échéances sous 30 jours",
+    "hintEmpty": "Rien de prévu",
+    "hintSummary": "{{amount}} sur {{count}} échéances",
+    "empty": "Aucune échéance dans les 30 prochains jours.",
+    "overdue": "En retard",
+    "dueToday": "Aujourd'hui",
+    "inDays_one": "Dans {{count}} jour",
+    "inDays_other": "Dans {{count}} jours",
+    "types": {
+      "debt": "dette",
+      "recurring": "récurrent"
+    }
+  },
+  "spending": {
+    "title": "Dépenses par catégorie",
+    "reportsLink": "Rapports",
+    "hintSummary_one": "{{amount}} sur {{count}} catégorie",
+    "hintSummary_other": "{{amount}} sur {{count}} catégories",
+    "mostOn": " · principalement pour {{category}}"
+  },
+  "spendingChart": {
+    "noData": "Aucune donnée de dépense sur cette période."
+  },
+  "budgets": {
+    "title": "Budgets",
+    "hint": "",
+    "empty": "Aucun budget configuré."
+  },
+  "recent": {
+    "title": "Activité récente",
+    "hint": "Vos six dernières opérations",
+    "empty": "Aucune opération enregistrée."
+  },
+  "goals": {
+    "title": "Objectifs",
+    "hint": "Progression vers vos cibles",
+    "empty": "Aucun objectif actif.",
+    "progressAmount": "{{current}} sur {{target}}",
+    "targetDate": " · d'ici le {{date}}"
+  },
+  "cashflowChart": {
+    "legend": {
+      "income": "Revenus",
+      "expenses": "Dépenses",
+      "netWorth": "Valeur nette"
+    },
+    "yAxis": {
+      "cashflow": "Flux de trésorerie",
+      "netWorth": "Valeur nette"
+    },
+    "noData": "Aucune donnée de trésorerie sur cette période."
+  }
+}

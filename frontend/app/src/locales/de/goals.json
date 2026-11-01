@@ -1,0 +1,196 @@
+{
+  "categories": {
+    "emergencyFund": "Emergency Fonds",
+    "vacation": "Vacation",
+    "car": "Car Purchase",
+    "home": "Home Purchase",
+    "education": "Education",
+    "retirement": "Retirement",
+    "other": "Sonstiges",
+    "general": "General"
+  },
+  "icons": {
+    "target": "Ziel",
+    "money": "Money",
+    "home": "Home",
+    "car": "Car",
+    "travel": "Travel",
+    "education": "Education",
+    "health": "Health",
+    "gift": "Gift"
+  },
+  "page": {
+    "title": "Ziele",
+    "description": "Chase targets mit a löschen finish line — contribute, track, und celebrate.",
+    "addGoal": "Add Ziel",
+    "createFirstGoal": "Erstes Ziel erstellen",
+    "yourGoals": "Ihre Ziele",
+    "tabs": {
+      "active": "Aktiv",
+      "completed": "Abgeschlossen",
+      "all": "Alle"
+    },
+    "empty": {
+      "title": "Keine Ziele yet",
+      "description": "Erstellen Ihr erst financial Ziel bis Beginn tracking progress toward a Ziel."
+    },
+    "noGoalsInView": {
+      "all": "Keine Ziele in dieser anzeigen.",
+      "active": "Keine aktiv Ziele in dieser anzeigen.",
+      "completed": "Keine abgeschlossen Ziele in dieser anzeigen."
+    },
+    "onlyGoalInView": {
+      "all": "Das hervorgehobene Ziel oben ist Ihr einziges Ziel.",
+      "active": "Das hervorgehobene Ziel oben ist Ihr einziges aktives Ziel.",
+      "completed": "Das hervorgehobene Ziel oben ist Ihr einziges abgeschlossenes Ziel."
+    },
+    "toasts": {
+      "deleted": "Ziel deleted",
+      "deleteFailed": "Fehlgeschlagen bis löschen Ziel",
+      "markedComplete": "Ziel marked complete",
+      "updateFailed": "Ziel konnte nicht aktualisiert werden"
+    },
+    "deleteDialog": {
+      "title": "Löschen {{name}}?",
+      "description": "Das Ziel und sein Fortschrittsverlauf werden entfernt. Dies kann nicht rückgängig gemacht werden.",
+      "confirmLabel": "Löschen Ziel"
+    }
+  },
+  "journey": {
+    "ariaLabel": "Savings journey",
+    "title": "Savings journey",
+    "ofTargeted": "von {{amount}} Zielbetrag",
+    "summary_one": "{{saved}} gespart across {{count}} Ziel · {{active}} aktiv · {{completed}} abgeschlossen",
+    "summary_other": "{{saved}} gespart across {{count}} Ziele · {{active}} aktiv · {{completed}} abgeschlossen"
+  },
+  "hero": {
+    "primaryGoalAria": "Hauptziel: {{name}}",
+    "spotlight": "Spotlight",
+    "primary": "Primary",
+    "completed": "Abgeschlossen",
+    "ofTarget": "von {{amount}}",
+    "toGo": "Noch {{amount}}",
+    "saveToArrive": "Speichern {{amount}}/Monat bis arrive von {{date}}",
+    "targetDate": "Ziel {{date}}",
+    "daysLeft": "{{count}} days übrig",
+    "contribute": "Contribute",
+    "details": "Details",
+    "edit": "Bearbeiten"
+  },
+  "list": {
+    "primary": "Primary",
+    "done": "Done",
+    "left": "{{amount}} übrig",
+    "contribute": "Contribute",
+    "actionsFor": "{{name}} actions",
+    "menu": {
+      "contribute": "Contribute",
+      "details": "Details",
+      "edit": "Bearbeiten",
+      "markComplete": "Mark complete",
+      "delete": "Löschen"
+    }
+  },
+  "form": {
+    "titleEdit": "Bearbeiten Ziel",
+    "titleCreate": "Erstellen Ziel",
+    "updating": "Updating",
+    "newTarget": "Neu savings Ziel",
+    "untitledGoal": "Untitled Ziel",
+    "name": {
+      "label": "Ziel Name",
+      "placeholder": "e.g. Emergency Fonds"
+    },
+    "description": {
+      "label": "Beschreibung",
+      "placeholder": "Optional notes"
+    },
+    "targetAmount": {
+      "label": "Ziel Betrag"
+    },
+    "currency": {
+      "label": "Währung"
+    },
+    "category": {
+      "label": "Kategorie",
+      "placeholder": "Select Kategorie",
+      "selectPlaceholder": "Select Kategorie"
+    },
+    "targetDate": {
+      "label": "Zieldatum"
+    },
+    "icon": {
+      "label": "Icon",
+      "placeholder": "Icon"
+    },
+    "color": {
+      "label": "Color"
+    },
+    "setAsPrimary": "Set as primary Ziel",
+    "cancel": "Cancel",
+    "saveChanges": "Speichern changes",
+    "saveGoal": "Speichern Ziel",
+    "toasts": {
+      "updated": "Ziel aktualisiert",
+      "created": "Ziel erstellt",
+      "updateFailed": "Ziel konnte nicht aktualisiert werden",
+      "createFailed": "Ziel konnte nicht erstellt werden"
+    },
+    "validation": {
+      "nameRequired": "Ziel Name ist erforderlich",
+      "targetAmountPositive": "Ziel Betrag must be greater than 0"
+    }
+  },
+  "contribute": {
+    "title": "Add contribution",
+    "descriptionWithGoal": "{{name}} · {{amount}} remaining",
+    "descriptionNoGoal": "Beitragen toward a Ziel",
+    "amount": {
+      "label": "Betrag"
+    },
+    "type": {
+      "label": "Typ",
+      "contribution": "Einzahlung (add bis Ziel)",
+      "withdrawal": "Auszahlung (entfernen von Ziel)"
+    },
+    "description": {
+      "label": "Beschreibung",
+      "placeholder": "e.g. Monatlich savings"
+    },
+    "date": {
+      "label": "Datum"
+    },
+    "submitWithdrawal": "Record withdrawal",
+    "submitContribution": "Add contribution",
+    "toasts": {
+      "contributionAdded": "Beitrag hinzugefügt",
+      "withdrawalRecorded": "Withdrawal recorded",
+      "failed": "Transaktion konnte nicht hinzugefügt werden"
+    },
+    "validation": {
+      "amountPositive": "Betrag must be greater than 0",
+      "dateRequired": "Datum ist erforderlich"
+    }
+  },
+  "details": {
+    "primary": "Primary",
+    "completed": "Abgeschlossen",
+    "complete": "complete",
+    "saved": "Gespart",
+    "target": "Ziel",
+    "remaining": "Remaining",
+    "targetDate": "Zieldatum",
+    "daysLeft": "Days übrig",
+    "saveToReach": "Speichern {{amount}}/Monat bis reach von {{date}}",
+    "onTrack": "Am track",
+    "behindPace": "Behind pace",
+    "avgPerMonth": "avg {{amount}}/mo",
+    "recentActivity": "Letzte Aktivitäten",
+    "noContributions": "Keine contributions yet",
+    "contribution": "Contribution",
+    "withdrawal": "Auszahlung",
+    "contribute": "Contribute",
+    "edit": "Bearbeiten",
+    "close": "Schließen"
+  }
+}

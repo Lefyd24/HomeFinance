@@ -1,0 +1,567 @@
+{
+  "page": {
+    "title": "Consulente Finanziario",
+    "description": "Esegui calcoli finanziari per investimenti, prestiti, fondo d'emergenza e patrimonio netto.",
+    "toolLabel": "Strumento"
+  },
+  "tools": {
+    "investment": "Investimento",
+    "loan": "Prestito",
+    "emergency": "Fondo d'emergenza",
+    "networth": "Patrimonio netto"
+  },
+  "toolPanel": {
+    "results": "Risultati"
+  },
+  "charts": {
+    "year": "Anno {{n}}",
+    "month": "Mese {{n}}",
+    "age": "Età {{n}}",
+    "now": "Ora"
+  },
+  "secondaryNav": {
+    "investment": {
+      "compound": "Interesse composto",
+      "retirement": "Pensione",
+      "compare": "Confronta",
+      "selfSustaining": "Autosufficiente"
+    },
+    "loan": {
+      "amortization": "Ammortamento",
+      "earlyPayoff": "Estinzione anticipata"
+    }
+  },
+  "investmentTool": {
+    "compound": {
+      "title": "Crescita composta",
+      "description": "Scopri come i tuoi soldi crescono nel tempo grazie all'interesse composto.",
+      "infoBanner": "I tuoi soldi generano interessi, e quegli interessi generano a loro volta altri interessi.",
+      "startingAmountLabel": "Importo iniziale",
+      "startingAmountHint": "Deposito unico iniziale",
+      "monthlyDepositLabel": "Deposito mensile",
+      "monthlyDepositHint": "Contributi regolari",
+      "annualReturnLabel": "Rendimento annuo",
+      "annualReturnHint": "Azioni: 7–10%, obbligazioni: 3–5%",
+      "investmentPeriodLabel": "Periodo di investimento",
+      "investmentPeriodHint": "Anni di crescita",
+      "calculateButton": "Calcola crescita",
+      "calculationError": "Errore di calcolo",
+      "emptyResults": "Inserisci i tuoi dati e calcola per vedere i risultati qui.",
+      "finalBalance": "Saldo finale",
+      "finalBalanceHint": "{{years}} anni",
+      "contributed": "Totale versato",
+      "contributedHint": "I tuoi depositi",
+      "interest": "Interessi",
+      "analysis": "Analisi",
+      "returnLabel": "Rendimento: ",
+      "multiplierLabel": "Moltiplicatore: ",
+      "monthlyLabel": "Mensile: ",
+      "ruleOf72Label": "Regola del 72: ",
+      "ruleOf72Value": "~{{years}} anni",
+      "tip": "Consiglio:",
+      "tipText": "Al {{rate}}%, la Regola del 72 indica che il tuo capitale raddoppia in circa {{years}} anni.",
+      "chartTitle": "Crescita dell'investimento nel tempo",
+      "legendBalance": "Saldo totale",
+      "legendContributions": "I tuoi versamenti",
+      "insight": {
+        "excellent": "Crescita eccellente! Il tuo capitale si moltiplica di {{multiplier}}x in {{years}} anni.",
+        "good": "Buona crescita — il tuo investimento è più che raddoppiato.",
+        "moderate": "Crescita moderata. Valuta di aumentare i versamenti mensili.",
+        "conservative": "Crescita prudente. Un orizzonte più lungo accelererà l'effetto."
+      }
+    },
+    "retirement": {
+      "title": "Proiezione pensionistica",
+      "description": "Stima il saldo finale alla pensione e la rendita mensile secondo la «regola del 4%».",
+      "currentAgeLabel": "Età attuale",
+      "retirementAgeLabel": "Età pensionabile",
+      "currentSavingsLabel": "Baffi attuali",
+      "monthlyContributionLabel": "Contributo mensile",
+      "expectedReturnLabel": "Rendimento atteso %",
+      "expectedInflationLabel": "Inflazione attesa %",
+      "inflationHint": "Media: 2–3%. Il tasso di prelievo utilizza la regola sicura del 4%.",
+      "calculateButton": "Calcola pensione",
+      "calculationError": "Errore di calcolo",
+      "emptyResults": "Inserisci le tue tempistiche e calcola per proiettare la pensione.",
+      "balanceAt": "Saldo a {{age}} anni",
+      "todaysMoney": "{{amount}} in valore attuale",
+      "monthlyIncome": "Reddito mensile",
+      "monthlyIncomeHint": "Regola del 4%",
+      "yearsToRetire": "Anni alla pensione",
+      "yearsToRetireHint": "{{from}} → {{to}}",
+      "outlook": "Prospettiva",
+      "milestones": "Tappe",
+      "milestoneAge": "Età {{age}}",
+      "fourPercentRule": "Regola del 4%:",
+      "fourPercentRuleText": "{{balance}} garantisce {{income}}/mese.",
+      "chartTitle": "Proiezione risparmi per la pensione",
+      "seriesProjectedBalance": "Saldo proiettato",
+      "adequacy": {
+        "excellent": "Il reddito pensionistico proiettato è eccellente e garantisce un ottimo tenore di vita.",
+        "good": "Buona prospettiva pensionistica.",
+        "moderate": "Reddito pensionistico moderato. Valuta di aumentare i versamenti.",
+        "low": "Il reddito proiettato è inferiore alle necessità medie."
+      }
+    },
+    "compare": {
+      "title": "Confronta strategie",
+      "description": "Confronta l'impatto dei contributi mensili e dei rendimenti sul saldo finale.",
+      "initialInvestmentLabel": "Investimento iniziale",
+      "investmentPeriodLabel": "Periodo di investimento",
+      "monthlyLabel": "Mensile",
+      "returnLabel": "Rendimento %",
+      "compareButton": "Confronta strategie",
+      "comparisonError": "Errore nel confronto",
+      "emptyResults": "Imposta i tuoi scenari per scoprire la soluzione migliore.",
+      "bestYields": "offre il rendimento più alto: {{amount}}",
+      "columnScenario": "Scenario",
+      "columnMonthly": "Mensile",
+      "columnRate": "Tasso",
+      "columnFinalBalance": "Saldo finale",
+      "differenceSummary": "La differenza tra {{from}} e {{to}} è di {{amount}} in {{years}} anni.",
+      "chartTitle": "Confronto scenari nel tempo",
+      "scenarios": {
+        "conservative": "Prudente (Basso rischio)",
+        "moderate": "Moderato (Bilanciato)",
+        "aggressive": "Aggressivo (Alto rischio)"
+      }
+    },
+    "selfSustaining": {
+      "title": "Portafoglio autosufficiente",
+      "description": "Trova il capitale necessario affinché gli interessi coprano interamente un prelievo mensile.",
+      "infoBanner": "Quando gli interessi mensili coprono la tua rendita desiderata, il capitale iniziale rimane intatto per sempre.",
+      "initialInvestmentLabel": "Investimento iniziale (€)",
+      "monthlyContributionLabel": "Contributo mensile (€)",
+      "annualRateLabel": "Tasso di interesse annuo (%)",
+      "monthlyWithdrawalLabel": "Obiettivo prelievo mensile (€)",
+      "calculateButton": "Calcola capitale obiettivo",
+      "calculationError": "Impossibile raggiungere la sostenibilità con questi valori.",
+      "emptyResults": "Inserisci i dati e calcola per scoprire il capitale obiettivo.",
+      "targetCapital": "Capitale obiettivo",
+      "targetCapitalDetail": "Genera {{interest}}/mese di interessi — sufficienti a coprire prelievi da {{withdrawal}}",
+      "timeToGoal": "Tempo per l'obiettivo",
+      "timeToGoalValue": "{{years}} anni {{months}} mesi",
+      "timeToGoalHint": "{{months}} mesi totali",
+      "totalContributed": "Totale versato",
+      "totalContributedHint": "I tuoi depositi",
+      "interestEarned": "Interessi maturati",
+      "interestEarnedHint": "Interesse composto",
+      "exportHint": "Esporta il dettaglio annuale",
+      "exportCsv": "CSV",
+      "exportExcel": "Excel",
+      "sustainabilityCheck": "Verifica sostenibilità:",
+      "sustainabilityCheckText": "prelevare {{withdrawal}}/mese da {{capital}} per un anno lascia comunque {{remaining}}.",
+      "chartTitleGrowth": "Crescita verso il capitale obiettivo",
+      "chartTitleSustainability": "Andamento del saldo durante la fase di prelievo",
+      "legendBalance": "Saldo",
+      "legendContributions": "I tuoi versamenti",
+      "legendTargetCapital": "Capitale obiettivo",
+      "legendBalanceAfterWithdrawal": "Saldo dopo il prelievo",
+      "export": {
+        "headerYear": "Anno",
+        "headerBalance": "Saldo",
+        "headerContributions": "Versamenti",
+        "headerInterestEarned": "Interessi maturati",
+        "headerYearGrowth": "Crescita annua",
+        "headerTargetReached": "Obiettivo raggiunto",
+        "yes": "Sì",
+        "no": "No"
+      }
+    }
+  },
+  "loanTool": {
+    "amortization": {
+      "title": "Ammortamento del prestito",
+      "description": "La tua rata mensile e gli interessi totali sul finanziamento.",
+      "loanAmountLabel": "Importo del prestito",
+      "interestRateLabel": "Tasso di interesse %",
+      "loanTermLabel": "Durata (anni)",
+      "calculateButton": "Calcola rata",
+      "calculationError": "Errore di calcolo",
+      "emptyResults": "Inserisci i dettagli del prestito per visualizzare la rata.",
+      "monthly": "Mensile",
+      "monthlyHint": "{{years}} anni",
+      "totalInterest": "Interessi totali",
+      "totalPaid": "Totale pagato",
+      "totalPaidHint": "Capitale + interessi",
+      "summary": "In {{years}} anni al {{rate}}%, pagherai {{amount}} di interessi.",
+      "chartTitle": "Debito residuo nel tempo",
+      "seriesRemainingBalance": "Debito residuo"
+    },
+    "earlyPayoff": {
+      "title": "Estinzione anticipata",
+      "description": "Scopri come i versamenti extra riducono il capitale e tagliano gli interessi futuri.",
+      "remainingBalanceLabel": "Debito residuo",
+      "interestRateLabel": "Tasso di interesse %",
+      "remainingYearsLabel": "Anni rimanenti",
+      "extraPaymentLabel": "Rata mensile extra",
+      "extraPaymentHint": "Importo oltre la rata normale",
+      "calculateButton": "Calcola risparmio",
+      "calculationError": "Errore di calcolo",
+      "emptyResults": "Inserisci un importo extra per calcolare il risparmio.",
+      "saveAlert": "Risparmia {{amount}}",
+      "saveAlertDetail": "versando {{extra}} extra ogni mese.",
+      "timeSaved": "Tempo risparmiato",
+      "timeSavedValue": "{{years}} anni",
+      "timeSavedHint": "{{months}} mesi",
+      "newTerm": "Nuova durata",
+      "newTermValue": "{{years}} anni",
+      "newTermHint": "rispetto a {{years}} anni",
+      "original": "Originale",
+      "new": "Nuovo",
+      "save": "Risparmio",
+      "perMonth": "{{amount}}/mese",
+      "tip": "I pagamenti extra riducono direttamente la quota capitale."
+    }
+  },
+  "emergencyFund": {
+    "title": "Fondo d'emergenza",
+    "description": "Gli esperti raccomandano di accantonare da 3 a 6 mesi di spese essenziali.",
+    "whyYouNeedOne": "Perché è fondamentale",
+    "reasons": {
+      "threeMonths": "3 mesi:",
+      "threeMonthsText": "Protezione minima per dipendenti stabili",
+      "sixMonths": "6 mesi:",
+      "sixMonthsText": "Raccomandato per la maggior parte delle persone",
+      "twelveMonths": "12 mesi:",
+      "twelveMonthsText": "Per liberi professionisti o entrate variabili"
+    },
+    "analyzeIntro": "Analizzeremo le tue spese reali degli ultimi 6 mesi per darti una raccomandazione su misura.",
+    "analyzeButton": "Analizza le mie spese",
+    "loadError": "Errore nel caricamento",
+    "emptyResults": "Esegui l'analisi per vedere la raccomandazione.",
+    "notEnoughData": "Dati insufficienti.",
+    "notEnoughDataFallback": "Sono necessarie più transazioni di spesa.",
+    "notEnoughDataHelp": "Requisiti per l'analisi:",
+    "notEnoughDataChecklist": {
+      "expenses": "Transazioni di spesa registrate sui conti",
+      "history": "Almeno alcune settimane di storico spese",
+      "categorized": "Transazioni categorizzate"
+    },
+    "currentCoverage": "Copertura attuale del fondo",
+    "months": "{{count}} mesi",
+    "coverageDetail": "{{assets}} in attività liquide · spese mensili medie di {{expenses}}",
+    "percentOfTarget": "{{percent}}% dell'obiettivo raccomandato di 6 mesi",
+    "targets": "I tuoi obiettivi di fondo d'emergenza",
+    "targetsBasedOn": "Basato su spese mensili di {{amount}}",
+    "tiers": {
+      "minimum": "Minimo",
+      "recommended": "Raccomandato",
+      "maximum": "Ottimale"
+    },
+    "met": "Raggiunto",
+    "savingsPlansTitle": "Piani di risparmio per l'obiettivo di 6 mesi",
+    "gapLabel": "Mancano: {{amount}}",
+    "monthsCount": "{{count}} mesi",
+    "recommendedBadge": "Raccomandato",
+    "perMonth": "{{amount}}/mese",
+    "goalReached": "Congratulazioni! Hai raggiunto il tuo obiettivo raccomandato.",
+    "status": {
+      "excellent": "Hai un fondo d'emergenza solido che ti copre a lungo. Ottimo lavoro!",
+      "good": "Il tuo fondo è buono. Continua a incrementarlo.",
+      "fair": "Fondo sotto i livelli raccomandati. Dagli la priorità.",
+      "critical": "Fondo criticamente basso. Accumula d'urgenza 1–2 mesi di spese."
+    }
+  },
+  "netWorthTool": {
+    "title": "Tracciamento patrimonio netto",
+    "description": "Patrimonio netto = Attività totali − Passività totali.",
+    "infoBanner": "<strong>Attività:</strong> contanti, investimenti, immobili, veicoli. <strong>Passività:</strong> prestiti, carte di credito, mutui.",
+    "currentButton": "Patrimonio attuale",
+    "historyButton": "Andamento storico",
+    "projectionButton": "Proiezione futura",
+    "loadCurrentError": "Errore nel caricamento del patrimonio",
+    "loadHistoryError": "Errore nel caricamento dello storico",
+    "loadProjectionError": "Errore nel caricamento della proiezione",
+    "emptyResults": "Scegli una vista sopra per visualizzare il patrimonio netto.",
+    "netWorth": "Patrimonio netto",
+    "asOf": "Al {{date}}",
+    "totalAssets": "Attività totali",
+    "totalLiabilities": "Passività totali",
+    "debtToAssetRatio": "Rapporto debiti/attività:",
+    "history": {
+      "infoBanner": "Stima del patrimonio netto negli ultimi 12 mesi basata sullo storico.",
+      "changeLabel": "Variazione 12 mesi: ",
+      "chartTitle": "Storico patrimonio netto (stimato)",
+      "seriesNetWorth": "Patrimonio netto",
+      "seriesChange": "Variazione mensile",
+      "peak": "Massimo",
+      "trough": "Minimo",
+      "average": "Media",
+      "chartHint": "La linea rappresenta il patrimonio netto; le barre indicano l'apporto del singolo mese."
+    },
+    "projection": {
+      "growthLabel": "Crescita proiettata",
+      "growthHint": "Basato su un risparmio medio di {{amount}}/mese",
+      "projectedIn12Months": "Patrimonio netto proiettato tra 12 mesi:",
+      "infoBanner": "Presuppone il mantenimento del ritmo di risparmio attuale.",
+      "chartTitle": "Proiezione patrimonio netto",
+      "seriesProjectedNetWorth": "Patrimonio proiettato",
+      "projectedBand": "Proiettato",
+      "todayLine": "Oggi",
+      "chartHint": "Tratteggiato poiché si tratta di un calcolo teorico basato sui dati attuali."
+    },
+    "health": {
+      "excellent": "Eccellente! Il rapporto debiti/attività è molto sano.",
+      "good": "Buona posizione finanziaria con debiti contenuti.",
+      "moderate": "Livello di debito moderato. Valuta la riduzione dei debiti.",
+      "high": "Rapporto debiti elevato. Dai la priorità all'estinzione delle passività."
+    }
+  },
+  "aiAdvisor": {
+    "popup": {
+      "title": "Assistente Finanziario",
+      "subtitle": "Legge i tuoi conti reali, budget e bollette",
+      "close": "Chiudi assistente",
+      "resize": "Ridimensiona assistente"
+    },
+    "unavailableReason": "La chat IA non è configurata su questo server.",
+    "models": {
+      "pickerLabel": "Modello",
+      "search": "Cerca modelli…",
+      "sortName": "Nome",
+      "sortPrice": "Prezzo",
+      "sortContext": "Contesto",
+      "loading": "Caricamento modelli…",
+      "unavailable": "Impossibile caricare l'elenco dei modelli.",
+      "empty": "Nessun modello corrispondente.",
+      "updated": "Aggiornato {{when}}",
+      "count": "{{count}} modelli",
+      "refresh": "Aggiorna elenco modelli",
+      "free": "gratis",
+      "priceUnknown": "prezzo sconosciuto",
+      "perMillion": "per 1M di token",
+      "contextLength": "Contesto {{size}}"
+    },
+    "usage": {
+      "title": "Questa risposta",
+      "model": "Modello",
+      "steps": "Passaggi",
+      "toolCalls": "Ricerche",
+      "input": "Token di input",
+      "cached": "Token in cache",
+      "output": "Token di output",
+      "peakContext": "Picco contesto",
+      "cost": "Costo",
+      "duration": "Durata",
+      "estimated": "Costo stimato.",
+      "tokens": "tok",
+      "sessionTotal": "Questa chat: {{cost}}"
+    },
+    "chat": {
+      "newChat": "Nuova chat",
+      "thinking": "Elaborazione in corso",
+      "copy": "Copia",
+      "copied": "Copiato",
+      "askAgain": "Chiedi di nuovo",
+      "heading": "Chiedi qualsiasi cosa sulle tue finanze.",
+      "subheading": "Il consulente consulta le tue transazioni, saldi, budget e debiti reali per risponderti.",
+      "composerPlaceholderDisabled": "Il consulente non è disponibile",
+      "composerPlaceholder": "Fai una domanda sulle tue finanze…",
+      "composerAriaLabel": "Fai una domanda sulle tue finanze",
+      "stopAriaLabel": "Interrompi",
+      "sendAriaLabel": "Invia",
+      "composerHint": "Invio per inviare, Maiusc + Invio per andare a capo.",
+      "genericError": "L'assistente si è interrotto.",
+      "unreachableError": "Impossibile raggiungere il consulente ({{status}}).",
+      "emptyResponseError": "L'assistente ha restituito una risposta vuota.",
+      "streamError": "Si è verificato un errore durante il collegamento.",
+      "suggestionGroups": {
+        "findLeak": {
+          "title": "Trova le spese superflue",
+          "prompts": [
+            "Quali sono le mie prime 3 categorie di spesa questo mese?",
+            "Quali abbonamenti sto pagando senza utilizzarli?"
+          ]
+        },
+        "checkPlan": {
+          "title": "Verifica il piano",
+          "prompts": [
+            "Sono in linea con i miei budget?",
+            "Quali spese ricorrenti scadranno nei prossimi 7 giorni?"
+          ]
+        },
+        "getOutOfDebt": {
+          "title": "Estingui i debiti",
+          "prompts": [
+            "A quanto ammonta il mio debito totale e quale dovrei ripagare per primo?",
+            "Se aggiungo 200 al mese per ripagare i debiti, quando sarò libero?"
+          ]
+        },
+        "portfolioHealth": {
+          "title": "Analisi portafoglio",
+          "prompts": [
+            "Ho una concentrazione eccessiva su un singolo titolo?",
+            "Quanto è rischioso il mio portafoglio rispetto al mercato?"
+          ]
+        },
+        "investDecision": {
+          "title": "Scelte di investimento",
+          "prompts": [
+            "Quanto posso ragionevolmente investire ogni mese?",
+            "Dovrei incrementare la mia posizione principale o acquistare un ETF globale?",
+            "È meglio ripagare i debiti prima di iniziare a investire?"
+          ]
+        }
+      },
+      "export": "Esporta"
+    },
+    "toolTrail": {
+      "labels": {
+        "getTransactions": "Lettura transazioni",
+        "getTotals": "Calcolo totali",
+        "getAccountBalances": "Verifica saldi",
+        "getBudgetsStatus": "Esame dei budget",
+        "getRecurringExpenses": "Verifica spese ricorrenti",
+        "getDebts": "Verifica debiti",
+        "sendAnalysisEmail": "Invio email",
+        "getInvestorProfile": "Lettura profilo investitore",
+        "updateInvestorProfile": "Aggiornamento profilo investitore",
+        "getPortfolioOverview": "Lettura portafoglio",
+        "getPositions": "Elenco posizioni",
+        "getPortfolioAllocation": "Verifica allocazione",
+        "getPortfolioRisk": "Misurazione rischio",
+        "getInvestmentTransactions": "Lettura attività broker",
+        "getPositionHistory": "Tracciamento storico posizione",
+        "getWatchlist": "Verifica watchlist",
+        "searchSymbols": "Ricerca ticker",
+        "getCompanyResearch": "Ricerca azienda",
+        "compareSymbols": "Confronto",
+        "getTechnical": "Lettura grafici per",
+        "simulateSymbol": "Simulazione scenari per",
+        "getNetWorth": "Calcolo patrimonio netto",
+        "getEmergencyFund": "Verifica fondo d'emergenza",
+        "getGoals": "Verifica obiettivi",
+        "getInvestableSurplus": "Calcolo surplus investibile",
+        "getRecurringCommitments": "Calcolo impegni ricorrenti",
+        "projectInvestment": "Proiezione crescita",
+        "compareInvestVsPayoff": "Confronto investimento vs. estinzione debito",
+        "loadSkill": "Caricamento skill",
+        "getCategoryTrends": "Analisi tendenze categorie",
+        "getCashflowTrend": "Grafico flusso di cassa",
+        "detectSpendingAnomalies": "Ricerca spese anomale",
+        "getSubscriptionAudit": "Verifica abbonamenti",
+        "sendReportEmail": "Invio report via email",
+        "getFinancialStatements": "Lettura bilanci di",
+        "getAnalystEstimates": "Lettura stime analisti per",
+        "findPeers": "Ricerca aziende comparabili a",
+        "dcfValuation": "Valutazione DCF per",
+        "getNewsDigest": "Lettura ultime notizie su",
+        "screenStocks": "Screening azioni",
+        "screenEtfs": "Screening ETF",
+        "getSectorOverview": "Analisi settore",
+        "portfolioFit": "Verifica idoneità portafoglio",
+        "rebalancePlan": "Pianificazione ribilanciamento",
+        "getFundCosts": "Confronto costi fondi",
+        "webSearch": "Ricerca sul Web"
+      },
+      "usingFallback": "Utilizzo di {{name}}",
+      "phrases": {
+        "statement": "Lettura {{statement}} per {{symbol}}",
+        "webSearch": "Ricerca sul Web per {{query}}"
+      },
+      "statements": {
+        "income": "conto economico",
+        "balance": "stato patrimoniale",
+        "cashflow": "rendiconto finanziario"
+      },
+      "usingSkill": "Utilizzo della skill: {{title}}"
+    },
+    "profileUpdate": {
+      "title": "Il consulente ha aggiornato il tuo profilo",
+      "undo": "Annulla",
+      "undone": "(annullato)",
+      "notSet": "non impostato",
+      "fields": {
+        "risk_tolerance": "Tolleranza al rischio",
+        "primary_objective": "Obiettivo principale",
+        "horizon_years": "Orizzonte (anni)",
+        "liquidity_needs_months": "Liquidità necessaria (mesi)",
+        "target_allocation": "Allocazione obiettivo",
+        "max_single_position_pct": "Max singola posizione",
+        "excluded_sectors": "Settori esclusi",
+        "excluded_symbols": "Simboli esclusi",
+        "income_stability": "Stabilità reddito",
+        "experience_level": "Esperienza",
+        "base_currency": "Valuta base",
+        "tax_residency": "Residenza fiscale",
+        "notes": "Note"
+      }
+    },
+    "export": {
+      "modelLine": "Modello: {{model}} · {{cost}}",
+      "title": "Conversazione Assistente IA",
+      "exportedAt": "Esportato il {{when}}",
+      "you": "Tu",
+      "advisor": "Consulente"
+    },
+    "skills": {
+      "menuLabel": "Skill",
+      "activeLabel": "Skill attive",
+      "dismiss": "Interrompi {{title}}",
+      "modelHint": "{{skill}} funziona meglio con {{model}}.",
+      "switchModel": "Passa a {{model}}",
+      "dismissHint": "Chiudi"
+    }
+  },
+  "investorProfile": {
+    "title": "Profilo investitore",
+    "description": "Informazioni utilizzate dal consulente IA per personalizzare i consigli.",
+    "loading": "Caricamento…",
+    "notSetYet": "Nessuna impostazione salvata.",
+    "choose": "Scegli…",
+    "save": "Salva profilo",
+    "saving": "Salvataggio…",
+    "saved": "Salvato",
+    "saveFailed": "Impossibile salvare il profilo.",
+    "allocationTotal": "Totale: {{total}}% (dovrebbe essere circa 100%)",
+    "fields": {
+      "riskTolerance": "Tolleranza al rischio",
+      "primaryObjective": "Obiettivo principale",
+      "horizonYears": "Orizzonte di investimento (anni)",
+      "liquidityNeedsMonths": "Mesi di spese da tenere liquidi",
+      "maxSinglePosition": "Massimo per singola posizione (%)",
+      "incomeStability": "Stabilità del reddito",
+      "experienceLevel": "Esperienza negli investimenti",
+      "baseCurrency": "Valuta principale",
+      "taxResidency": "Residenza fiscale",
+      "targetAllocation": "Allocazione obiettivo",
+      "excludedSectors": "Settori esclusi",
+      "excludedSymbols": "Simboli esclusi",
+      "notes": "Altre informazioni utili"
+    },
+    "hints": {
+      "horizonYears": "Fra quanti anni avrai bisogno di questi soldi.",
+      "maxSinglePosition": "Segnala se una raccomandazione supera questa percentuale.",
+      "targetAllocation": "Ripartizione percentuale desiderata (~100%).",
+      "commaSeparated": "Separati da virgola",
+      "notes": "es. «Ho già una pensione integrativa»"
+    },
+    "assetClasses": {
+      "equity": "Azioni",
+      "bond": "Obbligazioni",
+      "cash": "Liquidità",
+      "crypto": "Criptovalute",
+      "other": "Altro"
+    },
+    "values": {
+      "conservative": "Conservativo",
+      "moderate": "Moderato",
+      "balanced": "Bilanciato",
+      "growth": "Crescita",
+      "aggressive": "Aggressivo",
+      "preservation": "Preservare il capitale",
+      "income": "Generare rendita",
+      "stable": "Stabile",
+      "variable": "Variabile",
+      "uncertain": "Incierto",
+      "beginner": "Principiante",
+      "intermediate": "Intermedio",
+      "experienced": "Esperto"
+    },
+    "history": {
+      "title": "Storico modifiche",
+      "description": "Cronologia di tutte le modifiche apportate."
+    }
+  }
+}

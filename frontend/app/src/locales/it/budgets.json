@@ -1,0 +1,107 @@
+{
+  "page": {
+    "title": "Budget",
+    "description": "Imposta limiti di spesa per categorie e periodi temporali.",
+    "createButton": "Crea Budget"
+  },
+  "summary": {
+    "of": "di {{amount}}",
+    "envelopes_one": "{{count}} budget",
+    "envelopes_other": "{{count}} budget",
+    "overLimit": "{{count}} oltre il limite",
+    "over": "oltre",
+    "left": "rimasti"
+  },
+  "empty": {
+    "title": "Nessun budget creato",
+    "description": "Crea un budget per monitorare le tue uscite.",
+    "cta": "Crea il tuo primo budget"
+  },
+  "period": {
+    "monthly": "Mensile",
+    "yearly": "Annuale",
+    "custom": "Personalizzato"
+  },
+  "status": {
+    "over": "Superato",
+    "watch": "Quasi al limite",
+    "unused": "Inutilizzato",
+    "good": "In linea"
+  },
+  "card": {
+    "actionsAria": "Azioni per {{name}}",
+    "edit": "Modifica",
+    "periodDetails": "Dettagli periodo",
+    "delete": "Elimina",
+    "ofLimit": "del limite di {{amount}}",
+    "over": "oltre",
+    "remaining": "rimanenti",
+    "allCategories": "Tutte le categorie",
+    "more": "+{{count}}"
+  },
+  "deleteDialog": {
+    "title": "Eliminare {{name}}?",
+    "description": "Le tue spese rimangono; viene rimosso solo il budget.",
+    "confirmLabel": "Elimina budget"
+  },
+  "toasts": {
+    "deleted": "Budget eliminato",
+    "deleteError": "Errore nell'eliminazione del budget",
+    "created": "Budget creato",
+    "updated": "Budget aggiornato",
+    "createError": "Errore nella creazione del budget",
+    "updateError": "Errore nell'aggiornamento del budget"
+  },
+  "form": {
+    "createTitle": "Crea Budget",
+    "editTitle": "Modifica Budget",
+    "name": "Nome Budget",
+    "amount": "Importo",
+    "period": "Periodo",
+    "selectPeriod": "Seleziona periodo",
+    "startDate": "Data inizio",
+    "endDate": "Data fine",
+    "categories": "Categorie",
+    "noExpenseCategories": "Nessuna categoria di spesa disponibile.",
+    "submitCreate": "Crea Budget",
+    "submitUpdate": "Aggiorna Budget",
+    "validation": {
+      "nameRequired": "Il nome del budget è obbligatorio",
+      "amountPositive": "L'importo deve essere maggiore di zero"
+    }
+  },
+  "details": {
+    "titleFallback": "Dettagli Budget",
+    "description": "Utilizzo per il {{year}}.",
+    "prevYearAria": "Anno precedente {{year}}",
+    "nextYearAria": "Anno successivo {{year}}",
+    "unableToLoad": "Impossibile caricare i dettagli del budget.",
+    "budgetPeriod": "Budget {{suffix}}",
+    "perMonth": "/mese",
+    "perYear": "/anno",
+    "yearBudget": "Budget Annuale",
+    "yearSpent": "Speso nell'anno",
+    "yearRemaining": "Rimanente nell'anno",
+    "yearUsage": "Utilizzo annuo",
+    "noDataForYear": "Nessun dato per questo anno",
+    "current": "Attuale",
+    "statusOver": "Superato",
+    "statusAlmost": "Quasi al limite",
+    "statusNoSpending": "Nessuna spesa",
+    "noTransactions": "Nessuna transazione in questo periodo",
+    "table": {
+      "date": "Data",
+      "description": "Descrizione",
+      "category": "Categoria",
+      "account": "Conto",
+      "amount": "Importo",
+      "uncategorized": "Non categorizzato"
+    },
+    "totalMobile": "Totale ({{count}})",
+    "totalDesktop_one": "Totale ({{count}} transazione)",
+    "totalDesktop_other": "Totale ({{count}} transazioni)",
+    "percentUsed": "{{percent}}% del budget utilizzato",
+    "over": "oltre",
+    "left": "rimasti"
+  }
+}

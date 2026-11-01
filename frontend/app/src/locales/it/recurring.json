@@ -1,0 +1,194 @@
+{
+  "page": {
+    "title": "Recurring",
+    "description": "What leaves tuo conti su a schedule, e when it è prossimo due.",
+    "addAction": "Add"
+  },
+  "totals": {
+    "due30": {
+      "label": "Due in 30 days",
+      "hint": "{{count}} attivo"
+    },
+    "monthly": {
+      "label": "Mensile commitment",
+      "hint": "Tutto cadences normalised"
+    },
+    "overdue": {
+      "label": "Overdue",
+      "hintAttention": "Needs attention",
+      "hintClear": "Tutto cancella"
+    }
+  },
+  "tabs": {
+    "all": "Tutti",
+    "expenses": "Spese",
+    "income": "Entrate",
+    "paused": "Paused ({{count}})"
+  },
+  "sections": {
+    "paused": "Paused",
+    "overdue": "Overdue",
+    "next7": "Prossimo 7 days",
+    "later": "Later",
+    "empty": "Nothing here in questo visualizza."
+  },
+  "empty": {
+    "title": "Nothing su a schedule yet",
+    "description": "Add il bills e subscriptions quello repeat, e they will mostra up here prima they sono due.",
+    "addFirst": "Add il primo one"
+  },
+  "cadence": {
+    "daily": "Giornaliero",
+    "weekly": "Settimanale",
+    "monthly": "Mensile",
+    "every": "Every {{interval}} {{unit}}"
+  },
+  "units": {
+    "days": "days",
+    "weeks": "weeks",
+    "months": "months"
+  },
+  "due": {
+    "paused": "Paused",
+    "overdue": "{{count}}d overdue",
+    "today": "Oggi",
+    "tomorrow": "Tomorrow",
+    "inDays": "In {{count}} days"
+  },
+  "detail": {
+    "fallbackTitle": "Ricorrenti pagamento",
+    "fallbackDescription": "Connected pagamenti",
+    "loadError": "Could non carica il pagamento storico.",
+    "stats": {
+      "totalPaid": "Totale paid",
+      "payments": "Pagamenti",
+      "lastPayment": "Ultimo pagamento"
+    },
+    "empty": {
+      "title": "Nessun pagamenti recorded yet.",
+      "description": "Mark it paid once e il storico starts here."
+    },
+    "table": {
+      "date": "Data",
+      "description": "Descrizione",
+      "amount": "Importo",
+      "actions": "Pagamento actions"
+    },
+    "paymentOnly": "Pagamento record only"
+  },
+  "paymentEdit": {
+    "title": "Modifica pagamento",
+    "description": "Aggiorna questo pagamento record. Il linked ledger transazione è restante unchanged.",
+    "amount": "Importo (€)",
+    "date": "Pagamento data",
+    "notes": "Notes",
+    "save": "Salva changes",
+    "leavesTransaction": "Any linked transazione su il Transazioni page è non modified.",
+    "validation": {
+      "amountRequired": "Importo must be greater than 0",
+      "dateRequired": "La data del pagamento è obbligatoria"
+    },
+    "toasts": {
+      "updated": "Pagamento updated",
+      "failed": "Could non aggiorna pagamento",
+      "deleted": "Pagamento removed",
+      "deleteFailed": "Could non rimuovi pagamento"
+    },
+    "deleteConfirm": {
+      "title": "Rimuovi questo pagamento?",
+      "description": "Rimuovis il pagamento da questo recurring item e rewinds its due data. Any linked transazione stays in tuo ledger.",
+      "confirmLabel": "Rimuovi pagamento"
+    }
+  },
+  "actions": {
+    "resume": "Resume",
+    "markPaid": "Mark paid",
+    "viewTransactions": "Transazioni",
+    "moreActionsAria": "Altro actions",
+    "disable": "Disable"
+  },
+  "toast": {
+    "resumed": "{{name}} resumed",
+    "paused": "{{name}} paused",
+    "resumeError": "Could non resume it. Prova di nuovo.",
+    "pauseError": "Could non pause it. Prova di nuovo.",
+    "deleted": "Deleted",
+    "deleteError": "Could non elimina it. Prova di nuovo.",
+    "updated": "Ricorrenti spesa updated",
+    "created": "Ricorrenti spesa created",
+    "updateError": "Non riuscito a aggiorna recurring spesa",
+    "createError": "Non riuscito a add recurring spesa"
+  },
+  "deleteConfirm": {
+    "title": "Elimina {{name}}?",
+    "description": "Its pagamento storico goes con it. Pause it instead if tu only want it off il agenda.",
+    "confirmLabel": "Elimina permanently"
+  },
+  "aria": {
+    "totals": "Recurring totals",
+    "schedule": "Recurring schedule"
+  },
+  "form": {
+    "titleCreate": "Add a recurring pagamento",
+    "titleEdit": "Modifica recurring pagamento",
+    "description": "Set il importo e how often it repeats. Il agenda will surface it prima each due data.",
+    "saving": "Salvataggio…",
+    "saveChanges": "Salva changes",
+    "addIt": "Add it",
+    "none": "Nessuno",
+    "categoryPrefix": {
+      "expense": "Spesa",
+      "income": "Entrate"
+    },
+    "units": {
+      "days": "Days",
+      "weeks": "Weeks",
+      "months": "Months"
+    },
+    "fields": {
+      "name": "Nome",
+      "namePlaceholder": "e.g. Netflix, Rent",
+      "amount": "Importo (€)",
+      "account": "Conto",
+      "accountPlaceholder": "Conto",
+      "category": "Categoria",
+      "categoryPlaceholder": "Categoria",
+      "startDate": "Inizio data",
+      "nextDueDate": "Prossimo due data",
+      "repeatsEvery": "Repeats every",
+      "unitPlaceholder": "Unit",
+      "notifyBeforeDue": "Notify me prima due",
+      "daysBefore": "Days prima",
+      "notifyDaysPlaceholder": "Uses default if empty",
+      "notes": "Notes"
+    },
+    "validation": {
+      "nameRequired": "Nome è obbligatorio",
+      "amountPositive": "Importo must be greater than 0",
+      "startDateRequired": "Inizio data è obbligatorio",
+      "nextDueDateRequired": "Prossimo due data è obbligatorio"
+    }
+  },
+  "markPaid": {
+    "validation": {
+      "amountPositive": "Importo must be greater than 0",
+      "paymentDateRequired": "La data del pagamento è obbligatoria"
+    },
+    "title": "Mark as paid",
+    "submit": "Mark as paid",
+    "saving": "Salvataggio…",
+    "descriptionFor": "Records a pagamento per {{name}} e rolls its prossimo due data forward.",
+    "descriptionGeneric": "Records a pagamento e rolls il prossimo due data forward.",
+    "noTransactionLink": "Nessun transazione link",
+    "transactionOption": "{{date}} — {{description}} ({{amount}})",
+    "toastSuccess": "Pagamento registrato: la prossima scadenza è stata aggiornata",
+    "toastError": "Impossibile registrare il pagamento",
+    "fields": {
+      "amountPaid": "Importo paid (€)",
+      "paymentDate": "Pagamento data",
+      "linkTransaction": "Collega a una transazione esistente (facoltativo)",
+      "notes": "Notes",
+      "notesPlaceholder": "Facoltativo"
+    }
+  }
+}
