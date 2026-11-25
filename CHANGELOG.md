@@ -6,6 +6,20 @@ Releases that add database migrations or new `.env` settings say so, so you know
 
 ## [Unreleased]
 
+## [1.5.0] - 2026-11-25
+
+Fixes Freedom24 values, returns and history. Adds migration `028`. No new `.env` settings. Migrations apply automatically on start, so [back up first](docs/operations.md#backups). On its first sync after the update, each Freedom24 account rebuilds its past portfolio history once, so charts and returns change.
+
+### Fixed
+- **Freedom24 holdings show live prices.** Positions were valued at the broker's overnight figure, so all day they showed the previous close (for example MOH.GR at 56.65 while it traded at 56.00). Stocks and funds are now valued at the live last price, which matches the Freedom24 app. Bonds keep the broker's own valuation.
+- **"Today" for Greek stocks.** Freedom24's quote feed reports no change for ATHEX stocks even on days they move, so they always showed 0.00%. The day's move is now worked out from the previous close.
+- **Currency conversions.** Only one side of each FX trade was recorded, so every conversion looked like money arriving from nowhere. Both sides are now recorded.
+- **Rebuilt portfolio history.** The broker reports trades but not deposits or withdrawals. The rebuilt history used to leave cash negative for years and then make the value jump overnight, which showed up as gains of over 100% and a meaningless best day. Now:
+  - Trade amounts and prices are converted into the account currency.
+  - A deposit is assumed on the day a purchase needed one.
+  - The history starts with the first trade instead of two years back, so all-time figures include early trades.
+- **Daily prices from Freedom24 were dated one day early**, because Freedom24 stamps each day's price at midnight Moscow time.
+
 ## [1.4.0] - 2026-11-01
 
 A security hardening release. No new migrations. One new optional `.env` setting, `NOTIFICATION_ENCRYPTION_KEY_PREVIOUS`, used only while rotating keys. Everyone has to sign in once after updating.
@@ -154,7 +168,8 @@ First public release.
 - The Privacy Policy and Terms pages read the operator's name, contact email and jurisdiction from the server instead of compiled-in values. **Action required:** set `LEGAL_OPERATOR_NAME`, `LEGAL_CONTACT_EMAIL` and `LEGAL_JURISDICTION` in `.env`. Until you do, those pages show a "not configured" notice. See [Configuration](docs/configuration.md#legal-pages).
 - `docker-compose.yml` now names the published image. `docker compose pull && docker compose up -d` updates without building.
 
-[Unreleased]: https://github.com/Lefyd24/HomeFinance/compare/v1.4.0...HEAD
+[Unreleased]: https://github.com/Lefyd24/HomeFinance/compare/v1.5.0...HEAD
+[1.5.0]: https://github.com/Lefyd24/HomeFinance/compare/v1.4.0...v1.5.0
 [1.4.0]: https://github.com/Lefyd24/HomeFinance/compare/v1.3.3...v1.4.0
 [1.3.3]: https://github.com/Lefyd24/HomeFinance/compare/v1.3.2...v1.3.3
 [1.3.2]: https://github.com/Lefyd24/HomeFinance/compare/v1.3.1...v1.3.2
