@@ -78,6 +78,7 @@ INSTRUMENT_KINDS: dict[tuple[int, int], str] = {
 
 # `instr_type_c` on a trade row uses the same type codes as tickerFinder.
 CURRENCY_INSTRUMENT_TYPE = 6
+BOND_INSTRUMENT_TYPE = 2
 
 
 def _first(d: dict[str, Any], *keys: str) -> Any:
@@ -129,33 +130,54 @@ def _parse_datetime(value: Any) -> Optional[datetime]:
     return None
 
 
-def _day_change_pct_from_quote(quote: dict[str, Any]) -> Optional[float]:
+def _previous_close(
+    quote: dict[str, Any], row_close: Optional[float] = None
+) -> Optional[float]:
+    """The instrument's previous session close, from the quote feed and the
+    portfolio row.
+
+    `ClosePrice` is **not** reliably the previous close: on the live rows of
+    2026-11-25, after the European session ended, it equalled `ltp` for every
+    holding — today's close — while MTLN.EU carried `chg` -1.02 and `pcp`
+    -2.47 against the previous close of 41.28. So the delta wins: `ltp - chg`
+    when the feed reports a move, then the percentage. For ATHEX stocks the
+    feed reports `chg` 0 and `pcp` 0 even on days they moved four percent
+    (ALPHA.GR 4.28 -> 4.108 the same day), so the portfolio row's own
+    `close_price` — the previous session's close the broker valued the
+    position at overnight — is the next source. `ClosePrice` is the last resort.
+    """
+    last_price = _opt_float(quote.get("ltp"))
+    change = _opt_float(quote.get("chg"))
+    if last_price and change:
+        return round(last_price - change, 6)
+    pcp = _opt_float(quote.get("pcp"))
+    if last_price and pcp and pcp > -100:
+        return round(last_price / (1 + pcp / 100), 6)
+    if row_close and row_close > 0:
+        return row_close
+    close = _opt_float(quote.get("ClosePrice"))
+    return close if close and close > 0 else None
+
+
+def _day_change_pct_from_quote(
+    quote: dict[str, Any], row_close: Optional[float] = None
+) -> Optional[float]:
     """The instrument's percent move for the day, from one quote row.
 
     `pcp` is the feed's own percentage and wins when it says the instrument
-    moved. But for some venues (Greek stocks — every ATHEX holding reported
-    0.00 in the field while its price moved) `pcp` comes back pinned at 0 or
-    empty even though the first-hand price fields carry the real move: on the
-    recorded live rows, `chg` is the absolute price delta and `ltp` -
-    `ClosePrice` reproduces it exactly (AAPL.US: 339.05 - 338.19 = 0.87, and
-    0.87 / 338.19 = 0.26% = `pcp`). So a bare zero is taken at face value only
-    when the prices agree; otherwise the percentage is derived from them. If
-    nothing can confirm or contradict it — no `ClosePrice` and no `chg` — the
-    honest answer is None, not a fabricated flat day.
+    moved. When it is pinned at 0 or missing (every ATHEX holding), the move
+    is derived from the last price and the previous close (see
+    `_previous_close`). If nothing can confirm or contradict a flat day, the
+    honest answer is None, not a fabricated 0.00.
     """
     pcp = _opt_float(quote.get("pcp"))
     if pcp:
         return pcp
-    previous_close = _opt_float(quote.get("ClosePrice"))
-    if not previous_close or previous_close <= 0:
-        return None
     last_price = _opt_float(quote.get("ltp"))
-    if last_price is not None:
-        return round((last_price - previous_close) / previous_close * 100, 2)
-    change = _opt_float(quote.get("chg"))
-    if change is not None:
-        return round(change / previous_close * 100, 2)
-    return None
+    previous_close = _previous_close(quote, row_close)
+    if last_price is None or not previous_close:
+        return None
+    return round((last_price - previous_close) / previous_close * 100, 2)
 
 
 class Freedom24Provider(InvestmentProvider):
@@ -163,6 +185,7 @@ class Freedom24Provider(InvestmentProvider):
         super().__init__(public_key, private_key, base_currency)
         self._client = Tradernet(public=public_key, private=private_key)
         self._portfolio_cache: Optional[dict[str, Any]] = None
+        self._positions_cache: Optional[list[ProviderPosition]] = None
 
     # ------------------------------------------------------------------ portfolio
 
@@ -274,23 +297,51 @@ class Freedom24Provider(InvestmentProvider):
             currency=base,
             positions_value=round(positions_value, 2),
             cash_by_currency={c: round(v, 2) for c, v in cash_by_currency.items()},
+            fx_rates={
+                currency: self._convert(1.0, currency, base, rates)[1] for currency in rates
+            },
         )
 
     def get_positions(self) -> list[ProviderPosition]:
+        """Open holdings, valued at the live last price.
+
+        `market_value` on the portfolio row is the broker's **overnight**
+        valuation: on 2026-11-25 every row carried `sql_exec_tm` 03:2x and
+        priced MOH.GR at 56.65 all day while it traded at 56.00 and the broker's
+        own app showed 56.00. The quote feed's `ltp` is live, so it values
+        every non-bond holding (value = ltp x quantity, the figure the broker
+        app shows). Bonds keep the row's valuation — their price is a
+        percentage of face value. When the quote feed fails, the overnight
+        value is still a sane fallback.
+        """
+        if self._positions_cache is not None:
+            return self._positions_cache
+
         ps = self._portfolio()
         rates, base = self._fx_rates(ps)
 
         pos_rows = ps.get("pos") or []
         if not isinstance(pos_rows, list):
             raise ValueError("Unexpected Freedom24 response shape: pos is not a list")
+        rows = [
+            row
+            for row in pos_rows
+            if isinstance(row, dict) and _first(row, "i", "base_contract_code")
+        ]
+
+        quotes: dict[str, dict[str, Any]] = {}
+        if rows:
+            try:
+                quotes = self._quotes([str(_first(r, "i", "base_contract_code")) for r in rows])
+            except Exception:  # noqa: BLE001 - live prices are an upgrade, never fatal
+                logger.warning(
+                    "Freedom24 quote lookup failed; using overnight valuations", exc_info=True
+                )
 
         positions: list[ProviderPosition] = []
-        for row in pos_rows:
-            if not isinstance(row, dict):
-                continue
-            symbol = _first(row, "i", "base_contract_code")
-            if not symbol:
-                continue
+        for row in rows:
+            symbol = str(_first(row, "i", "base_contract_code"))
+            quote = quotes.get(symbol) or {}
 
             quantity = _as_float(row.get("q"))
             currency = str(_first(row, "curr", "base_currency") or base).upper()
@@ -298,24 +349,21 @@ class Freedom24Provider(InvestmentProvider):
             # the book value at the time it was opened.
             avg_price = _opt_float(_first(row, "bal_price_a", "price_a"))
 
-            # `market_value` is the broker's own live valuation of the whole
-            # position and is the one figure its web portfolio agrees with.
+            # The overnight valuation. NOT `mkt_price` for the price: that field
+            # can be a session behind even `market_value` (INUV.US, 2026-08-12:
+            # mkt_price 1.05 against market_value 0.91 on a quantity of 1).
             market_value = _opt_float(row.get("market_value"))
-
-            # NOT `mkt_price`. That field (and `close_price` beside it) belongs
-            # to the row's `sql_signal_tm` snapshot, which can be a session or
-            # more behind `market_value` — verified live on 2026-08-12, where
-            # INUV.US carried mkt_price 1.05 against market_value 0.91 on a
-            # quantity of 1. Rendering it as "current price" made the card
-            # contradict its own market value and the broker's page. The price
-            # per unit is therefore derived from the value the broker stands
-            # behind, so value = price x quantity always holds; the snapshot
-            # fields are only a last resort when there is no value to divide.
             current_price = (
                 market_value / quantity
                 if market_value is not None and quantity
                 else _opt_float(_first(row, "mkt_price", "close_price"))
             )
+
+            last_price = _opt_float(quote.get("ltp"))
+            is_bond = int(_as_float(row.get("t"), -1)) == BOND_INSTRUMENT_TYPE
+            if last_price and last_price > 0 and quantity and not is_bond:
+                current_price = last_price
+                market_value = last_price * quantity
 
             if market_value is None:
                 market_value = quantity * (current_price or avg_price or 0.0)
@@ -334,34 +382,34 @@ class Freedom24Provider(InvestmentProvider):
                 else None
             )
 
-            positions.append(
-                ProviderPosition(
-                    symbol=str(symbol),
-                    name=_first(row, "name", "name2"),
-                    quantity=quantity,
-                    avg_price=avg_price,
-                    current_price=current_price,
-                    market_value=round(market_value, 2),
-                    currency=currency,
-                    cost_basis=round(cost_basis, 2) if cost_basis is not None else None,
-                    fx_rate=fx_rate,
-                    market_value_base=round(market_value_base, 2),
-                    cost_basis_base=(
-                        round(cost_basis_base, 2) if cost_basis_base is not None else None
-                    ),
-                    exchange=_first(row, "ltr"),
-                )
+            position = ProviderPosition(
+                symbol=symbol,
+                name=_first(row, "name", "name2"),
+                quantity=quantity,
+                avg_price=avg_price,
+                current_price=current_price,
+                market_value=round(market_value, 2),
+                currency=currency,
+                cost_basis=round(cost_basis, 2) if cost_basis is not None else None,
+                fx_rate=fx_rate,
+                market_value_base=round(market_value_base, 2),
+                cost_basis_base=(
+                    round(cost_basis_base, 2) if cost_basis_base is not None else None
+                ),
+                exchange=_first(row, "ltr"),
             )
+            if quote:
+                self._apply_day_change(position, quote, _opt_float(row.get("close_price")))
+            positions.append(position)
 
-        self._attach_quotes(positions)
+        self._positions_cache = positions
         return positions
 
-    def _attach_quotes(self, positions: list[ProviderPosition]) -> None:
-        """Fill in each position's intraday move from the quote feed.
-
-        Best-effort: the portfolio response already carries everything needed
-        for value and return, so a quote-feed failure costs the day-change
-        column rather than failing the whole sync.
+    @staticmethod
+    def _apply_day_change(
+        position: ProviderPosition, quote: dict[str, Any], row_close: Optional[float]
+    ) -> None:
+        """Fill in a position's intraday move from its quote row.
 
         `chg` is the instrument's **price** move for the day, not the money the
         holding gained — one share of a EUR 4 stock and thirty of them share
@@ -370,26 +418,9 @@ class Freedom24Provider(InvestmentProvider):
         market value, which also keeps it right for bonds, whose price is
         quoted as a percentage of face value rather than as money per unit.
         """
-        if not positions:
-            return
-        try:
-            quotes = self._quotes([p.symbol for p in positions])
-        except Exception:  # noqa: BLE001 - decorative data, never fatal
-            logger.warning("Freedom24 quote lookup failed; skipping day change", exc_info=True)
-            return
-
-        for position in positions:
-            quote = quotes.get(position.symbol)
-            if not quote:
-                continue
-            position.previous_close = _opt_float(quote.get("ClosePrice"))
-            position.day_change_pct = _day_change_pct_from_quote(quote)
-            position.day_change = _day_change_amount(
-                position.market_value, position.day_change_pct
-            )
-            last_price = _opt_float(quote.get("ltp"))
-            if position.current_price is None and last_price is not None:
-                position.current_price = last_price
+        position.previous_close = _previous_close(quote, row_close)
+        position.day_change_pct = _day_change_pct_from_quote(quote, row_close)
+        position.day_change = _day_change_amount(position.market_value, position.day_change_pct)
 
     def _quotes(self, symbols: list[str]) -> dict[str, dict[str, Any]]:
         """symbol -> quote row, via the public /securities/export endpoint."""
@@ -441,12 +472,15 @@ class Freedom24Provider(InvestmentProvider):
             if not isinstance(bar, (list, tuple)) or len(bar) < 4:
                 continue
             try:
-                # xSeries is unix seconds; the SDK adds +3h for Moscow-session
-                # alignment, but calendar-day charts only need the date part.
+                # xSeries is unix seconds at midnight **Moscow** time: the bar
+                # for 2026-11-25 is stamped 2026-11-24 21:00 UTC (verified
+                # live). Taking the UTC date shifted every bar a day early, so
+                # yesterday's snapshot showed today's close. Rounding to the
+                # nearest UTC midnight reads both that and plain UTC stamps.
                 ts = float(stamp)
                 if ts > 1e12:  # milliseconds, just in case
                     ts /= 1000.0
-                bar_date = datetime.utcfromtimestamp(ts).date()
+                bar_date = datetime.utcfromtimestamp(ts + 12 * 3600).date()
             except (TypeError, ValueError, OSError, OverflowError):
                 continue
             high, low, open_, close = (
@@ -466,7 +500,8 @@ class Freedom24Provider(InvestmentProvider):
     # --------------------------------------------------------------- transactions
 
     def get_transactions(self, since: Optional[datetime] = None) -> list[ProviderTransaction]:
-        """Trades from getTradesHistory, plus one `fee` row per commission charged.
+        """Trades from getTradesHistory, plus one `fee` row per commission charged
+        and a second `fx` row per currency conversion (see `_fx_base_leg`).
 
         `amount` is signed from the account's point of view: money leaving on a
         buy or as commission is negative, proceeds of a sale are positive.
@@ -528,6 +563,11 @@ class Freedom24Provider(InvestmentProvider):
                 )
             )
 
+            if txn_type == "fx":
+                leg = self._fx_base_leg(row, str(external_id), is_buy, txn_date)
+                if leg is not None:
+                    transactions.append(leg)
+
             commission = abs(_as_float(row.get("commission")))
             if commission:
                 transactions.append(
@@ -553,6 +593,41 @@ class Freedom24Provider(InvestmentProvider):
                 )
 
         return transactions
+
+    @staticmethod
+    def _fx_base_leg(
+        row: dict[str, Any], external_id: str, is_buy: bool, txn_date: datetime
+    ) -> Optional[ProviderTransaction]:
+        """The other side of a currency conversion.
+
+        An FX trade on `BASE/QUOTE` reports the quantity `q` in BASE and the
+        cash `v` in QUOTE (`curr_c`) — verified live: "EUR/USD" sell, q 47.75,
+        p 1.1058, v 52.8 USD is 47.75 EUR sold for 52.80 USD. The trade row
+        above carries only the QUOTE leg, so on its own every conversion read
+        as money appearing from nowhere: a EUR->USD->EUR round trip on
+        2026-11-12 put a phantom ~100 EUR into the rebuilt cash history. This
+        row books the BASE leg so the two net to the conversion spread.
+        """
+        pair = str(_first(row, "instr_nm") or "")
+        if "/" not in pair:
+            return None
+        base_ccy = pair.split("/", 1)[0].strip().upper()
+        quantity = abs(_as_float(row.get("q")))
+        if not base_ccy or not quantity:
+            return None
+        return ProviderTransaction(
+            # Suffixed so it can never collide with a trade id — the sync is
+            # keyed on (account_id, external_id).
+            external_id=f"{external_id}-leg",
+            type="fx",
+            symbol=pair,
+            quantity=None,
+            price=None,
+            amount=round(quantity if is_buy else -quantity, 2),
+            currency=base_ccy,
+            date=txn_date,
+            raw_payload={"trade_id": external_id, "leg": base_ccy, "q": row.get("q")},
+        )
 
     # -------------------------------------------------------------------- search
 

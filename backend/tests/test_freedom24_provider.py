@@ -205,7 +205,8 @@ class StubClient:
                 ]
             },
             "xSeries": {
-                "BYLOT.GR": [1722297600, 1722384000],  # 2024-07-30, 2024-07-31 UTC
+                # 2024-07-30 and 2024-07-31 at midnight Moscow (21:00 UTC the day before).
+                "BYLOT.GR": [1722286800, 1722373200],
             },
             "vl": {"BYLOT.GR": [1000, 1100]},
         }
@@ -240,11 +241,10 @@ def test_positions_read_cost_basis_market_value_and_return(provider):
     assert position.currency == "EUR"
     # bal_price_a, not price_avr/avg_price (which the API never sends).
     assert position.avg_price == 0.755
-    assert position.market_value == 3.29
-    # Derived from market_value, never read from `mkt_price`/`close_price`:
-    # those belong to the row's snapshot timestamp and routinely disagree with
-    # the value the broker actually stands behind.
-    assert position.current_price == pytest.approx(3.288 / 3)
+    # Valued at the live last price from the quote feed (1.109 x 3), not the
+    # row's overnight `market_value` (3.288), which goes stale during the day.
+    assert position.current_price == 1.109
+    assert position.market_value == 3.33
     # open_bal, the broker's own book value for the whole position.
     assert position.cost_basis == 2.27
     assert position.exchange == "ATHEX"
@@ -276,8 +276,11 @@ def test_balance_converts_every_currency_into_the_base(provider):
     # 200 USD at 78.0308/89.6292 EUR-per-USD = 174.13 EUR, plus 1.52 EUR cash.
     assert balance.cash_balance == pytest.approx(175.65, abs=0.05)
     assert balance.cash_by_currency == {"EUR": 1.52, "GBP": 0.0, "USD": 200.0}
-    assert balance.positions_value == 3.29
-    assert balance.total_value == pytest.approx(178.94, abs=0.05)
+    assert balance.positions_value == 3.33
+    assert balance.total_value == pytest.approx(178.98, abs=0.05)
+    # Multipliers into EUR, from the `currval` ratios.
+    assert balance.fx_rates["EUR"] == 1.0
+    assert balance.fx_rates["USD"] == pytest.approx(78.0308 / 89.6292)
 
 
 def test_balance_falls_back_to_largest_exposure_when_base_is_unquoted():
@@ -300,6 +303,7 @@ def test_balance_falls_back_to_largest_exposure_when_base_is_unquoted():
     provider.base_currency = "JPY"
     provider._client = NoEurClient()
     provider._portfolio_cache = None
+    provider._positions_cache = None
 
     balance = provider.get_balance()
     assert balance.currency == "USD"
@@ -446,7 +450,9 @@ def test_quote_failure_does_not_fail_the_sync(provider, monkeypatch):
     )
 
     position = provider.get_positions()[0]
+    # Falls back to the row's overnight valuation.
     assert position.market_value == 3.29
+    assert position.current_price == pytest.approx(3.288 / 3)
     assert position.day_change_pct is None
 
 
@@ -491,6 +497,9 @@ def test_day_change_is_zero_when_the_prices_say_flat(provider, monkeypatch):
 
 def test_day_change_stays_null_when_nothing_can_derive_it(provider, monkeypatch):
     """No pcp, no previous close, no delta: None beats a fabricated 0.00."""
+    row = dict(POSITION_RESPONSE["result"]["ps"]["pos"][0])
+    del row["close_price"]
+    monkeypatch.setattr(provider, "_portfolio", lambda: {"acc": [], "pos": [row]})
     monkeypatch.setattr(
         provider,
         "_quotes",
@@ -516,3 +525,87 @@ def test_candles_parse_gethloc_hloc_and_xseries(provider):
     assert cmd == "getHloc"
     assert args[0] == "BYLOT.GR"
     assert args[3] == 86400
+
+
+# Recorded live on 2026-11-25 after the ATHEX/EU close. The portfolio rows still
+# carry the overnight valuation (MOH.GR 56.65) while the broker app shows the
+# live 56.00; the feed reports `chg`/`pcp` 0 for the Greek stocks even though
+# ALPHA.GR fell from 4.28 to 4.108, and `ClosePrice` equals `ltp` (today's
+# close, not the previous one).
+LIVE_POSITIONS = {
+    "acc": [
+        {"curr": "EUR", "currval": 90.3445, "s": -1.42},
+        {"curr": "USD", "currval": 82.1911, "s": 0.39},
+    ],
+    "pos": [
+        {"i": "ALPHA.GR", "curr": "EUR", "currval": 89.8818, "q": 10, "t": 1,
+         "bal_price_a": 4.551, "mkt_price": 4.28, "close_price": 4.28,
+         "market_value": 42.79, "open_bal": 45.51},
+        {"i": "MOH.GR", "curr": "EUR", "currval": 89.8818, "q": 1, "t": 1,
+         "bal_price_a": 52.8, "mkt_price": 56.7, "close_price": 56.7,
+         "market_value": 56.65, "open_bal": 52.8},
+        {"i": "MTLN.EU", "curr": "EUR", "currval": 89.8818, "q": 1, "t": 1,
+         "bal_price_a": 45.7, "mkt_price": 41.28, "close_price": 41.28,
+         "market_value": 41.2, "open_bal": 45.7},
+    ],
+}
+LIVE_QUOTES = {
+    "ALPHA.GR": {"c": "ALPHA.GR", "ltp": 4.108, "chg": 0, "pcp": 0, "ClosePrice": 4.108},
+    "MOH.GR": {"c": "MOH.GR", "ltp": 56, "chg": 0, "pcp": 0, "ClosePrice": 56},
+    "MTLN.EU": {"c": "MTLN.EU", "ltp": 40.26, "chg": -1.02, "pcp": -2.47, "ClosePrice": 40.26},
+}
+
+
+def test_live_account_matches_the_broker_app(provider, monkeypatch):
+    """Value, cost and per-holding return agree with the Freedom24 app's screen."""
+    monkeypatch.setattr(provider, "_portfolio", lambda: LIVE_POSITIONS)
+    monkeypatch.setattr(provider, "_quotes", lambda symbols: LIVE_QUOTES)
+
+    positions = {p.symbol: p for p in provider.get_positions()}
+    assert positions["ALPHA.GR"].market_value == 41.08
+    assert positions["MOH.GR"].market_value == 56.00
+    assert positions["MTLN.EU"].market_value == 40.26
+    # The app: open positions EUR 137.34, all-time -6.67 (-4.63%).
+    value = sum(p.market_value for p in positions.values())
+    cost = sum(p.cost_basis for p in positions.values())
+    assert value == pytest.approx(137.34)
+    assert value - cost == pytest.approx(-6.67)
+
+    # The day's move: from the feed for MTLN, from the row's previous close
+    # for the Greek stocks whose feed claims a flat day.
+    assert positions["MTLN.EU"].day_change_pct == -2.47
+    assert positions["MTLN.EU"].previous_close == pytest.approx(41.28)
+    assert positions["ALPHA.GR"].day_change_pct == pytest.approx(-4.02)
+    assert positions["MOH.GR"].day_change_pct == pytest.approx(-1.23)
+
+    balance = provider.get_balance()
+    # -1.42 EUR + 0.39 USD (at 82.1911/90.3445) = -1.07 EUR, overdrawn by fees.
+    assert balance.cash_balance == pytest.approx(-1.07)
+    assert balance.total_value == pytest.approx(136.27)
+
+
+def test_fx_conversion_books_both_legs(provider, monkeypatch):
+    """EUR/USD sell 47.75 @ 1.1058 = 52.80 USD in, and 47.75 EUR out."""
+    monkeypatch.setattr(
+        provider._client,
+        "get_trades_history",
+        lambda start=None, end=None: {
+            "trades": {
+                "trade": [
+                    {"id": "9", "instr_nm": "EUR/USD", "instr_type_c": "6", "type": "2",
+                     "q": "47.75000000", "p": "1.10580000", "v": 52.8, "curr_c": "USD",
+                     "date": "2026-11-12T12:32:35.960", "commission": "0"},
+                    {"id": "10", "instr_nm": "USD/EUR", "instr_type_c": "6", "type": "1",
+                     "q": "20.72000000", "p": ".86860000", "v": 18, "curr_c": "EUR",
+                     "date": "2021-10-08T17:51:27.000", "commission": "0.00"},
+                ]
+            }
+        },
+    )
+    by_id = {t.external_id: t for t in provider.get_transactions()}
+
+    assert (by_id["9"].amount, by_id["9"].currency) == (52.8, "USD")
+    assert (by_id["9-leg"].amount, by_id["9-leg"].currency) == (-47.75, "EUR")
+    assert by_id["9-leg"].type == "fx"
+    assert (by_id["10"].amount, by_id["10"].currency) == (-18.0, "EUR")
+    assert (by_id["10-leg"].amount, by_id["10-leg"].currency) == (20.72, "USD")

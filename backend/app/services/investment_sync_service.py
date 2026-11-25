@@ -28,8 +28,19 @@ from app.utils.crypto import decrypt, encrypt, DecryptionError
 logger = logging.getLogger("app.investments")
 
 # Charts need ≥2 points; without a backfill a brand-new account only has today's
-# sync snapshot and sparklines stay blank until the next calendar day.
-_HISTORY_LOOKBACK_DAYS = 365 * 2
+# sync snapshot and sparklines stay blank until the next calendar day. Long
+# enough to cover a whole trade tape: a shorter window starts the curve mid-way
+# through the account's life, so "all-time" net invested and gain leave out
+# everything before it while the P&L breakdown still counts those trades.
+_HISTORY_LOOKBACK_DAYS = 365 * 10
+
+# Per provider, the current version of the history reconstruction. An account
+# whose credential records an older version has its past snapshots discarded
+# and rebuilt on its next sync. Bump when a reconstruction bug is fixed.
+#   freedom24 1: FX trades booked one leg only, amounts were summed across
+#   currencies, and missing deposits were papered over with a constant cash
+#   shift — the rebuilt curve went negative and tripled in a day.
+HISTORY_VERSIONS: dict[str, int] = {"freedom24": 1}  # also: candles dated a day early
 
 
 def get_provider_for_account(account: Account):
@@ -74,10 +85,14 @@ def sync_account(db: Session, account: Account) -> InvestmentCredential:
         # left early (wrongly-parsed) rows stuck forever because we keyed on
         # external_id and never updated them.
         transactions = provider.get_transactions(since=None)
+        target_version = HISTORY_VERSIONS.get(account.provider or "", 0)
+        rebuild = (credential.history_version or 0) < target_version
         # Candle fetches are one network call per symbol. Do them now, before the
         # first write, so no SQLite write transaction is open across network I/O
         # (every other writer would otherwise sit on its busy timeout meanwhile).
-        backfill = _fetch_backfill_candles(db, account, provider, positions, transactions)
+        backfill = _fetch_backfill_candles(
+            db, account, provider, positions, transactions, force=rebuild
+        )
         _attach_cached_day_changes(db, account, positions)
 
         account.balance = round(balance.total_value, 2)
@@ -109,6 +124,13 @@ def sync_account(db: Session, account: Account) -> InvestmentCredential:
             )
 
         _upsert_transactions(db, account.id, transactions)
+        if rebuild and backfill is not None:
+            # Drop the curve the old reconstruction built (today's row is
+            # rewritten below from the live balance).
+            db.query(PortfolioSnapshot).filter(
+                PortfolioSnapshot.account_id == account.id,
+                PortfolioSnapshot.date < date.today(),
+            ).delete(synchronize_session=False)
 
         today = date.today()
         snapshot = (
@@ -128,6 +150,8 @@ def sync_account(db: Session, account: Account) -> InvestmentCredential:
         db.flush()
 
         _backfill_portfolio_history(db, account, balance, positions, backfill)
+        if backfill is not None or not rebuild:
+            credential.history_version = max(credential.history_version or 0, target_version)
 
         credential.sync_status = "ok"
         credential.sync_error = None
@@ -233,12 +257,13 @@ def _fetch_backfill_candles(
     provider,
     positions: list[ProviderPosition],
     transactions: list[ProviderTransaction],
+    force: bool = False,
 ) -> Optional[_BackfillData]:
     """Network half of the history backfill; must run before any write.
 
     Returns None when no backfill is needed (provider can't do candles, or the
-    account already has a usable series). Reads only, then releases the pooled
-    connection before talking to the broker.
+    account already has a usable series and `force` is off). Reads only, then
+    releases the pooled connection before talking to the broker.
     """
     get_candles = getattr(provider, "get_candles", None)
     if not callable(get_candles):
@@ -251,7 +276,7 @@ def _fetch_backfill_candles(
         .count()
     )
     # Already have a usable series (today + at least one prior day).
-    if existing_count >= 2:
+    if existing_count >= 2 and not force:
         return None
 
     stored = (
@@ -335,6 +360,8 @@ def _backfill_portfolio_history(
         live_total=balance.total_value,
         live_cash=balance.cash_balance,
         live_positions=balance.positions_value,
+        fx_rates=balance.fx_rates,
+        base_currency=balance.currency,
     )
 
     for point in points:
@@ -362,54 +389,98 @@ def _reconstruct_daily_values(
     live_total: float,
     live_cash: float,
     live_positions: float,
+    fx_rates: Optional[dict[str, float]] = None,
+    base_currency: Optional[str] = None,
 ) -> list[dict]:
-    """Replay trades day-by-day and mark positions to market with HLOC closes.
+    """Replay trades day-by-day and mark positions to market with daily closes.
 
-    When the tape has no buy/sell rows (or candles are missing), fall back to
-    holding today's quantities constant and walking their historical closes —
-    still enough for a sparkline, even if cash is held flat.
+    Every amount and close is converted into the account currency with
+    `fx_rates` (today's broker rates — the tape has no historical ones), so a
+    USD buy no longer moves EUR cash by its USD figure.
+
+    The tape has no deposits or withdrawals (no broker here reports them), so
+    cash is rebuilt with the fewest external flows that explain it: replaying
+    from zero, whenever trades would take cash below the floor a deposit is
+    assumed to have arrived that day; whatever cash is left over at the end
+    beyond the live balance is assumed withdrawn as early as the account
+    could have paid it out. The old approach — replay trades alone, then shift the whole curve
+    so it ends on today's balance — produced years of negative cash (-93.80 on
+    the live Freedom24 account) and a total value that tripled overnight when
+    the shift ran out, which every return figure then read as performance.
+
+    Trades before `start` are replayed too (without emitting points), so the
+    holdings and cash on the first charted day are the real ones.
+
+    When the tape has no buy/sell rows, fall back to holding today's
+    quantities constant and walking their historical closes, with cash flat.
     """
+    rates = {k.upper(): v for k, v in (fx_rates or {}).items() if v}
+    base = (base_currency or "").upper()
+
+    def to_base(amount: float, currency: Optional[str]) -> float:
+        ccy = (currency or base).upper()
+        if not ccy or ccy == base:
+            return amount
+        return amount * rates.get(ccy, 1.0)
+
+    symbol_ccy: dict[str, str] = {}
+    for txn in txns:
+        if txn.type in ("buy", "sell") and txn.symbol and txn.currency:
+            symbol_ccy[txn.symbol] = txn.currency
+    for position in positions:
+        if position.currency:
+            symbol_ccy[position.symbol] = position.currency
+
     events: dict[date, list] = defaultdict(list)
     for txn in txns:
         if not txn.date:
             continue
         day = txn.date.date() if isinstance(txn.date, datetime) else txn.date
-        if start <= day <= end:
+        if day <= end:
             events[day].append(txn)
 
     has_trade_qty = any(t.type in ("buy", "sell") and t.symbol for t in txns)
     qty: dict[str, float] = defaultdict(float)
-    cash = 0.0
+    last_close: dict[str, float] = {}
 
     if not has_trade_qty:
         for position in positions:
             qty[position.symbol] = position.quantity
-        cash = live_cash
+            if position.current_price is not None:
+                last_close[position.symbol] = position.current_price
 
-    calendar_days: set[date] = set(events)
+    calendar_days: set[date] = {d for d in events if d >= start}
     for closes in closes_by_symbol.values():
         calendar_days.update(d for d in closes if start <= d <= end)
-    # Always include endpoints so the series can be aligned to live totals.
     calendar_days.add(end)
 
-    last_close: dict[str, float] = {}
-    for position in positions:
-        if position.current_price is not None:
-            last_close[position.symbol] = position.current_price
+    def apply(txn) -> float:
+        """Book one transaction's quantity; return its cash effect in base."""
+        if txn.type in ("buy", "sell") and txn.symbol and txn.quantity is not None:
+            signed = abs(txn.quantity) if txn.type == "buy" else -abs(txn.quantity)
+            qty[txn.symbol] = qty.get(txn.symbol, 0.0) + signed
+            if abs(qty[txn.symbol]) < 1e-9:
+                qty[txn.symbol] = 0.0
+            # Until a close arrives, the trade price is the best mark there is.
+            if txn.price and txn.symbol not in last_close:
+                last_close[txn.symbol] = txn.price
+        return to_base(float(txn.amount or 0.0), txn.currency)
+
+    # Trading cash effect per emitted day (pre-start activity folds into the first).
+    trade_cash: list[float] = []
+    pending = 0.0
+    if has_trade_qty:
+        for day in sorted(d for d in events if d < start):
+            for txn in events[day]:
+                pending += apply(txn)
 
     raw: list[dict] = []
     for day in sorted(calendar_days):
-        if day < start or day > end:
-            continue
-
+        effect = pending
+        pending = 0.0
         if has_trade_qty:
             for txn in events.get(day, []):
-                if txn.type in ("buy", "sell") and txn.symbol and txn.quantity is not None:
-                    signed = txn.quantity if txn.type == "buy" else -txn.quantity
-                    qty[txn.symbol] = qty.get(txn.symbol, 0.0) + signed
-                    if abs(qty[txn.symbol]) < 1e-9:
-                        qty[txn.symbol] = 0.0
-                cash += float(txn.amount or 0.0)
+                effect += apply(txn)
 
         for symbol, closes in closes_by_symbol.items():
             if day in closes:
@@ -422,33 +493,62 @@ def _reconstruct_daily_values(
             price = last_close.get(symbol)
             if price is None:
                 continue
-            positions_value += quantity * price
+            positions_value += to_base(quantity * price, symbol_ccy.get(symbol))
 
-        raw.append(
-            {
-                "date": day,
-                "cash_balance": cash,
-                "positions_value": positions_value,
-                "total_value": cash + positions_value,
-            }
-        )
+        trade_cash.append(effect)
+        raw.append({"date": day, "positions_value": positions_value})
 
     if not raw:
         return []
 
-    # Shift cash so the series ends on the live total. Deposits/dividends are
-    # missing from the Freedom24 trade tape, so absolute cash is usually wrong;
-    # the day-to-day shape from marks and trades is still useful for charts.
-    cash_offset = live_total - raw[-1]["total_value"]
-    for point in raw:
-        point["cash_balance"] = round(point["cash_balance"] + cash_offset, 2)
+    if has_trade_qty:
+        cash_path = _minimal_flow_cash_path(trade_cash, live_cash)
+    else:
+        cash_path = [live_cash] * len(raw)
+
+    for point, cash in zip(raw, cash_path):
+        point["cash_balance"] = round(cash, 2)
         point["positions_value"] = round(point["positions_value"], 2)
-        point["total_value"] = round(point["cash_balance"] + point["positions_value"], 2)
+        point["total_value"] = round(cash + point["positions_value"], 2)
 
     raw[-1]["cash_balance"] = round(live_cash, 2)
     raw[-1]["positions_value"] = round(live_positions, 2)
     raw[-1]["total_value"] = round(live_total, 2)
     return raw
+
+
+def _minimal_flow_cash_path(effects: list[float], live_cash: float) -> list[float]:
+    """Cash per day from daily trading effects, with the fewest assumed flows.
+
+    The floor is zero, or the live balance when that is already negative (a
+    commission can leave a broker account slightly overdrawn). Deposits are
+    added the day cash would otherwise breach the floor; any surplus over the
+    live balance at the end is withdrawn from the earliest day after which the
+    account could have paid it out without breaching the floor.
+    """
+    floor = min(0.0, live_cash)
+    path: list[float] = []
+    cash = 0.0
+    for effect in effects:
+        cash += effect
+        if cash < floor:
+            cash = floor
+        path.append(cash)
+
+    surplus = path[-1] - live_cash
+    if surplus < 0:
+        # More cash now than trades explain: an earlier deposit sat idle.
+        return [c - surplus for c in path]
+    if surplus > 0:
+        cut = len(path) - 1
+        running_min = path[-1]
+        for i in range(len(path) - 1, -1, -1):
+            running_min = min(running_min, path[i])
+            if running_min - surplus < floor - 1e-9:
+                break
+            cut = i
+        path = path[:cut] + [c - surplus for c in path[cut:]]
+    return path
 
 
 def sync_all_investment_accounts(session_factory) -> None:

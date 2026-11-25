@@ -10,13 +10,17 @@ class ProviderBalance:
 
     `cash_by_currency` keeps the untouched per-currency cash rows so the UI can
     show what the broker actually holds, while `cash_balance` is the single
-    converted figure the account's balance is set from.
+    converted figure the account's balance is set from. `fx_rates` maps each
+    currency the broker quotes to the multiplier that converts it into
+    `currency`, when the provider knows it (used to put multi-currency trade
+    history on one scale when rebuilding past values).
     """
     total_value: float
     cash_balance: float
     currency: str
     positions_value: float = 0.0
     cash_by_currency: dict[str, float] = field(default_factory=dict)
+    fx_rates: dict[str, float] = field(default_factory=dict)
 
 
 @dataclass

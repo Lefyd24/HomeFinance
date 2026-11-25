@@ -30,6 +30,9 @@ class InvestmentCredential(Base):
     encrypted_private_key = Column(Text, nullable=False)
     sync_status = Column(String(20), default="pending")  # pending, ok, error
     sync_error = Column(Text, nullable=True)
+    # Version of the history reconstruction the account's snapshots were built
+    # with; see investment_sync_service.HISTORY_VERSIONS.
+    history_version = Column(Integer, nullable=False, default=0, server_default="0")
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
